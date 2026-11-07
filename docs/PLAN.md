@@ -17,7 +17,7 @@ take applications, manage members, publish events/announcements, share event pho
 | Region | Supabase `eu-central-1` (Frankfurt) | Closest region to Istanbul; there is no Turkey region (see KVKK) |
 | Hosting | Vercel | Native Next.js hosting, preview deployments per branch |
 | Login | Google sign-in (Supabase OAuth) | Works on Android & iOS, needs **no email sending and no domain** |
-| i18n | next-intl, cookie-based locale (no `/en` URL prefix), TR default + EN | Members app, not SEO-driven; easy to add languages later |
+| i18n | next-intl, TR at `/`, EN at `/en` (`localePrefix: "as-needed"`), browser-language detection + remembered choice | URL-based locale keeps pages statically prerendered with Next 16 Cache Components (a cookie-only locale would make every page dynamic); easy to add languages later |
 | Mobile | PWA (manifest + service worker + Web Push) | Android & iOS (16.4+, from Home Screen) without App Store fees |
 | Email | Deferred until we own a domain (Resend then) | Resend's test sender can only mail the account owner |
 | Member messaging | WhatsApp deep links (`wa.me`) + Web Push | The club already lives in a WhatsApp group |
