@@ -1,4 +1,6 @@
 import { useTranslations } from "next-intl";
+import { Suspense } from "react";
+import { UserMenu, UserMenuSkeleton } from "@/components/auth/user-menu";
 import { Link } from "@/i18n/navigation";
 import { DesktopNav } from "./desktop-nav";
 import { LocaleSwitcher } from "./locale-switcher";
@@ -13,8 +15,12 @@ export function SiteHeader() {
           {t("title")}
         </Link>
         <DesktopNav />
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-2">
           <LocaleSwitcher />
+          {/* Session-dependent: streams in while the rest of the page is static. */}
+          <Suspense fallback={<UserMenuSkeleton />}>
+            <UserMenu />
+          </Suspense>
         </div>
       </div>
     </header>

@@ -30,6 +30,37 @@
     "title": "Çok yakında",
     "description": "Bu bölüm üzerinde çalışıyoruz. Takipte kal!"
   },
+  "Auth": {
+    "signIn": "Giriş Yap",
+    "signOut": "Çıkış Yap",
+    "account": "Hesabım",
+    "userMenu": "Hesap menüsü",
+    "signInTitle": "Giriş yap",
+    "signInDescription": "Ride & Vibe üyeleri Google hesabıyla giriş yapar.",
+    "continueWithGoogle": "Google ile devam et",
+    "notMember": "Henüz üye değil misin?",
+    "applyLink": "Kulübe başvur",
+    "error": "Giriş tamamlanamadı. Lütfen tekrar dene.",
+    "notice": "Giriş yaptığında Google hesabındaki adın, e-posta adresin ve profil fotoğrafın yalnızca kulüp üyeliği işlemleri için kullanılır."
+  },
+  "Account": {
+    "title": "Hesabım",
+    "email": "E-posta",
+    "status": "Durum",
+    "role": "Rol",
+    "statuses": {
+      "pending": "Onay bekliyor",
+      "active": "Aktif üye",
+      "inactive": "Pasif"
+    },
+    "roles": {
+      "member": "Üye",
+      "organizer": "Organizatör",
+      "admin": "Yönetici"
+    },
+    "pendingTitle": "Üyeliğin onay bekliyor",
+    "pendingBody": "Giriş yaptın ama hesabın henüz bir yönetici tarafından onaylanmadı. Onaylandığında tüm özelliklere erişebileceksin."
+  },
   "NotFound": {
     "title": "Sayfa bulunamadı",
     "description": "Aradığın sayfa yok ya da taşınmış olabilir.",
