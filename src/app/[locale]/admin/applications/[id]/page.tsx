@@ -96,7 +96,10 @@ async function ApplicationDetail({ params }: { params: PageProps<"/[locale]/admi
             </a>
           </Row>
         )}
-        <Row label={tApply("fields.languages")}>{list(a.languages, "languages")}</Row>
+        <Row label={tApply("fields.languages")}>
+          {list(a.languages, "languages")}
+          {a.other_languages && ` (${a.other_languages})`}
+        </Row>
       </Section>
 
       <Section title={tApply("sections.riding")}>
@@ -124,7 +127,10 @@ async function ApplicationDetail({ params }: { params: PageProps<"/[locale]/admi
             {[a.utm_source, a.utm_medium, a.utm_campaign, a.utm_content].filter(Boolean).join(" / ")}
           </Row>
         )}
-        <Row label={tApply("fields.event_interests")}>{list(a.event_interests, "event_interests")}</Row>
+        <Row label={tApply("fields.event_interests")}>
+          {list(a.event_interests, "event_interests")}
+          {a.other_event_interests && ` (${a.other_event_interests})`}
+        </Row>
         <Row label={tApply("fields.expectations")} block>{a.expectations}</Row>
         <Row label={tApply("fields.alienating_behaviors")} block>{a.alienating_behaviors}</Row>
       </Section>

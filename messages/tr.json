@@ -75,7 +75,7 @@
     "fields": {
       "full_name": "Ad soyad",
       "phone": "Telefon (WhatsApp)",
-      "phoneHint": "Başvurun onaylanınca WhatsApp'tan yazacağız.",
+      "phoneHint": "Başvurun onaylanınca WhatsApp'tan yazacağız. Türkiye dışı numaralar için ülkeyi değiştirebilirsin.",
       "email": "E-posta",
       "emailHint": "Giriş yapacağın Google hesabının e-postası olursa en iyisi.",
       "birth_date": "Doğum tarihi",
@@ -98,14 +98,17 @@
       "in_other_clubs": "Başka bir motosiklet kulübüne veya grubuna üye misin?",
       "other_club_names": "Hangi kulüpler / gruplar?",
       "heard_from": "Bizi nereden duydun?",
-      "referrer_name": "Seni yönlendiren üyenin adı",
+      "referrer_name": "Seni kim yönlendirdi?",
       "event_interests": "Hangi etkinliklere katılmak istersin?",
       "expectations": "Kulüpten beklentilerin neler?",
       "alienating_behaviors": "Bir toplulukta seni uzaklaştıran davranışlar nelerdir?",
       "consent_privacy": "<link>Aydınlatma metnini</link> okudum ve anladım.",
       "consent_rules": "Kulüp kurallarına ve grup sürüşü güvenlik kurallarına uymayı kabul ediyorum.",
       "consent_photos": "Etkinliklerde çekilen ve beni gösteren fotoğrafların kulüp galerisinde paylaşılmasına açık rıza veriyorum.",
-      "consentPhotosHint": "İsteğe bağlı. İstediğin zaman geri alabilirsin; başvurunu etkilemez."
+      "consentPhotosHint": "İsteğe bağlı. İstediğin zaman geri alabilirsin; başvurunu etkilemez.",
+      "other_languages": "Hangi diller?",
+      "other_event_interests": "Başka hangi etkinliklere katılmak istersin?",
+      "referrerHint": "Seni yönlendiren üyeye teşekkür etmek istiyoruz."
     },
     "options": {
       "yes": "Evet",
@@ -123,6 +126,7 @@
         "a1": "A1",
         "a2": "A2",
         "a": "A",
+        "b": "B (125 cc yetkili)",
         "none": "Henüz yok"
       },
       "riding_styles": {
@@ -153,7 +157,8 @@
         "off_road": "Arazi günleri",
         "track_days": "Pist günleri",
         "maintenance": "Bakım atölyeleri",
-        "charity_rides": "Sosyal sorumluluk sürüşleri"
+        "charity_rides": "Sosyal sorumluluk sürüşleri",
+        "other": "Diğer"
       }
     },
     "submit": "Başvuruyu gönder",

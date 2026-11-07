@@ -35,6 +35,7 @@ import {
 } from "@/lib/applications/options";
 import { type ApplicationFieldErrors, type ApplyErrorKey, validateApplication } from "@/lib/applications/schema";
 import { istanbulDistrictNames } from "@/lib/istanbul-districts";
+import { PhoneField } from "./phone-field";
 
 type Status = "idle" | "invalid" | "duplicate" | "error" | "success";
 
@@ -46,24 +47,48 @@ export function ApplyForm() {
   const [isPending, startTransition] = useTransition();
   const [status, setStatus] = useState<Status>("idle");
   const [errors, setErrors] = useState<ApplicationFieldErrors>({});
+  // Errors show for fields the person has left (blur) or after a submit attempt.
+  const [touched, setTouched] = useState<ReadonlySet<string>>(new Set());
+  const [submitAttempts, setSubmitAttempts] = useState(0);
 
   // Conditional sections.
   const [cityChoice, setCityChoice] = useState<"istanbul" | "other">("istanbul");
   const [ownsBike, setOwnsBike] = useState<string | null>(null);
   const [otherClubs, setOtherClubs] = useState<string | null>(null);
   const [heardFrom, setHeardFrom] = useState<string | null>(null);
+  const [languages, setLanguages] = useState<readonly string[]>([]);
+  const [events, setEvents] = useState<readonly string[]>([]);
+
+  function revalidate() {
+    if (!formRef.current) return;
+    const check = validateApplication(new FormData(formRef.current));
+    setErrors(check.ok ? {} : check.fieldErrors);
+  }
+
+  // Base UI checkboxes/radios update their hidden inputs after the click
+  // handler, so re-validate on the next frame.
+  const revalidateSoon = () => requestAnimationFrame(revalidate);
+
+  function onFieldBlur(event: React.FocusEvent<HTMLFormElement>) {
+    const field = (event.target as HTMLElement).closest("[data-field]")?.getAttribute("data-field");
+    if (field && !touched.has(field)) setTouched(new Set(touched).add(field));
+    revalidate();
+  }
 
   // Bring the first problem into view after a failed submit.
   useEffect(() => {
-    if (status !== "invalid") return;
+    if (status !== "invalid" || submitAttempts === 0) return;
     const first = formRef.current?.querySelector<HTMLElement>("[data-invalid=true]");
     first?.scrollIntoView({ behavior: "smooth", block: "center" });
     first?.querySelector<HTMLElement>("input, select, textarea, [role=checkbox], [role=radio]")?.focus({ preventScroll: true });
-  }, [status, errors]);
+    // Only on submit attempts, not while typing.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [submitAttempts]);
 
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
+    setSubmitAttempts((n) => n + 1);
 
     const check = validateApplication(formData);
     if (!check.ok) {
@@ -101,12 +126,21 @@ export function ApplyForm() {
   }
 
   const error = (name: string) => {
+    if (submitAttempts === 0 && !touched.has(name)) return undefined;
     const key = errors[name];
     return key ? t(`errors.${key as ApplyErrorKey}`) : undefined;
   };
 
   return (
-    <form ref={formRef} onSubmit={onSubmit} noValidate className="flex flex-col gap-10">
+    <form
+      ref={formRef}
+      onSubmit={onSubmit}
+      onBlur={onFieldBlur}
+      onChange={revalidateSoon}
+      onClick={revalidateSoon}
+      noValidate
+      className="flex flex-col gap-10"
+    >
       <input type="hidden" name="locale" value={locale} />
       {UTM_KEYS.map((key) => {
         const value = searchParams.get(key);
@@ -124,16 +158,7 @@ export function ApplyForm() {
         <FieldLegend className="text-lg">{t("sections.about")}</FieldLegend>
         <FieldGroup>
           <TextField name="full_name" label={t("fields.full_name")} error={error("full_name")} autoComplete="name" />
-          <TextField
-            name="phone"
-            type="tel"
-            label={t("fields.phone")}
-            hint={t("fields.phoneHint")}
-            error={error("phone")}
-            autoComplete="tel"
-            inputMode="tel"
-            placeholder="0532 123 45 67"
-          />
+          <PhoneField name="phone" label={t("fields.phone")} hint={t("fields.phoneHint")} error={error("phone")} />
           <TextField
             name="email"
             type="email"
@@ -163,7 +188,7 @@ export function ApplyForm() {
             horizontal
           />
           {cityChoice === "istanbul" ? (
-            <Field data-invalid={!!error("district")}>
+            <Field data-field="district" data-invalid={!!error("district")}>
               <FieldLabel htmlFor="district">{t("fields.district")}</FieldLabel>
               <NativeSelect id="district" name="district" defaultValue="" className="w-full" aria-invalid={!!error("district")}>
                 <NativeSelectOption value="" disabled>
@@ -199,8 +224,12 @@ export function ApplyForm() {
             hint={t("fields.multiHint")}
             options={LANGUAGES}
             optionLabel={(v) => t(`options.languages.${v}`)}
+            onValuesChange={setLanguages}
             error={error("languages")}
           />
+          {languages.includes("other") && (
+            <TextField name="other_languages" label={t("fields.other_languages")} error={error("other_languages")} />
+          )}
         </FieldGroup>
       </FieldSet>
 
@@ -294,7 +323,13 @@ export function ApplyForm() {
             error={error("heard_from")}
           />
           {heardFrom === "friend" && (
-            <TextField name="referrer_name" label={t("fields.referrer_name")} error={error("referrer_name")} />
+            <TextField
+              name="referrer_name"
+              label={t("fields.referrer_name")}
+              optional={t("optional")}
+              hint={t("fields.referrerHint")}
+              error={error("referrer_name")}
+            />
           )}
           <ChoiceChips
             name="event_interests"
@@ -302,8 +337,16 @@ export function ApplyForm() {
             hint={t("fields.multiHint")}
             options={EVENT_INTERESTS}
             optionLabel={(v) => t(`options.event_interests.${v}`)}
+            onValuesChange={setEvents}
             error={error("event_interests")}
           />
+          {events.includes("other") && (
+            <TextField
+              name="other_event_interests"
+              label={t("fields.other_event_interests")}
+              error={error("other_event_interests")}
+            />
+          )}
           <TextAreaField name="expectations" label={t("fields.expectations")} error={error("expectations")} />
           <TextAreaField name="alienating_behaviors" label={t("fields.alienating_behaviors")} error={error("alienating_behaviors")} />
         </FieldGroup>
@@ -371,7 +414,7 @@ function TextField({
   error?: string;
 } & Omit<React.ComponentProps<typeof Input>, "name">) {
   return (
-    <Field data-invalid={!!error}>
+    <Field data-field={name} data-invalid={!!error}>
       <FieldLabel htmlFor={name}>
         {label} <OptionalTag text={optional} />
       </FieldLabel>
@@ -384,7 +427,7 @@ function TextField({
 
 function TextAreaField({ name, label, error }: { name: string; label: string; error?: string }) {
   return (
-    <Field data-invalid={!!error}>
+    <Field data-field={name} data-invalid={!!error}>
       <FieldLabel htmlFor={name}>{label}</FieldLabel>
       <Textarea id={name} name={name} rows={3} maxLength={1000} aria-invalid={!!error} />
       <FieldError>{error}</FieldError>
@@ -412,7 +455,7 @@ function ChoiceRadios<T extends string>({
   horizontal?: boolean;
 }) {
   return (
-    <Field data-invalid={!!error}>
+    <Field data-field={name} data-invalid={!!error}>
       <FieldTitle id={`${name}-label`}>{label}</FieldTitle>
       <RadioGroup
         name={name}
@@ -442,6 +485,7 @@ function ChoiceChips<T extends string>({
   hint,
   options,
   optionLabel,
+  onValuesChange,
   error,
 }: {
   name: string;
@@ -449,10 +493,18 @@ function ChoiceChips<T extends string>({
   hint?: string;
   options: readonly T[];
   optionLabel: (value: T) => string;
+  onValuesChange?: (values: readonly T[]) => void;
   error?: string;
 }) {
+  const [selected, setSelected] = useState<readonly T[]>([]);
+  function toggle(value: T, checked: boolean) {
+    const next = checked ? [...selected, value] : selected.filter((v) => v !== value);
+    setSelected(next);
+    onValuesChange?.(next);
+  }
+
   return (
-    <Field data-invalid={!!error}>
+    <Field data-field={name} data-invalid={!!error}>
       <FieldTitle id={`${name}-label`}>{label}</FieldTitle>
       {hint && <FieldDescription>{hint}</FieldDescription>}
       <div role="group" aria-labelledby={`${name}-label`} className="flex flex-wrap gap-2">
@@ -461,7 +513,13 @@ function ChoiceChips<T extends string>({
             key={value}
             className="flex min-h-10 cursor-pointer items-center gap-2 rounded-full border px-3.5 py-2 text-sm has-data-checked:border-primary has-data-checked:bg-primary/5"
           >
-            <Checkbox name={name} value={value} aria-invalid={!!error} />
+            <Checkbox
+              name={name}
+              value={value}
+              checked={selected.includes(value)}
+              onCheckedChange={(checked) => toggle(value, checked)}
+              aria-invalid={!!error}
+            />
             {optionLabel(value)}
           </label>
         ))}
@@ -483,7 +541,7 @@ function ConsentCheckbox({
   error?: string;
 }) {
   return (
-    <Field orientation="horizontal" data-invalid={!!error}>
+    <Field orientation="horizontal" data-field={name} data-invalid={!!error}>
       <Checkbox id={name} name={name} aria-invalid={!!error} className="mt-0.5 self-start" />
       <FieldContent>
         <FieldLabel htmlFor={name} className="font-normal leading-snug">

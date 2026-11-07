@@ -1,3 +1,4 @@
+import { isPossiblePhoneNumber } from "libphonenumber-js";
 import { z } from "zod";
 import { ISTANBUL, isIstanbulDistrict, sideOfDistrict } from "@/lib/istanbul-districts";
 import type { TablesInsert } from "@/lib/supabase/database.types";
@@ -46,10 +47,21 @@ const choices = <T extends readonly [string, ...string[]]>(values: T) =>
 
 const checkbox = z.literal("on").optional().transform((v) => v === "on");
 
+const rule = (path: string, key: ApplyErrorKey = "required") => ({ path: [path], error: key });
+
+// Run a cross-field rule only when the fields it depends on have no issues.
+const onlyIf =
+  (...fields: string[]) =>
+  (payload: { issues: readonly { path?: readonly PropertyKey[] }[] }) =>
+    payload.issues.every((issue) => !fields.includes(String(issue.path?.[0])));
+
 // Turkish-friendly phone normalization to E.164 (+905321234567).
 export function normalizePhone(input: string) {
   const digits = input.replace(/\D/g, "");
-  if (input.trim().startsWith("+")) return `+${digits}`;
+  if (input.trim().startsWith("+")) {
+    // "+90 0546…" — a Turkish trunk 0 typed after the country code.
+    return digits.startsWith("900") ? `+90${digits.slice(3)}` : `+${digits}`;
+  }
   if (digits.startsWith("00")) return `+${digits.slice(2)}`;
   if (digits.length === 11 && digits.startsWith("0")) return `+90${digits.slice(1)}`;
   if (digits.length === 10 && digits.startsWith("5")) return `+90${digits}`;
@@ -77,7 +89,12 @@ export const applicationSchema = z
       .string(err("required"))
       .min(1, err("required"))
       .transform(normalizePhone)
-      .pipe(z.string().regex(/^\+[1-9][0-9]{6,14}$/, err("invalidPhone"))),
+      .pipe(
+        z
+          .string()
+          .regex(/^\+[1-9][0-9]{6,14}$/, err("invalidPhone"))
+          .refine((v) => isPossiblePhoneNumber(v), err("invalidPhone")),
+      ),
     email: z
       .string(err("required"))
       .min(1, err("required"))
@@ -99,6 +116,7 @@ export const applicationSchema = z
       .pipe(z.string().regex(/^[A-Za-z0-9._]{1,30}$/, err("invalidInstagram")))
       .optional(),
     languages: choices(LANGUAGES),
+    other_languages: optionalText(120),
 
     license_class: z.enum(LICENSE_CLASSES, err("required")),
     riding_years: z.coerce.number(err("invalidNumber")).int(err("invalidNumber")).min(0, err("invalidNumber")).max(70, err("invalidNumber")),
@@ -114,6 +132,7 @@ export const applicationSchema = z
     heard_from: z.enum(HEARD_FROM, err("required")),
     referrer_name: optionalText(120),
     event_interests: choices(EVENT_INTERESTS),
+    other_event_interests: optionalText(300),
     expectations: text(10, 1000),
     alienating_behaviors: text(3, 1000),
 
@@ -127,20 +146,32 @@ export const applicationSchema = z
     utm_content: optionalText(200),
     utm_term: optionalText(200),
   })
-  .superRefine((v, ctx) => {
-    const require = (path: keyof typeof v, ok: boolean) => {
-      if (!ok) ctx.addIssue({ code: "custom", path: [path], message: "required" });
-    };
-    if (v.city_choice === "istanbul" && !isIstanbulDistrict(v.district)) {
-      ctx.addIssue({ code: "custom", path: ["district"], message: "invalidDistrict" });
-    }
-    require("city", v.city_choice === "istanbul" || !!v.city);
-    if (v.owns_motorcycle) {
-      require("motorcycle_brand", !!v.motorcycle_brand);
-      require("motorcycle_model", !!v.motorcycle_model);
-    }
-    if (v.in_other_clubs) require("other_club_names", !!v.other_club_names);
-    if (v.heard_from === "friend") require("referrer_name", !!v.referrer_name);
+  // "Required only if" rules. `when` lets each rule run as soon as its own
+  // fields are valid, even while other fields still have errors.
+  .refine((v) => v.city_choice !== "istanbul" || isIstanbulDistrict(v.district), {
+    ...rule("district", "invalidDistrict"),
+    when: onlyIf("city_choice", "district"),
+  })
+  .refine((v) => v.city_choice === "istanbul" || !!v.city, { ...rule("city"), when: onlyIf("city_choice", "city") })
+  .refine((v) => !v.languages.includes("other") || !!v.other_languages, {
+    ...rule("other_languages"),
+    when: onlyIf("languages", "other_languages"),
+  })
+  .refine((v) => !v.owns_motorcycle || !!v.motorcycle_brand, {
+    ...rule("motorcycle_brand"),
+    when: onlyIf("owns_motorcycle", "motorcycle_brand"),
+  })
+  .refine((v) => !v.owns_motorcycle || !!v.motorcycle_model, {
+    ...rule("motorcycle_model"),
+    when: onlyIf("owns_motorcycle", "motorcycle_model"),
+  })
+  .refine((v) => !v.in_other_clubs || !!v.other_club_names, {
+    ...rule("other_club_names"),
+    when: onlyIf("in_other_clubs", "other_club_names"),
+  })
+  .refine((v) => !v.event_interests.includes("other") || !!v.other_event_interests, {
+    ...rule("other_event_interests"),
+    when: onlyIf("event_interests", "other_event_interests"),
   })
   .transform(
     (v): TablesInsert<"applications"> => ({
@@ -154,6 +185,7 @@ export const applicationSchema = z
       side: v.city_choice === "istanbul" ? sideOfDistrict(v.district) : null,
       instagram: v.instagram ?? null,
       languages: v.languages,
+      other_languages: v.languages.includes("other") ? v.other_languages! : null,
       license_class: v.license_class,
       riding_years: v.riding_years,
       owns_motorcycle: v.owns_motorcycle,
@@ -166,8 +198,10 @@ export const applicationSchema = z
       in_other_clubs: v.in_other_clubs,
       other_club_names: v.in_other_clubs ? v.other_club_names! : null,
       heard_from: v.heard_from,
-      referrer_name: v.heard_from === "friend" ? v.referrer_name! : null,
+      // Optional: lets us credit (and later reward) the referring member.
+      referrer_name: v.heard_from === "friend" ? (v.referrer_name ?? null) : null,
       event_interests: v.event_interests,
+      other_event_interests: v.event_interests.includes("other") ? v.other_event_interests! : null,
       expectations: v.expectations,
       alienating_behaviors: v.alienating_behaviors,
       consent_privacy: v.consent_privacy,

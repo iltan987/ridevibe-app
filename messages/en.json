@@ -75,7 +75,7 @@
     "fields": {
       "full_name": "Full name",
       "phone": "Phone (WhatsApp)",
-      "phoneHint": "We'll message you on WhatsApp once your application is approved.",
+      "phoneHint": "We'll message you on WhatsApp once approved. Change the country for non-Turkish numbers.",
       "email": "Email",
       "emailHint": "Ideally the email of the Google account you'll sign in with.",
       "birth_date": "Date of birth",
@@ -98,14 +98,17 @@
       "in_other_clubs": "Are you a member of another motorcycle club or group?",
       "other_club_names": "Which clubs / groups?",
       "heard_from": "How did you hear about us?",
-      "referrer_name": "Name of the member who referred you",
+      "referrer_name": "Who referred you?",
       "event_interests": "Which events would you like to join?",
       "expectations": "What do you expect from the club?",
       "alienating_behaviors": "What behaviours in a community would push you away?",
       "consent_privacy": "I have read and understood the <link>privacy notice</link>.",
       "consent_rules": "I agree to follow the club rules and group riding safety rules.",
       "consent_photos": "I give my explicit consent for photos of me taken at events to be shared in the club gallery.",
-      "consentPhotosHint": "Optional. You can withdraw it any time; it doesn't affect your application."
+      "consentPhotosHint": "Optional. You can withdraw it any time; it doesn't affect your application.",
+      "other_languages": "Which languages?",
+      "other_event_interests": "Which other events would you like to join?",
+      "referrerHint": "We'd like to thank the member who referred you."
     },
     "options": {
       "yes": "Yes",
@@ -123,6 +126,7 @@
         "a1": "A1",
         "a2": "A2",
         "a": "A",
+        "b": "B (125 cc authorised)",
         "none": "Not yet"
       },
       "riding_styles": {
@@ -153,7 +157,8 @@
         "off_road": "Off-road days",
         "track_days": "Track days",
         "maintenance": "Maintenance workshops",
-        "charity_rides": "Charity rides"
+        "charity_rides": "Charity rides",
+        "other": "Other"
       }
     },
     "submit": "Submit application",

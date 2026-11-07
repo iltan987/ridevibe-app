@@ -5,7 +5,8 @@ import type { Enums } from "@/lib/supabase/database.types";
 // messages/*.json under Apply.options.*.
 
 export const LANGUAGES = ["tr", "en", "other"] as const;
-export const LICENSE_CLASSES = ["a1", "a2", "a", "none"] as const satisfies readonly Enums<"license_class">[];
+// "b" = B license with the 125 cc (A1) authorisation.
+export const LICENSE_CLASSES = ["a1", "a2", "a", "b", "none"] as const satisfies readonly Enums<"license_class">[];
 export const RIDING_STYLES = ["city", "touring", "enduro", "sport", "cruiser", "scooter"] as const;
 export const GROUP_EXPERIENCE = ["none", "some", "a_lot"] as const satisfies readonly Enums<"group_ride_experience">[];
 export const HEARD_FROM = ["instagram_ad", "instagram_other", "friend", "other"] as const satisfies readonly Enums<"heard_from">[];
@@ -19,6 +20,7 @@ export const EVENT_INTERESTS = [
   "track_days",
   "maintenance",
   "charity_rides",
+  "other",
 ] as const;
 
 export const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"] as const;
