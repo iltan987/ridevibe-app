@@ -55,6 +55,20 @@ pnpm db:types                 # regenerate src/lib/supabase/database.types.ts
   `public.admin_set_member_access()`.
 - Every permission rule gets a pgTAP test, including the "must fail" cases.
 
+### Production (hosted Supabase `ridevibe-db`, ref `igqqicbfejhnsggfuydh`, Frankfurt)
+
+- Provisioned via Vercel Marketplace (Free plan); env vars are injected into Vercel **production + preview** only.
+  Local dev always uses the Docker stack. Preview deployments share the production database.
+- **Migrations:** `pnpm exec supabase db push --remote=<POSTGRES_URL_NON_POOLING> --dry-run` first, then without
+  `--dry-run` + `--yes`; then run `supabase test db` against the same target. Get the URL with
+  `vercel env pull --environment=production <file outside the repo>` and delete the file afterwards.
+- **Auth/config as code:** production overrides live in `[remotes.production]` in `supabase/config.toml`. Always run
+  `pnpm exec supabase config diff --remote=igqqicbfejhnsggfuydh` and review before `config push --remote=… --yes`.
+  Local defaults must not leak into production — pin hosted values in the remote block when the diff shows them.
+- Google OAuth creds: `GOOGLE_LOCAL_*` / `GOOGLE_PROD_*` in the root `.env` (git-ignored). Never name config env vars
+  `SUPABASE_*` — the CLI lets those override every config value, including remote blocks.
+- Functions run in `fra1` (`vercel.ts`), next to the database.
+
 ## Stack & conventions
 
 - **Next.js 16 App Router** with `cacheComponents`, `partialPrefetching` and React Compiler enabled. Request-time data
