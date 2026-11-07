@@ -30,6 +30,37 @@
     "title": "Coming soon",
     "description": "We're working on this section. Stay tuned!"
   },
+  "Auth": {
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "account": "My account",
+    "userMenu": "Account menu",
+    "signInTitle": "Sign in",
+    "signInDescription": "Ride & Vibe members sign in with their Google account.",
+    "continueWithGoogle": "Continue with Google",
+    "notMember": "Not a member yet?",
+    "applyLink": "Apply to join",
+    "error": "Sign-in couldn't be completed. Please try again.",
+    "notice": "When you sign in, the name, email address and profile photo from your Google account are used only for club membership."
+  },
+  "Account": {
+    "title": "My account",
+    "email": "Email",
+    "status": "Status",
+    "role": "Role",
+    "statuses": {
+      "pending": "Awaiting approval",
+      "active": "Active member",
+      "inactive": "Inactive"
+    },
+    "roles": {
+      "member": "Member",
+      "organizer": "Organizer",
+      "admin": "Admin"
+    },
+    "pendingTitle": "Your membership is awaiting approval",
+    "pendingBody": "You're signed in, but an admin hasn't approved your account yet. Once approved, you'll get access to everything."
+  },
   "NotFound": {
     "title": "Page not found",
     "description": "The page you're looking for doesn't exist or has moved.",
