@@ -70,6 +70,9 @@ WhatsApp invite link → person signs in with Google → account is linked to th
 
 ## Git workflow
 
-- `main` is always deployable. Work happens on short-lived branches (`feat/…`, `fix/…`, `chore/…`), merged via PR.
+- Solo project, lightweight flow: `main` = production (what Samet and members see once deployed).
+- Each iteration gets a short-lived branch (`feat/…`, `fix/…`, `chore/…`); iltan reviews the diff (and the Vercel
+  preview deployment), then it is merged into `main` locally with `--no-ff`. No PR ceremony needed.
+- Small doc/config tweaks may go straight to `main`.
 - Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:` …). No co-author trailers.
 - DB changes only through versioned Supabase migrations in `supabase/migrations`.
