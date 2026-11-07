@@ -37,7 +37,27 @@ Roles: `admin` (Samet, iltan), `organizer` (ride captains), `member`.
 Application flow: public form → admin reviews (New → Contacted → Approved / Rejected) → on approval admin sends a
 WhatsApp invite link → person signs in with Google → account is linked to the application.
 
-## Phase 1 (demo for Samet)
+## Status (2026-11-08)
+
+Live at https://ridevibe.com.tr: TR/EN site, Google sign-in (roles/statuses), public application form, draft privacy
+notice, staff-only applications list/detail.
+
+## MVP for Samet (agreed 2026-11-08)
+
+Build in this order, one branch each:
+1. **Applications review workflow** — status changes + notes; on approval a WhatsApp invite with sign-in link; signing
+   in with the same email activates the member automatically.
+2. **Members** — directory (name, district/side, bike) and "my profile" editing.
+3. **Events** — organizers create rides (date, meeting point + map link, route, capacity); members RSVP with a
+   waiting list; home page shows upcoming events.
+4. **Announcements** — short organizer posts, pinned on the home page.
+5. Right after the MVP: **event photo gallery** (Cloudflare R2).
+
+**Design pass needed:** everything so far uses default shadcn styling. Before/while building the MVP screens, define
+the visual identity (logo, colours, typography, light/dark, motorcycle "vibe") and apply it across existing pages.
+Do this as its own step, early, so new screens are built in the final style.
+
+## Phase 1 (original scope)
 
 1. Landing page with ad attribution (UTM params stored with the application)
 2. Application form + admin review pipeline

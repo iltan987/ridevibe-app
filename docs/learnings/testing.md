@@ -27,3 +27,9 @@
 ### Check access control in three roles (2026-11-07)
 - Every staff page: signed-out → sign-in redirect, member → 404, organizer/admin → content. The DB tests cover the
   same rules at the data level.
+
+### Smoke-testing production safely (2026-11-08)
+- Preview deployments are behind Vercel login (puppeteer can't pass it without a bypass secret); production is public.
+- **Do:** after merging, run the browser E2E against `https://ridevibe.com.tr` with an `@pgtap.invalid` email and a
+  `utm_campaign=smoke-test`, verify the row via `POSTGRES_URL_NON_POOLING` (`docker run --rm postgres:17-alpine
+  psql "$URL" …`), then delete it.
