@@ -24,7 +24,8 @@
     "events": "Etkinlikleri Gör"
   },
   "Footer": {
-    "rights": "© Ride & Vibe · İstanbul"
+    "rights": "© Ride & Vibe · İstanbul",
+    "privacy": "Aydınlatma metni"
   },
   "ComingSoon": {
     "title": "Çok yakında",
@@ -178,6 +179,11 @@
       "invalidInstagram": "Geçerli bir Instagram kullanıcı adı gir.",
       "invalidDistrict": "Listeden bir ilçe seç."
     }
+  },
+  "Privacy": {
+    "title": "Aydınlatma Metni",
+    "draftNotice": "TASLAK — Bu metin henüz hukuki incelemeden geçmedi. Sarı ile işaretli alanlar doldurulacak.",
+    "version": "Sürüm: {version}"
   },
   "NotFound": {
     "title": "Sayfa bulunamadı",

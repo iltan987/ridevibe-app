@@ -18,6 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default function SignInPage({ searchParams }: PageProps<"/[locale]/sign-in">) {
   const t = useTranslations("Auth");
+  const tFooter = useTranslations("Footer");
 
   return (
     <section className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-4 py-12">
@@ -30,7 +31,12 @@ export default function SignInPage({ searchParams }: PageProps<"/[locale]/sign-i
           <Suspense fallback={<Skeleton className="h-9 w-full" />}>
             <SignInForm searchParams={searchParams} />
           </Suspense>
-          <p className="text-xs text-muted-foreground">{t("notice")}</p>
+          <p className="text-xs text-muted-foreground">
+            {t("notice")}{" "}
+            <Link href="/privacy" className="underline underline-offset-2">
+              {tFooter("privacy")}
+            </Link>
+          </p>
         </CardContent>
         <CardFooter className="gap-1 text-sm">
           {t("notMember")}

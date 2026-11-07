@@ -24,7 +24,8 @@
     "events": "See events"
   },
   "Footer": {
-    "rights": "© Ride & Vibe · Istanbul"
+    "rights": "© Ride & Vibe · Istanbul",
+    "privacy": "Privacy notice"
   },
   "ComingSoon": {
     "title": "Coming soon",
@@ -178,6 +179,11 @@
       "invalidInstagram": "Enter a valid Instagram username.",
       "invalidDistrict": "Choose a district from the list."
     }
+  },
+  "Privacy": {
+    "title": "Privacy Notice",
+    "draftNotice": "DRAFT — This text has not been legally reviewed yet. Highlighted parts are still to be filled in.",
+    "version": "Version: {version}"
   },
   "NotFound": {
     "title": "Page not found",
