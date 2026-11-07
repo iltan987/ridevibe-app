@@ -341,10 +341,12 @@ email_optional = false
 
 # Google sign-in. Values come from the git-ignored `.env` in the project root
 # (see .env.example). Google redirect URI for local: http://127.0.0.1:54321/auth/v1/callback
+# Do NOT name these SUPABASE_*: the CLI lets SUPABASE_* env vars override every
+# config value, including [remotes.production], which would push local creds.
 [auth.external.google]
 enabled = true
-client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
-secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_SECRET)"
+client_id = "env(GOOGLE_LOCAL_CLIENT_ID)"
+secret = "env(GOOGLE_LOCAL_CLIENT_SECRET)"
 redirect_uri = ""
 url = ""
 skip_nonce_check = false
@@ -432,3 +434,26 @@ enabled = true
 # formatted with uppercase keywords, indent 2, max width 180, trailing commas,
 # and column/key alignment. Set to "null" to emit raw, unformatted SQL.
 # format_options = "{\"keywordCase\":\"upper\",\"indent\":2,\"maxWidth\":180,\"commaStyle\":\"trailing\"}"
+
+# ---------------------------------------------------------------------------
+# Production (hosted, Frankfurt). Applies when targeting this project ref, e.g.
+#   pnpm exec supabase config diff --remote=igqqicbfejhnsggfuydh
+#   pnpm exec supabase config push --remote=igqqicbfejhnsggfuydh
+# Only the keys declared here override the settings above.
+# ---------------------------------------------------------------------------
+[remotes.production]
+project_id = "igqqicbfejhnsggfuydh"
+
+[remotes.production.auth]
+site_url = "https://ridevibe.com.tr"
+additional_redirect_urls = [
+  "https://ridevibe.com.tr/**",
+  "https://ridevibe-app.vercel.app/**",
+  # Vercel preview deployments of this account
+  "https://*-iltan-caners-projects.vercel.app/**",
+]
+
+[remotes.production.auth.external.google]
+enabled = true
+client_id = "env(GOOGLE_PROD_CLIENT_ID)"
+secret = "env(GOOGLE_PROD_CLIENT_SECRET)"
