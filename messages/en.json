@@ -1,0 +1,38 @@
+{
+  "Metadata": {
+    "title": "Ride & Vibe",
+    "description": "Istanbul's motorcycle community. Rides, events and new friendships."
+  },
+  "Nav": {
+    "home": "Home",
+    "events": "Events",
+    "gallery": "Gallery",
+    "apply": "Apply",
+    "signIn": "Sign in",
+    "menu": "Menu"
+  },
+  "LocaleSwitcher": {
+    "label": "Language",
+    "tr": "Türkçe",
+    "en": "English"
+  },
+  "Home": {
+    "eyebrow": "Istanbul Motorcycle Club",
+    "title": "Let's ride together.",
+    "subtitle": "Weekend rides, long tours, coffee meetups. Meet riders from every side of Istanbul, Asian and European.",
+    "apply": "Apply to join",
+    "events": "See events"
+  },
+  "Footer": {
+    "rights": "© Ride & Vibe · Istanbul"
+  },
+  "ComingSoon": {
+    "title": "Coming soon",
+    "description": "We're working on this section. Stay tuned!"
+  },
+  "NotFound": {
+    "title": "Page not found",
+    "description": "The page you're looking for doesn't exist or has moved.",
+    "back": "Back to home"
+  }
+}
