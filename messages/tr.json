@@ -1,0 +1,38 @@
+{
+  "Metadata": {
+    "title": "Ride & Vibe",
+    "description": "İstanbul'un motosiklet topluluğu. Sürüşler, etkinlikler ve yeni dostluklar."
+  },
+  "Nav": {
+    "home": "Ana Sayfa",
+    "events": "Etkinlikler",
+    "gallery": "Galeri",
+    "apply": "Başvur",
+    "signIn": "Giriş Yap",
+    "menu": "Menü"
+  },
+  "LocaleSwitcher": {
+    "label": "Dil",
+    "tr": "Türkçe",
+    "en": "English"
+  },
+  "Home": {
+    "eyebrow": "İstanbul Motosiklet Kulübü",
+    "title": "Birlikte sürelim.",
+    "subtitle": "Hafta sonu sürüşleri, uzun turlar, kahve buluşmaları. Asya'dan Avrupa'ya, İstanbul'un her yakasından motorcularla tanış.",
+    "apply": "Kulübe Başvur",
+    "events": "Etkinlikleri Gör"
+  },
+  "Footer": {
+    "rights": "© Ride & Vibe · İstanbul"
+  },
+  "ComingSoon": {
+    "title": "Çok yakında",
+    "description": "Bu bölüm üzerinde çalışıyoruz. Takipte kal!"
+  },
+  "NotFound": {
+    "title": "Sayfa bulunamadı",
+    "description": "Aradığın sayfa yok ya da taşınmış olabilir.",
+    "back": "Ana sayfaya dön"
+  }
+}
