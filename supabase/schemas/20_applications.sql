@@ -1,0 +1,189 @@
+-- ---------------------------------------------------------------------------
+-- Membership applications (replaces the Google Form). Spec:
+-- docs/application-form.md. Anyone may submit; only staff can read/manage.
+-- ---------------------------------------------------------------------------
+
+create type public.application_status as enum ('new', 'contacted', 'approved', 'rejected');
+-- 'b' = B license holder with the 125 cc (A1) authorisation (since 2024).
+create type public.license_class as enum ('a1', 'a2', 'a', 'b', 'none');
+create type public.group_ride_experience as enum ('none', 'some', 'a_lot');
+create type public.heard_from as enum ('instagram_ad', 'instagram_other', 'friend', 'other');
+
+create table public.applications (
+  id uuid primary key default gen_random_uuid(),
+  status public.application_status not null default 'new',
+  locale text not null default 'tr' check (locale in ('tr', 'en')),
+
+  -- About you
+  full_name text not null check (char_length(full_name) between 2 and 120),
+  phone text not null check (phone ~ '^\+[1-9][0-9]{6,14}$'), -- E.164, normalized by the app
+  email text not null check (char_length(email) <= 254 and email ~ '^[^@\s]+@[^@\s]+\.[^@\s]+$'),
+  birth_date date not null check (birth_date > date '1920-01-01'), -- 18+ enforced by trigger
+  city text not null default 'İstanbul' check (char_length(city) between 1 and 80),
+  district text not null check (char_length(district) between 1 and 80),
+  side public.istanbul_side,
+  instagram text check (instagram ~ '^[A-Za-z0-9._]{1,30}$'),
+  languages text[] not null
+    check (cardinality(languages) >= 1 and languages <@ array['tr', 'en', 'other']),
+  other_languages text check (char_length(other_languages) <= 120),
+
+  -- Riding
+  license_class public.license_class not null,
+  riding_years smallint not null check (riding_years between 0 and 70),
+  owns_motorcycle boolean not null,
+  motorcycle_brand text check (char_length(motorcycle_brand) <= 60),
+  motorcycle_model text check (char_length(motorcycle_model) <= 60),
+  motorcycle_cc smallint check (motorcycle_cc between 50 and 3000),
+  riding_styles text[] not null
+    check (cardinality(riding_styles) >= 1 and riding_styles <@ array[
+      'city', 'touring', 'enduro', 'sport', 'cruiser', 'scooter']),
+  group_experience public.group_ride_experience not null,
+
+  -- You and the club
+  in_other_clubs boolean not null,
+  other_club_names text check (char_length(other_club_names) <= 300),
+  heard_from public.heard_from not null,
+  referrer_name text check (char_length(referrer_name) <= 120),
+  event_interests text[] not null
+    check (cardinality(event_interests) >= 1 and event_interests <@ array[
+      'day_rides', 'multi_day_tours', 'camping', 'coffee_meetups', 'training',
+      'off_road', 'track_days', 'maintenance', 'charity_rides', 'other']),
+  other_event_interests text check (char_length(other_event_interests) <= 300),
+  expectations text not null check (char_length(expectations) between 10 and 1000),
+  alienating_behaviors text not null check (char_length(alienating_behaviors) between 3 and 1000),
+
+  -- Consents (KVKK): stored with the notice version the applicant saw.
+  consent_privacy boolean not null check (consent_privacy),
+  consent_rules boolean not null check (consent_rules),
+  consent_photos boolean not null default false,
+  privacy_notice_version text not null check (char_length(privacy_notice_version) <= 40),
+
+  -- Ad attribution (from the Instagram ad link)
+  utm_source text check (char_length(utm_source) <= 200),
+  utm_medium text check (char_length(utm_medium) <= 200),
+  utm_campaign text check (char_length(utm_campaign) <= 200),
+  utm_content text check (char_length(utm_content) <= 200),
+  utm_term text check (char_length(utm_term) <= 200),
+
+  -- Review (staff only)
+  admin_notes text check (char_length(admin_notes) <= 4000),
+  reviewed_by uuid references public.profiles (id) on delete set null,
+  reviewed_at timestamptz,
+
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+
+  constraint applications_motorcycle_details check (
+    not owns_motorcycle or (motorcycle_brand is not null and motorcycle_model is not null)
+  ),
+  constraint applications_other_clubs_named check (
+    not in_other_clubs or other_club_names is not null
+  ),
+  constraint applications_other_languages_named check (
+    not ('other' = any (languages)) or other_languages is not null
+  ),
+  constraint applications_other_events_named check (
+    not ('other' = any (event_interests)) or other_event_interests is not null
+  )
+);
+
+comment on table public.applications is 'Membership applications from the public form.';
+
+create index applications_status_created_idx on public.applications (status, created_at desc);
+
+-- One open application per email (a person can re-apply after a decision).
+create unique index applications_open_email_key on public.applications (lower(email))
+  where status in ('new', 'contacted');
+
+create trigger applications_set_updated_at
+before update on public.applications
+for each row execute function private.set_updated_at();
+
+-- Validate/normalize on insert: 18+ (Istanbul date), trimmed lowercase email.
+create or replace function private.applications_before_insert()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  new.email = lower(trim(new.email));
+  if new.birth_date > ((now() at time zone 'Europe/Istanbul')::date - interval '18 years') then
+    raise exception 'applicant must be at least 18 years old'
+      using errcode = '23514', constraint = 'applications_min_age';
+  end if;
+  return new;
+end;
+$$;
+
+create trigger applications_before_insert
+before insert on public.applications
+for each row execute function private.applications_before_insert();
+
+-- Stamp who reviewed and when, whenever the status changes.
+create or replace function private.applications_track_review()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if new.status is distinct from old.status then
+    new.reviewed_by = (select auth.uid());
+    new.reviewed_at = now();
+  end if;
+  return new;
+end;
+$$;
+
+create trigger applications_track_review
+before update on public.applications
+for each row execute function private.applications_track_review();
+
+revoke all on function private.applications_before_insert() from public, anon, authenticated;
+revoke all on function private.applications_track_review() from public, anon, authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Privileges: the public may only INSERT the applicant columns (no status,
+-- notes or review fields). Reading/updating is for staff; deleting for admins
+-- (KVKK erasure requests).
+-- ---------------------------------------------------------------------------
+
+revoke all on table public.applications from anon, authenticated;
+
+grant insert (
+  locale, full_name, phone, email, birth_date, city, district, side, instagram, languages, other_languages,
+  license_class, riding_years, owns_motorcycle, motorcycle_brand, motorcycle_model, motorcycle_cc,
+  riding_styles, group_experience, in_other_clubs, other_club_names, heard_from, referrer_name,
+  event_interests, other_event_interests, expectations, alienating_behaviors, consent_privacy, consent_rules,
+  consent_photos, privacy_notice_version, utm_source, utm_medium, utm_campaign, utm_content, utm_term
+) on table public.applications to anon, authenticated;
+
+grant select on table public.applications to authenticated;
+grant update (status, admin_notes) on table public.applications to authenticated;
+grant delete on table public.applications to authenticated;
+
+alter table public.applications enable row level security;
+
+create policy "applications: anyone can submit a new application"
+on public.applications
+for insert
+to anon, authenticated
+with check (status = 'new');
+
+create policy "applications: staff can read"
+on public.applications
+for select
+to authenticated
+using ((select private.is_staff()));
+
+create policy "applications: staff can review"
+on public.applications
+for update
+to authenticated
+using ((select private.is_staff()))
+with check ((select private.is_staff()));
+
+create policy "applications: admins can delete"
+on public.applications
+for delete
+to authenticated
+using ((select private.is_admin()));

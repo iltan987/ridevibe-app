@@ -1,0 +1,166 @@
+import { Mail, MessageCircle, Phone } from "lucide-react";
+import type { Metadata } from "next";
+import { getFormatter, getTranslations } from "next-intl/server";
+import { notFound } from "next/navigation";
+import { Suspense, type ReactNode } from "react";
+import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Link } from "@/i18n/navigation";
+import { getApplication } from "@/lib/applications/queries";
+import { requireStaff } from "@/lib/auth/require-staff";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("Admin");
+  return { title: t("applications"), robots: { index: false } };
+}
+
+export default async function ApplicationDetailPage({ params }: PageProps<"/[locale]/admin/applications/[id]">) {
+  const t = await getTranslations("Admin");
+
+  return (
+    <section className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8">
+      <Link href="/admin/applications" className="text-sm text-muted-foreground hover:text-foreground">
+        ← {t("back")}
+      </Link>
+      <Suspense fallback={<Skeleton className="h-[40rem] w-full rounded-xl" />}>
+        <ApplicationDetail params={params} />
+      </Suspense>
+    </section>
+  );
+}
+
+// Age in full years on today's date in Istanbul.
+function ageFrom(birthDate: string) {
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(new Date());
+  const [ty, tm, td] = today.split("-").map(Number);
+  const [by, bm, bd] = birthDate.split("-").map(Number);
+  return ty - by - (tm < bm || (tm === bm && td < bd) ? 1 : 0);
+}
+
+async function ApplicationDetail({ params }: { params: PageProps<"/[locale]/admin/applications/[id]">["params"] }) {
+  const { id } = await params;
+  await requireStaff(`/admin/applications/${id}`);
+
+  const [a, t, tApply, format] = await Promise.all([
+    getApplication(id),
+    getTranslations("Admin"),
+    getTranslations("Apply"),
+    getFormatter(),
+  ]);
+  if (!a) notFound();
+
+  const list = (values: string[], key: "languages" | "riding_styles" | "event_interests") =>
+    values.map((v) => tApply(`options.${key}.${v}` as Parameters<typeof tApply>[0])).join(", ");
+  const yesNo = (v: boolean) => tApply(v ? "options.yes" : "options.no");
+  const waNumber = a.phone.replace(/\D/g, "");
+
+  return (
+    <>
+      <header className="flex flex-col gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-2xl font-bold tracking-tight">{a.full_name}</h1>
+          <Badge variant={a.status === "new" ? "default" : "secondary"}>{t(`statuses.${a.status}`)}</Badge>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          {t("submittedAt")}: {format.dateTime(new Date(a.created_at), { dateStyle: "long", timeStyle: "short" })}
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noreferrer" className={buttonVariants({ size: "sm" })}>
+            <MessageCircle aria-hidden /> {t("contact.whatsapp")}
+          </a>
+          <a href={`tel:${a.phone}`} className={buttonVariants({ size: "sm", variant: "outline" })}>
+            <Phone aria-hidden /> {t("contact.call")}
+          </a>
+          <a href={`mailto:${a.email}`} className={buttonVariants({ size: "sm", variant: "outline" })}>
+            <Mail aria-hidden /> {t("contact.email")}
+          </a>
+        </div>
+      </header>
+
+      <Section title={tApply("sections.about")}>
+        <Row label={tApply("fields.phone")}>{a.phone}</Row>
+        <Row label={tApply("fields.email")}>{a.email}</Row>
+        <Row label={tApply("fields.birth_date")}>
+          {format.dateTime(new Date(`${a.birth_date}T12:00:00`), { dateStyle: "long" })} · {t("age", { age: ageFrom(a.birth_date) })}
+        </Row>
+        <Row label={tApply("fields.city")}>
+          {a.city} / {a.district}
+          {a.side && ` · ${t(`sides.${a.side}`)}`}
+        </Row>
+        {a.instagram && (
+          <Row label={tApply("fields.instagram")}>
+            <a href={`https://instagram.com/${a.instagram}`} target="_blank" rel="noreferrer" className="underline underline-offset-4">
+              @{a.instagram}
+            </a>
+          </Row>
+        )}
+        <Row label={tApply("fields.languages")}>
+          {list(a.languages, "languages")}
+          {a.other_languages && ` (${a.other_languages})`}
+        </Row>
+      </Section>
+
+      <Section title={tApply("sections.riding")}>
+        <Row label={tApply("fields.license_class")}>{tApply(`options.license_class.${a.license_class}`)}</Row>
+        <Row label={tApply("fields.riding_years")}>{t("years", { years: a.riding_years })}</Row>
+        <Row label={tApply("fields.owns_motorcycle")}>
+          {a.owns_motorcycle
+            ? [a.motorcycle_brand, a.motorcycle_model, a.motorcycle_cc && `${a.motorcycle_cc} cc`].filter(Boolean).join(" · ")
+            : yesNo(false)}
+        </Row>
+        <Row label={tApply("fields.riding_styles")}>{list(a.riding_styles, "riding_styles")}</Row>
+        <Row label={tApply("fields.group_experience")}>{tApply(`options.group_experience.${a.group_experience}`)}</Row>
+      </Section>
+
+      <Section title={tApply("sections.club")}>
+        <Row label={tApply("fields.in_other_clubs")}>
+          {a.in_other_clubs ? a.other_club_names : yesNo(false)}
+        </Row>
+        <Row label={tApply("fields.heard_from")}>
+          {tApply(`options.heard_from.${a.heard_from}`)}
+          {a.referrer_name && ` · ${a.referrer_name}`}
+        </Row>
+        {(a.utm_source || a.utm_campaign) && (
+          <Row label={t("source")}>
+            {[a.utm_source, a.utm_medium, a.utm_campaign, a.utm_content].filter(Boolean).join(" / ")}
+          </Row>
+        )}
+        <Row label={tApply("fields.event_interests")}>
+          {list(a.event_interests, "event_interests")}
+          {a.other_event_interests && ` (${a.other_event_interests})`}
+        </Row>
+        <Row label={tApply("fields.expectations")} block>{a.expectations}</Row>
+        <Row label={tApply("fields.alienating_behaviors")} block>{a.alienating_behaviors}</Row>
+      </Section>
+
+      <Section title={t("consents")}>
+        <p className="text-sm">{a.consent_photos ? t("consentPhotosYes") : t("consentPhotosNo")}</p>
+        <p className="text-xs text-muted-foreground">{t("noticeVersion", { version: a.privacy_notice_version })}</p>
+      </Section>
+    </>
+  );
+}
+
+function Section({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <dl className="flex flex-col gap-3">{children}</dl>
+      </CardContent>
+    </Card>
+  );
+}
+
+function Row({ label, children, block }: { label: string; children: ReactNode; block?: boolean }) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd className={block ? "text-sm whitespace-pre-wrap" : "text-sm"}>{children}</dd>
+    </div>
+  );
+}

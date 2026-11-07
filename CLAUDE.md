@@ -12,6 +12,10 @@ announcements, photo galleries, attendance. Plan and decisions: `docs/PLAN.md`. 
   decisions, and stop at decision points instead of building large chunks unasked.
 - **Research before writing code.** Don't trust memory for library APIs: check the bundled docs
   (`node_modules/next/dist/docs/`, package READMEs/types), context7, or the web. Prefer current versions and patterns.
+- **Learnings — read before, write after.** `docs/learnings/` holds everything discovered the hard way (library
+  quirks, root causes of mistakes, workarounds, environment issues), one file per topic (index in its README).
+  Before working in an area, read the matching file. Whenever you discover something non-obvious — by docs, by
+  trial, or by fixing your own mistake — add an entry (symptom → cause → do) in the same commit as the work.
 
 ## Git
 
@@ -78,6 +82,8 @@ pnpm db:types                 # regenerate src/lib/supabase/database.types.ts
   source of truth for message keys and types; every key must exist in `messages/en.json` too. No hard-coded UI strings.
   Use `Link`, `redirect`, `useRouter`, `usePathname` from `@/i18n/navigation`, not from `next/*`.
   Locale on the server comes from `next/root-params` (see `src/i18n/request.ts`). Time zone: `Europe/Istanbul`.
+  Dev quirk: `pnpm dev` (Turbopack) may keep serving stale `messages/*.json` after edits (`MISSING_MESSAGE`) —
+  restart the dev server before assuming a missing key.
 - **UI:** Tailwind CSS 4 + shadcn/ui (`base-nova` style, built on Base UI). Base UI composes with the `render` prop,
   **not** `asChild`. For links that look like buttons use `buttonVariants()` on `Link`. `cn` comes from the `cn`
   package (re-exported in `@/lib/utils`). Add components with `pnpm dlx shadcn@latest add <name>`.

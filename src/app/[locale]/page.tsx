@@ -1,4 +1,6 @@
 import { useTranslations } from "next-intl";
+import { Suspense } from "react";
+import { ApplyLink } from "@/components/apply/apply-link";
 import { buttonVariants } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 
@@ -17,9 +19,16 @@ export default function HomePage() {
         {t("subtitle")}
       </p>
       <div className="flex flex-col gap-3 sm:flex-row">
-        <Link href="/apply" className={buttonVariants({ size: "lg" })}>
-          {t("apply")}
-        </Link>
+        {/* Keeps the ad's UTM params; the fallback is the same link without them. */}
+        <Suspense
+          fallback={
+            <Link href="/apply" className={buttonVariants({ size: "lg" })}>
+              {t("apply")}
+            </Link>
+          }
+        >
+          <ApplyLink className={buttonVariants({ size: "lg" })}>{t("apply")}</ApplyLink>
+        </Suspense>
         <Link
           href="/events"
           className={buttonVariants({ size: "lg", variant: "outline" })}

@@ -93,6 +93,15 @@ backups or outgrows the free limits. Split across members it is negligible.
 - Data stored outside Turkey (Frankfurt) = cross-border transfer under KVKK art. 9 (amended 2024): standard contract
   with the processor and notification to the Authority within 5 business days.
 - Members can download and delete their data; rejected applications are deleted after a retention period.
+- Retention: instead of keeping expired records "archived" (still personal data → not allowed past the purpose),
+  **anonymise** them: strip name/contact/birth date/free text, keep counts, district/side, source, dates for stats.
+
+**Open decisions (as of 2026-11-08):**
+- Ride & Vibe is an **informal group** (not a dernek) → ask **Samet** to be the data controller (veri sorumlusu) in
+  the privacy notice. iltan will ask once there is an MVP to show.
+- Contact email for data requests (e.g. `kvkk@ridevibe.com.tr` forwarded to a Gmail).
+- Retention periods: 6 months for rejected applications, 1 year after membership ends (proposed, accepted by iltan).
+- Cross-border transfer formalities (art. 9) — see the lawyer discussion; decide before public launch.
 
 ## Git workflow
 

@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "@/i18n/navigation";
+import { isStaff } from "@/lib/auth/require-staff";
 import { getCurrentUser } from "@/lib/auth/user";
 import { UserMenuDropdown } from "./user-menu-dropdown";
 
@@ -21,6 +22,7 @@ export async function UserMenu() {
     <UserMenuDropdown
       name={user.profile?.full_name || user.email || ""}
       avatarUrl={user.profile?.avatar_url ?? null}
+      showAdmin={isStaff(user.profile)}
     />
   );
 }

@@ -24,7 +24,8 @@
     "events": "Etkinlikleri Gör"
   },
   "Footer": {
-    "rights": "© Ride & Vibe · İstanbul"
+    "rights": "© Ride & Vibe · İstanbul",
+    "privacy": "Aydınlatma metni"
   },
   "ComingSoon": {
     "title": "Çok yakında",
@@ -60,6 +61,165 @@
     },
     "pendingTitle": "Üyeliğin onay bekliyor",
     "pendingBody": "Giriş yaptın ama hesabın henüz bir yönetici tarafından onaylanmadı. Onaylandığında tüm özelliklere erişebileceksin."
+  },
+  "Apply": {
+    "title": "Kulübe başvur",
+    "intro": "Formu doldurmak yaklaşık 3 dakika sürer. Başvurunu inceledikten sonra WhatsApp üzerinden sana ulaşacağız.",
+    "optional": "isteğe bağlı",
+    "sections": {
+      "about": "Seni tanıyalım",
+      "riding": "Sürüş",
+      "club": "Sen ve kulüp",
+      "consents": "Onaylar"
+    },
+    "fields": {
+      "full_name": "Ad soyad",
+      "phone": "Telefon (WhatsApp)",
+      "phoneHint": "Başvurun onaylanınca WhatsApp'tan yazacağız. Türkiye dışı numaralar için ülkeyi değiştirebilirsin.",
+      "email": "E-posta",
+      "emailHint": "Giriş yapacağın Google hesabının e-postası olursa en iyisi.",
+      "birth_date": "Doğum tarihi",
+      "birthDateHint": "18 yaşından büyük olmalısın. Doğum gününü kutlamak için de kullanırız.",
+      "city": "Şehir",
+      "city_other": "Şehir adı",
+      "district": "İlçe",
+      "districtPlaceholder": "İlçe seç",
+      "instagram": "Instagram kullanıcı adı",
+      "languages": "Konuştuğun diller",
+      "license_class": "Ehliyet sınıfı",
+      "riding_years": "Kaç yıldır motosiklet kullanıyorsun?",
+      "owns_motorcycle": "Motosikletin var mı?",
+      "motorcycle_brand": "Marka",
+      "motorcycle_model": "Model",
+      "motorcycle_cc": "Motor hacmi (cc)",
+      "riding_styles": "Sürüş tarzın",
+      "multiHint": "Birden fazla seçebilirsin.",
+      "group_experience": "Grup sürüşü deneyimin",
+      "in_other_clubs": "Başka bir motosiklet kulübüne veya grubuna üye misin?",
+      "other_club_names": "Hangi kulüpler / gruplar?",
+      "heard_from": "Bizi nereden duydun?",
+      "referrer_name": "Seni kim yönlendirdi?",
+      "event_interests": "Hangi etkinliklere katılmak istersin?",
+      "expectations": "Kulüpten beklentilerin neler?",
+      "alienating_behaviors": "Bir toplulukta seni uzaklaştıran davranışlar nelerdir?",
+      "consent_privacy": "<link>Aydınlatma metnini</link> okudum ve anladım.",
+      "consent_rules": "Kulüp kurallarına ve grup sürüşü güvenlik kurallarına uymayı kabul ediyorum.",
+      "consent_photos": "Etkinliklerde çekilen ve beni gösteren fotoğrafların kulüp galerisinde paylaşılmasına açık rıza veriyorum.",
+      "consentPhotosHint": "İsteğe bağlı. İstediğin zaman geri alabilirsin; başvurunu etkilemez.",
+      "other_languages": "Hangi diller?",
+      "other_event_interests": "Başka hangi etkinliklere katılmak istersin?",
+      "referrerHint": "Seni yönlendiren üyeye teşekkür etmek istiyoruz."
+    },
+    "options": {
+      "yes": "Evet",
+      "no": "Hayır",
+      "city": {
+        "istanbul": "İstanbul",
+        "other": "Başka bir şehir"
+      },
+      "languages": {
+        "tr": "Türkçe",
+        "en": "İngilizce",
+        "other": "Diğer"
+      },
+      "license_class": {
+        "a1": "A1",
+        "a2": "A2",
+        "a": "A",
+        "b": "B (125 cc yetkili)",
+        "none": "Henüz yok"
+      },
+      "riding_styles": {
+        "city": "Şehir içi",
+        "touring": "Touring / uzun yol",
+        "enduro": "Enduro / arazi",
+        "sport": "Sport",
+        "cruiser": "Cruiser / chopper",
+        "scooter": "Scooter"
+      },
+      "group_experience": {
+        "none": "Hiç yok",
+        "some": "Biraz",
+        "a_lot": "Çok"
+      },
+      "heard_from": {
+        "instagram_ad": "Instagram reklamı",
+        "instagram_other": "Instagram (reklam dışı)",
+        "friend": "Bir arkadaş / üye",
+        "other": "Diğer"
+      },
+      "event_interests": {
+        "day_rides": "Günübirlik sürüşler",
+        "multi_day_tours": "Çok günlü turlar",
+        "camping": "Kamp",
+        "coffee_meetups": "Kahvaltı / kahve buluşmaları",
+        "training": "Sürüş ve güvenlik eğitimleri",
+        "off_road": "Arazi günleri",
+        "track_days": "Pist günleri",
+        "maintenance": "Bakım atölyeleri",
+        "charity_rides": "Sosyal sorumluluk sürüşleri",
+        "other": "Diğer"
+      }
+    },
+    "submit": "Başvuruyu gönder",
+    "submitting": "Gönderiliyor…",
+    "formHasErrors": "Lütfen işaretli alanları düzelt.",
+    "successTitle": "Başvurun alındı!",
+    "successBody": "Teşekkürler! Başvurunu inceleyip WhatsApp üzerinden seninle iletişime geçeceğiz.",
+    "backHome": "Ana sayfaya dön",
+    "duplicate": "Bu e-posta adresiyle henüz sonuçlanmamış bir başvurun var. Lütfen sonucunu bekle.",
+    "genericError": "Bir şeyler ters gitti. Lütfen biraz sonra tekrar dene.",
+    "errors": {
+      "required": "Bu alan zorunlu.",
+      "tooShort": "Biraz daha detay yazar mısın?",
+      "tooLong": "Bu metin çok uzun.",
+      "invalidEmail": "Geçerli bir e-posta adresi gir.",
+      "invalidPhone": "Geçerli bir telefon numarası gir (ör. 0532 123 45 67).",
+      "invalidDate": "Geçerli bir tarih gir.",
+      "tooYoung": "Başvurmak için 18 yaşından büyük olmalısın.",
+      "invalidNumber": "Geçerli bir sayı gir.",
+      "invalidOption": "Geçersiz seçim.",
+      "chooseAtLeastOne": "En az birini seç.",
+      "mustAccept": "Devam etmek için onaylaman gerekiyor.",
+      "invalidInstagram": "Geçerli bir Instagram kullanıcı adı gir.",
+      "invalidDistrict": "Listeden bir ilçe seç."
+    }
+  },
+  "Privacy": {
+    "title": "Aydınlatma Metni",
+    "draftNotice": "TASLAK — Bu metin henüz hukuki incelemeden geçmedi. Sarı ile işaretli alanlar doldurulacak.",
+    "version": "Sürüm: {version}"
+  },
+  "Admin": {
+    "applications": "Başvurular",
+    "adminArea": "Yönetim",
+    "statuses": {
+      "new": "Yeni",
+      "contacted": "İletişime geçildi",
+      "approved": "Onaylandı",
+      "rejected": "Reddedildi"
+    },
+    "empty": "Bu durumda başvuru yok.",
+    "back": "Başvurulara dön",
+    "submittedAt": "Başvuru tarihi",
+    "age": "{age} yaş",
+    "sides": {
+      "asian": "Anadolu Yakası",
+      "european": "Avrupa Yakası"
+    },
+    "contact": {
+      "whatsapp": "WhatsApp",
+      "call": "Ara",
+      "email": "E-posta"
+    },
+    "source": "Kaynak",
+    "campaign": "Kampanya: {campaign}",
+    "consents": "Onaylar",
+    "consentPhotosYes": "Fotoğraf paylaşımına açık rıza verdi",
+    "consentPhotosNo": "Fotoğraf paylaşımına rıza vermedi",
+    "noticeVersion": "Aydınlatma metni sürümü: {version}",
+    "noBike": "Motosikleti yok",
+    "years": "{years} yıl"
   },
   "NotFound": {
     "title": "Sayfa bulunamadı",
