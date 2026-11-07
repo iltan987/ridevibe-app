@@ -12,6 +12,10 @@ announcements, photo galleries, attendance. Plan and decisions: `docs/PLAN.md`. 
   decisions, and stop at decision points instead of building large chunks unasked.
 - **Research before writing code.** Don't trust memory for library APIs: check the bundled docs
   (`node_modules/next/dist/docs/`, package READMEs/types), context7, or the web. Prefer current versions and patterns.
+- **Learnings — read before, write after.** `docs/learnings/` holds everything discovered the hard way (library
+  quirks, root causes of mistakes, workarounds, environment issues), one file per topic (index in its README).
+  Before working in an area, read the matching file. Whenever you discover something non-obvious — by docs, by
+  trial, or by fixing your own mistake — add an entry (symptom → cause → do) in the same commit as the work.
 
 ## Git
 
