@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(18);
+select plan(21);
 
 -- ---------------------------------------------------------------------------
 -- Fixtures: an admin, an organizer and an active member (as postgres).
@@ -43,16 +43,16 @@ begin
   ) || overrides);
 
   insert into public.applications (
-    locale, full_name, phone, email, birth_date, city, district, side, instagram, languages,
+    locale, full_name, phone, email, birth_date, city, district, side, instagram, languages, other_languages,
     license_class, riding_years, owns_motorcycle, motorcycle_brand, motorcycle_model, motorcycle_cc,
     riding_styles, group_experience, in_other_clubs, other_club_names, heard_from, referrer_name,
-    event_interests, expectations, alienating_behaviors, consent_privacy, consent_rules,
+    event_interests, other_event_interests, expectations, alienating_behaviors, consent_privacy, consent_rules,
     consent_photos, privacy_notice_version, utm_source, utm_medium, utm_campaign, utm_content, utm_term
   ) values (
-    r.locale, r.full_name, r.phone, r.email, r.birth_date, r.city, r.district, r.side, r.instagram, r.languages,
+    r.locale, r.full_name, r.phone, r.email, r.birth_date, r.city, r.district, r.side, r.instagram, r.languages, r.other_languages,
     r.license_class, r.riding_years, r.owns_motorcycle, r.motorcycle_brand, r.motorcycle_model, r.motorcycle_cc,
     r.riding_styles, r.group_experience, r.in_other_clubs, r.other_club_names, r.heard_from, r.referrer_name,
-    r.event_interests, r.expectations, r.alienating_behaviors, r.consent_privacy, r.consent_rules,
+    r.event_interests, r.other_event_interests, r.expectations, r.alienating_behaviors, r.consent_privacy, r.consent_rules,
     r.consent_photos, r.privacy_notice_version, r.utm_source, r.utm_medium, r.utm_campaign, r.utm_content, r.utm_term
   );
 end;
@@ -110,11 +110,30 @@ select throws_ok(
 );
 
 select throws_ok(
+  $$ select pg_temp.submit('{"email": "otherlang@pgtap.invalid", "languages": ["tr", "other"]}') $$,
+  '23514', null,
+  'choosing "other" languages requires naming them'
+);
+
+select throws_ok(
+  $$ select pg_temp.submit('{"email": "otherevent@pgtap.invalid", "event_interests": ["other"]}') $$,
+  '23514', null,
+  'choosing "other" events requires describing them'
+);
+
+select lives_ok(
+  $$ select pg_temp.submit('{"email": "blicense@pgtap.invalid", "license_class": "b", "languages": ["other"], "other_languages": "Deutsch", "event_interests": ["other"], "other_event_interests": "Gece sürüşleri"}') $$,
+  'B license and "other" answers with text are accepted'
+);
+
+select throws_ok(
   $$ select pg_temp.submit('{"email": "badphone@pgtap.invalid", "phone": "0532 123 45 67"}') $$,
   '23514', null,
   'phone numbers must be normalized to E.164'
 );
 reset role;
+-- Keep exactly one fixture application for the review tests below.
+delete from public.applications where email = 'blicense@pgtap.invalid';
 
 select is(
   (select email || '|' || status from public.applications where email like '%@pgtap.invalid'),

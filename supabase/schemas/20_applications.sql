@@ -4,7 +4,8 @@
 -- ---------------------------------------------------------------------------
 
 create type public.application_status as enum ('new', 'contacted', 'approved', 'rejected');
-create type public.license_class as enum ('a1', 'a2', 'a', 'none');
+-- 'b' = B license holder with the 125 cc (A1) authorisation (since 2024).
+create type public.license_class as enum ('a1', 'a2', 'a', 'b', 'none');
 create type public.group_ride_experience as enum ('none', 'some', 'a_lot');
 create type public.heard_from as enum ('instagram_ad', 'instagram_other', 'friend', 'other');
 
@@ -24,6 +25,7 @@ create table public.applications (
   instagram text check (instagram ~ '^[A-Za-z0-9._]{1,30}$'),
   languages text[] not null
     check (cardinality(languages) >= 1 and languages <@ array['tr', 'en', 'other']),
+  other_languages text check (char_length(other_languages) <= 120),
 
   -- Riding
   license_class public.license_class not null,
@@ -45,7 +47,8 @@ create table public.applications (
   event_interests text[] not null
     check (cardinality(event_interests) >= 1 and event_interests <@ array[
       'day_rides', 'multi_day_tours', 'camping', 'coffee_meetups', 'training',
-      'off_road', 'track_days', 'maintenance', 'charity_rides']),
+      'off_road', 'track_days', 'maintenance', 'charity_rides', 'other']),
+  other_event_interests text check (char_length(other_event_interests) <= 300),
   expectations text not null check (char_length(expectations) between 10 and 1000),
   alienating_behaviors text not null check (char_length(alienating_behaviors) between 3 and 1000),
 
@@ -75,6 +78,12 @@ create table public.applications (
   ),
   constraint applications_other_clubs_named check (
     not in_other_clubs or other_club_names is not null
+  ),
+  constraint applications_other_languages_named check (
+    not ('other' = any (languages)) or other_languages is not null
+  ),
+  constraint applications_other_events_named check (
+    not ('other' = any (event_interests)) or other_event_interests is not null
   )
 );
 
@@ -141,10 +150,10 @@ revoke all on function private.applications_track_review() from public, anon, au
 revoke all on table public.applications from anon, authenticated;
 
 grant insert (
-  locale, full_name, phone, email, birth_date, city, district, side, instagram, languages,
+  locale, full_name, phone, email, birth_date, city, district, side, instagram, languages, other_languages,
   license_class, riding_years, owns_motorcycle, motorcycle_brand, motorcycle_model, motorcycle_cc,
   riding_styles, group_experience, in_other_clubs, other_club_names, heard_from, referrer_name,
-  event_interests, expectations, alienating_behaviors, consent_privacy, consent_rules,
+  event_interests, other_event_interests, expectations, alienating_behaviors, consent_privacy, consent_rules,
   consent_photos, privacy_notice_version, utm_source, utm_medium, utm_campaign, utm_content, utm_term
 ) on table public.applications to anon, authenticated;
 
