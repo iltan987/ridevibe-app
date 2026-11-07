@@ -5,13 +5,14 @@ create extension if not exists pgtap with schema extensions;
 select plan(15);
 
 -- ---------------------------------------------------------------------------
--- Fixtures (run as postgres, which bypasses RLS)
+-- Fixtures (run as postgres, which bypasses RLS). All queries below are scoped
+-- to these fixture ids so the test also works on a database with real data.
 -- ---------------------------------------------------------------------------
 insert into auth.users (id, email, raw_user_meta_data) values
-  ('00000000-0000-0000-0000-00000000000a', 'admin@test.local',   '{"full_name": "Ada Admin"}'),
-  ('00000000-0000-0000-0000-00000000000b', 'member@test.local',  '{"name": "Mert Member"}'),
-  ('00000000-0000-0000-0000-00000000000c', 'pending@test.local', '{"full_name": "Pelin Pending"}'),
-  ('00000000-0000-0000-0000-00000000000d', 'other@test.local',   '{"full_name": "Orhan Other"}');
+  ('00000000-0000-0000-0000-00000000000a', 'pgtap-admin@pgtap.invalid',   '{"full_name": "Ada Admin"}'),
+  ('00000000-0000-0000-0000-00000000000b', 'pgtap-member@pgtap.invalid',  '{"name": "Mert Member"}'),
+  ('00000000-0000-0000-0000-00000000000c', 'pgtap-pending@pgtap.invalid', '{"full_name": "Pelin Pending"}'),
+  ('00000000-0000-0000-0000-00000000000d', 'pgtap-other@pgtap.invalid',   '{"full_name": "Orhan Other"}');
 
 select is(
   (select full_name || '|' || role || '|' || status from public.profiles where id = '00000000-0000-0000-0000-00000000000b'),
@@ -51,7 +52,7 @@ reset role;
 select pg_temp.login('00000000-0000-0000-0000-00000000000c');
 
 select results_eq(
-  'select id from public.profiles',
+  $$ select id from public.profiles where id::text like '00000000-0000-0000-0000-%' $$,
   $$ values ('00000000-0000-0000-0000-00000000000c'::uuid) $$,
   'pending user sees only their own profile'
 );
@@ -69,7 +70,7 @@ reset role;
 select pg_temp.login('00000000-0000-0000-0000-00000000000b');
 
 select is(
-  (select count(*)::int from public.profiles),
+  (select count(*)::int from public.profiles where id::text like '00000000-0000-0000-0000-%'),
   3,
   'active member sees active members but not pending ones'
 );
@@ -115,7 +116,7 @@ reset role;
 select pg_temp.login('00000000-0000-0000-0000-00000000000a');
 
 select is(
-  (select count(*)::int from public.profiles),
+  (select count(*)::int from public.profiles where id::text like '00000000-0000-0000-0000-%'),
   4,
   'admin sees every profile, including pending ones'
 );
