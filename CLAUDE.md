@@ -32,6 +32,29 @@ pnpm exec tsc --noEmit
 
 Run lint, typecheck and build before every commit that touches code.
 
+```bash
+pnpm db:start                 # local Supabase in Docker (Docker Desktop with WSL integration must be running)
+pnpm db:reset                 # rebuild local DB from migrations (+ seed)
+pnpm db:migration <name>      # generate a migration from supabase/schemas (review it!)
+pnpm db:test                  # pgTAP tests in supabase/tests/database
+pnpm db:types                 # regenerate src/lib/supabase/database.types.ts
+```
+
+## Database (Supabase)
+
+- **Declarative schemas:** `supabase/schemas/*.sql` is the source of truth (files apply in name order). Never edit the
+  DB via Studio or ad-hoc SQL. Workflow: edit schema file → `pnpm db:migration <name>` → review the generated file in
+  `supabase/migrations/` → `pnpm db:reset` → `pnpm db:test` → `pnpm db:types` → commit schema + migration + types
+  together. Data (DML) is not tracked by declarative schemas; write such migrations by hand.
+- **Security model:** every table has RLS enabled **and** explicit grants: `revoke all … from anon, authenticated`, then
+  grant only what is needed (column-level `update` grants for user-editable fields). Policies alone are not enough.
+- Security-definer helpers live in the non-exposed `private` schema with `set search_path = ''` and fully qualified
+  names. Use `(select auth.uid())` / `(select private.is_staff())` in policies (evaluated once per query).
+- Roles: `member` / `organizer` / `admin`; status: `pending` / `active` / `inactive`. Helpers: `private.my_role()`,
+  `private.is_active_member()`, `private.is_staff()`, `private.is_admin()`. Role/status change only through
+  `public.admin_set_member_access()`.
+- Every permission rule gets a pgTAP test, including the "must fail" cases.
+
 ## Stack & conventions
 
 - **Next.js 16 App Router** with `cacheComponents`, `partialPrefetching` and React Compiler enabled. Request-time data
