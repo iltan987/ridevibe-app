@@ -2,7 +2,7 @@
 
 import { Languages } from "lucide-react";
 import { useLocale, useTranslations, type Locale } from "next-intl";
-import { useTransition } from "react";
+import { Suspense, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -16,7 +16,28 @@ import {
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 
+// usePathname() suspends on routes with unknown dynamic params, so the
+// interactive switcher streams in; the fallback is the same button, disabled.
 export function LocaleSwitcher() {
+  return (
+    <Suspense fallback={<LocaleButton disabled />}>
+      <LocaleSwitcherMenu />
+    </Suspense>
+  );
+}
+
+function LocaleButton(props: React.ComponentProps<typeof Button>) {
+  const t = useTranslations("LocaleSwitcher");
+  const locale = useLocale();
+  return (
+    <Button variant="ghost" size="sm" aria-label={t("label")} {...props}>
+      <Languages aria-hidden />
+      {locale.toUpperCase()}
+    </Button>
+  );
+}
+
+function LocaleSwitcherMenu() {
   const t = useTranslations("LocaleSwitcher");
   const locale = useLocale();
   const router = useRouter();
@@ -32,13 +53,7 @@ export function LocaleSwitcher() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger
-        render={<Button variant="ghost" size="sm" disabled={isPending} />}
-        aria-label={t("label")}
-      >
-        <Languages aria-hidden />
-        {locale.toUpperCase()}
-      </DropdownMenuTrigger>
+      <DropdownMenuTrigger render={<LocaleButton disabled={isPending} />} />
       <DropdownMenuContent align="end">
         <DropdownMenuGroup>
           <DropdownMenuLabel>{t("label")}</DropdownMenuLabel>

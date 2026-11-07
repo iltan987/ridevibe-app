@@ -1,13 +1,26 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { Suspense } from "react";
 import { Link, usePathname } from "@/i18n/navigation";
 import { isActive, navItems } from "./nav-items";
 
-// App-style tab bar for phones; hidden from md breakpoint up.
+// App-style tab bar for phones; hidden from md breakpoint up. Active state
+// streams in behind Suspense (see DesktopNav for why).
 export function BottomNav() {
+  return (
+    <Suspense fallback={<BottomNavLinks />}>
+      <BottomNavWithPathname />
+    </Suspense>
+  );
+}
+
+function BottomNavWithPathname() {
+  return <BottomNavLinks pathname={usePathname()} />;
+}
+
+function BottomNavLinks({ pathname }: { pathname?: string }) {
   const t = useTranslations("Nav");
-  const pathname = usePathname();
 
   return (
     <nav
@@ -19,7 +32,7 @@ export function BottomNav() {
           <li key={href}>
             <Link
               href={href}
-              aria-current={isActive(pathname, href) ? "page" : undefined}
+              aria-current={pathname && isActive(pathname, href) ? "page" : undefined}
               className="flex flex-col items-center gap-1 py-2 text-xs font-medium text-muted-foreground transition-colors aria-[current=page]:text-foreground"
             >
               <Icon className="size-5" aria-hidden />
