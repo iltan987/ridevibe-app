@@ -40,7 +40,8 @@ WhatsApp invite link → person signs in with Google → account is linked to th
 ## Status (2026-11-08)
 
 Live at https://ridevibe.com.tr: TR/EN site, Google sign-in (roles/statuses), public application form, draft privacy
-notice, staff-only applications list/detail.
+notice, staff-only applications list/detail. Google OAuth app is **published** (any Google account can sign in;
+new accounts start as `pending`).
 
 ## MVP for Samet (agreed 2026-11-08)
 

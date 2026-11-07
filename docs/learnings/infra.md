@@ -25,3 +25,10 @@
 - Supabase Free: 500 MB DB, 1 GB storage, 5 GB egress, **no backups**, pauses after 1 week inactivity → own nightly
   backup + keep-alive planned; media on Cloudflare R2 (10 GB free, free egress).
 - Videos stay on WhatsApp (it doesn't store media long-term; phones pay the storage).
+
+### Publishing the Google OAuth app (2026-11-08)
+- "In production" requires app name, support email, **homepage URL and privacy policy URL** on an authorized domain
+  (Branding page); the Publish button stays disabled until they're set. We use `https://ridevibe.com.tr` and
+  `https://ridevibe.com.tr/privacy` (must actually be live). Basic scopes (openid/email/profile) need no Google review.
+- Until published, only listed test users can sign in. After publishing anyone can — safe because new profiles are
+  `pending` until an admin activates them.
