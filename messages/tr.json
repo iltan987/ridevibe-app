@@ -185,6 +185,37 @@
     "draftNotice": "TASLAK — Bu metin henüz hukuki incelemeden geçmedi. Sarı ile işaretli alanlar doldurulacak.",
     "version": "Sürüm: {version}"
   },
+  "Admin": {
+    "applications": "Başvurular",
+    "adminArea": "Yönetim",
+    "statuses": {
+      "new": "Yeni",
+      "contacted": "İletişime geçildi",
+      "approved": "Onaylandı",
+      "rejected": "Reddedildi"
+    },
+    "empty": "Bu durumda başvuru yok.",
+    "back": "Başvurulara dön",
+    "submittedAt": "Başvuru tarihi",
+    "age": "{age} yaş",
+    "sides": {
+      "asian": "Anadolu Yakası",
+      "european": "Avrupa Yakası"
+    },
+    "contact": {
+      "whatsapp": "WhatsApp",
+      "call": "Ara",
+      "email": "E-posta"
+    },
+    "source": "Kaynak",
+    "campaign": "Kampanya: {campaign}",
+    "consents": "Onaylar",
+    "consentPhotosYes": "Fotoğraf paylaşımına açık rıza verdi",
+    "consentPhotosNo": "Fotoğraf paylaşımına rıza vermedi",
+    "noticeVersion": "Aydınlatma metni sürümü: {version}",
+    "noBike": "Motosikleti yok",
+    "years": "{years} yıl"
+  },
   "NotFound": {
     "title": "Sayfa bulunamadı",
     "description": "Aradığın sayfa yok ya da taşınmış olabilir.",

@@ -185,6 +185,37 @@
     "draftNotice": "DRAFT — This text has not been legally reviewed yet. Highlighted parts are still to be filled in.",
     "version": "Version: {version}"
   },
+  "Admin": {
+    "applications": "Applications",
+    "adminArea": "Admin",
+    "statuses": {
+      "new": "New",
+      "contacted": "Contacted",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "empty": "No applications with this status.",
+    "back": "Back to applications",
+    "submittedAt": "Submitted",
+    "age": "{age} years old",
+    "sides": {
+      "asian": "Asian side",
+      "european": "European side"
+    },
+    "contact": {
+      "whatsapp": "WhatsApp",
+      "call": "Call",
+      "email": "Email"
+    },
+    "source": "Source",
+    "campaign": "Campaign: {campaign}",
+    "consents": "Consents",
+    "consentPhotosYes": "Gave explicit consent to photo sharing",
+    "consentPhotosNo": "No consent to photo sharing",
+    "noticeVersion": "Privacy notice version: {version}",
+    "noBike": "Doesn't own a motorcycle",
+    "years": "{years} years"
+  },
   "NotFound": {
     "title": "Page not found",
     "description": "The page you're looking for doesn't exist or has moved.",

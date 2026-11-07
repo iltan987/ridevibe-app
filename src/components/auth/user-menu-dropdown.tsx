@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut, UserRound } from "lucide-react";
+import { ClipboardList, LogOut, UserRound } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useTransition } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -21,11 +21,14 @@ import { initials } from "@/lib/initials";
 export function UserMenuDropdown({
   name,
   avatarUrl,
+  showAdmin,
 }: {
   name: string;
   avatarUrl: string | null;
+  showAdmin: boolean;
 }) {
   const t = useTranslations("Auth");
+  const tAdmin = useTranslations("Admin");
   const [isPending, startTransition] = useTransition();
 
   return (
@@ -48,6 +51,12 @@ export function UserMenuDropdown({
           <UserRound aria-hidden />
           {t("account")}
         </DropdownMenuLinkItem>
+        {showAdmin && (
+          <DropdownMenuLinkItem render={<Link href="/admin/applications" />}>
+            <ClipboardList aria-hidden />
+            {tAdmin("applications")}
+          </DropdownMenuLinkItem>
+        )}
         <DropdownMenuItem
           disabled={isPending}
           onClick={() => startTransition(() => signOut())}
