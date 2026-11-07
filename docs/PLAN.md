@@ -1,4 +1,4 @@
-# Riding Club Platform — Plan
+# Ride & Vibe Platform — Plan
 
 Living document. Update it when decisions change.
 
@@ -13,13 +13,16 @@ take applications, manage members, publish events/announcements, share event pho
 |---|---|---|
 | Framework | Next.js 16 (App Router), TypeScript, React Compiler | One codebase for public site, member area and admin panel |
 | UI | Tailwind CSS 4 + shadcn/ui | Accessible components, fast to build, easy to theme |
-| Backend | Supabase (Postgres + Auth + Storage), provisioned via Vercel Marketplace | Auth, DB, file storage in one service; Row Level Security enforces permissions in the DB |
+| Backend | Supabase (Postgres + Auth), provisioned via Vercel Marketplace | Auth and DB in one service; Row Level Security enforces permissions in the DB |
+| Media storage | Cloudflare R2 (photos + a few curated videos) | 10 GB free, then $0.015/GB-month; downloads (egress) always free, unlike Supabase Storage (1 GB / 5 GB egress on Free) |
 | Region | Supabase `eu-central-1` (Frankfurt) | Closest region to Istanbul; there is no Turkey region (see KVKK) |
 | Hosting | Vercel | Native Next.js hosting, preview deployments per branch |
-| Login | Google sign-in (Supabase OAuth) | Works on Android & iOS, needs **no email sending and no domain** |
+| Login | Google sign-in (Supabase OAuth) | Works on Android & iOS, needs no email sending |
 | i18n | next-intl, TR at `/`, EN at `/en` (`localePrefix: "as-needed"`), browser-language detection + remembered choice | URL-based locale keeps pages statically prerendered with Next 16 Cache Components (a cookie-only locale would make every page dynamic); easy to add languages later |
 | Mobile | PWA (manifest + service worker + Web Push) | Android & iOS (16.4+, from Home Screen) without App Store fees |
-| Email | Deferred until we own a domain (Resend then) | Resend's test sender can only mail the account owner |
+| Domain | `ridevibe.com.tr`, DNS on Vercel nameservers | All DNS records (site, email) managed from the Vercel CLI |
+| Email | Deferred until a feature needs it; then Resend on `ridevibe.com.tr` | Resend's test sender can only mail the account owner |
+| Accounts | All services under iltan's personal accounts (2FA on) | iltan administers the software; no shared passwords |
 | Member messaging | WhatsApp deep links (`wa.me`) + Web Push | The club already lives in a WhatsApp group |
 
 ## Who sees what
@@ -41,6 +44,29 @@ WhatsApp invite link → person signs in with Google → account is linked to th
 3. Member list & profiles (district, Asian/European side, bike)
 4. Events with RSVP, capacity and waiting list; announcements
 5. Event photo galleries
+
+## Media: photos in the app, videos stay on WhatsApp
+
+WhatsApp stays the place for sharing videos in the moment: it compresses heavily and doesn't keep media on its servers
+after delivery (members' phones pay the storage). The app does what WhatsApp can't: a lasting, organised **photo**
+gallery per event, visible to members who join later.
+
+- Photos are resized on the phone before upload (~2048 px full + small thumbnail), stored on R2.
+- Videos: only a few curated clips per event (added by organizers, size/length limits) or a link to the event's
+  Instagram reel. Full video hosting (Cloudflare Stream, ~$5–10/month) only if members ask for it after using the app.
+
+## Running costs
+
+Target: **$0/month** for Phase 1 (domain renewal aside).
+
+| Service | Plan | Limits that matter | Our mitigation |
+|---|---|---|---|
+| Vercel | Hobby (free) | Non-commercial use only | Move to Pro ($20/mo) if the app ever takes payments |
+| Supabase | Free | 500 MB DB, 50k MAU, **no backups**, pauses after 1 week of inactivity | Own nightly encrypted backup (scheduled GitHub job); daily keep-alive request (Vercel cron) |
+| Cloudflare R2 | Free tier | 10 GB storage, then $0.015/GB-month; free egress | Resize photos on upload; curated videos only |
+
+Upgrade trigger: Supabase Pro ($25/mo: daily backups, no pausing, 8 GB DB, 100 GB storage) when the club wants managed
+backups or outgrows the free limits. Split across members it is negligible.
 
 ## Phase 2
 
