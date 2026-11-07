@@ -8,11 +8,19 @@ Bundled docs are the source of truth: `node_modules/next/dist/docs/` (grep them 
   `01-app/01-getting-started/08-caching.md` and `02-guides/authentication-with-cache-components.md`.
 - **Source:** scaffold output.
 
-### A cookie-based locale would make every page dynamic (2026-11-07)
-- **Cause:** reading `cookies()` in the root layout blocks the static shell for the whole app.
-- **Do:** keep the locale in the URL (`app/[locale]`) and read it with `next/root-params` (`src/i18n/request.ts`) +
-  `generateStaticParams` in the layout.
-- **Source:** `02-guides/internationalization.md`, `03-api-reference/04-functions/next-root-params.md`.
+### Locale strategy: URL prefix (chosen) vs cookie (2026-11-08, corrected)
+- **Precise claim:** *reading* `cookies()` during render (next-intl "without i18n routing" setup) blocks prerendering
+  of every page under Cache Components (`cookies.md`: "calling cookies() outside of <Suspense> prevents the route
+  from being prerendered"). A cookie-based locale **can** stay static if the proxy reads the cookie and rewrites
+  internally to `/[locale]/…` (next-intl `localePrefix: "never"`).
+- **Why we keep URL prefixes (`as-needed`: TR `/`, EN `/en`):** it is what both Next.js
+  (`02-guides/internationalization.md`: sub-path or domain routing) and Google recommend — Google Search Central:
+  "use different URLs for each language version rather than cookies or browser settings", plus hreflang (next-intl
+  middleware emits alternate links). `never` loses unique per-language URLs and alternates; shared links show the
+  recipient's language.
+- **Do:** keep `[locale]` + `next/root-params`; never read the locale from `cookies()` in render.
+- **Source:** next-intl routing/configuration docs (`localePrefix`), Next.js bundled docs, Google Search Central
+  "Managing multi-regional and multilingual sites".
 
 ### "Next.js encountered the unstable value `Date.now()` while prerendering" from Supabase auth (2026-11-07)
 - **Cause:** auth-js compares token expiry with `Date.now()`; during (runtime) prerender cookies may be available but
