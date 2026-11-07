@@ -61,6 +61,124 @@
     "pendingTitle": "Your membership is awaiting approval",
     "pendingBody": "You're signed in, but an admin hasn't approved your account yet. Once approved, you'll get access to everything."
   },
+  "Apply": {
+    "title": "Apply to join",
+    "intro": "The form takes about 3 minutes. After reviewing your application, we'll reach out to you on WhatsApp.",
+    "optional": "optional",
+    "sections": {
+      "about": "About you",
+      "riding": "Riding",
+      "club": "You and the club",
+      "consents": "Consents"
+    },
+    "fields": {
+      "full_name": "Full name",
+      "phone": "Phone (WhatsApp)",
+      "phoneHint": "We'll message you on WhatsApp once your application is approved.",
+      "email": "Email",
+      "emailHint": "Ideally the email of the Google account you'll sign in with.",
+      "birth_date": "Date of birth",
+      "birthDateHint": "You must be over 18. We also use it to celebrate your birthday.",
+      "city": "City",
+      "city_other": "City name",
+      "district": "District",
+      "districtPlaceholder": "Choose a district",
+      "instagram": "Instagram username",
+      "languages": "Languages you speak",
+      "license_class": "License class",
+      "riding_years": "How many years have you been riding?",
+      "owns_motorcycle": "Do you own a motorcycle?",
+      "motorcycle_brand": "Brand",
+      "motorcycle_model": "Model",
+      "motorcycle_cc": "Engine size (cc)",
+      "riding_styles": "Your riding style",
+      "multiHint": "You can choose more than one.",
+      "group_experience": "Group riding experience",
+      "in_other_clubs": "Are you a member of another motorcycle club or group?",
+      "other_club_names": "Which clubs / groups?",
+      "heard_from": "How did you hear about us?",
+      "referrer_name": "Name of the member who referred you",
+      "event_interests": "Which events would you like to join?",
+      "expectations": "What do you expect from the club?",
+      "alienating_behaviors": "What behaviours in a community would push you away?",
+      "consent_privacy": "I have read and understood the <link>privacy notice</link>.",
+      "consent_rules": "I agree to follow the club rules and group riding safety rules.",
+      "consent_photos": "I give my explicit consent for photos of me taken at events to be shared in the club gallery.",
+      "consentPhotosHint": "Optional. You can withdraw it any time; it doesn't affect your application."
+    },
+    "options": {
+      "yes": "Yes",
+      "no": "No",
+      "city": {
+        "istanbul": "Istanbul",
+        "other": "Another city"
+      },
+      "languages": {
+        "tr": "Turkish",
+        "en": "English",
+        "other": "Other"
+      },
+      "license_class": {
+        "a1": "A1",
+        "a2": "A2",
+        "a": "A",
+        "none": "Not yet"
+      },
+      "riding_styles": {
+        "city": "City",
+        "touring": "Touring / long distance",
+        "enduro": "Enduro / off-road",
+        "sport": "Sport",
+        "cruiser": "Cruiser / chopper",
+        "scooter": "Scooter"
+      },
+      "group_experience": {
+        "none": "None",
+        "some": "Some",
+        "a_lot": "A lot"
+      },
+      "heard_from": {
+        "instagram_ad": "Instagram ad",
+        "instagram_other": "Instagram (not an ad)",
+        "friend": "A friend / member",
+        "other": "Other"
+      },
+      "event_interests": {
+        "day_rides": "Day rides",
+        "multi_day_tours": "Multi-day tours",
+        "camping": "Camping",
+        "coffee_meetups": "Breakfast / coffee meetups",
+        "training": "Riding & safety training",
+        "off_road": "Off-road days",
+        "track_days": "Track days",
+        "maintenance": "Maintenance workshops",
+        "charity_rides": "Charity rides"
+      }
+    },
+    "submit": "Submit application",
+    "submitting": "Submitting…",
+    "formHasErrors": "Please fix the highlighted fields.",
+    "successTitle": "Application received!",
+    "successBody": "Thank you! We'll review your application and contact you on WhatsApp.",
+    "backHome": "Back to home",
+    "duplicate": "You already have an open application with this email. Please wait for the result.",
+    "genericError": "Something went wrong. Please try again in a moment.",
+    "errors": {
+      "required": "This field is required.",
+      "tooShort": "Could you write a bit more?",
+      "tooLong": "This text is too long.",
+      "invalidEmail": "Enter a valid email address.",
+      "invalidPhone": "Enter a valid phone number (e.g. 0532 123 45 67).",
+      "invalidDate": "Enter a valid date.",
+      "tooYoung": "You must be over 18 to apply.",
+      "invalidNumber": "Enter a valid number.",
+      "invalidOption": "Invalid choice.",
+      "chooseAtLeastOne": "Choose at least one.",
+      "mustAccept": "You need to confirm this to continue.",
+      "invalidInstagram": "Enter a valid Instagram username.",
+      "invalidDistrict": "Choose a district from the list."
+    }
+  },
   "NotFound": {
     "title": "Page not found",
     "description": "The page you're looking for doesn't exist or has moved.",
