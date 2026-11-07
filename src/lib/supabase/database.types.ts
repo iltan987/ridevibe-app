@@ -5,7 +5,27 @@ export type Database = {
   
   "public": {
           Tables: {
-            "profiles": {
+            "applications": {
+                  Row: {
+                    "admin_notes": string | null,"alienating_behaviors": string,"birth_date": string,"city": string,"consent_photos": boolean,"consent_privacy": boolean,"consent_rules": boolean,"created_at": string,"district": string,"email": string,"event_interests": (string)[],"expectations": string,"full_name": string,"group_experience": Database["public"]['Enums']["group_ride_experience"],"heard_from": Database["public"]['Enums']["heard_from"],"id": string,"in_other_clubs": boolean,"instagram": string | null,"languages": (string)[],"license_class": Database["public"]['Enums']["license_class"],"locale": string,"motorcycle_brand": string | null,"motorcycle_cc": number | null,"motorcycle_model": string | null,"other_club_names": string | null,"owns_motorcycle": boolean,"phone": string,"privacy_notice_version": string,"referrer_name": string | null,"reviewed_at": string | null,"reviewed_by": string | null,"riding_styles": (string)[],"riding_years": number,"side": Database["public"]['Enums']["istanbul_side"] | null,"status": Database["public"]['Enums']["application_status"],"updated_at": string,"utm_campaign": string | null,"utm_content": string | null,"utm_medium": string | null,"utm_source": string | null,"utm_term": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "admin_notes"?: string | null,"alienating_behaviors": string,"birth_date": string,"city"?: string,"consent_photos"?: boolean,"consent_privacy": boolean,"consent_rules": boolean,"created_at"?: string,"district": string,"email": string,"event_interests": (string)[],"expectations": string,"full_name": string,"group_experience": Database["public"]['Enums']["group_ride_experience"],"heard_from": Database["public"]['Enums']["heard_from"],"id"?: string,"in_other_clubs": boolean,"instagram"?: string | null,"languages": (string)[],"license_class": Database["public"]['Enums']["license_class"],"locale"?: string,"motorcycle_brand"?: string | null,"motorcycle_cc"?: number | null,"motorcycle_model"?: string | null,"other_club_names"?: string | null,"owns_motorcycle": boolean,"phone": string,"privacy_notice_version": string,"referrer_name"?: string | null,"reviewed_at"?: string | null,"reviewed_by"?: string | null,"riding_styles": (string)[],"riding_years": number,"side"?: Database["public"]['Enums']["istanbul_side"] | null,"status"?: Database["public"]['Enums']["application_status"],"updated_at"?: string,"utm_campaign"?: string | null,"utm_content"?: string | null,"utm_medium"?: string | null,"utm_source"?: string | null,"utm_term"?: string | null
+                  }
+                  Update: {
+                    "admin_notes"?: string | null,"alienating_behaviors"?: string,"birth_date"?: string,"city"?: string,"consent_photos"?: boolean,"consent_privacy"?: boolean,"consent_rules"?: boolean,"created_at"?: string,"district"?: string,"email"?: string,"event_interests"?: (string)[],"expectations"?: string,"full_name"?: string,"group_experience"?: Database["public"]['Enums']["group_ride_experience"],"heard_from"?: Database["public"]['Enums']["heard_from"],"id"?: string,"in_other_clubs"?: boolean,"instagram"?: string | null,"languages"?: (string)[],"license_class"?: Database["public"]['Enums']["license_class"],"locale"?: string,"motorcycle_brand"?: string | null,"motorcycle_cc"?: number | null,"motorcycle_model"?: string | null,"other_club_names"?: string | null,"owns_motorcycle"?: boolean,"phone"?: string,"privacy_notice_version"?: string,"referrer_name"?: string | null,"reviewed_at"?: string | null,"reviewed_by"?: string | null,"riding_styles"?: (string)[],"riding_years"?: number,"side"?: Database["public"]['Enums']["istanbul_side"] | null,"status"?: Database["public"]['Enums']["application_status"],"updated_at"?: string,"utm_campaign"?: string | null,"utm_content"?: string | null,"utm_medium"?: string | null,"utm_source"?: string | null,"utm_term"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "applications_reviewed_by_fkey"
+      columns: ["reviewed_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"profiles": {
                   Row: {
                     "avatar_url": string | null,"city": string,"created_at": string,"district": string | null,"full_name": string,"id": string,"preferred_locale": string,"role": Database["public"]['Enums']["member_role"],"side": Database["public"]['Enums']["istanbul_side"] | null,"status": Database["public"]['Enums']["member_status"],"updated_at": string
                   }
@@ -30,7 +50,7 @@ export type Database = {
                            }
           }
           Enums: {
-            "istanbul_side": "asian"|"european","member_role": "member"|"organizer"|"admin","member_status": "pending"|"active"|"inactive"
+            "application_status": "new"|"contacted"|"approved"|"rejected","group_ride_experience": "none"|"some"|"a_lot","heard_from": "instagram_ad"|"instagram_other"|"friend"|"other","istanbul_side": "asian"|"european","license_class": "a1"|"a2"|"a"|"none","member_role": "member"|"organizer"|"admin","member_status": "pending"|"active"|"inactive"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -146,7 +166,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "istanbul_side": ["asian", "european"],"member_role": ["member", "organizer", "admin"],"member_status": ["pending", "active", "inactive"]
+            "application_status": ["new", "contacted", "approved", "rejected"],"group_ride_experience": ["none", "some", "a_lot"],"heard_from": ["instagram_ad", "instagram_other", "friend", "other"],"istanbul_side": ["asian", "european"],"license_class": ["a1", "a2", "a", "none"],"member_role": ["member", "organizer", "admin"],"member_status": ["pending", "active", "inactive"]
           }
         }
 } as const
