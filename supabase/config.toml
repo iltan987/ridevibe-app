@@ -457,3 +457,24 @@ additional_redirect_urls = [
 enabled = true
 client_id = "env(GOOGLE_PROD_CLIENT_ID)"
 secret = "env(GOOGLE_PROD_CLIENT_SECRET)"
+
+# Keep hosted defaults where the local dev values above would weaken or retune
+# production (verified with `supabase config diff` on 2026-11-07).
+[remotes.production.auth.email]
+enable_confirmations = true
+max_frequency = "1m0s"
+otp_length = 8
+
+[remotes.production.auth.sms]
+enable_confirmations = true
+
+[remotes.production.auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
+
+[remotes.production.db.pooler]
+default_pool_size = 15
+max_client_conn = 200
+
+[remotes.production.storage.vector]
+enabled = false
