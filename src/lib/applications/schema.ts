@@ -1,0 +1,216 @@
+import { z } from "zod";
+import { ISTANBUL, isIstanbulDistrict, sideOfDistrict } from "@/lib/istanbul-districts";
+import type { TablesInsert } from "@/lib/supabase/database.types";
+import {
+  EVENT_INTERESTS,
+  GROUP_EXPERIENCE,
+  HEARD_FROM,
+  LANGUAGES,
+  LICENSE_CLASSES,
+  PRIVACY_NOTICE_VERSION,
+  RIDING_STYLES,
+  UTM_KEYS,
+} from "./options";
+
+// Shared by the browser (instant feedback) and the server action (the real
+// check). Error messages are translation keys under Apply.errors.*.
+export type ApplyErrorKey =
+  | "required"
+  | "tooShort"
+  | "tooLong"
+  | "invalidEmail"
+  | "invalidPhone"
+  | "invalidDate"
+  | "tooYoung"
+  | "invalidNumber"
+  | "invalidOption"
+  | "chooseAtLeastOne"
+  | "mustAccept"
+  | "invalidInstagram"
+  | "invalidDistrict";
+
+const err = (key: ApplyErrorKey) => ({ error: key });
+
+const text = (min: number, max: number) =>
+  z
+    .string(err("required"))
+    .min(min, err(min <= 1 ? "required" : "tooShort"))
+    .max(max, err("tooLong"));
+
+const optionalText = (max: number) => z.string().max(max, err("tooLong")).optional();
+
+const yesNo = z.enum(["yes", "no"], err("required")).transform((v) => v === "yes");
+
+const choices = <T extends readonly [string, ...string[]]>(values: T) =>
+  z.array(z.enum(values, err("invalidOption"))).min(1, err("chooseAtLeastOne"));
+
+const checkbox = z.literal("on").optional().transform((v) => v === "on");
+
+// Turkish-friendly phone normalization to E.164 (+905321234567).
+export function normalizePhone(input: string) {
+  const digits = input.replace(/\D/g, "");
+  if (input.trim().startsWith("+")) return `+${digits}`;
+  if (digits.startsWith("00")) return `+${digits.slice(2)}`;
+  if (digits.length === 11 && digits.startsWith("0")) return `+90${digits.slice(1)}`;
+  if (digits.length === 10 && digits.startsWith("5")) return `+90${digits}`;
+  if (digits.length === 12 && digits.startsWith("90")) return `+${digits}`;
+  return `+${digits}`;
+}
+
+// Today's date in Istanbul as YYYY-MM-DD (same rule as the DB trigger).
+function istanbulToday() {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(new Date());
+}
+
+export function isAtLeast18(birthDate: string, today = istanbulToday()) {
+  const [y, m, d] = today.split("-").map(Number);
+  const limit = `${String(y - 18).padStart(4, "0")}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  return birthDate <= limit;
+}
+
+export const applicationSchema = z
+  .object({
+    locale: z.enum(["tr", "en"]),
+
+    full_name: text(2, 120),
+    phone: z
+      .string(err("required"))
+      .min(1, err("required"))
+      .transform(normalizePhone)
+      .pipe(z.string().regex(/^\+[1-9][0-9]{6,14}$/, err("invalidPhone"))),
+    email: z
+      .string(err("required"))
+      .min(1, err("required"))
+      .max(254, err("tooLong"))
+      .pipe(z.email(err("invalidEmail")))
+      .transform((v) => v.toLowerCase()),
+    birth_date: z
+      .string(err("required"))
+      .min(1, err("required"))
+      .pipe(z.iso.date(err("invalidDate")))
+      .refine((v) => v > "1920-01-01", err("invalidDate"))
+      .refine((v) => isAtLeast18(v), err("tooYoung")),
+    city_choice: z.enum(["istanbul", "other"], err("required")),
+    city: optionalText(80),
+    district: text(1, 80),
+    instagram: z
+      .string()
+      .transform((v) => v.replace(/^@/, ""))
+      .pipe(z.string().regex(/^[A-Za-z0-9._]{1,30}$/, err("invalidInstagram")))
+      .optional(),
+    languages: choices(LANGUAGES),
+
+    license_class: z.enum(LICENSE_CLASSES, err("required")),
+    riding_years: z.coerce.number(err("invalidNumber")).int(err("invalidNumber")).min(0, err("invalidNumber")).max(70, err("invalidNumber")),
+    owns_motorcycle: yesNo,
+    motorcycle_brand: optionalText(60),
+    motorcycle_model: optionalText(60),
+    motorcycle_cc: z.coerce.number(err("invalidNumber")).int(err("invalidNumber")).min(50, err("invalidNumber")).max(3000, err("invalidNumber")).optional(),
+    riding_styles: choices(RIDING_STYLES),
+    group_experience: z.enum(GROUP_EXPERIENCE, err("required")),
+
+    in_other_clubs: yesNo,
+    other_club_names: optionalText(300),
+    heard_from: z.enum(HEARD_FROM, err("required")),
+    referrer_name: optionalText(120),
+    event_interests: choices(EVENT_INTERESTS),
+    expectations: text(10, 1000),
+    alienating_behaviors: text(3, 1000),
+
+    consent_privacy: z.literal("on", err("mustAccept")).transform(() => true),
+    consent_rules: z.literal("on", err("mustAccept")).transform(() => true),
+    consent_photos: checkbox,
+
+    utm_source: optionalText(200),
+    utm_medium: optionalText(200),
+    utm_campaign: optionalText(200),
+    utm_content: optionalText(200),
+    utm_term: optionalText(200),
+  })
+  .superRefine((v, ctx) => {
+    const require = (path: keyof typeof v, ok: boolean) => {
+      if (!ok) ctx.addIssue({ code: "custom", path: [path], message: "required" });
+    };
+    if (v.city_choice === "istanbul" && !isIstanbulDistrict(v.district)) {
+      ctx.addIssue({ code: "custom", path: ["district"], message: "invalidDistrict" });
+    }
+    require("city", v.city_choice === "istanbul" || !!v.city);
+    if (v.owns_motorcycle) {
+      require("motorcycle_brand", !!v.motorcycle_brand);
+      require("motorcycle_model", !!v.motorcycle_model);
+    }
+    if (v.in_other_clubs) require("other_club_names", !!v.other_club_names);
+    if (v.heard_from === "friend") require("referrer_name", !!v.referrer_name);
+  })
+  .transform(
+    (v): TablesInsert<"applications"> => ({
+      locale: v.locale,
+      full_name: v.full_name,
+      phone: v.phone,
+      email: v.email,
+      birth_date: v.birth_date,
+      city: v.city_choice === "istanbul" ? ISTANBUL : v.city!,
+      district: v.district,
+      side: v.city_choice === "istanbul" ? sideOfDistrict(v.district) : null,
+      instagram: v.instagram ?? null,
+      languages: v.languages,
+      license_class: v.license_class,
+      riding_years: v.riding_years,
+      owns_motorcycle: v.owns_motorcycle,
+      // Drop bike/club/referrer details that don't apply to the chosen answer.
+      motorcycle_brand: v.owns_motorcycle ? v.motorcycle_brand! : null,
+      motorcycle_model: v.owns_motorcycle ? v.motorcycle_model! : null,
+      motorcycle_cc: v.owns_motorcycle ? (v.motorcycle_cc ?? null) : null,
+      riding_styles: v.riding_styles,
+      group_experience: v.group_experience,
+      in_other_clubs: v.in_other_clubs,
+      other_club_names: v.in_other_clubs ? v.other_club_names! : null,
+      heard_from: v.heard_from,
+      referrer_name: v.heard_from === "friend" ? v.referrer_name! : null,
+      event_interests: v.event_interests,
+      expectations: v.expectations,
+      alienating_behaviors: v.alienating_behaviors,
+      consent_privacy: v.consent_privacy,
+      consent_rules: v.consent_rules,
+      consent_photos: v.consent_photos,
+      privacy_notice_version: PRIVACY_NOTICE_VERSION,
+      utm_source: v.utm_source ?? null,
+      utm_medium: v.utm_medium ?? null,
+      utm_campaign: v.utm_campaign ?? null,
+      utm_content: v.utm_content ?? null,
+      utm_term: v.utm_term ?? null,
+    }),
+  );
+
+export type ApplicationFieldErrors = Partial<Record<string, ApplyErrorKey>>;
+
+const ARRAY_FIELDS = new Set(["languages", "riding_styles", "event_interests"]);
+
+/** FormData → plain object: trims strings, drops empty ones, collects multi-selects. */
+export function formDataToObject(formData: FormData) {
+  const out: Record<string, unknown> = {};
+  for (const key of new Set(formData.keys())) {
+    if (ARRAY_FIELDS.has(key)) {
+      out[key] = formData.getAll(key).map(String);
+      continue;
+    }
+    const value = String(formData.get(key) ?? "").trim();
+    if (value !== "") out[key] = value;
+  }
+  for (const key of ARRAY_FIELDS) out[key] ??= [];
+  for (const key of UTM_KEYS) if (typeof out[key] === "string") out[key] = (out[key] as string).slice(0, 200);
+  return out;
+}
+
+/** Validate; returns the DB row or the first error key per field. */
+export function validateApplication(formData: FormData) {
+  const result = applicationSchema.safeParse(formDataToObject(formData));
+  if (result.success) return { ok: true as const, data: result.data };
+
+  const fieldErrors: ApplicationFieldErrors = {};
+  for (const issue of result.error.issues) {
+    const field = String(issue.path[0] ?? "_form");
+    fieldErrors[field] ??= (issue.message as ApplyErrorKey) || "invalidOption";
+  }
+  return { ok: false as const, fieldErrors };
+}
