@@ -20,8 +20,10 @@ export function resolveTheme(pref: ThemePreference, systemPrefersDark: boolean):
 
 export function applyResolvedTheme(doc: Document, theme: ResolvedTheme): void {
   doc.documentElement.classList.toggle("dark", theme === "dark");
-  const meta = doc.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
-  if (meta) meta.content = THEME_COLORS[theme];
+  // Every tag: after hydration Next adds its own theme-color meta next to the server-rendered one.
+  doc.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]').forEach((meta) => {
+    meta.content = THEME_COLORS[theme];
+  });
 }
 
 /**
@@ -51,8 +53,9 @@ export function initTheme(
     }
   }
   doc.documentElement.classList.toggle("dark", dark);
-  const meta = doc.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
-  if (meta) meta.content = dark ? "#0B0D10" : "#FBF5E5";
+  doc.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]').forEach((meta) => {
+    meta.content = dark ? "#0B0D10" : "#FBF5E5";
+  });
 }
 
 export const themeInitScript = `(${initTheme.toString()})(document, (function(){try{return localStorage}catch(e){return null}})(), window.matchMedia ? window.matchMedia.bind(window) : null)`;

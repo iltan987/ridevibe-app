@@ -17,6 +17,7 @@ import {
 function fakeDoc(initialDark = true) {
   const classes = new Set<string>(initialDark ? ["dark"] : []);
   const meta = { content: "" };
+  const second = { content: "" }; // Next adds its own theme-color meta after the server one
   const doc = {
     documentElement: {
       classList: {
@@ -27,9 +28,9 @@ function fakeDoc(initialDark = true) {
         contains: (name: string) => classes.has(name),
       },
     },
-    querySelector: (sel: string) => (sel === 'meta[name="theme-color"]' ? meta : null),
+    querySelectorAll: (sel: string) => (sel === 'meta[name="theme-color"]' ? [meta, second] : []),
   };
-  return { doc: doc as unknown as Document, classes, meta };
+  return { doc: doc as unknown as Document, classes, meta, second };
 }
 
 const media = (matches: boolean) => () => ({ matches });
@@ -55,6 +56,20 @@ test("applyResolvedTheme toggles class and theme-color", () => {
   applyResolvedTheme(doc, "dark");
   assert.equal(classes.has("dark"), true);
   assert.equal(meta.content, THEME_COLORS.dark);
+});
+
+test("applyResolvedTheme and initTheme update every theme-color meta", () => {
+  const a = fakeDoc(true);
+  applyResolvedTheme(a.doc, "light");
+  assert.equal(a.meta.content, THEME_COLORS.light);
+  assert.equal(a.second.content, THEME_COLORS.light);
+  const b = fakeDoc(true);
+  initTheme(b.doc, storageOf("light"), media(true));
+  assert.equal(b.meta.content, "#FBF5E5");
+  assert.equal(b.second.content, "#FBF5E5");
+  const c = fakeDoc(false);
+  vm.runInNewContext(themeInitScript, { document: c.doc, localStorage: storageOf("dark"), window: {} });
+  assert.equal(c.second.content, "#0B0D10");
 });
 
 test("initTheme: nothing stored → dark + dark theme-color", () => {

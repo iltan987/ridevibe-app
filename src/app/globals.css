@@ -72,10 +72,10 @@
   --status-muted: #DDF5F0;
   --status-foreground: #0B6E5F;
   --sun: #F2C230;
-  --destructive: #C2272D;
+  --destructive: #B9222A;
   --border: #E6DCC5;
   --input: #93876C;
-  --ring: #E2741A;
+  --ring: #B4560C;
   --chart-1: #F98D2F;
   --chart-2: #0E9F88;
   --chart-3: #F2C230;
@@ -88,7 +88,7 @@
   --sidebar-accent: #F1E9D6;
   --sidebar-accent-foreground: #14120F;
   --sidebar-border: #E6DCC5;
-  --sidebar-ring: #E2741A;
+  --sidebar-ring: #B4560C;
   --radius: 0.375rem;
 }
 
@@ -112,7 +112,7 @@
   --status-muted: #0E2C28;
   --status-foreground: #4FE6CE;
   --sun: #FBE563;
-  --destructive: #F2555A;
+  --destructive: #FF7376;
   --border: #22272F;
   --input: #646A75;
   --ring: #F98D2F;
@@ -133,7 +133,7 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-ring;
   }
   body {
     @apply bg-background text-foreground;
