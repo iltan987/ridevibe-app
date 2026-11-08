@@ -3,8 +3,13 @@
 ### Docker comes from Docker Desktop (2026-11-07)
 - **Symptom:** `The command 'docker' could not be found in this WSL 2 distro` / `failed to connect to the docker API
   at npipe:…` / Supabase `DockerLifecycleInspectError`.
-- **Do:** start Docker Desktop and enable Settings → Resources → WSL Integration for the distro. It stops after
-  `wsl --shutdown`.
+- **Cause (usual):** Docker Desktop isn't running — WSL integration is already enabled for `Ubuntu`. Tell-tale:
+  `which docker` → `/mnt/c/Program Files/Docker/…` (Windows CLI) and no `/var/run/docker.sock`.
+- **Do:** start it yourself from WSL: `"/mnt/c/Program Files/Docker/Docker/Docker Desktop.exe" &`, then wait until
+  `/var/run/docker.sock` exists and `docker info` works (~30–60 s). Only if that fails, check Settings → Resources →
+  WSL Integration. It stops after `wsl --shutdown`.
+- `pnpm db:start` may fail with `StatusDbNotReadyError … starting` right after Docker boots — the container is
+  still healthy-checking; poll `pnpm db:status` instead of restarting.
 
 ### WSL network can drop entirely (2026-11-07)
 - **Symptom:** DNS failures *and* `ping 1.1.1.1` fails.
