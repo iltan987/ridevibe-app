@@ -6,6 +6,7 @@ import {
   THEME_COLORS,
   applyResolvedTheme,
   applyThemePreference,
+  syncThemePreference,
   initTheme,
   parseThemePreference,
   readThemePreference,
@@ -32,7 +33,7 @@ function fakeDoc(initialDark = true) {
 }
 
 const media = (matches: boolean) => () => ({ matches });
-const storageOf = (value: string | null) => ({ getItem: () => value });
+const storageOf = (value: string | null) => ({ getItem: (key: string) => (key === "theme" ? value : null) });
 
 test("parseThemePreference defaults to dark", () => {
   for (const v of [null, undefined, "", "blue", "DARK", 1, {}]) assert.equal(parseThemePreference(v), "dark");
@@ -164,4 +165,40 @@ test("applyThemePreference persists and readThemePreference reads it back", () =
       assert.equal(readThemePreference(), "system");
     },
   );
+});
+
+test("syncThemePreference applies without persisting (nothing stored stays empty)", () => {
+  const { doc, classes } = fakeDoc(false);
+  const writes: string[] = [];
+  withGlobals(
+    {
+      window: { matchMedia: media(false) },
+      document: doc,
+      localStorage: {
+        getItem: () => null,
+        setItem: (k: string) => void writes.push(k),
+      },
+    },
+    () => {
+      syncThemePreference(readThemePreference());
+      assert.equal(readThemePreference(), "dark");
+    },
+  );
+  assert.equal(classes.has("dark"), true);
+  assert.deepEqual(writes, []);
+});
+
+test("explicit light with no matchMedia applies light without throwing", () => {
+  const { doc, classes } = fakeDoc(true);
+  withGlobals({ window: {}, document: doc, localStorage: { getItem: () => null, setItem: () => {} } }, () => {
+    applyThemePreference("light");
+    syncThemePreference("system"); // missing matchMedia → dark
+  });
+  assert.equal(classes.has("dark"), true);
+  const again = fakeDoc(true);
+  withGlobals({ window: {}, document: again.doc, localStorage: { getItem: () => null, setItem: () => {} } }, () =>
+    syncThemePreference("light"),
+  );
+  assert.equal(again.classes.has("dark"), false);
+  assert.equal(again.meta.content, "#FBF5E5");
 });

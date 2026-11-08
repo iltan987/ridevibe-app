@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   applyThemePreference,
+  syncThemePreference,
   parseThemePreference,
   readThemePreference,
   type ThemePreference,
@@ -33,16 +34,17 @@ export function ThemeSwitcher() {
   // The inline <head> script sets the class during parsing; in dev, Strict Mode's remount resets <html>
   // attributes, so re-apply the stored preference before paint (no-op in production).
   useLayoutEffect(() => {
-    applyThemePreference(readThemePreference());
+    syncThemePreference(readThemePreference());
   }, []);
 
   // Follow the OS setting live while on "system".
   useEffect(() => {
     if (pref !== "system") return;
+    if (typeof window.matchMedia !== "function") return;
     const query = window.matchMedia("(prefers-color-scheme: dark)");
-    const onChange = () => applyThemePreference("system");
-    query.addEventListener("change", onChange);
-    return () => query.removeEventListener("change", onChange);
+    const onSystemChange = () => syncThemePreference("system");
+    query.addEventListener("change", onSystemChange);
+    return () => query.removeEventListener("change", onSystemChange);
   }, [pref]);
 
   function onChange(value: string) {

@@ -66,12 +66,20 @@ export function readThemePreference(): ThemePreference {
   }
 }
 
+/** Applies a preference to the page without persisting (mount, OS change). Persist only on a user choice. */
+export function syncThemePreference(pref: ThemePreference): void {
+  // matchMedia is only needed for "system"; missing → dark.
+  const systemPrefersDark =
+    pref === "system" && typeof window.matchMedia === "function" ? window.matchMedia(DARK_QUERY).matches : true;
+  applyResolvedTheme(document, resolveTheme(pref, systemPrefersDark));
+}
+
+/** The user's explicit choice: persist (swallowing storage errors), then apply. */
 export function applyThemePreference(pref: ThemePreference): void {
   try {
     localStorage.setItem(THEME_STORAGE_KEY, pref);
   } catch {
     // private mode / blocked storage: still apply for this page view
   }
-  const systemPrefersDark = window.matchMedia(DARK_QUERY).matches;
-  applyResolvedTheme(document, resolveTheme(pref, systemPrefersDark));
+  syncThemePreference(pref);
 }
