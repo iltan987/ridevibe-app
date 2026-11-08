@@ -35,3 +35,8 @@
 - Pull production env to the scratchpad (`vercel env pull --environment=production <scratchpad file>`), `chmod 600`,
   read single keys with `grep | cut`, mask URLs in output (`sed`), delete the file afterwards. Never print secrets;
   check `.env` contents by key names and format only.
+
+### `pkill -f` / `pgrep -f` match the shell running them (2026-11-08)
+- **Symptom:** a Bash call ends with exit 144 right after `pkill -f "next-server"`; the server keeps running.
+- **Cause:** `-f` matches full command lines, including the `bash -c '…pkill -f next-server…'` that runs it.
+- **Do:** stop servers by port: `kill $(ss -ltnp | grep ':3123 ' | grep -oP 'pid=\K[0-9]+')`, or `pgrep -x next-server`.

@@ -32,3 +32,11 @@
   `https://ridevibe.com.tr/privacy` (must actually be live). Basic scopes (openid/email/profile) need no Google review.
 - Until published, only listed test users can sign in. After publishing anyone can — safe because new profiles are
   `pending` until an admin activates them.
+
+### Vercel cron on Hobby + Supabase pausing (2026-11-08)
+- Hobby: each cron job may run **once a day** (±59 min), but a project can have 100 jobs → schedule the same path
+  several times a day (`vercel.ts` `crons`). Vercel sends `Authorization: Bearer $CRON_SECRET` (set in production
+  only; crons only run on production).
+- Supabase Free pauses after a week of too little "user database activity" (docs: "a few user requests to the
+  database each day") → the cron calls `rpc("keep_alive")`, a real query through the Data API, not a health URL.
+- **Source:** vercel.com/docs/cron-jobs/usage-and-pricing, manage-cron-jobs; supabase.com/docs/guides/platform/free-project-pausing.
