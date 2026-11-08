@@ -46,3 +46,19 @@
 - **Gotcha:** `initTheme` is embedded via `toString()`, so it must not reference module-level identifiers (inline
   constants); `src/lib/theme.test.ts` runs the generated string in `node:vm` to prove it.
 - **Source:** `node_modules/next/dist/docs/01-app/02-guides/preventing-flash-before-hydration.md`, found by testing.
+
+### Brand assets: tracing the wordmark and building the R&V icon (2026-11-09)
+- **Wordmark SVG:** potrace (pure-JS `potrace` npm) on the **half-resolution** alpha bitmap (1794×572, `turdSize` 10,
+  `optTolerance` 0.4, threshold 128), then round coordinates to 1 decimal and drop the whitespace → 39.7 KB, single
+  evenodd path, brush texture kept (full-res trace was 93 KB because of 3-decimal coordinates). Used as a CSS mask.
+- **`monogram-cream-master.png` is unusable as is:** the R's leg is cut by a vertical edge, the V by the image border,
+  and the & overlaps the V. The letters in `wordmark-cream-master.png` are separate connected components, so the
+  monogram is rebuilt from them (R, &, V pulled out by flood fill and re-spaced ~70 px apart, no underline).
+- **Icons:** render SVG → PNG with headless Chrome (`--default-background-color=00000000` keeps transparency);
+  maskable icon keeps the monogram inside ~56 % of the width (corners well inside the 80 % safe circle).
+
+### `opengraph-image.png` in `[locale]` is served from `/-/opengraph-image.png` (2026-11-09)
+- **Symptom:** `og:image` content is `…/-/opengraph-image.png?<hash>` (HTML of `/` and `/en`); `/opengraph-image.png` is 404.
+- **Cause:** the dynamic segment is replaced by `-` in the metadata route; it works (200, image/png).
+- **Do:** nothing, but `og:image` is an absolute URL built from `metadataBase` (unset → `http://localhost:3000` in
+  `pnpm start`; on Vercel it falls back to the deployment URL). Set `metadataBase` to the production domain before relying on previews.
