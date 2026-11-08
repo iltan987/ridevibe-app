@@ -106,6 +106,7 @@ async function MembersList({ searchParams }: { searchParams: PageProps<"/[locale
               member={{
                 id: m.id,
                 name: m.full_name,
+                email: m.member_contacts?.email ?? null,
                 avatarUrl: m.avatar_url,
                 status: m.status,
                 joinedLabel: t("joined", { date: format.dateTime(new Date(m.created_at), { dateStyle: "medium" }) }),

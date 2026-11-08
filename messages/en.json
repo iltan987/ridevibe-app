@@ -246,7 +246,8 @@
       "noRole": "Member (no role)",
       "activate": "Activate",
       "deactivate": "Deactivate",
-      "reactivate": "Reactivate"
+      "reactivate": "Reactivate",
+      "noEmail": "No email"
     },
     "roles": {
       "title": "Roles & permissions",
@@ -290,6 +291,37 @@
           "description": "Can see pending sign-ups and activate/deactivate members (except admins)."
         }
       }
+    },
+    "review": {
+      "title": "Review",
+      "markContacted": "Mark contacted",
+      "backToNew": "Back to new",
+      "approve": "Approve",
+      "reject": "Reject",
+      "reopen": "Undo decision",
+      "approveTitle": "Approve this application?",
+      "approveBody": "{name} becomes an active member automatically when they sign in with Google using this email ({email}). Send the WhatsApp invite after approving.",
+      "rejectTitle": "Reject this application?",
+      "rejectBody": "{name} can apply again later.",
+      "reopenBody": "The application goes back to “Contacted”. An account that was already activated stays active; deactivate it on the Members page if needed.",
+      "confirm": "Yes",
+      "cancel": "Cancel",
+      "notes": "Notes",
+      "notesHint": "Only staff who can see applications see this. Write facts only (KVKK).",
+      "saveNotes": "Save note",
+      "saved": "Saved",
+      "decidedBy": "{name} · {date}",
+      "decidedByUnknown": "Changed by: unknown · {date}",
+      "noPermission": "You don't have permission to change this application's status.",
+      "linked": "Account linked: {name}",
+      "notLinked": "Hasn't signed in yet. Send the invite; they become active automatically when they sign in with the email from the application. If they use a different Google account, activate it on the Members page.",
+      "sendInvite": "Send WhatsApp invite",
+      "delete": "Delete application",
+      "deleteTitle": "Delete this application permanently?",
+      "deleteBody": "For KVKK erasure requests. This cannot be undone."
+    },
+    "invite": {
+      "message": "Hi {name}! 🏍️ Your Ride & Vibe application has been approved, welcome aboard!\n\nTo complete your membership, sign in with the Google account of the email you applied with ({email}):\n{url}\n\nIf that email isn't a Google account, just reply here and we'll link your account together."
     }
   },
   "NotFound": {

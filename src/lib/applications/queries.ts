@@ -40,7 +40,13 @@ export async function countApplicationsByStatus() {
 export async function getApplication(id: string) {
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
   const supabase = await createClient();
-  const { data, error } = await supabase.from("applications").select("*").eq("id", id).maybeSingle();
+  const { data, error } = await supabase
+    .from("applications")
+    .select(
+      "*, reviewer:profiles!applications_reviewed_by_fkey(full_name), member:profiles!applications_profile_id_fkey(full_name, status)",
+    )
+    .eq("id", id)
+    .maybeSingle();
   if (error) throw new Error(`getApplication failed: ${error.code}`);
   return data;
 }

@@ -13,6 +13,8 @@ import { initials } from "@/lib/initials";
 export type MemberRowData = {
   id: string;
   name: string;
+  /** Sign-in email (helps recognise who a pending sign-up is). */
+  email: string | null;
   avatarUrl: string | null;
   status: MemberStatus;
   joinedLabel: string;
@@ -65,6 +67,7 @@ export function MemberRow({
             {member.name || "—"}
             {isSelf && <Badge variant="secondary">{t("members.you")}</Badge>}
           </p>
+          <p className="truncate text-xs text-muted-foreground">{member.email ?? t("members.noEmail")}</p>
           <p className="text-xs text-muted-foreground">{member.joinedLabel}</p>
         </div>
       </div>

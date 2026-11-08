@@ -28,7 +28,8 @@
 - Every staff page: signed-out → sign-in redirect, member without the permission → 404, holder → content. Test with a
   role that has *only* the permission in question (create it in the UI as `admin@test.local`). The DB tests cover the
   same rules at the data level.
-- Local test users: `admin@test.local` (admin role), `organizer@test.local` (Organizatör), `member@test.local`.
+- Local test users: `admin@test.local` (admin role), `organizer@test.local` (Organizatör), `reviewer@test.local`
+  (Başvuru Sorumlusu), `member@test.local`.
 - Seed many rows (e.g. 30 pending users via `insert into auth.users … generate_series`) to test pagination
   (`PAGE_SIZE` = 25), then delete them.
 

@@ -6,12 +6,12 @@ import { afterCursorFilter, type Cursor, ilikeContains, PAGE_SIZE, toPage } from
 export type MemberStatus = Enums<"member_status">;
 export const MEMBER_STATUSES = ["pending", "active", "inactive"] as const satisfies readonly MemberStatus[];
 
-// RLS returns other people's pending/inactive profiles only to members.manage.
+// RLS returns other people's pending/inactive profiles and emails only to members.manage.
 export async function listMembers({ status, query, cursor }: { status: MemberStatus; query?: string; cursor?: Cursor | null }) {
   const supabase = await createClient();
   let request = supabase
     .from("profiles")
-    .select("id, full_name, avatar_url, status, created_at, role_id")
+    .select("id, full_name, avatar_url, status, created_at, role_id, member_contacts(email)")
     .eq("status", status);
   if (query) request = request.ilike("full_name", ilikeContains(query));
   if (cursor) request = request.or(afterCursorFilter(cursor));

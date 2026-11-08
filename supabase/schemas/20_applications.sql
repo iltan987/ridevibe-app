@@ -69,6 +69,8 @@ create table public.applications (
   admin_notes text check (char_length(admin_notes) <= 4000),
   reviewed_by uuid references public.profiles (id) on delete set null,
   reviewed_at timestamptz,
+  -- The member account this (approved) application was linked to.
+  profile_id uuid references public.profiles (id) on delete set null,
 
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -94,6 +96,11 @@ create index applications_status_created_idx on public.applications (status, cre
 -- One open application per email (a person can re-apply after a decision).
 create unique index applications_open_email_key on public.applications (lower(email))
   where status in ('new', 'contacted');
+
+-- No expression index on private.normalize_email(email) here: index
+-- expressions run with the *inserting* user's rights, and anon (the public
+-- form) has no access to the private schema. Matching scans are rare and small.
+create index applications_profile_id_idx on public.applications (profile_id);
 
 create trigger applications_set_updated_at
 before update on public.applications
@@ -162,6 +169,73 @@ $$;
 create trigger applications_check_decision
 before update on public.applications
 for each row execute function private.applications_check_decision();
+
+-- ---------------------------------------------------------------------------
+-- Approval → membership. A *pending* account whose sign-in email matches an
+-- approved application (normalize_email) is activated, linked to it, and gets
+-- the application's city/district if it has none. Runs both when someone signs
+-- in after approval (handle_new_user) and when an application is approved for
+-- someone who already signed in (trigger below). Never touches active/inactive
+-- accounts, so it can't undo a suspension.
+-- ---------------------------------------------------------------------------
+
+create or replace function private.activate_from_approved_application(target_profile uuid)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  app record;
+begin
+  select a.id, a.city, a.district, a.side into app
+  from public.applications a
+  join public.member_contacts c on c.profile_id = target_profile
+  where a.status = 'approved'
+    and a.profile_id is null
+    and private.normalize_email(a.email) = private.normalize_email(c.email)
+  order by a.reviewed_at desc nulls last, a.created_at desc
+  limit 1;
+  if not found then
+    return;
+  end if;
+
+  update public.profiles p
+  set status = 'active',
+      city = case when p.district is null then app.city else p.city end,
+      side = case when p.district is null then app.side else p.side end,
+      district = coalesce(p.district, app.district)
+  where p.id = target_profile and p.status = 'pending';
+  if not found then
+    return;
+  end if;
+
+  update public.applications set profile_id = target_profile where id = app.id;
+end;
+$$;
+
+create or replace function private.applications_after_approval()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  perform private.activate_from_approved_application(c.profile_id)
+  from public.member_contacts c
+  where private.normalize_email(c.email) = private.normalize_email(new.email);
+  return null;
+end;
+$$;
+
+-- WHEN keeps the profile_id update above from re-firing this trigger.
+create trigger applications_after_approval
+after update of status on public.applications
+for each row when (new.status = 'approved' and old.status is distinct from new.status)
+execute function private.applications_after_approval();
+
+revoke all on function private.activate_from_approved_application(uuid) from public, anon, authenticated;
+revoke all on function private.applications_after_approval() from public, anon, authenticated;
 
 revoke all on function private.applications_before_insert() from public, anon, authenticated;
 revoke all on function private.applications_track_review() from public, anon, authenticated;
