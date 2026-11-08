@@ -25,7 +25,8 @@
   `text-base md:text-sm` and `h-10 md:h-8` (bigger touch target).
 
 ### Outline button border is barely visible (2026-11-07)
-- Known cosmetic issue on light theme (`border-border`); revisit when theming/branding.
+- Fixed in the design system: outline buttons use `border-input` in both themes (`border-transparent` lives in the
+  non-outline variants so `buttonVariants()` on `Link` works). `/admin/members` filter pills still use `border-border`.
 
 ### CSS `uppercase` on a `tr` page dots English i's (2026-11-09)
 - **Symptom:** brand rendered as "RİDE & VİBE" in mockups with `text-transform: uppercase`.
@@ -60,8 +61,8 @@
 ### `opengraph-image.png` in `[locale]` is served from `/-/opengraph-image.png` (2026-11-09)
 - **Symptom:** `og:image` content is `…/-/opengraph-image.png?<hash>` (HTML of `/` and `/en`); `/opengraph-image.png` is 404.
 - **Cause:** the dynamic segment is replaced by `-` in the metadata route; it works (200, image/png).
-- **Do:** nothing, but `og:image` is an absolute URL built from `metadataBase` (unset → `http://localhost:3000` in
-  `pnpm start`; on Vercel it falls back to the deployment URL). Set `metadataBase` to the production domain before relying on previews.
+- **Do:** nothing. `og:image` is absolute, built from `metadataBase`, which we deliberately leave unset (see
+  `nextjs.md`).
 
 ### `next/image` `priority` is deprecated in Next 16: use `preload` (2026-11-09)
 - **Do:** `<Image preload />` for above-the-fold images (`ClubBadge` takes `preload`); `placeholder="empty"` is the default, omit it.

@@ -40,7 +40,7 @@ Values are hex here for review; implementation may convert to `oklch()` (same co
 | `--secondary` / `--muted` | `#1E2229` | `#F1E9D6` | date block, chips, progress track |
 | `--muted-foreground` | `#A39C8C` | `#6B6352` | secondary text |
 | `--border` | `#22272F` | `#E6DCC5` | dividers, card borders |
-| `--input` | `#3A3F48` | `#CDBF9F` | input / outline-button borders |
+| `--input` | `#646A75` | `#93876C` | input / outline-button borders (final, raised for UI-contrast 3:1) |
 | `--primary` | `#F98D2F` | `#F98D2F` | main buttons, active tab |
 | `--primary-foreground` | `#1A0E02` | `#1A0E02` | text on orange |
 | `--accent-text` (new) | `#FBA04A` | `#B4560C` | orange *text* (eyebrows, links); plain orange fails AA on cream |
@@ -49,7 +49,7 @@ Values are hex here for review; implementation may convert to `oklch()` (same co
 | `--status-muted` (new) | `#0E2C28` | `#DDF5F0` | status pill background |
 | `--status-foreground` (new) | `#4FE6CE` | `#0B6E5F` | status pill text |
 | `--sun` (new) | `#FBE563` | `#F2C230` | rare highlight (hero glow); not for text |
-| `--destructive` | keep shadcn red, re-check contrast on both backgrounds | | errors, reject |
+| `--destructive` | `#F2555A` | `#C2272D` | errors, reject (final, contrast-tested) |
 
 - `--accent` (shadcn's hover background) = `--secondary` values; `--accent-foreground` = `--foreground`.
 - New tokens are exposed to Tailwind via `@theme inline` (`bg-status`, `text-status-foreground`, `text-accent-text`…).
@@ -84,12 +84,11 @@ CSS `text-transform: uppercase` follows the element's `lang`. On Turkish pages `
 - Dark is the default for everyone; the user can pick **Sistem / Koyu / Açık**; choice stored on the device.
 - Must not make pages dynamic (Cache Components): no theme cookie read on the server. The theme class is applied on
   the client before paint (inline script in `<head>`), so there's no flash of the wrong theme.
-- Candidate: `next-themes` (`attribute="class"`, `defaultTheme="dark"`, `enableSystem`). **The plan must verify** its
+- Built with an own inline script (`src/lib/theme.ts`, per `node_modules/next/dist/docs/01-app/02-guides/preventing-flash-before-hydration.md`), not `next-themes`. Original candidate: `next-themes` (`attribute="class"`, `defaultTheme="dark"`, `enableSystem`). **The plan must verify** its
   compatibility with Next 16 + React 19 + Cache Components (script-in-head warnings, `suppressHydrationWarning` on
   `<html>`); fall back to a ~20-line own inline script + small client hook if it doesn't fit.
-- **Switch location:** in the user menu dropdown (signed-in) **and** reachable when signed out (the header is the same
-  for everyone; place it next to the locale switcher or inside a small "settings" menu — decided in the plan by
-  looking at the header at 390 px). Labels via next-intl (`Theme.system` / `Theme.dark` / `Theme.light`).
+- **Switch location (final):** the header only, next to the locale switcher, same for signed-in and signed-out users
+  (not duplicated in the user menu). Labels via next-intl (`Theme.system` / `Theme.dark` / `Theme.light`).
 - `viewport.themeColor` follows the theme: `#0B0D10` dark, `#FBF5E5` light (browser bar colour on phones).
 
 ## 4. Logo & brand assets
