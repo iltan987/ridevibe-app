@@ -6,7 +6,9 @@ import { locale } from "next/root-params";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
+import { ThemeScript } from "@/components/theme/theme-script";
 import { routing } from "@/i18n/routing";
+import { THEME_COLORS } from "@/lib/theme";
 import "../globals.css";
 
 // Saira is a variable font (weight + width axes) with Turkish characters (ğ, ş, ı, İ) in latin-ext.
@@ -29,10 +31,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
-  ],
+  themeColor: THEME_COLORS.dark, // the theme script/switcher update the meta for other themes
 };
 
 export default async function LocaleLayout({
@@ -42,7 +41,11 @@ export default async function LocaleLayout({
     <html
       lang={await locale()}
       className={`${saira.variable} dark h-full antialiased`}
+      suppressHydrationWarning
     >
+      <head>
+        <ThemeScript />
+      </head>
       <body className="flex min-h-full flex-col">
         <NextIntlClientProvider>
           <SiteHeader />

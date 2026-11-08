@@ -34,3 +34,15 @@
 - **Do:** never CSS-uppercase English/brand words on Turkish pages: use the wordmark asset, write the capitals in the
   source, or set `lang="en"` on the element.
 - **Source:** found by rendering mockups (headless Chrome).
+
+### Theme: dark SSR default + inline `<head>` script, no cookies (2026-11-09)
+- **Symptom:** a client-side theme switch flashes the wrong theme, or reading a theme cookie in the root layout makes
+  every route dynamic (Cache Components).
+- **Do:** server always renders `class="dark"` + `suppressHydrationWarning` on `<html>`; `themeInitScript`
+  (`src/lib/theme.ts`, stringified `initTheme`) runs in `<head>` and fixes the class and `meta[name=theme-color]`
+  from `localStorage` before first paint (verified: class correct when `<body>` is parsed). `ThemeSwitcher` re-applies
+  the stored preference in `useLayoutEffect` (dev Strict Mode remount resets `<html>` attributes). Routes stay
+  prerendered. A plain `<script>` in the root `<head>` gave no React dev warning.
+- **Gotcha:** `initTheme` is embedded via `toString()`, so it must not reference module-level identifiers (inline
+  constants); `src/lib/theme.test.ts` runs the generated string in `node:vm` to prove it.
+- **Source:** `node_modules/next/dist/docs/01-app/02-guides/preventing-flash-before-hydration.md`, found by testing.

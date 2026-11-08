@@ -16,6 +16,12 @@
     "tr": "Türkçe",
     "en": "English"
   },
+  "Theme": {
+    "label": "Theme",
+    "system": "System",
+    "dark": "Dark",
+    "light": "Light"
+  },
   "Home": {
     "eyebrow": "Istanbul Motorcycle Club",
     "title": "Let's ride together.",
