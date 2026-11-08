@@ -33,3 +33,9 @@
 - **Do:** after merging, run the browser E2E against `https://ridevibe.com.tr` with an `@pgtap.invalid` email and a
   `utm_campaign=smoke-test`, verify the row via `POSTGRES_URL_NON_POOLING` (`docker run --rm postgres:17-alpine
   psql "$URL" …`), then delete it.
+
+### Unit tests: `node --test` runs `*.test.ts` directly, no framework (2026-11-08)
+- Node 24 strips TypeScript types natively and its default test glob includes `**/*.test.ts` → `pnpm test`.
+- Limits: no path aliases (`@/…`) and imports need the `.ts` extension (`allowImportingTsExtensions` is on) →
+  keep tested logic in dependency-free modules (e.g. `src/lib/auth/safe-next.ts`).
+- **Source:** found by testing.

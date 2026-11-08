@@ -4,12 +4,13 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { safeNextPath } from "./safe-next";
+import { signInErrorPath } from "./sign-in-error";
 
 export async function signInWithGoogle(formData: FormData) {
   const next = safeNextPath(formData.get("next"), "/account");
   // The origin is also checked by Supabase against its redirect allow-list.
   const origin = (await headers()).get("origin");
-  if (!origin) redirect("/sign-in?error=oauth");
+  if (!origin) redirect(signInErrorPath(next));
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
@@ -20,7 +21,7 @@ export async function signInWithGoogle(formData: FormData) {
     },
   });
 
-  if (error || !data.url) redirect("/sign-in?error=oauth");
+  if (error || !data.url) redirect(signInErrorPath(next));
   redirect(data.url);
 }
 

@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { safeNextPath } from "@/lib/auth/safe-next";
+import { signInErrorPath } from "@/lib/auth/sign-in-error";
 import { createClient } from "@/lib/supabase/server";
 
 // Google → Supabase → here with a one-time `code` (PKCE). Exchange it for a
@@ -18,5 +19,5 @@ export async function GET(request: NextRequest) {
   }
 
   // Missing/expired code or the user cancelled at Google.
-  return NextResponse.redirect(new URL("/sign-in?error=oauth", origin));
+  return NextResponse.redirect(new URL(signInErrorPath(next), origin));
 }

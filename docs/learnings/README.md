@@ -12,7 +12,8 @@ mistakes and their root causes, workarounds, environment quirks. Goal: never re-
 | [supabase.md](supabase.md) | CLI v3, declarative schemas, RLS/grants, auth, pgTAP, hosted project |
 | [ui.md](ui.md) | shadcn/ui `base-nova`, Base UI, mobile UX |
 | [forms.md](forms.md) | Zod 4, form submission, phone input |
-| [testing.md](testing.md) | Browser E2E without a test framework, signed-in sessions |
+| [testing.md](testing.md) | Unit tests with `node --test`, browser E2E without a framework, signed-in sessions |
+| [security.md](security.md) | Redirects, input handling, other attack-surface lessons |
 | [environment.md](environment.md) | WSL, Docker, pnpm, CLI tools, shell gotchas |
 | [infra.md](infra.md) | Vercel, Marketplace, domain/DNS, costs |
 | [domain.md](domain.md) | Motorcycle/Turkey/KVKK facts that drive product decisions |
