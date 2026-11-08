@@ -3,6 +3,7 @@ import { useTranslations } from "next-intl";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import { GoogleIcon } from "@/components/auth/google-icon";
+import { ClubBadge } from "@/components/brand/club-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -24,8 +25,9 @@ export default function SignInPage({ searchParams }: PageProps<"/[locale]/sign-i
     <section className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-4 py-12">
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">{t("signInTitle")}</CardTitle>
-          <CardDescription>{t("signInDescription")}</CardDescription>
+          <ClubBadge sizes="96px" className="mx-auto mb-2 w-24" />
+          <CardTitle className="heading text-center text-2xl">{t("signInTitle")}</CardTitle>
+          <CardDescription className="text-center">{t("signInDescription")}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <Suspense fallback={<Skeleton className="h-9 w-full" />}>

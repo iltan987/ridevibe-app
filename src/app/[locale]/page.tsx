@@ -1,6 +1,7 @@
 import { useTranslations } from "next-intl";
 import { Suspense } from "react";
 import { ApplyLink } from "@/components/apply/apply-link";
+import { ClubBadge } from "@/components/brand/club-badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 
@@ -9,10 +10,15 @@ export default function HomePage() {
 
   return (
     <section className="mx-auto flex w-full max-w-5xl flex-1 flex-col justify-center gap-6 px-4 py-16">
-      <p className="text-sm font-medium tracking-wide text-muted-foreground uppercase">
-        {t("eyebrow")}
-      </p>
-      <h1 className="text-4xl font-bold tracking-tight text-balance sm:text-6xl">
+      <div className="relative w-fit">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10 scale-150 rounded-full bg-primary/35 blur-3xl"
+        />
+        <ClubBadge preload sizes="118px" className="w-[118px]" />
+      </div>
+      <p className="eyebrow">{t("eyebrow")}</p>
+      <h1 className="heading text-5xl leading-[1.05] text-balance sm:text-7xl">
         {t("title")}
       </h1>
       <p className="max-w-xl text-lg text-pretty text-muted-foreground">

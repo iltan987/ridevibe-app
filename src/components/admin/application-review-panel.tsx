@@ -102,7 +102,7 @@ export function ApplicationReviewPanel({
       <CardHeader>
         <CardTitle className="flex flex-wrap items-center gap-2">
           {t("review.title")}
-          <Badge variant={status === "new" ? "default" : "secondary"}>{t(`statuses.${status}`)}</Badge>
+          <Badge variant={status === "approved" ? "status" : status === "new" ? "default" : "secondary"}>{t(`statuses.${status}`)}</Badge>
         </CardTitle>
         {decidedLabel && <p className="text-xs text-muted-foreground">{decidedLabel}</p>}
       </CardHeader>

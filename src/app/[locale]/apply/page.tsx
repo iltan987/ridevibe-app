@@ -16,7 +16,7 @@ export default function ApplyPage() {
   return (
     <section className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-4 py-10">
       <header className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
+        <h1 className="heading text-3xl">{t("title")}</h1>
         <p className="text-muted-foreground">{t("intro")}</p>
       </header>
       {/* The form reads UTM params from the URL (ad attribution). */}

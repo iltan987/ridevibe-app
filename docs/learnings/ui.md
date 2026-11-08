@@ -62,3 +62,10 @@
 - **Cause:** the dynamic segment is replaced by `-` in the metadata route; it works (200, image/png).
 - **Do:** nothing, but `og:image` is an absolute URL built from `metadataBase` (unset → `http://localhost:3000` in
   `pnpm start`; on Vercel it falls back to the deployment URL). Set `metadataBase` to the production domain before relying on previews.
+
+### `next/image` `priority` is deprecated in Next 16: use `preload` (2026-11-09)
+- **Do:** `<Image preload />` for above-the-fold images (`ClubBadge` takes `preload`); `placeholder="empty"` is the default, omit it.
+
+### Headless Chrome screenshots of `/` show English unless `Accept-Language` is set (2026-11-09)
+- **Symptom:** TR screenshots rendered English copy (next-intl negotiates locale from the header on `/`).
+- **Do:** `page.setExtraHTTPHeaders({"Accept-Language": "tr"})` per locale; set `localStorage.theme` via `evaluateOnNewDocument` for dark/light.

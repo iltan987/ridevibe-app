@@ -21,7 +21,7 @@ export default function RolesPage() {
   return (
     <section className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8">
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
+        <h1 className="heading text-3xl">{t("title")}</h1>
         <p className="text-sm text-muted-foreground">{t("intro")}</p>
       </div>
       <Suspense fallback={<Skeleton className="h-96 w-full rounded-xl" />}>
