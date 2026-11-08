@@ -69,3 +69,11 @@
 ### Headless Chrome screenshots of `/` show English unless `Accept-Language` is set (2026-11-09)
 - **Symptom:** TR screenshots rendered English copy (next-intl negotiates locale from the header on `/`).
 - **Do:** `page.setExtraHTTPHeaders({"Accept-Language": "tr"})` per locale; set `localStorage.theme` via `evaluateOnNewDocument` for dark/light.
+
+### `buttonVariants()` on a `Link` is not tailwind-merged: base + variant classes can conflict (2026-11-09)
+- **Symptom:** light-theme outline buttons rendered as `<Link>` had no border while `<Button>` did (same classes).
+- **Cause:** `Button` runs the cva output through `cn` (merge drops `border-transparent`), but `buttonVariants()` returns both `border-transparent` (base) and `border-input` (variant); the stylesheet order picks transparent.
+- **Do:** keep colour utilities that variants override out of the cva base (`border-transparent` now lives in the non-outline variants).
+
+### Active nav text uses `text-accent-text`, not `text-primary` (2026-11-09)
+- Orange `--primary` on cream is ~2.2:1; `--accent-text` passes AA. On light, `bg-muted` under it is only ~4.05:1, so the desktop active pill is `bg-card`.

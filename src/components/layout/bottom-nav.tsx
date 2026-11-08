@@ -33,7 +33,7 @@ function BottomNavLinks({ pathname }: { pathname?: string }) {
             <Link
               href={href}
               aria-current={pathname && isActive(pathname, href) ? "page" : undefined}
-              className="flex flex-col items-center gap-1 py-2 text-xs font-medium text-muted-foreground transition-colors aria-[current=page]:font-semibold aria-[current=page]:text-primary"
+              className="flex flex-col items-center gap-1 py-2 text-xs font-medium text-muted-foreground transition-colors aria-[current=page]:font-semibold aria-[current=page]:text-accent-text"
             >
               <Icon className="size-5" aria-hidden />
               {t(labelKey)}
