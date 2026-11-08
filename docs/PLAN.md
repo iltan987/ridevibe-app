@@ -81,14 +81,22 @@ with notes only they can see.
   only with a new permission **`members.notes`**; the member never sees them in the app. Append-only: no editing in
   place (a correction is a new note), author + time always shown; only admins can delete (e.g. KVKK erasure).
 - **Warnings** = notes of kind `warning`, created with **`members.discipline`**; warning count shown in member lists.
+  Warnings are **also shown to the member** on their account page (a warning they never see changes nothing); other
+  notes stay staff-only. (decided 2026-11-08)
 - **Suspend / ban** (`members.discipline`, reason required → stored as a note). Suspended = no access until
-  reactivated. Banned = no access, and a new application with the same email is flagged in application review.
-  Only admins can suspend/ban an admin; nobody acts on themselves.
+  reactivated. Banned = no access; optional end date (no date = permanent until an admin lifts it). Only admins can
+  suspend/ban an admin; nobody acts on themselves. (decided 2026-11-08)
+- **Ban evasion** (a banned person signs in/applies with another Google account): a ban is about the *person*. On ban,
+  copy their identifiers from the profile and linked application(s) into a **ban list**: phone (E.164, strongest —
+  Turkish lines are registered to a national ID), all known emails (Gmail normalised: dots and `+tags` ignored),
+  Instagram username (lowercased), full name + birth date (weak; only as a combination). Every new application and
+  new sign-in is checked; matches are **flagged for staff** with the reason (e.g. "phone matches a banned member"),
+  never auto-rejected (false positives would turn away innocent people). Visible with `members.discipline`.
 - **KVKK:** conduct records are personal data → mention them in the privacy notice; members can request their data
   (art. 11), so notes must be factual and professional; same retention as other member data (anonymise/delete 1 year
   after membership ends). Add to the lawyer/Samet questions.
-- Open questions: should a *warning* also be shown to the member (e.g. on their account page), or stay staff-only?
-  Ban: permanent until an admin lifts it, or with an end date?
+- KVKK for the ban list: legitimate interest (club safety); must be in the privacy notice with a retention limit
+  (e.g. while the ban lasts, max N years — ask the lawyer).
 
 ## Phase 1 (original scope)
 
@@ -155,7 +163,8 @@ backups or outgrows the free limits. Split across members it is negligible.
 - Contact email for data requests (e.g. `kvkk@ridevibe.com.tr` forwarded to a Gmail).
 - Retention periods: 6 months for rejected applications, 1 year after membership ends (proposed, accepted by iltan).
 - Cross-border transfer formalities (art. 9) — see the lawyer discussion; decide before public launch.
-- Member conduct notes/warnings/bans: wording in the privacy notice, retention, and how to answer access requests.
+- Member conduct notes/warnings/bans and the ban list (identifiers kept to detect re-joining): wording in the privacy
+  notice, retention, and how to answer access requests.
 
 ## Git workflow
 
