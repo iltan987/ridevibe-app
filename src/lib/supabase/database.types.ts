@@ -7,20 +7,46 @@ export type Database = {
           Tables: {
             "applications": {
                   Row: {
-                    "admin_notes": string | null,"alienating_behaviors": string,"birth_date": string,"city": string,"consent_photos": boolean,"consent_privacy": boolean,"consent_rules": boolean,"created_at": string,"district": string,"email": string,"event_interests": (string)[],"expectations": string,"full_name": string,"group_experience": Database["public"]['Enums']["group_ride_experience"],"heard_from": Database["public"]['Enums']["heard_from"],"id": string,"in_other_clubs": boolean,"instagram": string | null,"languages": (string)[],"license_class": Database["public"]['Enums']["license_class"],"locale": string,"motorcycle_brand": string | null,"motorcycle_cc": number | null,"motorcycle_model": string | null,"other_club_names": string | null,"other_event_interests": string | null,"other_languages": string | null,"owns_motorcycle": boolean,"phone": string,"privacy_notice_version": string,"referrer_name": string | null,"reviewed_at": string | null,"reviewed_by": string | null,"riding_styles": (string)[],"riding_years": number,"side": Database["public"]['Enums']["istanbul_side"] | null,"status": Database["public"]['Enums']["application_status"],"updated_at": string,"utm_campaign": string | null,"utm_content": string | null,"utm_medium": string | null,"utm_source": string | null,"utm_term": string | null
+                    "admin_notes": string | null,"alienating_behaviors": string,"birth_date": string,"city": string,"consent_photos": boolean,"consent_privacy": boolean,"consent_rules": boolean,"created_at": string,"district": string,"email": string,"event_interests": (string)[],"expectations": string,"full_name": string,"group_experience": Database["public"]['Enums']["group_ride_experience"],"heard_from": Database["public"]['Enums']["heard_from"],"id": string,"in_other_clubs": boolean,"instagram": string | null,"languages": (string)[],"license_class": Database["public"]['Enums']["license_class"],"locale": string,"motorcycle_brand": string | null,"motorcycle_cc": number | null,"motorcycle_model": string | null,"other_club_names": string | null,"other_event_interests": string | null,"other_languages": string | null,"owns_motorcycle": boolean,"phone": string,"privacy_notice_version": string,"profile_id": string | null,"referrer_name": string | null,"reviewed_at": string | null,"reviewed_by": string | null,"riding_styles": (string)[],"riding_years": number,"side": Database["public"]['Enums']["istanbul_side"] | null,"status": Database["public"]['Enums']["application_status"],"updated_at": string,"utm_campaign": string | null,"utm_content": string | null,"utm_medium": string | null,"utm_source": string | null,"utm_term": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "admin_notes"?: string | null,"alienating_behaviors": string,"birth_date": string,"city"?: string,"consent_photos"?: boolean,"consent_privacy": boolean,"consent_rules": boolean,"created_at"?: string,"district": string,"email": string,"event_interests": (string)[],"expectations": string,"full_name": string,"group_experience": Database["public"]['Enums']["group_ride_experience"],"heard_from": Database["public"]['Enums']["heard_from"],"id"?: string,"in_other_clubs": boolean,"instagram"?: string | null,"languages": (string)[],"license_class": Database["public"]['Enums']["license_class"],"locale"?: string,"motorcycle_brand"?: string | null,"motorcycle_cc"?: number | null,"motorcycle_model"?: string | null,"other_club_names"?: string | null,"other_event_interests"?: string | null,"other_languages"?: string | null,"owns_motorcycle": boolean,"phone": string,"privacy_notice_version": string,"referrer_name"?: string | null,"reviewed_at"?: string | null,"reviewed_by"?: string | null,"riding_styles": (string)[],"riding_years": number,"side"?: Database["public"]['Enums']["istanbul_side"] | null,"status"?: Database["public"]['Enums']["application_status"],"updated_at"?: string,"utm_campaign"?: string | null,"utm_content"?: string | null,"utm_medium"?: string | null,"utm_source"?: string | null,"utm_term"?: string | null
+                    "admin_notes"?: string | null,"alienating_behaviors": string,"birth_date": string,"city"?: string,"consent_photos"?: boolean,"consent_privacy": boolean,"consent_rules": boolean,"created_at"?: string,"district": string,"email": string,"event_interests": (string)[],"expectations": string,"full_name": string,"group_experience": Database["public"]['Enums']["group_ride_experience"],"heard_from": Database["public"]['Enums']["heard_from"],"id"?: string,"in_other_clubs": boolean,"instagram"?: string | null,"languages": (string)[],"license_class": Database["public"]['Enums']["license_class"],"locale"?: string,"motorcycle_brand"?: string | null,"motorcycle_cc"?: number | null,"motorcycle_model"?: string | null,"other_club_names"?: string | null,"other_event_interests"?: string | null,"other_languages"?: string | null,"owns_motorcycle": boolean,"phone": string,"privacy_notice_version": string,"profile_id"?: string | null,"referrer_name"?: string | null,"reviewed_at"?: string | null,"reviewed_by"?: string | null,"riding_styles": (string)[],"riding_years": number,"side"?: Database["public"]['Enums']["istanbul_side"] | null,"status"?: Database["public"]['Enums']["application_status"],"updated_at"?: string,"utm_campaign"?: string | null,"utm_content"?: string | null,"utm_medium"?: string | null,"utm_source"?: string | null,"utm_term"?: string | null
                   }
                   Update: {
-                    "admin_notes"?: string | null,"alienating_behaviors"?: string,"birth_date"?: string,"city"?: string,"consent_photos"?: boolean,"consent_privacy"?: boolean,"consent_rules"?: boolean,"created_at"?: string,"district"?: string,"email"?: string,"event_interests"?: (string)[],"expectations"?: string,"full_name"?: string,"group_experience"?: Database["public"]['Enums']["group_ride_experience"],"heard_from"?: Database["public"]['Enums']["heard_from"],"id"?: string,"in_other_clubs"?: boolean,"instagram"?: string | null,"languages"?: (string)[],"license_class"?: Database["public"]['Enums']["license_class"],"locale"?: string,"motorcycle_brand"?: string | null,"motorcycle_cc"?: number | null,"motorcycle_model"?: string | null,"other_club_names"?: string | null,"other_event_interests"?: string | null,"other_languages"?: string | null,"owns_motorcycle"?: boolean,"phone"?: string,"privacy_notice_version"?: string,"referrer_name"?: string | null,"reviewed_at"?: string | null,"reviewed_by"?: string | null,"riding_styles"?: (string)[],"riding_years"?: number,"side"?: Database["public"]['Enums']["istanbul_side"] | null,"status"?: Database["public"]['Enums']["application_status"],"updated_at"?: string,"utm_campaign"?: string | null,"utm_content"?: string | null,"utm_medium"?: string | null,"utm_source"?: string | null,"utm_term"?: string | null
+                    "admin_notes"?: string | null,"alienating_behaviors"?: string,"birth_date"?: string,"city"?: string,"consent_photos"?: boolean,"consent_privacy"?: boolean,"consent_rules"?: boolean,"created_at"?: string,"district"?: string,"email"?: string,"event_interests"?: (string)[],"expectations"?: string,"full_name"?: string,"group_experience"?: Database["public"]['Enums']["group_ride_experience"],"heard_from"?: Database["public"]['Enums']["heard_from"],"id"?: string,"in_other_clubs"?: boolean,"instagram"?: string | null,"languages"?: (string)[],"license_class"?: Database["public"]['Enums']["license_class"],"locale"?: string,"motorcycle_brand"?: string | null,"motorcycle_cc"?: number | null,"motorcycle_model"?: string | null,"other_club_names"?: string | null,"other_event_interests"?: string | null,"other_languages"?: string | null,"owns_motorcycle"?: boolean,"phone"?: string,"privacy_notice_version"?: string,"profile_id"?: string | null,"referrer_name"?: string | null,"reviewed_at"?: string | null,"reviewed_by"?: string | null,"riding_styles"?: (string)[],"riding_years"?: number,"side"?: Database["public"]['Enums']["istanbul_side"] | null,"status"?: Database["public"]['Enums']["application_status"],"updated_at"?: string,"utm_campaign"?: string | null,"utm_content"?: string | null,"utm_medium"?: string | null,"utm_source"?: string | null,"utm_term"?: string | null
                   }
                   Relationships: [
                     {
+      foreignKeyName: "applications_profile_id_fkey"
+      columns: ["profile_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
       foreignKeyName: "applications_reviewed_by_fkey"
       columns: ["reviewed_by"]
 isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"member_contacts": {
+                  Row: {
+                    "email": string | null,"profile_id": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "email"?: string | null,"profile_id": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "email"?: string | null,"profile_id"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "member_contacts_profile_id_fkey"
+      columns: ["profile_id"]
+isOneToOne: true
       referencedRelation: "profiles"
       referencedColumns: ["id"]
     }

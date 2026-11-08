@@ -73,3 +73,16 @@
 - `select("…, profiles(count)")` returns `[{ count }]` per row (respects RLS); `role:roles(...)` via a FK column
   returns an object or null, typed correctly by generated types.
 - Generated RPC arg types are non-nullable even when SQL accepts null (`set_member_role(…, null)`) → cast at the call.
+
+### Expression indexes run with the inserting user's rights (2026-11-08)
+- **Symptom:** after adding `create index … on applications (private.normalize_email(email))`, the public form
+  failed: `42501: permission denied for function normalize_email` (anon has no access to `private`).
+- **Cause:** index expressions are evaluated as the role doing the INSERT/UPDATE.
+- **Do:** never index a `private.*` function on a table that anon/authenticated write; only on tables written by
+  security-definer code (e.g. `member_contacts`). The pgTAP "anon can submit" test caught it — keep such tests.
+
+### pgTAP/SQL helper parameters can be shadowed by column names (2026-11-08)
+- **Symptom:** every assertion returned the same unrelated row.
+- **Cause:** in `language sql` function `profile_of(email text)`, `where u.email = email` compared the column to
+  itself.
+- **Do:** name parameters so they can't collide with columns (`user_email`, `target_id`).

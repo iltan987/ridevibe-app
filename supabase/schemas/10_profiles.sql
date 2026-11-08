@@ -129,6 +129,38 @@ using (id = (select auth.uid()))
 with check (id = (select auth.uid()));
 
 -- ---------------------------------------------------------------------------
+-- Member contacts: the sign-in email, kept apart from profiles because every
+-- active member can read profiles. Readable by the person and by staff with
+-- members.manage (to recognise pending sign-ups). Maintained by triggers on
+-- auth.users only — nobody writes it over the API.
+-- ---------------------------------------------------------------------------
+
+create table public.member_contacts (
+  profile_id uuid primary key references public.profiles (id) on delete cascade,
+  email text check (char_length(email) <= 320),
+  updated_at timestamptz not null default now()
+);
+
+comment on table public.member_contacts is 'Private contact data per member (sign-in email). Synced from auth.users.';
+
+-- Safe here (unlike on applications): only security-definer triggers write this table.
+create index member_contacts_normalized_email_idx on public.member_contacts (private.normalize_email(email));
+
+revoke all on table public.member_contacts from anon, authenticated;
+grant select on table public.member_contacts to authenticated;
+
+alter table public.member_contacts enable row level security;
+
+create policy "member_contacts: read own or with members.manage"
+on public.member_contacts
+for select
+to authenticated
+using (
+  profile_id = (select auth.uid())
+  or (select private.has_permission('members.manage'))
+);
+
+-- ---------------------------------------------------------------------------
 -- Roles privileges (tables in 05_roles.sql). Anyone signed in may read role
 -- names/permissions (not personal data; the app shows them). Only admins edit
 -- them, and nobody can edit or delete the built-in admin role or create
@@ -266,7 +298,9 @@ grant execute on function public.set_member_role(uuid, uuid) to authenticated;
 grant execute on function public.set_member_status(uuid, public.member_status) to authenticated;
 
 -- ---------------------------------------------------------------------------
--- Create a profile when a user signs up (Google provides name + picture).
+-- Create a profile when a user signs up (Google provides name + picture), keep
+-- the sign-in email in member_contacts, and activate the member right away if
+-- an approved application with the same email exists (20_applications.sql).
 -- ---------------------------------------------------------------------------
 
 create or replace function private.handle_new_user()
@@ -285,11 +319,32 @@ begin
     case when char_length(new.raw_user_meta_data ->> 'avatar_url') <= 2048
       then new.raw_user_meta_data ->> 'avatar_url' end
   );
+  insert into public.member_contacts (profile_id, email) values (new.id, new.email);
+  perform private.activate_from_approved_application(new.id);
   return new;
 end;
 $$;
 
 revoke all on function private.handle_new_user() from public, anon, authenticated;
+
+create or replace function private.handle_user_email_change()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  update public.member_contacts set email = new.email, updated_at = now() where profile_id = new.id;
+  return new;
+end;
+$$;
+
+revoke all on function private.handle_user_email_change() from public, anon, authenticated;
+
+create trigger on_auth_user_email_changed
+after update of email on auth.users
+for each row when (old.email is distinct from new.email)
+execute function private.handle_user_email_change();
 
 create trigger on_auth_user_created
 after insert on auth.users
