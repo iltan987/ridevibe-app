@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Saira } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getTranslations } from "next-intl/server";
 import { locale } from "next/root-params";
@@ -9,15 +9,11 @@ import { SiteHeader } from "@/components/layout/site-header";
 import { routing } from "@/i18n/routing";
 import "../globals.css";
 
-// Geist ships Turkish characters (ğ, ş, ı, İ) in the latin-ext subset.
-const geistSans = Geist({
+// Saira is a variable font (weight + width axes) with Turkish characters (ğ, ş, ı, İ) in latin-ext.
+const saira = Saira({
   variable: "--font-sans",
   subsets: ["latin", "latin-ext"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin", "latin-ext"],
+  axes: ["wdth"],
 });
 
 export function generateStaticParams() {
@@ -45,7 +41,7 @@ export default async function LocaleLayout({
   return (
     <html
       lang={await locale()}
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${saira.variable} dark h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
         <NextIntlClientProvider>
