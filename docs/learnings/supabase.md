@@ -53,3 +53,7 @@
 - **Symptom:** first `config diff` also changed pooler size, TOTP MFA, email rate limits, vector storage.
 - **Do:** always `config diff` first; pin hosted values in `[remotes.production]` for anything you don't intend to
   change. Undeclared properties are left untouched (v3).
+
+### `supabase test db --remote=…` needs `--yes` in agent runs (2026-11-08)
+- **Symptom:** `HostedMutationConsentRequiredError … Run pgTAP tests … Nothing was changed.`
+- **Do:** after `db push`, run `supabase test db --remote=<url> --yes` (tests roll back; documented rollout step).
