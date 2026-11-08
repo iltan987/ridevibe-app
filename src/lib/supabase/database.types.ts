@@ -47,6 +47,9 @@ isOneToOne: false
           Functions: {
             "admin_set_member_access":
 { Args: { "new_role": Database["public"]['Enums']["member_role"],"new_status": Database["public"]['Enums']["member_status"],"target_id": string }; Returns: undefined
+                           },
+"keep_alive":
+{ Args: Record<PropertyKey, never>; Returns: boolean
                            }
           }
           Enums: {
