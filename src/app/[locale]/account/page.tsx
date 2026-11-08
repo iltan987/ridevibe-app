@@ -76,7 +76,7 @@ async function AccountDetails() {
                 </Badge>
               </dd>
               <dt className="text-muted-foreground">{t("role")}</dt>
-              <dd>{t(`roles.${profile.role}`)}</dd>
+              <dd>{user.role ? (user.role.isAdmin ? t("roles.admin") : user.role.name) : t("roles.member")}</dd>
             </dl>
           </CardContent>
         )}

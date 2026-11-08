@@ -56,7 +56,6 @@
     },
     "roles": {
       "member": "Üye",
-      "organizer": "Organizatör",
       "admin": "Yönetici"
     },
     "pendingTitle": "Üyeliğin onay bekliyor",
@@ -219,7 +218,79 @@
     "consentPhotosNo": "Fotoğraf paylaşımına rıza vermedi",
     "noticeVersion": "Aydınlatma metni sürümü: {version}",
     "noBike": "Motosikleti yok",
-    "years": "{years} yıl"
+    "years": "{years} yıl",
+    "accessErrors": {
+      "forbidden": "Bu işlem için yetkin yok.",
+      "invalid": "Geçersiz istek. Sayfayı yenileyip tekrar dene.",
+      "duplicate": "Bu isimde bir rol zaten var.",
+      "error": "Bir şeyler ters gitti. Lütfen tekrar dene."
+    },
+    "pagination": {
+      "next": "Sonraki sayfa",
+      "first": "İlk sayfa"
+    },
+    "members": {
+      "title": "Üyeler ve erişim",
+      "statuses": {
+        "pending": "Onay bekleyen",
+        "active": "Aktif",
+        "inactive": "Pasif"
+      },
+      "pendingHint": "Google ile giriş yapmış ama henüz onaylanmamış kişiler. Tanıdığın kişileri aktifleştir.",
+      "search": "İsimle ara",
+      "searchButton": "Ara",
+      "empty": "Bu listede kimse yok.",
+      "joined": "Kayıt: {date}",
+      "you": "Sen",
+      "role": "Rol",
+      "noRole": "Üye (rolsüz)",
+      "activate": "Aktifleştir",
+      "deactivate": "Pasifleştir",
+      "reactivate": "Yeniden aktifleştir"
+    },
+    "roles": {
+      "title": "Roller ve yetkiler",
+      "intro": "Roller kimin neyi yapabileceğini belirler. Her üyenin en fazla bir rolü olur; rolsüz üyeler yalnızca üye alanını görür. Rolleri üyelere “Üyeler ve erişim” sayfasından atarsın.",
+      "adminDescription": "Tüm yetkilere sahiptir. Rolleri düzenlemek ve rol atamak yalnızca yöneticilere açıktır. Bu rol değiştirilemez veya silinemez.",
+      "holders": "{count, plural, =0 {Bu rolde kimse yok} other {# kişi bu rolde}}",
+      "name": "Rol adı",
+      "namePlaceholder": "Örn. Yol Kaptanı",
+      "permissions": "Yetkiler",
+      "save": "Kaydet",
+      "saved": "Kaydedildi",
+      "delete": "Rolü sil",
+      "deleteConfirm": "“{name}” silinsin mi? Bu roldeki {count, plural, =0 {kimse etkilenmez} other {# kişi normal üye olur}}.",
+      "confirmDelete": "Evet, sil",
+      "cancel": "Vazgeç",
+      "newRole": "Yeni rol",
+      "create": "Rol ekle"
+    },
+    "permissions": {
+      "applications": {
+        "view": {
+          "label": "Başvuruları görüntüleme",
+          "description": "Başvuru listesini ve başvuranların bilgilerini görebilir."
+        },
+        "review": {
+          "label": "Başvuruları inceleme",
+          "description": "“İletişime geçildi” olarak işaretleyebilir ve not ekleyebilir."
+        },
+        "decide": {
+          "label": "Başvuruyu onaylama / reddetme",
+          "description": "Onay üyelik verir. İnceleme yetkisini de kapsar."
+        },
+        "delete": {
+          "label": "Başvuru silme",
+          "description": "KVKK silme talepleri için başvuruyu kalıcı olarak siler."
+        }
+      },
+      "members": {
+        "manage": {
+          "label": "Üyeleri yönetme",
+          "description": "Onay bekleyenleri görebilir, üyeleri aktif/pasif yapabilir (yöneticiler hariç)."
+        }
+      }
+    }
   },
   "NotFound": {
     "title": "Sayfa bulunamadı",

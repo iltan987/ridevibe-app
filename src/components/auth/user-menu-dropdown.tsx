@@ -1,6 +1,6 @@
 "use client";
 
-import { ClipboardList, LogOut, UserRound } from "lucide-react";
+import { ClipboardList, LogOut, ShieldCheck, UserRound, UsersRound } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useTransition } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -21,11 +21,15 @@ import { initials } from "@/lib/initials";
 export function UserMenuDropdown({
   name,
   avatarUrl,
-  showAdmin,
+  showApplications,
+  showMembers,
+  showRoles,
 }: {
   name: string;
   avatarUrl: string | null;
-  showAdmin: boolean;
+  showApplications: boolean;
+  showMembers: boolean;
+  showRoles: boolean;
 }) {
   const t = useTranslations("Auth");
   const tAdmin = useTranslations("Admin");
@@ -51,10 +55,22 @@ export function UserMenuDropdown({
           <UserRound aria-hidden />
           {t("account")}
         </DropdownMenuLinkItem>
-        {showAdmin && (
+        {showApplications && (
           <DropdownMenuLinkItem render={<Link href="/admin/applications" />}>
             <ClipboardList aria-hidden />
             {tAdmin("applications")}
+          </DropdownMenuLinkItem>
+        )}
+        {showMembers && (
+          <DropdownMenuLinkItem render={<Link href="/admin/members" />}>
+            <UsersRound aria-hidden />
+            {tAdmin("members.title")}
+          </DropdownMenuLinkItem>
+        )}
+        {showRoles && (
+          <DropdownMenuLinkItem render={<Link href="/admin/roles" />}>
+            <ShieldCheck aria-hidden />
+            {tAdmin("roles.title")}
           </DropdownMenuLinkItem>
         )}
         <DropdownMenuItem
