@@ -16,6 +16,13 @@ announcements, photo galleries, attendance. Plan and decisions: `docs/PLAN.md`. 
   quirks, root causes of mistakes, workarounds, environment issues), one file per topic (index in its README).
   Before working in an area, read the matching file. Whenever you discover something non-obvious — by docs, by
   trial, or by fixing your own mistake — add an entry (symptom → cause → do) in the same commit as the work.
+- **Workflow per iteration (superpowers):** design → `brainstorming` (spec, iltan approves) → `writing-plans` →
+  `subagent-driven-development` with `test-driven-development` (pgTAP first for permissions) → `verification-before-
+  completion` (lint, tsc, test, db:test, build, browser E2E) → `requesting-code-review` (+ `/security-review` for
+  RLS/grant changes) → iltan reviews → merge. Small fixes skip design/plan. No git worktrees (one local Supabase DB);
+  no PRs (local `--no-ff` merge). End of session: `claude-md-management:revise-claude-md`.
+- **Fix the environment yourself** before calling it a blocker: e.g. Docker down → start
+  `"/mnt/c/Program Files/Docker/Docker/Docker Desktop.exe" &` and wait for `/var/run/docker.sock`.
 
 ## Git
 
@@ -43,6 +50,8 @@ pnpm db:reset                 # rebuild local DB from migrations (+ seed)
 pnpm db:migration <name>      # generate a migration from supabase/schemas (review it!)
 pnpm db:test                  # pgTAP tests in supabase/tests/database
 pnpm db:types                 # regenerate src/lib/supabase/database.types.ts
+pnpm exec supabase migration up   # apply new migrations locally, keeping data (db:reset wipes auth users)
+kill $(ss -ltnp | grep ':3123 ' | grep -oP 'pid=\K[0-9]+')   # stop a local server; never `pkill -f` (kills own shell)
 ```
 
 ## Database (Supabase)
@@ -64,6 +73,10 @@ pnpm db:types                 # regenerate src/lib/supabase/database.types.ts
   `src/lib/auth/`. A new permission = enum value + policy/RPC check + pgTAP test + `Admin.permissions.*` messages.
 - Status: `pending` / `active` / `inactive`.
 - Every permission rule gets a pgTAP test, including the "must fail" cases.
+- Generated migrations may DROP a replaced column before its data is copied: move the DROP to the end and add the
+  hand-written data step in between. Seed rows the app relies on (e.g. built-in roles) go in the migration.
+- Never put a `private.*` function in an index/default on a table that anon/authenticated write (it runs with the
+  writer's rights → the public form breaks).
 
 ### Production (hosted Supabase `ridevibe-db`, ref `igqqicbfejhnsggfuydh`, Frankfurt)
 
@@ -78,6 +91,11 @@ pnpm db:types                 # regenerate src/lib/supabase/database.types.ts
 - Google OAuth creds: `GOOGLE_LOCAL_*` / `GOOGLE_PROD_*` in the root `.env` (git-ignored). Never name config env vars
   `SUPABASE_*` — the CLI lets those override every config value, including remote blocks.
 - Functions run in `fra1` (`vercel.ts`), next to the database.
+- Rollout: merge → `db push` (dry-run first) → `test db --remote --yes` → push `main` (Vercel deploys). If the
+  migration removes something old code uses, push `main` immediately after. Don't push branches with schema changes
+  for a preview first: previews use the production DB.
+- Check crons/requests: `vercel --scope <team> logs requests --project ridevibe-app --environment production --json
+  --since 45m -q 'requestPath:"/api/keep-alive"'` (Hobby keeps < 1 h; fields under `.data`).
 
 ## Stack & conventions
 
@@ -95,6 +113,9 @@ pnpm db:types                 # regenerate src/lib/supabase/database.types.ts
   package (re-exported in `@/lib/utils`). Add components with `pnpm dlx shadcn@latest add <name>`.
 - Mobile-first: design for ~390px first; the bottom tab bar is the main navigation on phones.
 - Primary nav items live in `src/components/layout/nav-items.ts`.
+- Server Actions: validate with Zod, let RLS decide, map error codes to results, call `refresh()` (`next/cache`)
+  after a successful mutation. They and Route Handlers can't read the locale root param — derive it from data.
+- Lists use keyset pagination (`src/lib/pagination.ts` + `Pager`); access checks via `can()` / `requirePermission()`.
 - **Every list paginates.** No fixed caps like `.limit(200)`: the club grew to ~130 members in two weeks. Design
   queries and screens with pagination (and visible totals) from the start; don't let counts fail silently.
 

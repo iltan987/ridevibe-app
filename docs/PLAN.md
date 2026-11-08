@@ -69,9 +69,25 @@ Build in this order, one branch each:
 4. **Announcements** — short organizer posts, pinned on the home page.
 5. Right after the MVP: **event photo gallery** (Cloudflare R2).
 
+**Joining after approval (decided 2026-11-08):** staff add approved people to the club WhatsApp group **manually**,
+and send the sign-in invite with the one-tap `wa.me` button on the application page. No automation for now.
+
 **Design pass needed:** everything so far uses default shadcn styling. Before/while building the MVP screens, define
 the visual identity (logo, colours, typography, light/dark, motorcycle "vibe") and apply it across existing pages.
 Do this as its own step, early, so new screens are built in the final style.
+
+## Optional later: automatic WhatsApp messages
+
+Possible via Meta's official **WhatsApp Business Platform (Cloud API)**: on approval the app sends a pre-approved
+*utility* template (TR/EN) with the sign-in link. Cost is negligible (Turkey utility ≈ $0.001/message per third-party
+sources, 2026 — verify in Meta's pricing table; free inside an open customer-service window). Needs a Meta Business
+account + WhatsApp Business Account, a number for the API (the club's WhatsApp Business number can usually be shared
+via "coexistence"), a payment method, and template approval. Unverified businesses: 250 new contacts/24 h.
+Never use unofficial WhatsApp Web automation (Baileys, whatsapp-web.js): against the ToS, numbers get banned.
+
+Decision (iltan, 2026-11-08): **not now** — too much setup for the benefit. If built, it must be **optional**: an
+admin on/off switch in the app (plus "off" automatically when the API credentials aren't configured), with the
+manual `wa.me` button always available as the fallback. KVKK: Meta as a processor abroad → privacy notice.
 
 ## Member conduct: notes, warnings, bans (planned, step 2b)
 
