@@ -40,3 +40,12 @@
 - Supabase Free pauses after a week of too little "user database activity" (docs: "a few user requests to the
   database each day") → the cron calls `rpc("keep_alive")`, a real query through the Data API, not a health URL.
 - **Source:** vercel.com/docs/cron-jobs/usage-and-pricing, manage-cron-jobs; supabase.com/docs/guides/platform/free-project-pausing.
+
+### Checking production requests/crons from the CLI on Hobby (2026-11-08)
+- **Symptom:** `vercel logs --since 1h` printed nothing useful; filtering hid the JSON error *"The hobby plan does not
+  retain runtime logs for the requested time range"*. Default `runtime` logs were empty even for real traffic.
+- **Do:** use CDN request records, max ~45 min back:
+  `vercel --scope <team> logs requests --project ridevibe-app --environment production --json --since 45m -q 'requestPath:"/api/keep-alive"'`
+  Fields are under `.data` (`timestamp`, `httpStatus`, `userAgent`); cron calls show `vercel-cron/1.0`. Free-text
+  `-q` isn't supported for requests — use `field:"value"`. Never pipe CLI errors into a filter that can hide them.
+- Verified 2026-11-08: keep-alive cron ran 19:17 UTC → 200.
