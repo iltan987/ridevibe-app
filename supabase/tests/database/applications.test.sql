@@ -2,19 +2,33 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(21);
+select plan(24);
 
 -- ---------------------------------------------------------------------------
--- Fixtures: an admin, an organizer and an active member (as postgres).
--- Every statement is scoped to fixture rows (@pgtap.invalid) so the test also
--- works on a database with real data (e.g. production; all rolled back).
+-- Fixtures: an admin, a reviewer (view + review), a decider (view + decide)
+-- and an active member without a role (as postgres). Every statement is scoped
+-- to fixture rows (@pgtap.invalid) so the test also works on a database with
+-- real data (e.g. production; all rolled back).
 -- ---------------------------------------------------------------------------
 insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-0000000000a1', 'pgtap-admin@pgtap.invalid', '{"full_name": "Ada Admin"}'),
   ('00000000-0000-0000-0000-0000000000b1', 'pgtap-organizer@pgtap.invalid', '{"full_name": "Oya Organizer"}'),
-  ('00000000-0000-0000-0000-0000000000c1', 'pgtap-member@pgtap.invalid', '{"full_name": "Mert Member"}');
-update public.profiles set role = 'admin', status = 'active' where id = '00000000-0000-0000-0000-0000000000a1';
-update public.profiles set role = 'organizer', status = 'active' where id = '00000000-0000-0000-0000-0000000000b1';
+  ('00000000-0000-0000-0000-0000000000c1', 'pgtap-member@pgtap.invalid', '{"full_name": "Mert Member"}'),
+  ('00000000-0000-0000-0000-0000000000d1', 'pgtap-decider@pgtap.invalid', '{"full_name": "Deniz Decider"}');
+insert into public.roles (id, name) values
+  ('00000000-0000-0000-0000-0000000000e1', 'pgtap-reviewer'),
+  ('00000000-0000-0000-0000-0000000000e2', 'pgtap-decider');
+insert into public.role_permissions (role_id, permission) values
+  ('00000000-0000-0000-0000-0000000000e1', 'applications.view'),
+  ('00000000-0000-0000-0000-0000000000e1', 'applications.review'),
+  ('00000000-0000-0000-0000-0000000000e2', 'applications.view'),
+  ('00000000-0000-0000-0000-0000000000e2', 'applications.decide');
+update public.profiles set role_id = (select id from public.roles where is_admin), status = 'active'
+  where id = '00000000-0000-0000-0000-0000000000a1';
+update public.profiles set role_id = '00000000-0000-0000-0000-0000000000e1', status = 'active'
+  where id = '00000000-0000-0000-0000-0000000000b1';
+update public.profiles set role_id = '00000000-0000-0000-0000-0000000000e2', status = 'active'
+  where id = '00000000-0000-0000-0000-0000000000d1';
 update public.profiles set status = 'active' where id = '00000000-0000-0000-0000-0000000000c1';
 
 create function pg_temp.login(uid uuid) returns void language sql as $$
@@ -153,21 +167,27 @@ reset role;
 select is((select status::text from public.applications where email like '%@pgtap.invalid'), 'new', 'members cannot change applications');
 
 -- ---------------------------------------------------------------------------
--- Organizer (staff)
+-- Reviewer (applications.view + applications.review)
 -- ---------------------------------------------------------------------------
 select pg_temp.login('00000000-0000-0000-0000-0000000000b1');
 
-select is((select count(*)::int from public.applications where email like '%@pgtap.invalid'), 1, 'organizers can read applications');
+select is((select count(*)::int from public.applications where email like '%@pgtap.invalid'), 1, 'reviewers can read applications');
 
 select lives_ok(
   $$ update public.applications set status = 'contacted', admin_notes = 'Called on WhatsApp' where email like '%@pgtap.invalid' $$,
-  'organizers can update status and notes'
+  'reviewers can mark contacted and add notes'
 );
 
 select throws_ok(
   $$ update public.applications set full_name = 'Changed' where email like '%@pgtap.invalid' $$,
   '42501', null,
-  'organizers cannot edit applicant answers'
+  'reviewers cannot edit applicant answers'
+);
+
+select throws_ok(
+  $$ update public.applications set status = 'approved' where email like '%@pgtap.invalid' $$,
+  '42501', null,
+  'reviewers cannot approve (needs applications.decide)'
 );
 
 delete from public.applications where email like '%@pgtap.invalid';
@@ -176,7 +196,23 @@ reset role;
 select is(
   (select reviewed_by::text || '|' || (reviewed_at is not null)::text || '|' || status from public.applications where email like '%@pgtap.invalid'),
   '00000000-0000-0000-0000-0000000000b1|true|contacted',
-  'status change records reviewer and time; organizer delete had no effect'
+  'status change records reviewer and time; reviewer delete had no effect'
+);
+
+-- ---------------------------------------------------------------------------
+-- Decider (applications.view + applications.decide)
+-- ---------------------------------------------------------------------------
+select pg_temp.login('00000000-0000-0000-0000-0000000000d1');
+select lives_ok(
+  $$ update public.applications set status = 'approved' where email like '%@pgtap.invalid' $$,
+  'deciders can approve'
+);
+reset role;
+
+select is(
+  (select reviewed_by::text || '|' || status from public.applications where email like '%@pgtap.invalid'),
+  '00000000-0000-0000-0000-0000000000d1|approved',
+  'approval is stamped with the decider'
 );
 
 -- ---------------------------------------------------------------------------
