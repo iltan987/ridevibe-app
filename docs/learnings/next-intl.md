@@ -30,3 +30,8 @@
 - **Cause:** next-intl splits keys on `.`; a permission value like `applications.view` can't be a flat key.
 - **Do:** nest the messages (`permissions.applications.view.label`); then `t(\`permissions.${permission}.label\`)`
   works and stays type-checked.
+
+### Messages in another language than the viewer's (2026-11-08)
+- **Do:** `getTranslations({ locale, namespace })` renders text in a given locale — used for the WhatsApp invite,
+  which must be in the *applicant's* language (`applications.locale`) while the admin browses in theirs. Build the
+  link with `getPathname({ href: "/sign-in", locale })` so English applicants get `/en/sign-in`.

@@ -1,13 +1,17 @@
 import { Mail, MessageCircle, Phone } from "lucide-react";
 import type { Metadata } from "next";
+import { hasLocale } from "next-intl";
 import { getFormatter, getTranslations } from "next-intl/server";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { Suspense, type ReactNode } from "react";
-import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Link } from "@/i18n/navigation";
+import { ApplicationReviewPanel } from "@/components/admin/application-review-panel";
+import { getPathname, Link } from "@/i18n/navigation";
+import { routing } from "@/i18n/routing";
+import { can } from "@/lib/auth/permissions";
 import { getApplication } from "@/lib/applications/queries";
 import { requirePermission } from "@/lib/auth/require-access";
 
@@ -41,7 +45,7 @@ function ageFrom(birthDate: string) {
 
 async function ApplicationDetail({ params }: { params: PageProps<"/[locale]/admin/applications/[id]">["params"] }) {
   const { id } = await params;
-  await requirePermission("applications.view", `/admin/applications/${id}`);
+  const me = await requirePermission("applications.view", `/admin/applications/${id}`);
 
   const [a, t, tApply, format] = await Promise.all([
     getApplication(id),
@@ -56,12 +60,18 @@ async function ApplicationDetail({ params }: { params: PageProps<"/[locale]/admi
   const yesNo = (v: boolean) => tApply(v ? "options.yes" : "options.no");
   const waNumber = a.phone.replace(/\D/g, "");
 
+  const decidedLabel = a.reviewed_at
+    ? a.reviewer?.full_name
+      ? t("review.decidedBy", { name: a.reviewer.full_name, date: format.dateTime(new Date(a.reviewed_at), { dateStyle: "medium", timeStyle: "short" }) })
+      : t("review.decidedByUnknown", { date: format.dateTime(new Date(a.reviewed_at), { dateStyle: "medium", timeStyle: "short" }) })
+    : null;
+  const inviteHref = a.status === "approved" && !a.member ? await whatsAppInvite(a) : null;
+
   return (
     <>
       <header className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="text-2xl font-bold tracking-tight">{a.full_name}</h1>
-          <Badge variant={a.status === "new" ? "default" : "secondary"}>{t(`statuses.${a.status}`)}</Badge>
         </div>
         <p className="text-sm text-muted-foreground">
           {t("submittedAt")}: {format.dateTime(new Date(a.created_at), { dateStyle: "long", timeStyle: "short" })}
@@ -78,6 +88,16 @@ async function ApplicationDetail({ params }: { params: PageProps<"/[locale]/admi
           </a>
         </div>
       </header>
+
+      <ApplicationReviewPanel
+        application={{ id: a.id, status: a.status, name: a.full_name, email: a.email, notes: a.admin_notes }}
+        canReview={can(me.access, "applications.review")}
+        canDecide={can(me.access, "applications.decide")}
+        canDelete={can(me.access, "applications.delete")}
+        decidedLabel={decidedLabel}
+        linkedMemberLabel={a.member ? t("review.linked", { name: a.member.full_name }) : null}
+        inviteHref={inviteHref}
+      />
 
       <Section title={tApply("sections.about")}>
         <Row label={tApply("fields.phone")}>{a.phone}</Row>
@@ -141,6 +161,17 @@ async function ApplicationDetail({ params }: { params: PageProps<"/[locale]/admi
       </Section>
     </>
   );
+}
+
+/** wa.me link with the approval invite, written in the applicant's language. */
+async function whatsAppInvite(a: { full_name: string; email: string; phone: string; locale: string }) {
+  const locale = hasLocale(routing.locales, a.locale) ? a.locale : routing.defaultLocale;
+  const [t, h] = await Promise.all([getTranslations({ locale, namespace: "Admin.invite" }), headers()]);
+  const host = h.get("x-forwarded-host") ?? h.get("host");
+  const proto = h.get("x-forwarded-proto") ?? (host?.startsWith("localhost") ? "http" : "https");
+  const url = `${proto}://${host}${getPathname({ href: "/sign-in", locale })}`;
+  const text = t("message", { name: a.full_name.split(" ")[0], email: a.email, url });
+  return `https://wa.me/${a.phone.replace(/\D/g, "")}?text=${encodeURIComponent(text)}`;
 }
 
 function Section({ title, children }: { title: string; children: ReactNode }) {

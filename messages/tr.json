@@ -246,7 +246,8 @@
       "noRole": "Üye (rolsüz)",
       "activate": "Aktifleştir",
       "deactivate": "Pasifleştir",
-      "reactivate": "Yeniden aktifleştir"
+      "reactivate": "Yeniden aktifleştir",
+      "noEmail": "E-posta yok"
     },
     "roles": {
       "title": "Roller ve yetkiler",
@@ -290,6 +291,37 @@
           "description": "Onay bekleyenleri görebilir, üyeleri aktif/pasif yapabilir (yöneticiler hariç)."
         }
       }
+    },
+    "review": {
+      "title": "Değerlendirme",
+      "markContacted": "İletişime geçildi",
+      "backToNew": "Yeniye al",
+      "approve": "Onayla",
+      "reject": "Reddet",
+      "reopen": "Kararı geri al",
+      "approveTitle": "Başvuru onaylansın mı?",
+      "approveBody": "{name} bu e-postayla ({email}) Google ile giriş yaptığında otomatik olarak aktif üye olur. Onaydan sonra WhatsApp davetini gönder.",
+      "rejectTitle": "Başvuru reddedilsin mi?",
+      "rejectBody": "{name} daha sonra yeniden başvurabilir.",
+      "reopenBody": "Başvuru “İletişime geçildi” durumuna döner. Zaten aktifleşmiş bir hesap aktif kalır; gerekirse Üyeler sayfasından pasifleştir.",
+      "confirm": "Evet",
+      "cancel": "Vazgeç",
+      "notes": "Notlar",
+      "notesHint": "Yalnızca başvuruları görebilen yetkililer görür. Kişi hakkında sadece gerçekleri yaz (KVKK).",
+      "saveNotes": "Notu kaydet",
+      "saved": "Kaydedildi",
+      "decidedBy": "{name} · {date}",
+      "decidedByUnknown": "Değiştiren: bilinmiyor · {date}",
+      "noPermission": "Bu başvurunun durumunu değiştirme yetkin yok.",
+      "linked": "Hesap bağlandı: {name}",
+      "notLinked": "Henüz giriş yapmadı. Davet mesajını gönder; başvurudaki e-postayla giriş yaptığında otomatik olarak aktif olur. Farklı bir Google hesabıyla girerse onu Üyeler sayfasından aktifleştir.",
+      "sendInvite": "WhatsApp daveti gönder",
+      "delete": "Başvuruyu sil",
+      "deleteTitle": "Başvuru kalıcı olarak silinsin mi?",
+      "deleteBody": "KVKK silme talepleri için. Bu işlem geri alınamaz."
+    },
+    "invite": {
+      "message": "Merhaba {name}! 🏍️ Ride & Vibe başvurun onaylandı, aramıza hoş geldin!\n\nÜyeliğini tamamlamak için başvuruda verdiğin e-postanın ({email}) Google hesabıyla giriş yap:\n{url}\n\nBu e-posta bir Google hesabı değilse bu mesaja yanıt ver, hesabını birlikte bağlayalım."
     }
   },
   "NotFound": {

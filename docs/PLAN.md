@@ -59,8 +59,9 @@ new accounts start as `pending`).
 ## MVP for Samet (agreed 2026-11-08)
 
 Build in this order, one branch each:
-1. **Applications review workflow** — status changes + notes; on approval a WhatsApp invite with sign-in link; signing
-   in with the same email activates the member automatically.
+1. **Applications review workflow** ✅ (2026-11-08) — status changes + notes; on approval a WhatsApp invite with
+   sign-in link; signing in with the same email (Gmail dots/+tags ignored) activates the member automatically.
+   Different email → staff activate the pending sign-up on `/admin/members` (shows sign-in emails).
 2. **Members** — directory (name, district/side, bike) and "my profile" editing.
    2b. **Member conduct** — confidential staff notes, warnings, suspend/ban (see "Member conduct" below).
 3. **Events** — organizers create rides (date, meeting point + map link, route, capacity); members RSVP with a
