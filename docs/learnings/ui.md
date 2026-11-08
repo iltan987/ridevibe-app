@@ -78,3 +78,9 @@
 
 ### Active nav text uses `text-accent-text`, not `text-primary` (2026-11-09)
 - Orange `--primary` on cream is ~2.2:1; `--accent-text` passes AA. On light, `bg-muted` under it is only ~4.05:1, so the desktop active pill is `bg-card`.
+
+### Next adds a second `theme-color` meta after hydration; tinted text needs blended-contrast checks (2026-11-09)
+- **Symptom:** after hydration `<head>` has two `meta[name="theme-color"]` (ours + Next's, recreated on navigation); updating only the first left the browser bar on the old colour.
+- **Do:** `applyResolvedTheme`/`initTheme` use `querySelectorAll` and set every tag (fake docs in `theme.test.ts` carry two).
+- **Also:** `text-destructive` on `bg-destructive/10…20` (or `bg-input/30`) over card/popover is lower contrast than on the plain background. `globals-contrast.test.ts` blends the tint (`blend()`); keep its alpha constants in sync with `button.tsx`/`badge.tsx`. Orange as *text* (`link` variants) is `text-accent-text`, and light `--ring` must be ≥ 3:1 on cream (`#B4560C`).
+- **Also:** CSS-mask elements (wordmark) vanish in Windows forced-colours mode unless `forced-color-adjust: none`.

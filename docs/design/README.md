@@ -12,7 +12,7 @@ actions, teal for positive/status states, cream text, Saira type.
 - **Theme:** `src/lib/theme.ts` (`initTheme` / `themeInitScript`, own inline head script instead of `next-themes`),
   `src/components/theme/{theme-script,theme-switcher}.tsx`. Switcher is in the header only. Nothing is stored until
   the user picks.
-- **Brand:** `src/components/brand/{wordmark,club-badge}.tsx`, `public/brand/` (wordmark SVG, icon PNGs),
+- **Brand:** `src/components/brand/{wordmark,club-badge}.tsx`, `src/assets/brand/badge.png` (production badge), `public/brand/` (wordmark SVG, icon PNGs),
   `src/app/{favicon.ico,icon.svg,apple-icon.png,manifest.ts}`, `src/app/[locale]/opengraph-image.png`.
 - **Mockups:** `docs/design/mockups/` (`chosen-gece-turkuaz.html`, `directions-a-b-c.html`, `shelved-logo-concepts.*`).
 
@@ -24,9 +24,9 @@ actions, teal for positive/status states, cream text, Saira type.
 
 ## Asset provenance
 
-- Badge: club WhatsApp JPEG (`brand/badge-original-whatsapp.jpg`) → Real-ESRGAN `realesrgan-x4plus` 4× → elliptical
-  mask → `brand/badge-2048.png` (and the cream wordmark master) → wordmark traced to SVG (potrace).
-- The **wordmark master (`wordmark-cream-master.png`) is the real source** for letters: `monogram-cream-master.png` is
+- Badge: club WhatsApp JPEG (`docs/design/brand/badge-original-whatsapp.jpg`) → Real-ESRGAN `realesrgan-x4plus` 4× → elliptical
+  mask → `docs/design/brand/badge-2048.png` (and the cream wordmark master) → wordmark traced to SVG (potrace).
+- The **wordmark master (`docs/design/brand/wordmark-cream-master.png`) is the real source** for letters: `docs/design/brand/monogram-cream-master.png` is
   badly cut (R leg, V, & overlap), so the R&V icon artwork was rebuilt from the wordmark's letters.
 - The print-resolution master is kept outside git by iltan.
 - The WhatsApp group photo (`ride-vibe-whatsapp-1024.jpg`) is replaced with the upscaled badge **manually**.
@@ -35,4 +35,4 @@ actions, teal for positive/status states, cream text, Saira type.
 ## Open items
 
 - `/admin/members` filter pills still use a faint `border-border` in light theme.
-- The badge PNG is 1.26 MB; `next/image` optimises it at serve time.
+- The production badge `src/assets/brand/badge.png` is 1.26 MB; `next/image` optimises it at serve time.

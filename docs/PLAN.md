@@ -76,6 +76,7 @@ and send the sign-in invite with the one-tap `wa.me` button on the application p
 teal for positive/status, Saira type, traced R&V wordmark and club badge. Spec:
 `docs/superpowers/specs/2026-11-09-design-system-design.md`; fallbacks and asset provenance: `docs/design/README.md`.
 Built on `feat/design-system`; new screens use the tokens in `src/app/globals.css`.
+Todo (manual): Samet replaces the WhatsApp group photo with `ride-vibe-whatsapp-1024.jpg` (kept outside git by iltan).
 
 ## Optional later: automatic WhatsApp messages
 
