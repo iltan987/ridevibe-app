@@ -32,9 +32,10 @@ pnpm dev          # dev server
 pnpm build        # production build (also validates Cache Components rules)
 pnpm lint         # ESLint
 pnpm exec tsc --noEmit
+pnpm test         # unit tests (node --test, *.test.ts)
 ```
 
-Run lint, typecheck and build before every commit that touches code.
+Run lint, typecheck, tests and build before every commit that touches code.
 
 ```bash
 pnpm db:start                 # local Supabase in Docker (Docker Desktop with WSL integration must be running)
@@ -89,6 +90,8 @@ pnpm db:types                 # regenerate src/lib/supabase/database.types.ts
   package (re-exported in `@/lib/utils`). Add components with `pnpm dlx shadcn@latest add <name>`.
 - Mobile-first: design for ~390px first; the bottom tab bar is the main navigation on phones.
 - Primary nav items live in `src/components/layout/nav-items.ts`.
+- **Every list paginates.** No fixed caps like `.limit(200)`: the club grew to ~130 members in two weeks. Design
+  queries and screens with pagination (and visible totals) from the start; don't let counts fail silently.
 
 ## Privacy (KVKK)
 

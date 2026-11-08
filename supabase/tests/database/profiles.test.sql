@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(15);
+select plan(16);
 
 -- ---------------------------------------------------------------------------
 -- Fixtures (run as postgres, which bypasses RLS). All queries below are scoped
@@ -19,6 +19,17 @@ select is(
   'Mert Member|member|pending',
   'sign-up trigger creates a pending member profile, falling back to the "name" claim'
 );
+
+insert into auth.users (id, email, raw_user_meta_data) values
+  ('00000000-0000-0000-0000-00000000000e', 'pgtap-longavatar@pgtap.invalid',
+   jsonb_build_object('full_name', 'Lale Long', 'avatar_url', 'https://x.invalid/' || repeat('a', 2100)));
+
+select is(
+  (select full_name || '|' || coalesce(avatar_url, 'null') from public.profiles where id = '00000000-0000-0000-0000-00000000000e'),
+  'Lale Long|null',
+  'an over-long avatar URL is dropped instead of breaking sign-up'
+);
+delete from auth.users where id = '00000000-0000-0000-0000-00000000000e';
 
 update public.profiles set role = 'admin', status = 'active' where id = '00000000-0000-0000-0000-00000000000a';
 update public.profiles set status = 'active'
