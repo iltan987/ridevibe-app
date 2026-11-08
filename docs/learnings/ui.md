@@ -26,3 +26,11 @@
 
 ### Outline button border is barely visible (2026-11-07)
 - Known cosmetic issue on light theme (`border-border`); revisit when theming/branding.
+
+### CSS `uppercase` on a `tr` page dots English i's (2026-11-09)
+- **Symptom:** brand rendered as "RİDE & VİBE" in mockups with `text-transform: uppercase`.
+- **Cause:** case mapping follows the element's `lang`; Turkish maps `i → İ` (correct for Turkish words like
+  "BİRLİKTE", wrong for English).
+- **Do:** never CSS-uppercase English/brand words on Turkish pages: use the wordmark asset, write the capitals in the
+  source, or set `lang="en"` on the element.
+- **Source:** found by rendering mockups (headless Chrome).

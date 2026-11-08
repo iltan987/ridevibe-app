@@ -1,0 +1,174 @@
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Saira:wdth,wght@50..125,100..900&family=Sora:wght@300..800&display=swap');
+
+.dirs .card-image { aspect-ratio: auto; display: block; padding: 18px; background: #1b1d22; }
+.phone { --r: 14px; width: 100%; max-width: 330px; margin: 0 auto; border-radius: 28px; overflow: hidden;
+  background: var(--bg); color: var(--fg); font-family: var(--body); border: 6px solid #000; box-shadow: 0 10px 30px rgba(0,0,0,.4); }
+.phone * { box-sizing: border-box; }
+.ph-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+.wm { font-family: var(--display); font-weight: 800; letter-spacing: var(--wm-track); font-stretch: var(--wm-stretch); text-transform: uppercase; font-size: 15px; }
+.wm b { color: var(--accent-text); font-weight: inherit; }
+.ph-tools { display: flex; gap: 8px; align-items: center; font-size: 11px; color: var(--muted); }
+.avatar { width: 26px; height: 26px; border-radius: 50%; background: var(--surface2); border: 1px solid var(--line); }
+.hero { padding: 22px 16px 18px; position: relative; overflow: hidden; }
+.hero::after { content: ""; position: absolute; inset: auto -40px -20px auto; width: 200px; height: 130px; background: var(--glow); filter: blur(46px); opacity: .32; pointer-events: none; }
+.eyebrow { font-size: 10.5px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--accent-text); }
+.h1 { font-family: var(--display); font-weight: var(--h-weight); font-stretch: var(--h-stretch); text-transform: var(--h-case); letter-spacing: var(--h-track);
+  font-size: 34px; line-height: 1.02; margin: 8px 0 10px; }
+.sub { font-size: 13px; line-height: 1.5; color: var(--muted); margin: 0 0 16px; }
+.btns { display: flex; gap: 8px; position: relative; z-index: 1; }
+.btn { flex: 1; text-align: center; padding: 11px 10px; border-radius: var(--btn-r); font-size: 13px; font-weight: 700; font-family: var(--body); }
+.btn-p { background: var(--accent); color: var(--on-accent); }
+.btn-o { border: 1px solid var(--line-strong); color: var(--fg); }
+.sec { padding: 4px 16px 16px; }
+.sec-t { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+.sec-t span:first-child { font-family: var(--display); font-weight: 700; font-stretch: var(--h-stretch); text-transform: var(--h-case); font-size: 14px; letter-spacing: .02em; }
+.sec-t span:last-child { font-size: 11px; color: var(--accent-text); font-weight: 600; }
+.ev { display: flex; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px; }
+.date { flex: none; width: 50px; border-radius: 10px; background: var(--surface2); text-align: center; padding: 7px 0; }
+.date small { display: block; font-size: 9.5px; letter-spacing: .12em; color: var(--muted); font-weight: 600; }
+.date strong { display: block; font-family: var(--display); font-size: 22px; font-weight: 800; line-height: 1.05; font-stretch: var(--h-stretch); }
+.ev-b { flex: 1; min-width: 0; }
+.ev-t { font-weight: 700; font-size: 14px; margin-bottom: 3px; }
+.ev-m { font-size: 11.5px; color: var(--muted); margin-bottom: 9px; }
+.bar { height: 5px; border-radius: 9px; background: var(--surface2); overflow: hidden; }
+.bar i { display: block; height: 100%; width: 60%; background: var(--accent2); }
+.ev-f { display: flex; justify-content: space-between; align-items: center; margin-top: 7px; font-size: 11px; color: var(--muted); }
+.pill { font-size: 10.5px; font-weight: 700; padding: 3px 8px; border-radius: 99px; background: var(--pill-bg); color: var(--pill-fg); }
+.tabs { display: grid; grid-template-columns: repeat(4,1fr); border-top: 1px solid var(--line); background: var(--surface); padding: 8px 4px 12px; }
+.tab { text-align: center; font-size: 10px; color: var(--muted); }
+.tab::before { content: ""; display: block; width: 20px; height: 20px; margin: 0 auto 4px; border-radius: 6px; border: 1.6px solid currentColor; opacity: .8; }
+.tab.on { color: var(--accent-text); font-weight: 700; }
+.tab.on::before { background: currentColor; opacity: 1; }
+.lightrow { margin-top: 14px; }
+.lightrow .phone { border-radius: 16px; border-width: 4px; }
+.lightrow .ph-cap { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); padding: 10px 12px 0; }
+.lightrow .sec { padding-top: 8px; }
+.swatches { display: flex; gap: 6px; margin-top: 8px; }
+.swatches span { width: 22px; height: 22px; border-radius: 6px; border: 1px solid rgba(255,255,255,.15); }
+
+/* A — Far (headlight amber), Archivo expanded */
+.d-a { --display: 'Archivo', sans-serif; --body: 'Archivo', sans-serif; --h-weight: 800; --h-stretch: 125%; --h-case: none; --h-track: -.02em;
+  --wm-stretch: 125%; --wm-track: .02em; --btn-r: 10px;
+  --bg: #0A0E1A; --surface: #111729; --surface2: #1A2238; --fg: #EEF1F7; --muted: #8C95AB; --line: #1F2840; --line-strong: #34405E;
+  --accent: #FFB547; --on-accent: #1A1200; --accent-text: #FFB547; --accent2: #FFB547; --glow: #FFB547; --pill-bg: #2A2414; --pill-fg: #FFC970; }
+.d-a.light { --bg: #F5F6F9; --surface: #FFFFFF; --surface2: #ECEEF3; --fg: #0A0E1A; --muted: #5A6377; --line: #E1E4EB; --line-strong: #C5CAD6;
+  --accent: #FFB547; --on-accent: #1A1200; --accent-text: #A15F00; --accent2: #E89A1E; --pill-bg: #FFF1D9; --pill-fg: #8A5100; }
+
+/* B — Boğaz (Bosphorus teal), Saira condensed caps */
+.d-b { --display: 'Saira', sans-serif; --body: 'Saira', sans-serif; --h-weight: 800; --h-stretch: 80%; --h-case: uppercase; --h-track: .005em;
+  --wm-stretch: 90%; --wm-track: .06em; --btn-r: 6px;
+  --bg: #0A1216; --surface: #0F1A20; --surface2: #18262E; --fg: #E9F2F3; --muted: #84979C; --line: #1C2C33; --line-strong: #2F4650;
+  --accent: #2FE3C4; --on-accent: #00221C; --accent-text: #2FE3C4; --accent2: #2FE3C4; --glow: #1BB6A0; --pill-bg: #0F2E2A; --pill-fg: #5CF0D6; }
+.d-b.light { --bg: #F3F7F7; --surface: #FFFFFF; --surface2: #E6EEEF; --fg: #0A1216; --muted: #54676C; --line: #DCE5E6; --line-strong: #BFCDD0;
+  --accent: #0E9F88; --on-accent: #FFFFFF; --accent-text: #0B7F6D; --accent2: #12B39A; --pill-bg: #DDF5F0; --pill-fg: #0B6E5F; }
+
+/* C — İki Far (amber actions + teal status), Sora geometric */
+.d-c { --display: 'Sora', sans-serif; --body: 'Sora', sans-serif; --h-weight: 700; --h-stretch: 100%; --h-case: none; --h-track: -.035em;
+  --wm-stretch: 100%; --wm-track: -.01em; --btn-r: 999px;
+  --bg: #0B0F1C; --surface: #121831; --surface2: #1B2342; --fg: #F1F3FA; --muted: #8E96B0; --line: #1E2643; --line-strong: #364066;
+  --accent: #FFB547; --on-accent: #1A1200; --accent-text: #FFB547; --accent2: #34D9C3; --glow: #3B5BDB; --pill-bg: #10302E; --pill-fg: #5EE8D4; }
+.d-c.light { --bg: #F5F6FB; --surface: #FFFFFF; --surface2: #ECEEF6; --fg: #0B0F1C; --muted: #5B6380; --line: #E0E3EE; --line-strong: #C4C9DA;
+  --accent: #FFB547; --on-accent: #1A1200; --accent-text: #A15F00; --accent2: #13A894; --pill-bg: #DDF4F1; --pill-fg: #0B6E62; }
+.d-c .wm { text-transform: none; font-size: 16px; }
+</style>
+
+<h2>Tasarım yönü: Gece sürüşü × Temiz &amp; sportif</h2>
+<p class="subtitle">Samet'in seçtiği "gece sürüşü" havası ile "temiz &amp; sportif" görünümün birleşimi. Üçü de koyu temalı (altında açık tema hâli var). Farkları vurgu rengi ve yazı tipi. Karıştırmak da mümkün ("A'nın rengi, C'nin yazı tipi" gibi). Logo bir sonraki adım; buradaki isim sadece yazı.</p>
+
+<div class="cards dirs">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="phone d-a">
+        <div class="ph-head"><span class="wm" lang="en">Ride <b>&amp;</b> Vibe</span><span class="ph-tools">TR <span class="avatar"></span></span></div>
+        <div class="hero">
+          <div class="eyebrow">İstanbul Motosiklet Kulübü</div>
+          <div class="h1">Birlikte sürelim.</div>
+          <p class="sub">Hafta sonu sürüşleri, uzun turlar, kahve buluşmaları. Asya'dan Avrupa'ya, İstanbul'un her yakasından motorcularla tanış.</p>
+          <div class="btns"><span class="btn btn-p">Kulübe Başvur</span><span class="btn btn-o">Etkinlikler</span></div>
+        </div>
+        <div class="sec">
+          <div class="sec-t"><span>Yaklaşan sürüşler</span><span>Tümü →</span></div>
+          <div class="ev"><div class="date"><small>PAZ</small><strong>15</strong><small>KAS</small></div>
+            <div class="ev-b"><div class="ev-t">Ağva &amp; Şile Kahvaltı Turu</div><div class="ev-m">08:30 · Üsküdar Meydan · 140 km</div>
+              <div class="bar"><i></i></div><div class="ev-f"><span>18 / 30 kişi</span><span class="pill">Katılıyorsun ✓</span></div></div></div>
+        </div>
+        <div class="tabs"><span class="tab on">Ana Sayfa</span><span class="tab">Etkinlikler</span><span class="tab">Galeri</span><span class="tab">Başvur</span></div>
+      </div>
+      <div class="lightrow"><div class="phone d-a light"><div class="ph-cap">Açık tema</div>
+        <div class="sec"><div class="ev"><div class="date"><small>PAZ</small><strong>15</strong><small>KAS</small></div>
+          <div class="ev-b"><div class="ev-t">Ağva &amp; Şile Kahvaltı Turu</div><div class="ev-m">08:30 · Üsküdar Meydan · 140 km</div>
+            <div class="bar"><i></i></div><div class="ev-f"><span>18 / 30 kişi</span><span class="pill">Katılıyorsun ✓</span></div></div></div>
+          <div class="btns" style="margin-top:10px"><span class="btn btn-p">Kulübe Başvur</span><span class="btn btn-o">Etkinlikler</span></div></div></div></div>
+    </div>
+    <div class="card-body">
+      <h3>A · Far</h3>
+      <p>Mürekkep laciverti gece, <strong>kehribar far ışığı</strong> vurgu. <strong>Archivo Expanded</strong> geniş başlıklar: kendinden emin, yarış motoru boyası havası, ama bağırmıyor.</p>
+      <div class="swatches"><span style="background:#0A0E1A"></span><span style="background:#111729"></span><span style="background:#FFB547"></span><span style="background:#EEF1F7"></span></div>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="phone d-b">
+        <div class="ph-head"><span class="wm" lang="en">Ride <b>&amp;</b> Vibe</span><span class="ph-tools">TR <span class="avatar"></span></span></div>
+        <div class="hero">
+          <div class="eyebrow">İstanbul Motosiklet Kulübü</div>
+          <div class="h1">Birlikte sürelim.</div>
+          <p class="sub">Hafta sonu sürüşleri, uzun turlar, kahve buluşmaları. Asya'dan Avrupa'ya, İstanbul'un her yakasından motorcularla tanış.</p>
+          <div class="btns"><span class="btn btn-p">Kulübe Başvur</span><span class="btn btn-o">Etkinlikler</span></div>
+        </div>
+        <div class="sec">
+          <div class="sec-t"><span>Yaklaşan sürüşler</span><span>Tümü →</span></div>
+          <div class="ev"><div class="date"><small>PAZ</small><strong>15</strong><small>KAS</small></div>
+            <div class="ev-b"><div class="ev-t">Ağva &amp; Şile Kahvaltı Turu</div><div class="ev-m">08:30 · Üsküdar Meydan · 140 km</div>
+              <div class="bar"><i></i></div><div class="ev-f"><span>18 / 30 kişi</span><span class="pill">Katılıyorsun ✓</span></div></div></div>
+        </div>
+        <div class="tabs"><span class="tab on">Ana Sayfa</span><span class="tab">Etkinlikler</span><span class="tab">Galeri</span><span class="tab">Başvur</span></div>
+      </div>
+      <div class="lightrow"><div class="phone d-b light"><div class="ph-cap">Açık tema</div>
+        <div class="sec"><div class="ev"><div class="date"><small>PAZ</small><strong>15</strong><small>KAS</small></div>
+          <div class="ev-b"><div class="ev-t">Ağva &amp; Şile Kahvaltı Turu</div><div class="ev-m">08:30 · Üsküdar Meydan · 140 km</div>
+            <div class="bar"><i></i></div><div class="ev-f"><span>18 / 30 kişi</span><span class="pill">Katılıyorsun ✓</span></div></div></div>
+          <div class="btns" style="margin-top:10px"><span class="btn btn-p">Kulübe Başvur</span><span class="btn btn-o">Etkinlikler</span></div></div></div></div>
+    </div>
+    <div class="card-body">
+      <h3>B · Boğaz</h3>
+      <p>Derin deniz siyahı, <strong>Boğaz turkuazı</strong> vurgu. <strong>Saira Condensed</strong> dar, büyük harf başlıklar: yarış numarası / gösterge paneli havası. En "sportif" olanı.</p>
+      <div class="swatches"><span style="background:#0A1216"></span><span style="background:#0F1A20"></span><span style="background:#2FE3C4"></span><span style="background:#E9F2F3"></span></div>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="phone d-c">
+        <div class="ph-head"><span class="wm" lang="en">Ride <b>&amp;</b> Vibe</span><span class="ph-tools">TR <span class="avatar"></span></span></div>
+        <div class="hero">
+          <div class="eyebrow">İstanbul Motosiklet Kulübü</div>
+          <div class="h1">Birlikte sürelim.</div>
+          <p class="sub">Hafta sonu sürüşleri, uzun turlar, kahve buluşmaları. Asya'dan Avrupa'ya, İstanbul'un her yakasından motorcularla tanış.</p>
+          <div class="btns"><span class="btn btn-p">Kulübe Başvur</span><span class="btn btn-o">Etkinlikler</span></div>
+        </div>
+        <div class="sec">
+          <div class="sec-t"><span>Yaklaşan sürüşler</span><span>Tümü →</span></div>
+          <div class="ev"><div class="date"><small>PAZ</small><strong>15</strong><small>KAS</small></div>
+            <div class="ev-b"><div class="ev-t">Ağva &amp; Şile Kahvaltı Turu</div><div class="ev-m">08:30 · Üsküdar Meydan · 140 km</div>
+              <div class="bar"><i></i></div><div class="ev-f"><span>18 / 30 kişi</span><span class="pill">Katılıyorsun ✓</span></div></div></div>
+        </div>
+        <div class="tabs"><span class="tab on">Ana Sayfa</span><span class="tab">Etkinlikler</span><span class="tab">Galeri</span><span class="tab">Başvur</span></div>
+      </div>
+      <div class="lightrow"><div class="phone d-c light"><div class="ph-cap">Açık tema</div>
+        <div class="sec"><div class="ev"><div class="date"><small>PAZ</small><strong>15</strong><small>KAS</small></div>
+          <div class="ev-b"><div class="ev-t">Ağva &amp; Şile Kahvaltı Turu</div><div class="ev-m">08:30 · Üsküdar Meydan · 140 km</div>
+            <div class="bar"><i></i></div><div class="ev-f"><span>18 / 30 kişi</span><span class="pill">Katılıyorsun ✓</span></div></div></div>
+          <div class="btns" style="margin-top:10px"><span class="btn btn-p">Kulübe Başvur</span><span class="btn btn-o">Etkinlikler</span></div></div></div></div>
+    </div>
+    <div class="card-body">
+      <h3>C · İki Far</h3>
+      <p>Lacivert gece; <strong>butonlarda kehribar</strong>, <strong>durumlarda turkuaz</strong> (kontenjan, "katılıyorsun"). <strong>Sora</strong>: yuvarlak geometrik yazı. En derli toplu uygulama hissi, karışık bir topluluk için en samimi olanı.</p>
+      <div class="swatches"><span style="background:#0B0F1C"></span><span style="background:#121831"></span><span style="background:#FFB547"></span><span style="background:#34D9C3"></span></div>
+    </div>
+  </div>
+
+</div>

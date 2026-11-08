@@ -1,0 +1,138 @@
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Saira:wdth,wght@50..125,100..900&display=swap');
+.mk * { box-sizing:border-box; }
+.mk { font-family:'Saira',sans-serif; }
+.phones { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; align-items:start; }
+@media (max-width:1000px){ .phones{ grid-template-columns:1fr; } }
+.col h3 { margin:0 0 4px; } .col p.d { margin:0 0 10px; font-size:13px; opacity:.75; }
+.phone { max-width:330px; margin:0 auto; border-radius:28px; overflow:hidden; border:6px solid #000; background:var(--bg); color:var(--fg); box-shadow:0 10px 30px rgba(0,0,0,.4); }
+.hd { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--line); }
+.hd img { height:28px; display:block; }
+.hd .t { display:flex; gap:8px; align-items:center; font-size:11px; color:var(--muted); }
+.av { width:26px; height:26px; border-radius:50%; background:var(--s2); border:1px solid var(--line); }
+.hero { position:relative; padding:18px 16px 18px; overflow:hidden; }
+.hero::before { content:""; position:absolute; right:-70px; top:-60px; width:260px; height:220px; background:radial-gradient(closest-side, var(--glow), transparent); opacity:.35; }
+.badge { position:relative; width:118px; height:118px; display:block; margin:2px 0 12px; filter:drop-shadow(0 6px 18px rgba(0,0,0,.45)); }
+.eb { position:relative; font-size:10.5px; font-weight:600; letter-spacing:.14em; color:var(--acc-t); text-transform:uppercase; }
+.h1 { position:relative; font-weight:800; font-stretch:80%; text-transform:uppercase; font-size:34px; line-height:1; margin:6px 0 10px; letter-spacing:.005em; }
+.sub { position:relative; font-size:13px; line-height:1.5; color:var(--muted); margin:0 0 16px; }
+.btns { position:relative; display:flex; gap:8px; }
+.btn { flex:1; text-align:center; padding:11px 8px; border-radius:6px; font-size:13px; font-weight:700; }
+.bp { background:var(--acc); color:var(--on-acc); } .bo { border:1px solid var(--line2); color:var(--fg); }
+.sec { padding:2px 16px 16px; }
+.st { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px; }
+.st b { font-weight:800; font-stretch:80%; text-transform:uppercase; font-size:14px; letter-spacing:.02em; } .st span { font-size:11px; color:var(--acc-t); font-weight:600; }
+.ev { background:var(--s1); border:1px solid var(--line); border-radius:14px; overflow:hidden; }
+.map { display:block; width:100%; height:96px; }
+.evb { display:flex; gap:12px; padding:12px; }
+.dt { flex:none; width:50px; border-radius:10px; background:var(--s2); text-align:center; padding:6px 0; }
+.dt small { display:block; font-size:9.5px; letter-spacing:.12em; color:var(--muted); font-weight:600; }
+.dt strong { display:block; font-size:22px; font-weight:800; font-stretch:80%; line-height:1.1; }
+.ei { flex:1; min-width:0; } .et { font-weight:700; font-size:14px; margin-bottom:2px; } .em { font-size:11.5px; color:var(--muted); margin-bottom:8px; }
+.bar { height:5px; border-radius:9px; background:var(--s2); overflow:hidden; } .bar i { display:block; height:100%; width:60%; background:var(--bar); }
+.ef { display:flex; justify-content:space-between; align-items:center; margin-top:7px; font-size:11px; color:var(--muted); }
+.pill { font-size:10.5px; font-weight:700; padding:3px 8px; border-radius:99px; background:var(--pill-bg); color:var(--pill-fg); }
+.tabs { display:grid; grid-template-columns:repeat(4,1fr); border-top:1px solid var(--line); background:var(--s1); padding:8px 4px 12px; }
+.tab { text-align:center; font-size:10px; color:var(--muted); } .tab::before { content:""; display:block; width:20px; height:20px; margin:0 auto 4px; border-radius:6px; border:1.6px solid currentColor; opacity:.8; }
+.tab.on { color:var(--acc-t); font-weight:700; } .tab.on::before { background:currentColor; }
+
+/* themes */
+.night { --bg:#0B0D10; --s1:#14171C; --s2:#1E2229; --line:#22272F; --line2:#3A3F48; --fg:#FBF5E5; --muted:#A39C8C;
+  --acc:#F98D2F; --on-acc:#1A0E02; --acc-t:#FBA04A; --glow:#F98D2F; --bar:linear-gradient(90deg,#F98D2F,#FBE563); --pill-bg:#2E1E0E; --pill-fg:#FBB060;
+  --map:#11151A; --road:#1F252D; --sea:#0E1820; --route:#F98D2F; --label:#7E8794; }
+.night.teal { --bar:#2FD8BE; --pill-bg:#0E2C28; --pill-fg:#4FE6CE; }
+.day { --bg:#FBF5E5; --s1:#FFFDF7; --s2:#F1E9D6; --line:#E6DCC5; --line2:#CDBF9F; --fg:#14120F; --muted:#6B6352;
+  --acc:#F98D2F; --on-acc:#1A0E02; --acc-t:#B4560C; --glow:#FBE563; --bar:linear-gradient(90deg,#E8761C,#F2C230); --pill-bg:#FDE6CC; --pill-fg:#8A400A;
+  --map:#EFE6D2; --road:#E0D4BA; --sea:#D9E3E4; --route:#E2741A; --label:#8C836F; }
+
+/* logo system */
+.sys { display:grid; grid-template-columns:1.1fr 1.4fr 1fr 1fr; gap:14px; margin-top:22px; }
+@media (max-width:1000px){ .sys{ grid-template-columns:1fr 1fr; } }
+.tile { border-radius:14px; overflow:hidden; border:1px solid #2a2d34; background:#1b1d22; }
+.tile .v { display:flex; align-items:center; justify-content:center; gap:14px; min-height:170px; padding:16px; }
+.tile .c { padding:10px 14px 14px; font:12.5px/1.45 system-ui; color:#c9ccd3; } .tile .c b { color:#fff; display:block; font-size:14px; margin-bottom:2px; }
+.wa { display:flex; flex-direction:column; gap:8px; background:#0b141a; padding:12px; border-radius:10px; width:100%; }
+.wa .row { display:flex; gap:10px; align-items:center; color:#e9edef; font:13px system-ui; } .wa .row small { color:#8696a0; display:block; font-size:11.5px; }
+.wa img { width:46px; height:46px; border-radius:50%; background:#fff; }
+</style>
+
+<h2>B + logo colours ("Gün batımı")</h2>
+<p class="subtitle">Same B layout and Saira font; the teal is replaced by the logo's sunset orange and cream. The WhatsApp badge stays as the main logo (here AI-upscaled 4×, background removed). Its brush lettering and an "R&amp;V" icon cut from the same lettering are used where the badge is too small. The event card now has a route preview.</p>
+
+<div class="phones mk">
+  <div class="col">
+    <h3>1 · Gece (orange only)</h3><p class="d">Night + sunset orange, sun-yellow in the progress bar.</p>
+    <div class="phone night">
+      <div class="hd"><img src="./rv-wordmark-cream.png" alt="Ride &amp; Vibe"><span class="t">TR <span class="av"></span></span></div>
+      <div class="hero">
+        <img class="badge" src="./rv-badge.png" alt="">
+        <div class="eb">İstanbul Motosiklet Kulübü</div>
+        <div class="h1">Birlikte sürelim.</div>
+        <p class="sub">Hafta sonu sürüşleri, uzun turlar, kahve buluşmaları. Asya'dan Avrupa'ya, İstanbul'un her yakasından motorcularla tanış.</p>
+        <div class="btns"><span class="btn bp">Kulübe Başvur</span><span class="btn bo">Etkinlikler</span></div>
+      </div>
+      <div class="sec">
+        <div class="st"><b>Yaklaşan sürüşler</b><span>Tümü →</span></div>
+        <div class="ev">
+          <svg class="map" viewBox="0 0 300 96" preserveAspectRatio="none"><rect width="300" height="96" fill="var(--map)"/><path d="M0 0 H300 V30 C 250 36, 210 22, 170 28 C 130 34, 90 20, 0 26 Z" fill="var(--sea)"/><path d="M0 70 L300 58 M40 96 L70 30 M150 96 L180 40 M230 96 L250 34 M0 48 L300 80" stroke="var(--road)" stroke-width="2" fill="none"/><path d="M28 78 C 60 76, 70 56, 104 58 S 150 72, 176 52 S 230 36, 272 38" stroke="var(--route)" stroke-width="6" opacity=".25" fill="none" stroke-linecap="round"/><path d="M28 78 C 60 76, 70 56, 104 58 S 150 72, 176 52 S 230 36, 272 38" stroke="var(--route)" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="28" cy="78" r="5" fill="var(--map)" stroke="var(--fg)" stroke-width="2.5"/><circle cx="176" cy="52" r="3" fill="var(--fg)"/><circle cx="272" cy="38" r="5.5" fill="var(--route)" stroke="var(--map)" stroke-width="2"/><text x="36" y="92" font-size="8" fill="var(--label)" font-family="Saira">Üsküdar</text><text x="160" y="44" font-size="8" fill="var(--label)" font-family="Saira">Şile</text><text x="252" y="56" font-size="8" fill="var(--label)" font-family="Saira">Ağva</text></svg>
+          <div class="evb"><div class="dt"><small>PAZ</small><strong>15</strong><small>KAS</small></div>
+            <div class="ei"><div class="et">Ağva &amp; Şile Kahvaltı Turu</div><div class="em">08:30 · Üsküdar → Ağva · 140 km</div><div class="bar"><i></i></div><div class="ef"><span>18 / 30 kişi</span><span class="pill">Katılıyorsun ✓</span></div></div></div>
+        </div>
+      </div>
+      <div class="tabs"><span class="tab on">Ana Sayfa</span><span class="tab">Etkinlikler</span><span class="tab">Galeri</span><span class="tab">Başvur</span></div>
+    </div>
+  </div>
+
+  <div class="col">
+    <h3>2 · Gece + turkuaz</h3><p class="d">Same, but statuses (spots, "you're going") stay teal from B.</p>
+    <div class="phone night teal">
+      <div class="hd"><img src="./rv-wordmark-cream.png" alt="Ride &amp; Vibe"><span class="t">TR <span class="av"></span></span></div>
+      <div class="hero">
+        <img class="badge" src="./rv-badge.png" alt="">
+        <div class="eb">İstanbul Motosiklet Kulübü</div>
+        <div class="h1">Birlikte sürelim.</div>
+        <p class="sub">Hafta sonu sürüşleri, uzun turlar, kahve buluşmaları. Asya'dan Avrupa'ya, İstanbul'un her yakasından motorcularla tanış.</p>
+        <div class="btns"><span class="btn bp">Kulübe Başvur</span><span class="btn bo">Etkinlikler</span></div>
+      </div>
+      <div class="sec">
+        <div class="st"><b>Yaklaşan sürüşler</b><span>Tümü →</span></div>
+        <div class="ev">
+          <svg class="map" viewBox="0 0 300 96" preserveAspectRatio="none"><rect width="300" height="96" fill="var(--map)"/><path d="M0 0 H300 V30 C 250 36, 210 22, 170 28 C 130 34, 90 20, 0 26 Z" fill="var(--sea)"/><path d="M0 70 L300 58 M40 96 L70 30 M150 96 L180 40 M230 96 L250 34 M0 48 L300 80" stroke="var(--road)" stroke-width="2" fill="none"/><path d="M28 78 C 60 76, 70 56, 104 58 S 150 72, 176 52 S 230 36, 272 38" stroke="var(--route)" stroke-width="6" opacity=".25" fill="none" stroke-linecap="round"/><path d="M28 78 C 60 76, 70 56, 104 58 S 150 72, 176 52 S 230 36, 272 38" stroke="var(--route)" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="28" cy="78" r="5" fill="var(--map)" stroke="var(--fg)" stroke-width="2.5"/><circle cx="176" cy="52" r="3" fill="var(--fg)"/><circle cx="272" cy="38" r="5.5" fill="var(--route)" stroke="var(--map)" stroke-width="2"/><text x="36" y="92" font-size="8" fill="var(--label)" font-family="Saira">Üsküdar</text><text x="160" y="44" font-size="8" fill="var(--label)" font-family="Saira">Şile</text><text x="252" y="56" font-size="8" fill="var(--label)" font-family="Saira">Ağva</text></svg>
+          <div class="evb"><div class="dt"><small>PAZ</small><strong>15</strong><small>KAS</small></div>
+            <div class="ei"><div class="et">Ağva &amp; Şile Kahvaltı Turu</div><div class="em">08:30 · Üsküdar → Ağva · 140 km</div><div class="bar"><i></i></div><div class="ef"><span>18 / 30 kişi</span><span class="pill">Katılıyorsun ✓</span></div></div></div>
+        </div>
+      </div>
+      <div class="tabs"><span class="tab on">Ana Sayfa</span><span class="tab">Etkinlikler</span><span class="tab">Galeri</span><span class="tab">Başvur</span></div>
+    </div>
+  </div>
+
+  <div class="col">
+    <h3>Açık tema</h3><p class="d">Light mode uses the badge's cream as the background.</p>
+    <div class="phone day">
+      <div class="hd"><img src="./rv-wordmark-ink.png" alt="Ride &amp; Vibe"><span class="t">TR <span class="av"></span></span></div>
+      <div class="hero">
+        <img class="badge" src="./rv-badge.png" alt="">
+        <div class="eb">İstanbul Motosiklet Kulübü</div>
+        <div class="h1">Birlikte sürelim.</div>
+        <p class="sub">Hafta sonu sürüşleri, uzun turlar, kahve buluşmaları. Asya'dan Avrupa'ya, İstanbul'un her yakasından motorcularla tanış.</p>
+        <div class="btns"><span class="btn bp">Kulübe Başvur</span><span class="btn bo">Etkinlikler</span></div>
+      </div>
+      <div class="sec">
+        <div class="st"><b>Yaklaşan sürüşler</b><span>Tümü →</span></div>
+        <div class="ev">
+          <svg class="map" viewBox="0 0 300 96" preserveAspectRatio="none"><rect width="300" height="96" fill="var(--map)"/><path d="M0 0 H300 V30 C 250 36, 210 22, 170 28 C 130 34, 90 20, 0 26 Z" fill="var(--sea)"/><path d="M0 70 L300 58 M40 96 L70 30 M150 96 L180 40 M230 96 L250 34 M0 48 L300 80" stroke="var(--road)" stroke-width="2" fill="none"/><path d="M28 78 C 60 76, 70 56, 104 58 S 150 72, 176 52 S 230 36, 272 38" stroke="var(--route)" stroke-width="6" opacity=".25" fill="none" stroke-linecap="round"/><path d="M28 78 C 60 76, 70 56, 104 58 S 150 72, 176 52 S 230 36, 272 38" stroke="var(--route)" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="28" cy="78" r="5" fill="var(--map)" stroke="var(--fg)" stroke-width="2.5"/><circle cx="176" cy="52" r="3" fill="var(--fg)"/><circle cx="272" cy="38" r="5.5" fill="var(--route)" stroke="var(--map)" stroke-width="2"/><text x="36" y="92" font-size="8" fill="var(--label)" font-family="Saira">Üsküdar</text><text x="160" y="44" font-size="8" fill="var(--label)" font-family="Saira">Şile</text><text x="252" y="56" font-size="8" fill="var(--label)" font-family="Saira">Ağva</text></svg>
+          <div class="evb"><div class="dt"><small>PAZ</small><strong>15</strong><small>KAS</small></div>
+            <div class="ei"><div class="et">Ağva &amp; Şile Kahvaltı Turu</div><div class="em">08:30 · Üsküdar → Ağva · 140 km</div><div class="bar"><i></i></div><div class="ef"><span>18 / 30 kişi</span><span class="pill">Katılıyorsun ✓</span></div></div></div>
+        </div>
+      </div>
+      <div class="tabs"><span class="tab on">Ana Sayfa</span><span class="tab">Etkinlikler</span><span class="tab">Galeri</span><span class="tab">Başvur</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="sys">
+  <div class="tile"><div class="v" style="background:#0B0D10"><img src="./rv-badge.png" style="width:140px" alt=""></div><div class="c"><b>Ana logo (arma)</b>The WhatsApp logo itself, 4× sharper, transparent background. Home, sign-in, link previews, stickers, merch.</div></div>
+  <div class="tile"><div class="v" style="flex-direction:column;background:linear-gradient(#0B0D10 50%,#FBF5E5 50%)"><img src="./rv-wordmark-cream.png" style="width:220px" alt=""><img src="./rv-wordmark-ink.png" style="width:220px;margin-top:22px" alt=""></div><div class="c"><b>Yazı logo</b>The badge's own brush lettering, cut out. Header, single-colour print, vests.</div></div>
+  <div class="tile"><div class="v" style="background:#16181c"><img src="./rv-icon-night.png" style="width:72px;border-radius:16px" alt=""><img src="./rv-icon-sunset.png" style="width:72px;border-radius:16px" alt=""><img src="./rv-icon-night.png" style="width:18px;border-radius:4px;align-self:end" alt=""></div><div class="c"><b>Uygulama ikonu</b>"R&amp;V" from the same lettering. Phone home screen, browser tab (still readable small).</div></div>
+  <div class="tile"><div class="v" style="background:#111b21"><div class="wa"><div class="row"><img src="./rv-badge.png" alt=""><div>Ride &amp; Vibe 🏍️<small>Pazar 08:30 Üsküdar…</small></div></div><div class="row"><img src="./rv-badge.png" style="width:34px;height:34px" alt=""><div style="font-size:12px">small</div></div></div></div><div class="c"><b>WhatsApp grubu</b>Same badge, now sharp. Replace the group photo with this file; nothing else changes.</div></div>
+</div>
