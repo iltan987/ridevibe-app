@@ -27,7 +27,7 @@
 - **Source:** supabase docs "Securing your API", "Grants vs. Policies".
 
 ### `current_role` is a reserved SQL word (2026-11-07)
-- **Do:** helper is `private.my_role()`; don't name functions after SQL keywords.
+- **Do:** don't name functions after SQL keywords (we once had `private.my_role()` for this reason).
 
 ### pgTAP tests must work on a non-empty database (2026-11-07)
 - **Symptom:** tests passed on a fresh DB, failed once real users existed (`users_email_partial_key` duplicates,
@@ -57,3 +57,19 @@
 ### `supabase test db --remote=…` needs `--yes` in agent runs (2026-11-08)
 - **Symptom:** `HostedMutationConsentRequiredError … Run pgTAP tests … Nothing was changed.`
 - **Do:** after `db push`, run `supabase test db --remote=<url> --yes` (tests roll back; documented rollout step).
+
+### Declarative sync drops columns before data can be migrated (2026-11-08)
+- **Symptom:** the generated `roles_permissions` migration dropped `profiles.role` *before* creating `roles`, which
+  would have lost every role assignment.
+- **Do:** whenever a column/type is replaced, move the generated `DROP` to the end of the migration and add the
+  hand-written data step (`INSERT …`/`UPDATE …`) in between; verify on local data with `migration up` before
+  `db reset`. Seed rows the app relies on (e.g. the built-in admin role) belong in that migration.
+
+### Column grants also apply to `id` in inserts (2026-11-08)
+- **Symptom:** pgTAP `permission denied for table roles` when inserting `(id, name)` as an admin.
+- **Do:** that's correct (`grant insert (name)`); in tests insert only granted columns and look rows up by name.
+
+### PostgREST embeds: `table(count)` and many-to-one objects (2026-11-08)
+- `select("…, profiles(count)")` returns `[{ count }]` per row (respects RLS); `role:roles(...)` via a FK column
+  returns an object or null, typed correctly by generated types.
+- Generated RPC arg types are non-nullable even when SQL accepts null (`set_member_role(…, null)`) → cast at the call.

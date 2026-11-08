@@ -138,13 +138,39 @@ create trigger applications_track_review
 before update on public.applications
 for each row execute function private.applications_track_review();
 
+-- Moving an application into or out of a decision (approved/rejected) needs
+-- `applications.decide`; RLS only checks `applications.review` (policies can't
+-- compare old and new values). Applies to signed-in users only, so trusted
+-- security-definer code (e.g. linking an approved application) isn't blocked.
+create or replace function private.applications_check_decision()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if current_user = 'authenticated'
+    and new.status is distinct from old.status
+    and (new.status in ('approved', 'rejected') or old.status in ('approved', 'rejected'))
+    and not private.has_permission('applications.decide')
+  then
+    raise exception 'missing permission applications.decide' using errcode = '42501';
+  end if;
+  return new;
+end;
+$$;
+
+create trigger applications_check_decision
+before update on public.applications
+for each row execute function private.applications_check_decision();
+
 revoke all on function private.applications_before_insert() from public, anon, authenticated;
 revoke all on function private.applications_track_review() from public, anon, authenticated;
+revoke all on function private.applications_check_decision() from public, anon, authenticated;
 
 -- ---------------------------------------------------------------------------
 -- Privileges: the public may only INSERT the applicant columns (no status,
--- notes or review fields). Reading/updating is for staff; deleting for admins
--- (KVKK erasure requests).
+-- notes or review fields). Reading, reviewing and deleting (KVKK
+-- erasure) each need a permission (05_roles.sql).
 -- ---------------------------------------------------------------------------
 
 revoke all on table public.applications from anon, authenticated;
@@ -169,21 +195,29 @@ for insert
 to anon, authenticated
 with check (status = 'new');
 
-create policy "applications: staff can read"
+create policy "applications: readable with applications.view"
 on public.applications
 for select
 to authenticated
-using ((select private.is_staff()));
+using ((select private.has_permission('applications.view')));
 
-create policy "applications: staff can review"
+-- applications.decide implies review; approve/reject itself is checked by the
+-- applications_check_decision trigger above.
+create policy "applications: reviewable with applications.review or decide"
 on public.applications
 for update
 to authenticated
-using ((select private.is_staff()))
-with check ((select private.is_staff()));
+using (
+  (select private.has_permission('applications.review'))
+  or (select private.has_permission('applications.decide'))
+)
+with check (
+  (select private.has_permission('applications.review'))
+  or (select private.has_permission('applications.decide'))
+);
 
-create policy "applications: admins can delete"
+create policy "applications: deletable with applications.delete"
 on public.applications
 for delete
 to authenticated
-using ((select private.is_admin()));
+using ((select private.has_permission('applications.delete')));

@@ -56,7 +56,6 @@
     },
     "roles": {
       "member": "Member",
-      "organizer": "Organizer",
       "admin": "Admin"
     },
     "pendingTitle": "Your membership is awaiting approval",
@@ -219,7 +218,79 @@
     "consentPhotosNo": "No consent to photo sharing",
     "noticeVersion": "Privacy notice version: {version}",
     "noBike": "Doesn't own a motorcycle",
-    "years": "{years} years"
+    "years": "{years} years",
+    "accessErrors": {
+      "forbidden": "You don't have permission to do this.",
+      "invalid": "Invalid request. Refresh the page and try again.",
+      "duplicate": "A role with this name already exists.",
+      "error": "Something went wrong. Please try again."
+    },
+    "pagination": {
+      "next": "Next page",
+      "first": "First page"
+    },
+    "members": {
+      "title": "Members & access",
+      "statuses": {
+        "pending": "Pending",
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "pendingHint": "People who signed in with Google but aren't approved yet. Activate the ones you know.",
+      "search": "Search by name",
+      "searchButton": "Search",
+      "empty": "Nobody in this list.",
+      "joined": "Joined {date}",
+      "you": "You",
+      "role": "Role",
+      "noRole": "Member (no role)",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "reactivate": "Reactivate"
+    },
+    "roles": {
+      "title": "Roles & permissions",
+      "intro": "Roles decide who can do what. Each member has at most one role; members without a role only see the member area. Assign roles on the “Members & access” page.",
+      "adminDescription": "Has every permission. Only admins can edit roles and assign them. This role cannot be changed or deleted.",
+      "holders": "{count, plural, =0 {Nobody has this role} one {# person has this role} other {# people have this role}}",
+      "name": "Role name",
+      "namePlaceholder": "e.g. Ride captain",
+      "permissions": "Permissions",
+      "save": "Save",
+      "saved": "Saved",
+      "delete": "Delete role",
+      "deleteConfirm": "Delete “{name}”? {count, plural, =0 {Nobody is affected.} one {# person becomes a regular member.} other {# people become regular members.}}",
+      "confirmDelete": "Yes, delete",
+      "cancel": "Cancel",
+      "newRole": "New role",
+      "create": "Add role"
+    },
+    "permissions": {
+      "applications": {
+        "view": {
+          "label": "View applications",
+          "description": "Can see the application list and applicant details."
+        },
+        "review": {
+          "label": "Review applications",
+          "description": "Can mark applications as contacted and add notes."
+        },
+        "decide": {
+          "label": "Approve / reject applications",
+          "description": "Approval grants membership. Includes reviewing."
+        },
+        "delete": {
+          "label": "Delete applications",
+          "description": "Permanently deletes an application (KVKK erasure requests)."
+        }
+      },
+      "members": {
+        "manage": {
+          "label": "Manage members",
+          "description": "Can see pending sign-ups and activate/deactivate members (except admins)."
+        }
+      }
+    }
   },
   "NotFound": {
     "title": "Page not found",

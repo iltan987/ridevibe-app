@@ -31,9 +31,12 @@ take applications, manage members, publish events/announcements, share event pho
 |---|---|
 | Landing page, public events teaser, apply form, KVKK texts | Public (no login) |
 | Events, RSVP, announcements, galleries, own profile, check-in | Approved members (login) |
-| Applications, member list, event/announcement management, attendance | Organizer / Admin roles |
+| Applications, member list, event/announcement management, attendance | Staff roles with the matching permission |
 
-Roles: `admin` (Samet, iltan), `organizer` (ride captains), `member`.
+Roles (decided 2026-11-08): admins create custom roles (e.g. "Organizatör", "Ride captain", "Membership team") and
+pick each role's permissions in the app (`/admin/roles`); each member has at most one role, assigned at
+`/admin/members`. Built-in **Admin** (Samet, iltan) has everything and is the only one who can edit/assign roles.
+Members without a role are regular members. Approve/reject is its own permission (approval grants membership).
 Application flow: public form → admin reviews (New → Contacted → Approved / Rejected) → on approval admin sends a
 WhatsApp invite link → person signs in with Google → account is linked to the application.
 

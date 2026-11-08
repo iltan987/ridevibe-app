@@ -12,7 +12,9 @@ import {
   countApplicationsByStatus,
   listApplications,
 } from "@/lib/applications/queries";
-import { requireStaff } from "@/lib/auth/require-staff";
+import { requirePermission } from "@/lib/auth/require-access";
+import { Pager } from "@/components/admin/pager";
+import { decodeCursor } from "@/lib/pagination";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("Admin");
@@ -48,15 +50,16 @@ async function ApplicationsList({
 }: {
   searchParams: PageProps<"/[locale]/admin/applications">["searchParams"];
 }) {
-  await requireStaff("/admin/applications");
+  await requirePermission("applications.view", "/admin/applications");
 
   const params = await searchParams;
   const status: ApplicationStatus = APPLICATION_STATUSES.includes(params.status as ApplicationStatus)
     ? (params.status as ApplicationStatus)
     : "new";
+  const cursor = decodeCursor(params.cursor);
 
-  const [rows, counts, t, tApply, format] = await Promise.all([
-    listApplications(status),
+  const [page, counts, t, tApply, format] = await Promise.all([
+    listApplications(status, cursor),
     countApplicationsByStatus(),
     getTranslations("Admin"),
     getTranslations("Apply"),
@@ -79,11 +82,11 @@ async function ApplicationsList({
         ))}
       </nav>
 
-      {rows.length === 0 ? (
+      {page.items.length === 0 ? (
         <p className="py-10 text-center text-muted-foreground">{t("empty")}</p>
       ) : (
         <ul className="flex flex-col gap-3">
-          {rows.map((a) => (
+          {page.items.map((a) => (
             <li key={a.id}>
               <Link href={`/admin/applications/${a.id}`} className="block rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
                 <Card className="transition-colors hover:bg-muted/40">
@@ -115,6 +118,8 @@ async function ApplicationsList({
           ))}
         </ul>
       )}
+
+      <Pager pathname="/admin/applications" query={{ status }} nextCursor={page.nextCursor} onFirstPage={!cursor} />
     </>
   );
 }

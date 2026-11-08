@@ -27,14 +27,54 @@ isOneToOne: false
                   ]
                 },"profiles": {
                   Row: {
-                    "avatar_url": string | null,"city": string,"created_at": string,"district": string | null,"full_name": string,"id": string,"preferred_locale": string,"role": Database["public"]['Enums']["member_role"],"side": Database["public"]['Enums']["istanbul_side"] | null,"status": Database["public"]['Enums']["member_status"],"updated_at": string
+                    "avatar_url": string | null,"city": string,"created_at": string,"district": string | null,"full_name": string,"id": string,"preferred_locale": string,"role_id": string | null,"side": Database["public"]['Enums']["istanbul_side"] | null,"status": Database["public"]['Enums']["member_status"],"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "avatar_url"?: string | null,"city"?: string,"created_at"?: string,"district"?: string | null,"full_name"?: string,"id": string,"preferred_locale"?: string,"role"?: Database["public"]['Enums']["member_role"],"side"?: Database["public"]['Enums']["istanbul_side"] | null,"status"?: Database["public"]['Enums']["member_status"],"updated_at"?: string
+                    "avatar_url"?: string | null,"city"?: string,"created_at"?: string,"district"?: string | null,"full_name"?: string,"id": string,"preferred_locale"?: string,"role_id"?: string | null,"side"?: Database["public"]['Enums']["istanbul_side"] | null,"status"?: Database["public"]['Enums']["member_status"],"updated_at"?: string
                   }
                   Update: {
-                    "avatar_url"?: string | null,"city"?: string,"created_at"?: string,"district"?: string | null,"full_name"?: string,"id"?: string,"preferred_locale"?: string,"role"?: Database["public"]['Enums']["member_role"],"side"?: Database["public"]['Enums']["istanbul_side"] | null,"status"?: Database["public"]['Enums']["member_status"],"updated_at"?: string
+                    "avatar_url"?: string | null,"city"?: string,"created_at"?: string,"district"?: string | null,"full_name"?: string,"id"?: string,"preferred_locale"?: string,"role_id"?: string | null,"side"?: Database["public"]['Enums']["istanbul_side"] | null,"status"?: Database["public"]['Enums']["member_status"],"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "profiles_role_id_fkey"
+      columns: ["role_id"]
+isOneToOne: false
+      referencedRelation: "roles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"role_permissions": {
+                  Row: {
+                    "permission": Database["public"]['Enums']["permission"],"role_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "permission": Database["public"]['Enums']["permission"],"role_id": string
+                  }
+                  Update: {
+                    "permission"?: Database["public"]['Enums']["permission"],"role_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "role_permissions_role_id_fkey"
+      columns: ["role_id"]
+isOneToOne: false
+      referencedRelation: "roles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"roles": {
+                  Row: {
+                    "created_at": string,"id": string,"is_admin": boolean,"name": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"id"?: string,"is_admin"?: boolean,"name": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: string,"is_admin"?: boolean,"name"?: string,"updated_at"?: string
                   }
                   Relationships: [
                     
@@ -45,15 +85,18 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "admin_set_member_access":
-{ Args: { "new_role": Database["public"]['Enums']["member_role"],"new_status": Database["public"]['Enums']["member_status"],"target_id": string }; Returns: undefined
-                           },
-"keep_alive":
+            "keep_alive":
 { Args: Record<PropertyKey, never>; Returns: boolean
+                           },
+"set_member_role":
+{ Args: { "new_role_id": string,"target_id": string }; Returns: undefined
+                           },
+"set_member_status":
+{ Args: { "new_status": Database["public"]['Enums']["member_status"],"target_id": string }; Returns: undefined
                            }
           }
           Enums: {
-            "application_status": "new"|"contacted"|"approved"|"rejected","group_ride_experience": "none"|"some"|"a_lot","heard_from": "instagram_ad"|"instagram_other"|"friend"|"other","istanbul_side": "asian"|"european","license_class": "a1"|"a2"|"a"|"b"|"none","member_role": "member"|"organizer"|"admin","member_status": "pending"|"active"|"inactive"
+            "application_status": "new"|"contacted"|"approved"|"rejected","group_ride_experience": "none"|"some"|"a_lot","heard_from": "instagram_ad"|"instagram_other"|"friend"|"other","istanbul_side": "asian"|"european","license_class": "a1"|"a2"|"a"|"b"|"none","member_status": "pending"|"active"|"inactive","permission": "applications.view"|"applications.review"|"applications.decide"|"applications.delete"|"members.manage"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -169,7 +212,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "application_status": ["new", "contacted", "approved", "rejected"],"group_ride_experience": ["none", "some", "a_lot"],"heard_from": ["instagram_ad", "instagram_other", "friend", "other"],"istanbul_side": ["asian", "european"],"license_class": ["a1", "a2", "a", "b", "none"],"member_role": ["member", "organizer", "admin"],"member_status": ["pending", "active", "inactive"]
+            "application_status": ["new", "contacted", "approved", "rejected"],"group_ride_experience": ["none", "some", "a_lot"],"heard_from": ["instagram_ad", "instagram_other", "friend", "other"],"istanbul_side": ["asian", "european"],"license_class": ["a1", "a2", "a", "b", "none"],"member_status": ["pending", "active", "inactive"],"permission": ["applications.view", "applications.review", "applications.decide", "applications.delete", "members.manage"]
           }
         }
 } as const

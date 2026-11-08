@@ -25,3 +25,8 @@
 ### Uppercase in Turkish needs `lang="tr"` (2026-11-07)
 - **Do:** `<html lang={locale}>` — CSS `uppercase` then renders `İSTANBUL` correctly. In JS use
   `toLocaleUpperCase("tr")` (see `src/lib/initials.ts`).
+
+### Message keys containing dots are nested paths (2026-11-08)
+- **Cause:** next-intl splits keys on `.`; a permission value like `applications.view` can't be a flat key.
+- **Do:** nest the messages (`permissions.applications.view.label`); then `t(\`permissions.${permission}.label\`)`
+  works and stays type-checked.

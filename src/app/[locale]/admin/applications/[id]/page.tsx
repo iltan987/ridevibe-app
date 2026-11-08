@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "@/i18n/navigation";
 import { getApplication } from "@/lib/applications/queries";
-import { requireStaff } from "@/lib/auth/require-staff";
+import { requirePermission } from "@/lib/auth/require-access";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("Admin");
@@ -41,7 +41,7 @@ function ageFrom(birthDate: string) {
 
 async function ApplicationDetail({ params }: { params: PageProps<"/[locale]/admin/applications/[id]">["params"] }) {
   const { id } = await params;
-  await requireStaff(`/admin/applications/${id}`);
+  await requirePermission("applications.view", `/admin/applications/${id}`);
 
   const [a, t, tApply, format] = await Promise.all([
     getApplication(id),
