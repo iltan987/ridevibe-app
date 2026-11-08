@@ -54,10 +54,15 @@ pnpm db:types                 # regenerate src/lib/supabase/database.types.ts
 - **Security model:** every table has RLS enabled **and** explicit grants: `revoke all … from anon, authenticated`, then
   grant only what is needed (column-level `update` grants for user-editable fields). Policies alone are not enough.
 - Security-definer helpers live in the non-exposed `private` schema with `set search_path = ''` and fully qualified
-  names. Use `(select auth.uid())` / `(select private.is_staff())` in policies (evaluated once per query).
-- Roles: `member` / `organizer` / `admin`; status: `pending` / `active` / `inactive`. Helpers: `private.my_role()`,
-  `private.is_active_member()`, `private.is_staff()`, `private.is_admin()`. Role/status change only through
-  `public.admin_set_member_access()`.
+  names. Use `(select auth.uid())` / `(select private.has_permission('…'))` in policies (evaluated once per query).
+- **Roles & permissions** (`supabase/schemas/05_roles.sql`): admins create roles and tick permissions
+  (`public.permission` enum); each profile has at most one `role_id` (null = regular member). The built-in admin role
+  (`roles.is_admin`) has every permission plus admin-only powers (editing roles, assigning roles). Only **active**
+  members have rights. Helpers: `private.has_permission(p)`, `private.is_admin()`, `private.is_active_member()`.
+  Role changes only via `public.set_member_role()` (admins), status via `public.set_member_status()`
+  (`members.manage`). App side: `can(user.access, p)`, `requirePermission()` / `requireAdmin()` in
+  `src/lib/auth/`. A new permission = enum value + policy/RPC check + pgTAP test + `Admin.permissions.*` messages.
+- Status: `pending` / `active` / `inactive`.
 - Every permission rule gets a pgTAP test, including the "must fail" cases.
 
 ### Production (hosted Supabase `ridevibe-db`, ref `igqqicbfejhnsggfuydh`, Frankfurt)

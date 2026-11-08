@@ -26,8 +26,9 @@ Local Supabase Studio: http://127.0.0.1:54323
 Sign in once so your profile exists, then run in the SQL editor (Studio locally, Supabase dashboard in production):
 
 ```sql
-update public.profiles set role = 'admin', status = 'active'
+update public.profiles
+set role_id = (select id from public.roles where is_admin), status = 'active'
 where id = (select id from auth.users where email = 'you@example.com');
 ```
 
-After that, manage roles from the app (or via `public.admin_set_member_access`).
+After that, manage roles at `/admin/roles` and members at `/admin/members`.

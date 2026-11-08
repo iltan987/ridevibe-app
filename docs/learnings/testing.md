@@ -18,15 +18,19 @@
      `createChunks("sb-127-auth-token", "base64-" + stringToBase64URL(JSON.stringify(session)))`
      (`require` from the project's `node_modules/@supabase/ssr/dist/main/utils/…`)
   5. restart the stack normally afterwards (email sign-in off again).
-- Local test users that exist now: `organizer@test.local`, `member@test.local` (password `test-password-123`).
+- Local test users: see below (password `test-password-123`).
 
 ### Validating pure TS logic quickly (2026-11-07)
 - `npx --yes tsx --tsconfig tsconfig.json script.ts` works (path aliases resolve). `pnpm dlx tsx` fails under
   pnpm 12 because esbuild's build script is blocked.
 
-### Check access control in three roles (2026-11-07)
-- Every staff page: signed-out → sign-in redirect, member → 404, organizer/admin → content. The DB tests cover the
+### Check access control per permission (2026-11-07, updated 2026-11-08)
+- Every staff page: signed-out → sign-in redirect, member without the permission → 404, holder → content. Test with a
+  role that has *only* the permission in question (create it in the UI as `admin@test.local`). The DB tests cover the
   same rules at the data level.
+- Local test users: `admin@test.local` (admin role), `organizer@test.local` (Organizatör), `member@test.local`.
+- Seed many rows (e.g. 30 pending users via `insert into auth.users … generate_series`) to test pagination
+  (`PAGE_SIZE` = 25), then delete them.
 
 ### Smoke-testing production safely (2026-11-08)
 - Preview deployments are behind Vercel login (puppeteer can't pass it without a bypass secret); production is public.
