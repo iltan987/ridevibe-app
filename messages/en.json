@@ -228,7 +228,8 @@
       "new": "New",
       "contacted": "Contacted",
       "approved": "Approved",
-      "rejected": "Rejected"
+      "rejected": "Rejected",
+      "unlinked": "Not signed in"
     },
     "empty": "No applications with this status.",
     "back": "Back to applications",

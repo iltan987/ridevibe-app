@@ -6,13 +6,19 @@ import { afterCursorFilter, type Cursor, PAGE_SIZE, toPage } from "@/lib/paginat
 export type ApplicationStatus = Enums<"application_status">;
 export const APPLICATION_STATUSES = ["new", "contacted", "approved", "rejected"] as const satisfies readonly ApplicationStatus[];
 
+/** Tabs on the applications list: the real statuses plus approved applicants who haven't signed in yet. */
+export const APPLICATION_FILTERS = [...APPLICATION_STATUSES, "unlinked"] as const;
+export type ApplicationFilter = (typeof APPLICATION_FILTERS)[number];
+
 const LIST_COLUMNS =
   "id, status, full_name, city, district, side, license_class, owns_motorcycle, motorcycle_brand, motorcycle_model, heard_from, utm_campaign, created_at";
 
 // RLS returns rows only with applications.view; for anyone else these are empty.
-export async function listApplications(status: ApplicationStatus, cursor?: Cursor | null) {
+export async function listApplications(filter: ApplicationFilter, cursor?: Cursor | null) {
   const supabase = await createClient();
-  let request = supabase.from("applications").select(LIST_COLUMNS).eq("status", status);
+  let request = supabase.from("applications").select(LIST_COLUMNS);
+  request =
+    filter === "unlinked" ? request.eq("status", "approved").is("profile_id", null) : request.eq("status", filter);
   if (cursor) request = request.or(afterCursorFilter(cursor));
   const { data, error } = await request
     .order("created_at", { ascending: false })
@@ -25,16 +31,16 @@ export async function listApplications(status: ApplicationStatus, cursor?: Curso
 export async function countApplicationsByStatus() {
   const supabase = await createClient();
   const counts = await Promise.all(
-    APPLICATION_STATUSES.map(async (status) => {
-      const { count, error } = await supabase
-        .from("applications")
-        .select("id", { count: "exact", head: true })
-        .eq("status", status);
+    APPLICATION_FILTERS.map(async (filter) => {
+      let request = supabase.from("applications").select("id", { count: "exact", head: true });
+      request =
+        filter === "unlinked" ? request.eq("status", "approved").is("profile_id", null) : request.eq("status", filter);
+      const { count, error } = await request;
       if (error) throw new Error(`countApplicationsByStatus failed: ${error.code}`);
-      return [status, count ?? 0] as const;
+      return [filter, count ?? 0] as const;
     }),
   );
-  return Object.fromEntries(counts) as Record<ApplicationStatus, number>;
+  return Object.fromEntries(counts) as Record<ApplicationFilter, number>;
 }
 
 export async function getApplication(id: string) {

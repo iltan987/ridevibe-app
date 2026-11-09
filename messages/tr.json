@@ -228,7 +228,8 @@
       "new": "Yeni",
       "contacted": "İletişime geçildi",
       "approved": "Onaylandı",
-      "rejected": "Reddedildi"
+      "rejected": "Reddedildi",
+      "unlinked": "Giriş yapmadı"
     },
     "empty": "Bu durumda başvuru yok.",
     "back": "Başvurulara dön",
