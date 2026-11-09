@@ -55,6 +55,7 @@
       "body": "Google doesn't allow sign-in in in-app browsers. Open the ⋯ menu at the top right and choose \"Open in browser\", or copy the link and paste it into Safari/Chrome.",
       "copy": "Copy link",
       "copied": "Copied",
+      "copyManually": "Press and hold to copy the link:",
       "openChrome": "Open in Chrome"
     }
   },

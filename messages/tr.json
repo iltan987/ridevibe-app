@@ -55,6 +55,7 @@
       "body": "Google, uygulama içi tarayıcılarda girişe izin vermiyor. Sağ üstteki ⋯ menüsünden \"Tarayıcıda aç\"ı seç ya da bağlantıyı kopyalayıp Safari/Chrome'a yapıştır.",
       "copy": "Bağlantıyı kopyala",
       "copied": "Kopyalandı",
+      "copyManually": "Bağlantıyı basılı tutup kopyala:",
       "openChrome": "Chrome'da aç"
     }
   },

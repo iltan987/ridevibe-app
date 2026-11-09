@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { chromeIntentUrl, detectInAppBrowser, isAndroid } from "@/lib/auth/in-app-browser";
 
 const subscribe = () => () => {};
@@ -14,6 +15,7 @@ export function InAppBrowserNotice() {
   const t = useTranslations("Auth.inApp");
   const userAgent = useSyncExternalStore(subscribe, getUserAgent, getServerUserAgent);
   const [copied, setCopied] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);
 
@@ -24,8 +26,11 @@ export function InAppBrowserNotice() {
     try {
       await navigator.clipboard.writeText(location.href);
     } catch {
+      // Webviews often block the Clipboard API: fall back to a field the person can long-press.
+      setCopyFailed(true);
       return;
     }
+    setCopyFailed(false);
     setCopied(true);
     clearTimeout(timer.current);
     timer.current = setTimeout(() => setCopied(false), 2000);
@@ -45,6 +50,15 @@ export function InAppBrowserNotice() {
           </a>
         )}
       </div>
+      <span className="sr-only" aria-live="polite">
+        {copied ? t("copied") : ""}
+      </span>
+      {copyFailed && (
+        <label className="flex flex-col gap-1 text-muted-foreground">
+          {t("copyManually")}
+          <Input readOnly value={location.href} onFocus={(e) => e.currentTarget.select()} />
+        </label>
+      )}
     </div>
   );
 }
