@@ -50,7 +50,13 @@ export function LinkAccountDialog({ applicationId, applicationName }: { applicat
     const request = ++latestRequest.current;
     setLoading(true);
     setFailure(null);
-    const result = await findLinkableAccounts({ search, cursor });
+    let result: Awaited<ReturnType<typeof findLinkableAccounts>>;
+    try {
+      result = await findLinkableAccounts({ search, cursor });
+    } catch {
+      // Network failure / server error: the action throws instead of returning.
+      result = { status: "error" };
+    }
     if (request !== latestRequest.current) return;
     setLoading(false);
     if ("status" in result) {
@@ -79,7 +85,11 @@ export function LinkAccountDialog({ applicationId, applicationName }: { applicat
 
   function onSearch(value: string) {
     setQuery(value);
-    setNextCursor(null); // the cursor belongs to the previous search
+    // Drop the previous search's cursor and any request still in flight
+    // (e.g. "More"), so its late response can't append to the new list.
+    latestRequest.current++;
+    setLoading(false);
+    setNextCursor(null);
     clearTimeout(searchTimer.current);
     searchTimer.current = setTimeout(() => void load(value, null), SEARCH_DELAY_MS);
   }
@@ -88,7 +98,7 @@ export function LinkAccountDialog({ applicationId, applicationName }: { applicat
     if (!selected) return;
     setFailure(null);
     startLinking(async () => {
-      const result = await linkApplication(applicationId, selected.id);
+      const result = await linkApplication(applicationId, selected.id).catch(() => ({ status: "error" as const }));
       if (result.status === "ok") onOpenChange(false);
       else setFailure(result.status === "invalid" || result.status === "forbidden" ? result.status : "error");
     });

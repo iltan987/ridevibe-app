@@ -97,3 +97,12 @@
 - **Cause:** PostgreSQL fires triggers of the same timing/event alphabetically by name.
 - **Do:** in a guard trigger, compare the normalised value (`lower(trim(new.email))`), or name triggers so the
   normaliser sorts first.
+
+### An embedded row hidden by RLS comes back as `null`, even though the FK is set (2026-11-09)
+- **Symptom:** application detail showed "not linked" (and offered linking) for an application with `profile_id` set,
+  for a decider without `members.manage`.
+- **Cause:** the `member:profiles!applications_profile_id_fkey(...)` embed obeys profiles RLS; pending profiles are
+  hidden from staff without `members.manage`, so the embed is `null`.
+- **Do:** derive state from the FK column itself (`!!a.profile_id`); use the embed only for optional extras (name,
+  status) and have a fallback label.
+- **Source:** code review of Task 7, verified in the browser with a view+review+decide role.

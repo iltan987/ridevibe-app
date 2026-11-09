@@ -70,7 +70,7 @@ const rawText = z.string().max(1000);
 export async function saveApplicationContact(id: string, values: ContactValues): Promise<ApplicationContactResult> {
   const input = z
     .object({ id: uuid, full_name: rawText, phone: rawText, email: rawText })
-    .safeParse({ id, ...values });
+    .safeParse({ ...values, id });
   if (!input.success) return { status: "invalid" };
   const { id: applicationId, ...contact } = input.data;
 

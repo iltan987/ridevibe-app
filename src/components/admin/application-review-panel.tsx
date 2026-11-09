@@ -37,7 +37,8 @@ export function ApplicationReviewPanel({
   canDecide,
   canDelete,
   decidedLabel,
-  linkedMemberLabel,
+  linkedLabel,
+  linkedInactive,
   inviteHref,
   canLink,
 }: {
@@ -47,8 +48,10 @@ export function ApplicationReviewPanel({
   canDelete: boolean;
   /** "Name · date" of the last status change, if any. */
   decidedLabel: string | null;
-  /** Set while the application is linked to an account (any status). */
-  linkedMemberLabel: string | null;
+  /** Set while the application is linked to an account (profile_id, any status). */
+  linkedLabel: string | null;
+  /** The linked account is inactive (suspended): approval doesn't activate it. */
+  linkedInactive: boolean;
   /** wa.me link with the invite text (approved applications only). */
   inviteHref: string | null;
   /** applications.decide, and the application is neither linked nor rejected. */
@@ -102,9 +105,11 @@ export function ApplicationReviewPanel({
   const dialog = confirm && {
     approved: {
       title: t("review.approveTitle"),
-      body: linkedMemberLabel
-        ? t("review.approveBodyLinked", { name: application.name })
-        : t("review.approveBody", { name: application.name, email: application.email }),
+      body: !linkedLabel
+        ? t("review.approveBody", { name: application.name, email: application.email })
+        : linkedInactive
+          ? t("review.approveBodyLinkedInactive", { name: application.name })
+          : t("review.approveBodyLinked", { name: application.name }),
     },
     rejected: { title: t("review.rejectTitle"), body: t("review.rejectBody", { name: application.name }) },
     reopen: { title: t("review.reopen"), body: t("review.reopenBody") },
@@ -154,12 +159,15 @@ export function ApplicationReviewPanel({
         </div>
 
         {/* Account: linked state, or invite (approved) and "Link to account" */}
-        {(linkedMemberLabel || status === "approved" || canLink) && (
+        {(linkedLabel || status === "approved" || canLink) && (
           <div className="flex flex-col gap-2 rounded-lg border bg-muted/30 p-3">
-            {linkedMemberLabel ? (
-              <p className="text-sm font-medium">{linkedMemberLabel}</p>
+            {linkedLabel ? (
+              <p className="text-sm font-medium">{linkedLabel}</p>
             ) : (
-              <p className="text-sm text-muted-foreground">{t(status === "approved" ? "review.notLinked" : "link.notLinked")}</p>
+              <p className="text-sm text-muted-foreground">
+                {/* Only those who can link get pointed to "Link to account". */}
+                {t(status === "approved" ? (canLink ? "review.notLinked" : "review.notLinkedNoLink") : "link.notLinked")}
+              </p>
             )}
             {(inviteHref || canLink) && (
               <div className="flex flex-wrap gap-2">

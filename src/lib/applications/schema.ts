@@ -252,17 +252,22 @@ export function formDataToObject(formData: FormData) {
   return out;
 }
 
+/** Zod issues → the first error key per top-level field. */
+function firstErrorPerField(issues: readonly { path: readonly PropertyKey[]; message: string }[]) {
+  const fieldErrors: Record<string, ApplyErrorKey> = {};
+  for (const issue of issues) {
+    const field = String(issue.path[0] ?? "_form");
+    fieldErrors[field] ??= (issue.message as ApplyErrorKey) || "invalidOption";
+  }
+  return fieldErrors;
+}
+
 /** Validate; returns the DB row or the first error key per field. */
 export function validateApplication(formData: FormData) {
   const result = applicationSchema.safeParse(formDataToObject(formData));
   if (result.success) return { ok: true as const, data: result.data };
 
-  const fieldErrors: ApplicationFieldErrors = {};
-  for (const issue of result.error.issues) {
-    const field = String(issue.path[0] ?? "_form");
-    fieldErrors[field] ??= (issue.message as ApplyErrorKey) || "invalidOption";
-  }
-  return { ok: false as const, fieldErrors };
+  return { ok: false as const, fieldErrors: firstErrorPerField(result.error.issues) };
 }
 
 /** Staff corrections of an application's contact fields — same rules as the public form. */
@@ -289,10 +294,5 @@ export function validateContactChanges(current: ContactValues, input: ContactVal
   const result = contactSchema.partial().safeParse(changed);
   if (result.success) return { ok: true as const, data: result.data };
 
-  const fieldErrors: Record<string, ApplyErrorKey> = {};
-  for (const issue of result.error.issues) {
-    const field = String(issue.path[0] ?? "_form");
-    fieldErrors[field] ??= (issue.message as ApplyErrorKey) || "invalidOption";
-  }
-  return { ok: false as const, fieldErrors };
+  return { ok: false as const, fieldErrors: firstErrorPerField(result.error.issues) };
 }

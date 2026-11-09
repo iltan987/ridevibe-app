@@ -66,7 +66,10 @@ async function ApplicationDetail({ params }: { params: PageProps<"/[locale]/admi
       ? t("review.decidedBy", { name: a.reviewer.full_name, date: format.dateTime(new Date(a.reviewed_at), { dateStyle: "medium", timeStyle: "short" }) })
       : t("review.decidedByUnknown", { date: format.dateTime(new Date(a.reviewed_at), { dateStyle: "medium", timeStyle: "short" }) })
     : null;
-  const inviteHref = a.status === "approved" && !a.member ? await whatsAppInvite(a) : null;
+  // Linked = profile_id. The `member` join can be null even then: profiles RLS
+  // hides pending accounts from staff without members.manage.
+  const linked = !!a.profile_id;
+  const inviteHref = a.status === "approved" && !linked ? await whatsAppInvite(a) : null;
   const canReview = can(me.access, "applications.review");
   const canDecide = can(me.access, "applications.decide");
 
@@ -105,9 +108,12 @@ async function ApplicationDetail({ params }: { params: PageProps<"/[locale]/admi
         canDecide={canDecide}
         canDelete={can(me.access, "applications.delete")}
         decidedLabel={decidedLabel}
-        linkedMemberLabel={a.member ? t("review.linked", { name: a.member.full_name }) : null}
+        linkedLabel={
+          linked ? (a.member?.full_name ? t("review.linked", { name: a.member.full_name }) : t("review.linkedUnknown")) : null
+        }
+        linkedInactive={a.member?.status === "inactive"}
         inviteHref={inviteHref}
-        canLink={canDecide && !a.profile_id && a.status !== "rejected"}
+        canLink={canDecide && !linked && a.status !== "rejected"}
       />
 
       <Section
