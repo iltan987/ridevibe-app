@@ -19,3 +19,12 @@
 - Avoid third-party requests that leak visitor IPs without need (e.g. phone-input flag CDN) and non-essential
   cookies (UTM attribution is passed via URL, no cookie).
 - Store the privacy-notice version with each consent (`privacy_notice_version`).
+
+### WhatsApp photos: groups are circles, communities are rounded squares (2026-11-09)
+- **Symptom:** the new group photo showed light corners and a blurred frame; the dark-cornered fix then looked like a
+  black tile on the community.
+- **Cause:** groups crop to a circle, communities to a rounded square; if the crop is zoomed out WhatsApp shrinks the
+  picture and fills the rest with a blurred copy. One file can't fit both.
+- **Do:** group = badge filling the square on its ring colour; community = badge with margin on a real background
+  (files and recipe: `docs/design/README.md`). Test in a throwaway group/community before asking Samet to change it.
+- **Source:** found by testing (iltan's test group).

@@ -21,6 +21,10 @@ announcements, photo galleries, attendance. Plan and decisions: `docs/PLAN.md`. 
   completion` (lint, tsc, test, db:test, build, browser E2E) → `requesting-code-review` (+ `/security-review` for
   RLS/grant changes) → iltan reviews → merge. Small fixes skip design/plan. No git worktrees (one local Supabase DB);
   no PRs (local `--no-ff` merge). End of session: `claude-md-management:revise-claude-md`.
+- **Nothing project-related lives only on one PC.** Claude Code settings, permissions, plugins and auto memory are
+  committed in `.claude/` (memory in `.claude/memory/` via `autoMemoryDirectory`); durable rules still belong here or
+  in `docs/`. Final assets go into `docs/` (not `.superpowers/`, the Desktop or the scratchpad); only secrets stay
+  out. New machine: README "New machine setup".
 - **Fix the environment yourself** before calling it a blocker: e.g. Docker down → start
   `"/mnt/c/Program Files/Docker/Docker/Docker Desktop.exe" &` and wait for `/var/run/docker.sock`.
 

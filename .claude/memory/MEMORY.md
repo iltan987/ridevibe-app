@@ -1,0 +1,8 @@
+- [iltan](user-iltan.md) — club member building & maintaining the motorcycle club app for founder Samet
+- [Dev rules](feedback-dev-rules.md) — git email iltancanerr@gmail.com, NEVER co-author trailers, always research docs
+- [Iterative collaboration](feedback-iterative-collaboration.md) — small reviewable steps, iltan steers, no rush
+- [Record learnings](feedback-record-learnings.md) — write discoveries/mistakes to docs/learnings/ (read before, write after)
+- [Ridingclub project](project-ridingclub.md) — requirements: motorcycle club Istanbul, TR/EN, KVKK, mobile; live at ridevibe.com.tr
+- [Paginate every list](feedback-paginate-lists.md) — no fixed caps like .limit(200); club grew to ~130 in 2 weeks
+- [Fix environment yourself](feedback-fix-environment-yourself.md) — start Docker Desktop etc. from WSL before calling it a blocker
+- [Agentic workflow](feedback-agentic-workflow.md) — phases via superpowers: spec → plan → subagent build+TDD → verify → independent review
