@@ -15,6 +15,10 @@ actions, teal for positive/status states, cream text, Saira type.
 - **Brand:** `src/components/brand/{wordmark,club-badge}.tsx`, `src/assets/brand/badge.png` (production badge), `public/brand/` (wordmark SVG, icon PNGs),
   `src/app/{favicon.ico,icon.svg,apple-icon.png,manifest.ts}`, `src/app/[locale]/opengraph-image.png`.
 - **Mockups:** `docs/design/mockups/` (`chosen-gece-turkuaz.html`, `directions-a-b-c.html`, `shelved-logo-concepts.*`).
+  The Turkish sheets shown to Samet are in `mockups/samet-tr/` (PNG; PDFs were the same images, one page each).
+- **WhatsApp photos:** `docs/design/brand/whatsapp/` — `grup.jpg` for every group (circle crop),
+  `topluluk-gece.jpg` for the community (rounded square, in use); `topluluk-krem.jpg` / `topluluk-gunbatimi.jpg` are
+  the unused options.
 
 ## Fallback directions
 
@@ -28,8 +32,13 @@ actions, teal for positive/status states, cream text, Saira type.
   mask → `docs/design/brand/badge-2048.png` (and the cream wordmark master) → wordmark traced to SVG (potrace).
 - The **wordmark master (`docs/design/brand/wordmark-cream-master.png`) is the real source** for letters: `docs/design/brand/monogram-cream-master.png` is
   badly cut (R leg, V, & overlap), so the R&V icon artwork was rebuilt from the wordmark's letters.
-- The print-resolution master is kept outside git by iltan.
-- The WhatsApp group photo (`ride-vibe-whatsapp-1024.jpg`) is replaced with the upscaled badge **manually**.
+- The print-resolution master `ride-vibe-logo-baski-4665.png` (4665 px, 21 MB) is kept outside git, on iltan's
+  Google Drive. Everything else is reproducible from this folder.
+- WhatsApp photos (Pillow, from `badge-2048.png`), set **manually** by Samet:
+  - group: 1024 px square, badge 1000 px centred on `#0B0B0C` (the badge's outer ring colour), so a circle crop
+    never shows light corners;
+  - community: 1024 px square, badge 860 px centred on night `#0B0D10` with a soft blurred `#F98D2F` glow
+    (WhatsApp shows communities as a rounded square, so the badge needs a margin and a real background).
 - Details and gotchas: `docs/learnings/ui.md`, `docs/learnings/environment.md`.
 
 ## Open items

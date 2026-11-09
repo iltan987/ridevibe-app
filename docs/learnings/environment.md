@@ -53,3 +53,18 @@
   into 2 pages; for a guaranteed one-page PDF print an HTML page that only contains the PNG at the page size.
   Local images need `--allow-file-access-from-files`. Emoji render as boxes (no emoji font in WSL).
 - **Source:** found by testing.
+
+### Claude Code memory and plugins are per machine unless committed (2026-11-09)
+- **Symptom:** auto memory (`~/.claude/projects/<project>/memory/`), plugins and permissions (git-ignored
+  `.claude/settings.local.json`) existed only on one PC; a fresh clone would lose them.
+- **Do:** `.claude/settings.json` (committed) holds `autoMemoryDirectory` (must be absolute or `~/`, so it assumes the
+  clone at `~/projects/ridingclub`; honored after the folder-trust dialog), permissions, `idleCompaction` and
+  `enabledPlugins`. Memory files are committed in `.claude/memory/`. Enabled plugins still need
+  `claude plugin install <id> --scope project` once per machine (README loop); `claude plugin list` shows
+  "enabled in project settings but isn't installed" otherwise.
+- **Marketplaces:** `anthropic-plugin-directory` is built in ("Anthropic Directory", `claude plugin marketplace list`)
+  and tracks upstream (superpowers 6.x); `claude-plugins-official` had an older superpowers (5.1.0). Keep the
+  directory IDs for superpowers / claude-md-management / context7 / frontend-design; typescript-lsp, figma and vercel
+  are only in `claude-plugins-official`. Never enable the same plugin from both (duplicate skills).
+- **Check:** `claude -p "print your auto memory directory path"` → `…/ridingclub/.claude/memory/`.
+- **Source:** code.claude.com/docs/en/memory (autoMemoryDirectory), settings-reference, plugins/install; found by testing.
