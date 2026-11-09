@@ -8,6 +8,7 @@ import { Suspense, type ReactNode } from "react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ApplicationContactEditor } from "@/components/admin/application-contact-editor";
 import { ApplicationReviewPanel } from "@/components/admin/application-review-panel";
 import { getPathname, Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
@@ -66,6 +67,15 @@ async function ApplicationDetail({ params }: { params: PageProps<"/[locale]/admi
       : t("review.decidedByUnknown", { date: format.dateTime(new Date(a.reviewed_at), { dateStyle: "medium", timeStyle: "short" }) })
     : null;
   const inviteHref = a.status === "approved" && !a.member ? await whatsAppInvite(a) : null;
+  const canReview = can(me.access, "applications.review");
+  const canDecide = can(me.access, "applications.decide");
+
+  const contactRows = (
+    <>
+      <Row label={tApply("fields.phone")}>{a.phone}</Row>
+      <Row label={tApply("fields.email")}>{a.email}</Row>
+    </>
+  );
 
   return (
     <>
@@ -91,17 +101,31 @@ async function ApplicationDetail({ params }: { params: PageProps<"/[locale]/admi
 
       <ApplicationReviewPanel
         application={{ id: a.id, status: a.status, name: a.full_name, email: a.email, notes: a.admin_notes }}
-        canReview={can(me.access, "applications.review")}
-        canDecide={can(me.access, "applications.decide")}
+        canReview={canReview}
+        canDecide={canDecide}
         canDelete={can(me.access, "applications.delete")}
         decidedLabel={decidedLabel}
         linkedMemberLabel={a.member ? t("review.linked", { name: a.member.full_name }) : null}
         inviteHref={inviteHref}
+        canLink={canDecide && !a.profile_id && a.status !== "rejected"}
       />
 
-      <Section title={tApply("sections.about")}>
-        <Row label={tApply("fields.phone")}>{a.phone}</Row>
-        <Row label={tApply("fields.email")}>{a.email}</Row>
+      <Section
+        title={tApply("sections.about")}
+        top={
+          // decide includes review (RLS)
+          canReview || canDecide ? (
+            <ApplicationContactEditor
+              application={{ id: a.id, full_name: a.full_name, phone: a.phone, email: a.email }}
+              emailLocked={a.status === "approved" && !canDecide}
+            >
+              {contactRows}
+            </ApplicationContactEditor>
+          ) : (
+            <dl className="flex flex-col gap-3">{contactRows}</dl>
+          )
+        }
+      >
         <Row label={tApply("fields.birth_date")}>
           {format.dateTime(new Date(`${a.birth_date}T12:00:00`), { dateStyle: "long" })} · {t("age", { age: ageFrom(a.birth_date) })}
         </Row>
@@ -174,13 +198,15 @@ async function whatsAppInvite(a: { full_name: string; email: string; phone: stri
   return `https://wa.me/${a.phone.replace(/\D/g, "")}?text=${encodeURIComponent(text)}`;
 }
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
+/** `top`: content above the rows that brings its own markup (e.g. the contact editor). */
+function Section({ title, top, children }: { title: string; top?: ReactNode; children: ReactNode }) {
   return (
     <Card>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex flex-col gap-3">
+        {top}
         <dl className="flex flex-col gap-3">{children}</dl>
       </CardContent>
     </Card>

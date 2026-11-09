@@ -332,7 +332,8 @@
       "reject": "Reddet",
       "reopen": "Kararı geri al",
       "approveTitle": "Başvuru onaylansın mı?",
-      "approveBody": "{name} bu e-postayla ({email}) Google ile giriş yaptığında otomatik olarak aktif üye olur. Onaydan sonra WhatsApp davetini gönder.",
+      "approveBody": "{name} bu e-postayla ({email}) Google ile giriş yaptığında otomatik olarak aktif üye olur; başka bir hesapla girerse “Hesaba bağla” ile bağla. Onaydan sonra WhatsApp davetini gönder.",
+      "approveBodyLinked": "{name} başvuruya bağlı hesabıyla hemen aktif üye olur. Onaydan sonra WhatsApp'tan haber ver.",
       "rejectTitle": "Başvuru reddedilsin mi?",
       "rejectBody": "{name} daha sonra yeniden başvurabilir.",
       "reopenBody": "Başvuru “İletişime geçildi” durumuna döner. Zaten aktifleşmiş bir hesap aktif kalır; gerekirse Üyeler sayfasından pasifleştir.",
@@ -345,12 +346,36 @@
       "decidedBy": "{name} · {date}",
       "decidedByUnknown": "Değiştiren: bilinmiyor · {date}",
       "noPermission": "Bu başvurunun durumunu değiştirme yetkin yok.",
-      "linked": "Hesap bağlandı: {name}",
-      "notLinked": "Henüz giriş yapmadı. Davet mesajını gönder; başvurudaki e-postayla giriş yaptığında otomatik olarak aktif olur. Farklı bir Google hesabıyla girerse onu Üyeler sayfasından aktifleştir.",
+      "linked": "Hesap bağlı: {name}",
+      "notLinked": "Henüz giriş yapmadı. Davet mesajını gönder; başvurudaki e-postayla giriş yaptığında otomatik olarak aktif olur. Farklı bir Google hesabıyla girdiyse “Hesaba bağla” ile bağla.",
       "sendInvite": "WhatsApp daveti gönder",
       "delete": "Başvuruyu sil",
       "deleteTitle": "Başvuru kalıcı olarak silinsin mi?",
       "deleteBody": "KVKK silme talepleri için. Bu işlem geri alınamaz."
+    },
+    "contactEdit": {
+      "edit": "Düzenle",
+      "save": "Kaydet",
+      "cancel": "Vazgeç",
+      "emailHint": "Kişinin Google ile giriş yaptığı (yapacağı) e-posta. Bu e-postayla giriş yapan hesap başvuruyla eşleşir.",
+      "emailLocked": "Onaylanmış başvurunun e-postasını yalnızca başvurular hakkında karar verebilenler değiştirebilir.",
+      "duplicateEmail": "Bu e-postayla açık bir başvuru daha var."
+    },
+    "link": {
+      "open": "Hesaba bağla",
+      "title": "Başvuruyu bir hesaba bağla",
+      "description": "Henüz aktif olmayan ve başvuruyla eşleşmemiş hesaplar. Adı başvurudakine benzeyenler üstte.",
+      "search": "Ad veya e-posta ile ara",
+      "empty": "Bağlanabilecek bekleyen hesap bulunamadı.",
+      "more": "Daha fazla",
+      "signedUp": "Kayıt: {date}",
+      "confirmTitle": "Hesaba bağlansın mı?",
+      "confirm": "{application} başvurusu {account} hesabına bağlansın mı? Başvuru onaylıysa hesap aktif olur.",
+      "submit": "Bağla",
+      "back": "Geri",
+      "close": "Kapat",
+      "notLinked": "Henüz bir hesaba bağlı değil.",
+      "invalid": "Bu başvuru ya da hesap artık bağlanamıyor. Sayfayı yenileyip tekrar dene."
     },
     "invite": {
       "message": "Merhaba {name}! 🏍️ Ride & Vibe başvurun onaylandı, aramıza hoş geldin!\n\nÜyeliğini tamamlamak için başvuruda verdiğin e-postanın ({email}) Google hesabıyla giriş yap:\n{url}\n\nBu e-posta bir Google hesabı değilse bu mesaja yanıt ver, hesabını birlikte bağlayalım."

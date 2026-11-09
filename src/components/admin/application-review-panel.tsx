@@ -18,6 +18,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
+import { LinkAccountDialog } from "@/components/admin/link-account-dialog";
 import { useRouter } from "@/i18n/navigation";
 import type { AccessActionResult } from "@/lib/access/actions";
 import type { ApplicationStatus } from "@/lib/applications/queries";
@@ -38,6 +39,7 @@ export function ApplicationReviewPanel({
   decidedLabel,
   linkedMemberLabel,
   inviteHref,
+  canLink,
 }: {
   application: { id: string; status: ApplicationStatus; name: string; email: string; notes: string | null };
   canReview: boolean;
@@ -45,10 +47,12 @@ export function ApplicationReviewPanel({
   canDelete: boolean;
   /** "Name · date" of the last status change, if any. */
   decidedLabel: string | null;
-  /** Set once the approved application is linked to a member account. */
+  /** Set while the application is linked to an account (any status). */
   linkedMemberLabel: string | null;
   /** wa.me link with the invite text (approved applications only). */
   inviteHref: string | null;
+  /** applications.decide, and the application is neither linked nor rejected. */
+  canLink: boolean;
 }) {
   const t = useTranslations("Admin");
   const router = useRouter();
@@ -96,7 +100,12 @@ export function ApplicationReviewPanel({
     ));
 
   const dialog = confirm && {
-    approved: { title: t("review.approveTitle"), body: t("review.approveBody", { name: application.name, email: application.email }) },
+    approved: {
+      title: t("review.approveTitle"),
+      body: linkedMemberLabel
+        ? t("review.approveBodyLinked", { name: application.name })
+        : t("review.approveBody", { name: application.name, email: application.email }),
+    },
     rejected: { title: t("review.rejectTitle"), body: t("review.rejectBody", { name: application.name }) },
     reopen: { title: t("review.reopen"), body: t("review.reopenBody") },
     delete: { title: t("review.deleteTitle"), body: t("review.deleteBody") },
@@ -144,20 +153,23 @@ export function ApplicationReviewPanel({
           {message("status")}
         </div>
 
-        {/* After approval: invite + link state */}
-        {status === "approved" && (
+        {/* Account: linked state, or invite (approved) and "Link to account" */}
+        {(linkedMemberLabel || status === "approved" || canLink) && (
           <div className="flex flex-col gap-2 rounded-lg border bg-muted/30 p-3">
             {linkedMemberLabel ? (
               <p className="text-sm font-medium">{linkedMemberLabel}</p>
             ) : (
-              <>
-                <p className="text-sm text-muted-foreground">{t("review.notLinked")}</p>
+              <p className="text-sm text-muted-foreground">{t(status === "approved" ? "review.notLinked" : "link.notLinked")}</p>
+            )}
+            {(inviteHref || canLink) && (
+              <div className="flex flex-wrap gap-2">
                 {inviteHref && (
-                  <a href={inviteHref} target="_blank" rel="noreferrer" className={buttonVariants({ className: "self-start" })}>
+                  <a href={inviteHref} target="_blank" rel="noreferrer" className={buttonVariants()}>
                     <MessageCircle aria-hidden /> {t("review.sendInvite")}
                   </a>
                 )}
-              </>
+                {canLink && <LinkAccountDialog applicationId={id} applicationName={application.name} />}
+              </div>
             )}
           </div>
         )}

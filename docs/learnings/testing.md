@@ -68,3 +68,18 @@
 - Limits: no path aliases (`@/…`) and imports need the `.ts` extension (`allowImportingTsExtensions` is on) →
   keep tested logic in dependency-free modules (e.g. `src/lib/auth/safe-next.ts`).
 - **Source:** found by testing.
+
+### Puppeteer clicks land on the fixed bottom tab bar (2026-11-09)
+- **Symptom:** clicking an "Edit" button on a long admin page at 390×844 navigated to `/apply` instead.
+- **Cause:** `ElementHandle.click()` only scrolls if the element is outside the viewport; a button just above the
+  bottom edge sits under the fixed tab bar, which receives the click.
+- **Do:** `el.evaluate((b) => b.scrollIntoView({ block: "center" }))` before `el.click()`. Also retry the first click
+  on a fresh page until the expected element appears (it can land before hydration).
+- **Source:** found by testing (Task 7 E2E).
+
+### Seeded `auth.users.created_at` doesn't reach `profiles.created_at` (2026-11-09)
+- **Symptom:** a pagination test over 30 seeded pending users was flaky: the order looked random.
+- **Cause:** `handle_new_user` inserts the profile with `created_at = now()`, the same for every row of one
+  `insert … generate_series`; keyset order (`created_at desc, id desc`) then falls back to random UUIDs.
+- **Do:** after seeding, `update public.profiles p set created_at = u.created_at from auth.users u where u.id = p.id …`.
+- **Source:** found by testing (Task 7 E2E).

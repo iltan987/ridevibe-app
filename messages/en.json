@@ -332,7 +332,8 @@
       "reject": "Reject",
       "reopen": "Undo decision",
       "approveTitle": "Approve this application?",
-      "approveBody": "{name} becomes an active member automatically when they sign in with Google using this email ({email}). Send the WhatsApp invite after approving.",
+      "approveBody": "{name} becomes an active member automatically when they sign in with Google using this email ({email}); if they use another account, link it with “Link to account”. Send the WhatsApp invite after approving.",
+      "approveBodyLinked": "{name} becomes an active member right away through the linked account. Let them know on WhatsApp after approving.",
       "rejectTitle": "Reject this application?",
       "rejectBody": "{name} can apply again later.",
       "reopenBody": "The application goes back to “Contacted”. An account that was already activated stays active; deactivate it on the Members page if needed.",
@@ -345,12 +346,36 @@
       "decidedBy": "{name} · {date}",
       "decidedByUnknown": "Changed by: unknown · {date}",
       "noPermission": "You don't have permission to change this application's status.",
-      "linked": "Account linked: {name}",
-      "notLinked": "Hasn't signed in yet. Send the invite; they become active automatically when they sign in with the email from the application. If they use a different Google account, activate it on the Members page.",
+      "linked": "Linked account: {name}",
+      "notLinked": "Hasn't signed in yet. Send the invite; they become active automatically when they sign in with the email from the application. If they signed in with a different Google account, link it with “Link to account”.",
       "sendInvite": "Send WhatsApp invite",
       "delete": "Delete application",
       "deleteTitle": "Delete this application permanently?",
       "deleteBody": "For KVKK erasure requests. This cannot be undone."
+    },
+    "contactEdit": {
+      "edit": "Edit",
+      "save": "Save",
+      "cancel": "Cancel",
+      "emailHint": "The email the person signs in to Google with. An account that signs in with it is matched to this application.",
+      "emailLocked": "Only staff who can decide on applications can change the email of an approved application.",
+      "duplicateEmail": "Another open application already uses this email."
+    },
+    "link": {
+      "open": "Link to account",
+      "title": "Link the application to an account",
+      "description": "Accounts that aren't active yet and aren't matched to an application. Names like the applicant's come first.",
+      "search": "Search by name or email",
+      "empty": "No pending account to link found.",
+      "more": "More",
+      "signedUp": "Signed up: {date}",
+      "confirmTitle": "Link to this account?",
+      "confirm": "Link the application of {application} to the account {account}? If the application is approved, the account becomes active.",
+      "submit": "Link",
+      "back": "Back",
+      "close": "Close",
+      "notLinked": "Not linked to an account yet.",
+      "invalid": "This application or account can no longer be linked. Refresh the page and try again."
     },
     "invite": {
       "message": "Hi {name}! 🏍️ Your Ride & Vibe application has been approved, welcome aboard!\n\nTo complete your membership, sign in with the Google account of the email you applied with ({email}):\n{url}\n\nIf that email isn't a Google account, just reply here and we'll link your account together."

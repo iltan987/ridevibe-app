@@ -91,3 +91,11 @@
 - **Do:** `applyResolvedTheme`/`initTheme` use `querySelectorAll` and set every tag (fake docs in `theme.test.ts` carry two).
 - **Also:** `text-destructive` on `bg-destructive/10…20` (or `bg-input/30`) over card/popover is lower contrast than on the plain background. `globals-contrast.test.ts` blends the tint (`blend()`); keep its alpha constants in sync with `button.tsx`/`badge.tsx`. Orange as *text* (`link` variants) is `text-accent-text`, and light `--ring` must be ≥ 3:1 on cream (`#B4560C`).
 - **Also:** CSS-mask elements (wordmark) vanish in Windows forced-colours mode unless `forced-color-adjust: none`.
+
+### shadcn `dialog` (base-nova): hard-coded English "Close", and `add` prompts to overwrite `button.tsx` (2026-11-09)
+- **Symptom:** `pnpm dlx shadcn@latest add dialog` stops at "button.tsx already exists. Overwrite?" (non-interactive
+  runs abort without writing anything); the generated `DialogContent`/`DialogFooter` render an sr-only/visible
+  "Close" that isn't translated.
+- **Do:** `yes n | pnpm dlx shadcn@latest add dialog` keeps our patched `button.tsx`. Use
+  `<DialogContent showCloseButton={false}>` and put a translated close/cancel button in the footer.
+- **Source:** found while adding the "Link to account" dialog (Task 7).

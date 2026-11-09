@@ -34,14 +34,17 @@ export function PhoneField({
   label,
   hint,
   error,
+  defaultValue,
 }: {
   name: string;
   label: string;
   hint?: string;
   error?: string;
+  /** Initial number in E.164 (e.g. when staff correct an application). */
+  defaultValue?: string;
 }) {
   const locale = useLocale();
-  const [value, setValue] = useState<Value>();
+  const [value, setValue] = useState<Value | undefined>(defaultValue as Value | undefined);
   // Re-mounting the input re-formats the displayed text from the clean value.
   const [formatKey, setFormatKey] = useState(0);
 
