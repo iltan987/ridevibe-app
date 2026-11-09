@@ -13,7 +13,7 @@ mistakes and their root causes, workarounds, environment quirks. Goal: never re-
 | [ui.md](ui.md) | shadcn/ui `base-nova`, Base UI, mobile UX |
 | [forms.md](forms.md) | Zod 4, form submission, phone input |
 | [testing.md](testing.md) | Unit tests with `node --test`, browser E2E without a framework, signed-in sessions |
-| [security.md](security.md) | Redirects, input handling, other attack-surface lessons |
+| [security.md](security.md) | Redirects, input handling, Google sign-in in in-app browsers, other attack-surface lessons |
 | [environment.md](environment.md) | WSL, Docker, pnpm, CLI tools, shell gotchas |
 | [infra.md](infra.md) | Vercel, Marketplace, domain/DNS, costs |
 | [domain.md](domain.md) | Motorcycle/Turkey/KVKK facts that drive product decisions |

@@ -1,6 +1,6 @@
 # Application gaps — design
 
-Status: **draft**, agreed in chat with iltan on 2026-11-09, pending review of this file.
+Status: **implemented** on `feat/application-gaps` (2026-11-09); agreed in chat with iltan.
 
 ## Why
 
@@ -65,9 +65,11 @@ Unchanged guarantee: activation only touches `pending` profiles, never `active` 
   pattern as `set_member_status`. Members can still edit their own name (unchanged; revisit in the Members iteration).
 
 ### Turkish mobile rule (problem A)
-- DB: new CHECK `applications_tr_mobile`: `phone !~ '^\+90' or phone ~ '^\+905[0-9]{9}$'`.
-- **Production data first:** before generating the migration, count existing rows that would violate it. If any,
-  add the constraint `not valid` (new rows checked, old rows untouched) and list those rows for staff to correct.
+- DB: **decision made during implementation (2026-11-09):** built as a trigger, not a table CHECK.
+  `private.applications_normalize_contact` raises a check violation with constraint name `applications_tr_mobile` when
+  a `+90` number is not `+905[0-9]{9}`. It runs on insert and only when `phone` changes, so old production rows that
+  would violate the rule don't block the migration and stay editable (an email-only correction doesn't trip on a
+  legacy phone). No production pre-count is needed.
 - App: the same rule in `src/lib/applications/schema.ts` with a specific error message ("Türkiye numarası 5 ile
   başlayan bir cep telefonu olmalı").
 
@@ -141,6 +143,14 @@ and showing its count.
 ### Members list (`/admin/members`)
 - Pending rows show a badge **"Başvurdu"** / **"Başvurusu yok"** from `pending_application_flags()`.
 - **Edit name** action for `members.manage` holders (`set_member_name`).
+
+## Decisions during implementation (2026-11-09)
+- Mobile rule is a trigger, not a CHECK (see section 1).
+- Changing the email of an **approved** application needs `applications.decide`, because it chooses which account
+  activates. Review-only staff see the email read-only on approved applications.
+- "Already linked" means a linked `new` / `contacted` / `approved` application; a linked **rejected** application does
+  not block linking or applying again.
+- `my_application_status()` returns the latest application among those linked by `profile_id` or matched by email.
 
 ## 3. Error handling
 Server Actions validate with Zod, let RLS/RPCs decide, map codes to results as in `src/lib/access/actions.ts`

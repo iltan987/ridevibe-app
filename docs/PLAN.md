@@ -50,6 +50,24 @@ Intended staff roles (2026-11-08, iltan):
 Application flow: public form → staff review (New → Contacted → Approved / Rejected) → on approval admin sends a
 WhatsApp invite link → person signs in with Google → account is linked to the application.
 
+**Application gaps (2026-11-09)** — spec `docs/superpowers/specs/2026-11-09-application-gaps-design.md`. Real
+applicants hit mistyped phones, nicknames, apply/sign-in with different emails and in-app browsers. The form stays
+open to anonymous visitors; instead:
+- **Linking:** `applications.profile_id` = the account the application belongs to (set when a signed-in user applies,
+  on approval, or by staff via "Link to account" on the application page, `applications.decide`). Approval activates
+  the linked account by `profile_id` first, then by email, and copies the approved application's name to the profile.
+- **Status / CTA:** `/account` for a pending member and `/apply` show "you haven't applied yet" (button to the form),
+  "under review", or the generic pending text, based on `my_application_status()`.
+- **In-app browser notice** on `/sign-in` (Instagram, Facebook, TikTok, LinkedIn): Google blocks OAuth there
+  (`disallowed_useragent`); explains how to open Safari/Chrome, with a copy-link fallback.
+- **Staff corrections:** edit applicant name/phone/email (review/decide); edit member name (`members.manage`).
+  Correcting the email of an approved application re-runs matching.
+- **Lists:** applications filter "Onaylandı, giriş yapmadı" (approved, not linked); pending members show a
+  "Başvurdu" / "Başvurusu yok" badge.
+- **Mobile rule:** Turkish numbers must be `+905…` (form + DB trigger).
+- **Follow-up (KVKK):** retention of pending accounts that never apply (minimisation: delete or anonymise after a set
+  period, to be decided with the other retention periods below).
+
 ## Status (2026-11-08)
 
 Live at https://ridevibe.com.tr: TR/EN site, Google sign-in (roles/statuses), public application form, draft privacy
