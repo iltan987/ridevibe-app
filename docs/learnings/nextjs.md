@@ -84,3 +84,15 @@ Bundled docs are the source of truth: `node_modules/next/dist/docs/` (grep them 
   already gets the right origin.
 - **Do:** leave it unset; set it only if a custom canonical origin is needed that differs from the Vercel production URL.
 - **Source:** Next source, above.
+
+### Error page: `[locale]/error.tsx`, no `global-error.tsx` (2026-11-09)
+- **Do:** `src/app/[locale]/error.tsx` catches page errors below the locale layout, so header, nav, theme and language
+  stay. It does **not** catch errors in the layout itself; those would need `global-error.tsx`, which renders its own
+  `<html>` without our CSS, fonts, theme script or messages. Skipped on purpose: the layout path doesn't throw
+  (`getCurrentUser()` maps Supabase errors to `null`). Revisit if the layout starts awaiting something that can throw.
+- **Props (16.3+):** `{ error: unknown, retry }` — `retry()` re-fetches and re-renders (prefer it over `reset`). Server
+  errors arrive with a generic message plus `error.digest` (matches the Vercel log entry); we show the digest.
+- **Gotchas:** don't name the component `Error` (shadows the global, breaks `instanceof Error`). To test, a temporary
+  client page that throws after mount works with a static build; delete it and re-run `pnpm build` before `tsc`
+  (stale `.next/types` still reference the deleted page).
+- **Source:** `03-api-reference/03-file-conventions/error.md`; found by testing.

@@ -335,5 +335,12 @@
     "title": "Sayfa bulunamadı",
     "description": "Aradığın sayfa yok ya da taşınmış olabilir.",
     "back": "Ana sayfaya dön"
+  },
+  "Error": {
+    "title": "Bir şeyler ters gitti",
+    "description": "Sayfa yüklenirken bir sorun oluştu. Tekrar dene; düzelmezse biraz sonra yeniden uğra.",
+    "retry": "Tekrar dene",
+    "back": "Ana sayfaya dön",
+    "code": "Hata kodu: {digest}"
   }
 }
