@@ -64,17 +64,19 @@ Build in this order, one branch each:
    Different email → staff activate the pending sign-up on `/admin/members` (shows sign-in emails).
 2. **Members** — directory (name, district/side, bike) and "my profile" editing.
    2b. **Member conduct** — confidential staff notes, warnings, suspend/ban (see "Member conduct" below).
-3. **Events** — organizers create rides (date, meeting point + map link, route, capacity); members RSVP with a
-   waiting list; home page shows upcoming events.
+3. **Events** — organizers create rides (date, route, capacity); rides have a **route** (path with start, stops,
+   finish), not a single meeting point — see spec §6; members RSVP with a waiting list; home page shows upcoming events.
 4. **Announcements** — short organizer posts, pinned on the home page.
 5. Right after the MVP: **event photo gallery** (Cloudflare R2).
 
 **Joining after approval (decided 2026-11-08):** staff add approved people to the club WhatsApp group **manually**,
 and send the sign-in invite with the one-tap `wa.me` button on the application page. No automation for now.
 
-**Design pass needed:** everything so far uses default shadcn styling. Before/while building the MVP screens, define
-the visual identity (logo, colours, typography, light/dark, motorcycle "vibe") and apply it across existing pages.
-Do this as its own step, early, so new screens are built in the final style.
+**Design system decided (2026-11-09):** "Gece + turkuaz" — dark default with light option, orange `#F98D2F` primary,
+teal for positive/status, Saira type, traced R&V wordmark and club badge. Spec:
+`docs/superpowers/specs/2026-11-09-design-system-design.md`; fallbacks and asset provenance: `docs/design/README.md`.
+Built on `feat/design-system`; new screens use the tokens in `src/app/globals.css`.
+Todo (manual): Samet replaces the WhatsApp group photo with `ride-vibe-whatsapp-1024.jpg` (kept outside git by iltan).
 
 ## Optional later: automatic WhatsApp messages
 

@@ -108,9 +108,16 @@ kill $(ss -ltnp | grep ':3123 ' | grep -oP 'pid=\K[0-9]+')   # stop a local serv
   Locale on the server comes from `next/root-params` (see `src/i18n/request.ts`). Time zone: `Europe/Istanbul`.
   Dev quirk: `pnpm dev` (Turbopack) may keep serving stale `messages/*.json` after edits (`MISSING_MESSAGE`) —
   restart the dev server before assuming a missing key.
+  Never CSS-`uppercase` English/brand words on Turkish pages (`i → İ`, "RİDE & VİBE"): use `Wordmark` or write the
+  capitals in the source (`docs/learnings/ui.md`).
 - **UI:** Tailwind CSS 4 + shadcn/ui (`base-nova` style, built on Base UI). Base UI composes with the `render` prop,
   **not** `asChild`. For links that look like buttons use `buttonVariants()` on `Link`. `cn` comes from the `cn`
   package (re-exported in `@/lib/utils`). Add components with `pnpm dlx shadcn@latest add <name>`.
+- **Design system** ("Gece + turkuaz", `docs/design/README.md`): palette tokens live in `src/app/globals.css` (hex,
+  contrast-tested by `globals-contrast.test.ts`; re-run `pnpm test` after changing values); `heading` / `eyebrow`
+  utilities; orange text uses `text-accent-text`, not `text-primary`. Brand: `Wordmark` / `ClubBadge`
+  (`src/components/brand/`). Theme: dark default via `src/lib/theme.ts` + inline head script, switcher in the header
+  only; never read cookies for theme (keeps routes static).
 - Mobile-first: design for ~390px first; the bottom tab bar is the main navigation on phones.
 - Primary nav items live in `src/components/layout/nav-items.ts`.
 - Server Actions: validate with Zod, let RLS decide, map error codes to results, call `refresh()` (`next/cache`)

@@ -114,7 +114,7 @@ export function ApplyForm() {
     return (
       <Card>
         <CardHeader className="items-start gap-3">
-          <CircleCheck className="size-8 text-green-600" aria-hidden />
+          <CircleCheck className="size-8 text-status" aria-hidden />
           <CardTitle className="text-xl">{t("successTitle")}</CardTitle>
           <CardDescription>{t("successBody")}</CardDescription>
           <Link href="/" className={buttonVariants({ variant: "outline", className: "mt-2" })}>

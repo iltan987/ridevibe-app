@@ -33,7 +33,7 @@ function DesktopNavLinks({ pathname }: { pathname?: string }) {
           aria-current={pathname && isActive(pathname, href) ? "page" : undefined}
           className={cn(
             "rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground",
-            "aria-[current=page]:bg-muted aria-[current=page]:text-foreground",
+            "aria-[current=page]:bg-card aria-[current=page]:font-semibold aria-[current=page]:text-accent-text",
           )}
         >
           {t(labelKey)}

@@ -49,3 +49,6 @@ supabase/.temp
 
 # allow committing env example
 !.env.example
+
+# brainstorming visual companion mockups
+.superpowers/

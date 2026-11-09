@@ -20,7 +20,7 @@ export default function AccountPage() {
 
   return (
     <section className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-6 px-4 py-10">
-      <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
+      <h1 className="heading text-3xl">{t("title")}</h1>
       <Suspense fallback={<Skeleton className="h-40 w-full rounded-xl" />}>
         <AccountDetails />
       </Suspense>
@@ -46,7 +46,7 @@ async function AccountDetails() {
   return (
     <>
       {profile?.status === "pending" && (
-        <Card className="border-amber-500/40 bg-amber-500/5">
+        <Card className="border-sun/40 bg-sun/10">
           <CardHeader>
             <CardTitle>{t("pendingTitle")}</CardTitle>
             <CardDescription>{t("pendingBody")}</CardDescription>
@@ -71,7 +71,7 @@ async function AccountDetails() {
             <dl className="grid grid-cols-[auto_1fr] items-center gap-x-6 gap-y-3 text-sm">
               <dt className="text-muted-foreground">{t("status")}</dt>
               <dd>
-                <Badge variant={profile.status === "active" ? "default" : "secondary"}>
+                <Badge variant={profile.status === "active" ? "status" : "secondary"}>
                   {t(`statuses.${profile.status}`)}
                 </Badge>
               </dd>

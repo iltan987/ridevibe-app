@@ -76,3 +76,11 @@ Bundled docs are the source of truth: `node_modules/next/dist/docs/` (grep them 
 - A client form keyed by its data remounts after `refresh()` and loses local state (e.g. a "Saved" message) → key by
   id and let the inputs keep what the user just saved.
 - **Source:** `03-api-reference/04-functions/refresh.md`; found by testing.
+
+### `metadataBase` is intentionally unset (2026-11-09)
+- **Symptom:** `og:image` / icon URLs are absolute; locally (`pnpm start`) they point at `http://localhost:3000`.
+- **Cause:** without `metadataBase` Next falls back to `VERCEL_PROJECT_PRODUCTION_URL` in production and
+  `VERCEL_BRANCH_URL` on previews (`node_modules/next/dist/lib/metadata/resolvers/resolve-url.js`), so each deployment
+  already gets the right origin.
+- **Do:** leave it unset; set it only if a custom canonical origin is needed that differs from the Vercel production URL.
+- **Source:** Next source, above.

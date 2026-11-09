@@ -40,3 +40,16 @@
 - **Symptom:** a Bash call ends with exit 144 right after `pkill -f "next-server"`; the server keeps running.
 - **Cause:** `-f` matches full command lines, including the `bash -c '…pkill -f next-server…'` that runs it.
 - **Do:** stop servers by port: `kill $(ss -ltnp | grep ':3123 ' | grep -oP 'pid=\K[0-9]+')`, or `pgrep -x next-server`.
+
+### Windows GPU tools run from WSL (2026-11-09)
+- **Do:** for GPU work (e.g. Real-ESRGAN `realesrgan-ncnn-vulkan.exe` from the official GitHub release) run the
+  Windows `.exe` directly from WSL and pass paths through `wslpath -w` (input, output and `-m models` dir). No CUDA/
+  Vulkan setup in WSL needed. `realesrgan-x4plus` beat `-anime` on the club badge (sharper, keeps texture).
+- **Source:** found by testing (design pass).
+
+### Headless Chrome for PNG/PDF exports (2026-11-09)
+- **Do:** `google-chrome --headless=new --screenshot=… --window-size=W,H --force-device-scale-factor=2
+  --virtual-time-budget=8000` (budget lets web fonts load). `--print-to-pdf` with CSS `@page{size:…}` may still split
+  into 2 pages; for a guaranteed one-page PDF print an HTML page that only contains the PNG at the page size.
+  Local images need `--allow-file-access-from-files`. Emoji render as boxes (no emoji font in WSL).
+- **Source:** found by testing.

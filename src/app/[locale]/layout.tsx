@@ -1,23 +1,21 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Saira } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getTranslations } from "next-intl/server";
 import { locale } from "next/root-params";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
+import { ThemeScript } from "@/components/theme/theme-script";
 import { routing } from "@/i18n/routing";
+import { THEME_COLORS } from "@/lib/theme";
 import "../globals.css";
 
-// Geist ships Turkish characters (ğ, ş, ı, İ) in the latin-ext subset.
-const geistSans = Geist({
+// Saira is a variable font (weight + width axes) with Turkish characters (ğ, ş, ı, İ) in latin-ext.
+const saira = Saira({
   variable: "--font-sans",
   subsets: ["latin", "latin-ext"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin", "latin-ext"],
+  axes: ["wdth"],
 });
 
 export function generateStaticParams() {
@@ -33,10 +31,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
-  ],
+  themeColor: THEME_COLORS.dark, // the theme script/switcher update the meta for other themes
 };
 
 export default async function LocaleLayout({
@@ -45,8 +40,12 @@ export default async function LocaleLayout({
   return (
     <html
       lang={await locale()}
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${saira.variable} dark h-full antialiased`}
+      suppressHydrationWarning
     >
+      <head>
+        <ThemeScript />
+      </head>
       <body className="flex min-h-full flex-col">
         <NextIntlClientProvider>
           <SiteHeader />

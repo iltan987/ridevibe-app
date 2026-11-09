@@ -23,6 +23,11 @@ import type { AccessActionResult } from "@/lib/access/actions";
 import type { ApplicationStatus } from "@/lib/applications/queries";
 import { deleteApplication, saveApplicationNotes, setApplicationStatus } from "@/lib/applications/review-actions";
 
+const STATUS_BADGE: Partial<Record<ApplicationStatus, "default" | "status">> = {
+  new: "default",
+  approved: "status",
+};
+
 type Confirm = { kind: "approved" | "rejected" | "reopen" | "delete" } | null;
 
 export function ApplicationReviewPanel({
@@ -102,7 +107,7 @@ export function ApplicationReviewPanel({
       <CardHeader>
         <CardTitle className="flex flex-wrap items-center gap-2">
           {t("review.title")}
-          <Badge variant={status === "new" ? "default" : "secondary"}>{t(`statuses.${status}`)}</Badge>
+          <Badge variant={STATUS_BADGE[status] ?? "secondary"}>{t(`statuses.${status}`)}</Badge>
         </CardTitle>
         {decidedLabel && <p className="text-xs text-muted-foreground">{decidedLabel}</p>}
       </CardHeader>

@@ -16,6 +16,12 @@
     "tr": "Türkçe",
     "en": "English"
   },
+  "Theme": {
+    "label": "Tema",
+    "system": "Sistem",
+    "dark": "Koyu",
+    "light": "Açık"
+  },
   "Home": {
     "eyebrow": "İstanbul Motosiklet Kulübü",
     "title": "Birlikte sürelim.",
