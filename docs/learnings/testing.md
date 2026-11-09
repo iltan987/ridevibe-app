@@ -9,6 +9,16 @@
   banner and reported failure while the submit actually succeeded). Wait for the submit button to re-enable or for
   a state that only the new result produces.
 
+### After a client navigation the previous page is still in the DOM, hidden (2026-11-09)
+- **Symptom:** after switching TR → EN, a script saw "Türkçe" *and* "English" checked, and clicking "Türkçe" did
+  nothing — it looked like the locale switch was broken (the design-system review reported it as a bug).
+- **Cause:** with Cache Components, Next keeps the previous route mounted inside a hidden `<Activity>`
+  (`display:none`) so Back is instant — even across locales (TR → EN is a soft navigation). Its open dropdown portal
+  stays too. `querySelector` finds the hidden copy first; clicking its 0×0 rect hits nothing. Users never see it.
+- **Do:** in E2E scripts query only visible elements (`getBoundingClientRect().width > 0`), and expect duplicate
+  headers/landmarks in the DOM. (Re-tested this way: switching works both ways and `NEXT_LOCALE` stays in sync.)
+- **Source:** found by testing (`window` marker survived the switch; `display:none` ancestor on the stale menu).
+
 ### Testing as a signed-in user locally (2026-11-07)
 - Google OAuth can't be automated and local JWTs are ES256 (can't be minted). Workaround:
   1. `pnpm exec supabase stop && SUPABASE_AUTH_EMAIL_ENABLED=true pnpm exec supabase start` (temporary, env only)

@@ -29,10 +29,18 @@ export function LocaleSwitcher() {
 function LocaleButton(props: React.ComponentProps<typeof Button>) {
   const t = useTranslations("LocaleSwitcher");
   const locale = useLocale();
+  const code = locale.toUpperCase();
+  // The accessible name must contain the visible text (WCAG 2.5.3 Label in
+  // Name): "Dil: TR", so voice-control users can say "TR".
   return (
-    <Button variant="ghost" size="sm" aria-label={t("label")} {...props}>
+    <Button
+      variant="ghost"
+      size="sm"
+      aria-label={t("current", { code })}
+      {...props}
+    >
       <Languages aria-hidden />
-      {locale.toUpperCase()}
+      {code}
     </Button>
   );
 }

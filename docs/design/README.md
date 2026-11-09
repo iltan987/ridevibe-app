@@ -34,5 +34,4 @@ actions, teal for positive/status states, cream text, Saira type.
 
 ## Open items
 
-- `/admin/members` filter pills still use a faint `border-border` in light theme.
 - The production badge `src/assets/brand/badge.png` is 1.26 MB; `next/image` optimises it at serve time.

@@ -13,6 +13,7 @@
   },
   "LocaleSwitcher": {
     "label": "Language",
+    "current": "Language: {code}",
     "tr": "Türkçe",
     "en": "English"
   },
@@ -334,5 +335,12 @@
     "title": "Page not found",
     "description": "The page you're looking for doesn't exist or has moved.",
     "back": "Back to home"
+  },
+  "Error": {
+    "title": "Something went wrong",
+    "description": "Something broke while loading this page. Try again; if it keeps happening, check back a little later.",
+    "retry": "Try again",
+    "back": "Back to home",
+    "code": "Error code: {digest}"
   }
 }
