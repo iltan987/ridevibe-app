@@ -220,8 +220,10 @@ export const applicationSchema = z
     }),
   );
 
+const emailAddress = z.email();
+
 /** Syntactically valid email (same check as the form's email field). */
-export const isEmailAddress = (value: string) => z.email().safeParse(value.trim()).success;
+export const isEmailAddress = (value: string) => emailAddress.safeParse(value.trim()).success;
 
 export type ApplicationFieldErrors = Partial<Record<string, ApplyErrorKey>>;
 

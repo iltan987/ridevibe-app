@@ -190,7 +190,7 @@ export function ApplyForm({ defaults }: { defaults?: { fullName: string; email: 
             type="email"
             label={t("fields.email")}
             hint={t("fields.emailHint")}
-            note={isEmailAddress(email) && !isGoogleMailAddress(email) ? t("fields.emailNotGmail") : undefined}
+            note={showNotGmailNote(email, defaults?.email) ? t("fields.emailNotGmail") : undefined}
             error={error("email")}
             autoComplete="email"
             inputMode="email"
@@ -417,6 +417,14 @@ export function ApplyForm({ defaults }: { defaults?: { fullName: string; email: 
       </div>
     </form>
   );
+}
+
+// Soft note for addresses that may not be Google accounts. Not for the signed-in
+// user's own sign-in email: they just signed in to Google with it (Workspace).
+function showNotGmailNote(value: string, signInEmail?: string) {
+  const normalized = value.trim().toLowerCase();
+  if (signInEmail && normalized === signInEmail.trim().toLowerCase()) return false;
+  return isEmailAddress(value) && !isGoogleMailAddress(value);
 }
 
 // ---------------------------------------------------------------------------

@@ -176,7 +176,7 @@
     "successBody": "Teşekkürler! Başvurunu inceleyip WhatsApp üzerinden seninle iletişime geçeceğiz.",
     "successEmail": "Onaylanınca <b>{email}</b> Google hesabınla giriş yapacaksın. Bu adres yanlışsa bize WhatsApp'tan yaz.",
     "backHome": "Ana sayfaya dön",
-    "duplicate": "Bu e-posta adresiyle henüz sonuçlanmamış bir başvurun var. Lütfen sonucunu bekle.",
+    "duplicate": "Zaten açık bir başvurun var. Lütfen sonucu bekle.",
     "genericError": "Bir şeyler ters gitti. Lütfen biraz sonra tekrar dene.",
     "alreadyMember": {
       "title": "Zaten üyesin",

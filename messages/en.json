@@ -176,7 +176,7 @@
     "successBody": "Thank you! We'll review your application and contact you on WhatsApp.",
     "successEmail": "Once approved, you'll sign in with the <b>{email}</b> Google account. If this address is wrong, message us on WhatsApp.",
     "backHome": "Back to home",
-    "duplicate": "You already have an open application with this email. Please wait for the result.",
+    "duplicate": "You already have an open application. Please wait for the result.",
     "genericError": "Something went wrong. Please try again in a moment.",
     "alreadyMember": {
       "title": "You're already a member",

@@ -21,7 +21,9 @@ export async function submitApplication(formData: FormData): Promise<SubmitAppli
   const supabase = await createClient();
   // Signed in: link the application to the account. The id comes from the
   // verified session, never from form data; RLS allows only the own id.
-  const { data: auth } = await supabase.auth.getClaims();
+  const { data: auth, error: authError } = await supabase.auth.getClaims();
+  // Continue unlinked; log only the code (KVKK).
+  if (authError) console.error("submitApplication: getClaims failed", { code: authError.code });
   const profileId = auth?.claims?.sub;
   const { error } = await supabase
     .from("applications")
