@@ -269,7 +269,7 @@
         "active": "Aktif",
         "inactive": "Pasif"
       },
-      "pendingHint": "Google ile giriş yapmış ama henüz onaylanmamış kişiler. Tanıdığın kişileri aktifleştir.",
+      "pendingHint": "Google ile giriş yapmış ama henüz onaylanmamış kişiler. Tanıdığın kişileri aktifleştir. Başvurusu olanları başvuru sayfasından “Hesaba bağla” ile bağla; başvurusu yoksa kişiden formu doldurmasını iste.",
       "search": "İsimle ara",
       "searchButton": "Ara",
       "empty": "Bu listede kimse yok.",
@@ -280,7 +280,18 @@
       "activate": "Aktifleştir",
       "deactivate": "Pasifleştir",
       "reactivate": "Yeniden aktifleştir",
-      "noEmail": "E-posta yok"
+      "noEmail": "E-posta yok",
+      "applied": "Başvurdu",
+      "notApplied": "Başvurusu yok",
+      "editName": "Adı düzenle",
+      "nameDialog": {
+        "title": "Üye adını düzenle",
+        "description": "Google hesabındaki ad yanlış ya da eksikse düzelt.",
+        "label": "Ad soyad",
+        "tooShort": "Ad en az 2 karakter olmalı.",
+        "save": "Kaydet",
+        "cancel": "Vazgeç"
+      }
     },
     "roles": {
       "title": "Roller ve yetkiler",

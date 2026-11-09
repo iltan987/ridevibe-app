@@ -269,7 +269,7 @@
         "active": "Active",
         "inactive": "Inactive"
       },
-      "pendingHint": "People who signed in with Google but aren't approved yet. Activate the ones you know.",
+      "pendingHint": "People who signed in with Google but aren't approved yet. Activate the ones you know. Link those with an application from the applications page with “Link to account”; if they have none, ask them to fill in the form.",
       "search": "Search by name",
       "searchButton": "Search",
       "empty": "Nobody in this list.",
@@ -280,7 +280,18 @@
       "activate": "Activate",
       "deactivate": "Deactivate",
       "reactivate": "Reactivate",
-      "noEmail": "No email"
+      "noEmail": "No email",
+      "applied": "Applied",
+      "notApplied": "No application",
+      "editName": "Edit name",
+      "nameDialog": {
+        "title": "Edit member name",
+        "description": "Fix the name if the Google account shows it wrong or incomplete.",
+        "label": "Full name",
+        "tooShort": "The name must be at least 2 characters.",
+        "save": "Save",
+        "cancel": "Cancel"
+      }
     },
     "roles": {
       "title": "Roles & permissions",

@@ -24,6 +24,15 @@ export async function listMembers({ status, query, cursor }: { status: MemberSta
   return toPage(data);
 }
 
+/** Which of these profiles have an open (new/contacted/approved) application? Needs members.manage. */
+export async function getPendingApplicationFlags(ids: string[]): Promise<Map<string, boolean>> {
+  if (!ids.length) return new Map();
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("pending_application_flags", { profile_ids: ids });
+  if (error) throw new Error(`getPendingApplicationFlags failed: ${error.code}`);
+  return new Map(data.map((row) => [row.profile_id, row.has_application]));
+}
+
 export async function countMembersByStatus() {
   const supabase = await createClient();
   const counts = await Promise.all(
