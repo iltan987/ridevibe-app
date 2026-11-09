@@ -151,6 +151,15 @@ and showing its count.
 - "Already linked" means a linked `new` / `contacted` / `approved` application; a linked **rejected** application does
   not block linking or applying again.
 - `my_application_status()` returns the latest application among those linked by `profile_id` or matched by email.
+- **Linked account shown to staff (final review):** anyone signed in can submit a real person's name and phone, so the
+  application page shows the linked account's name and sign-in email to everyone with `applications.view` (new
+  security-definer RPC `application_account()`; profiles RLS hides pending accounts from staff without
+  `members.manage`). If the sign-in email differs from the application email (normalised like
+  `private.normalize_email`), a warning asks staff to confirm the person uses that account; the approve dialog names
+  the account's email and uses the RPC's status for the "inactive" variant.
+- **Inactive members on `/apply`** see "your membership is inactive, message us on WhatsApp" instead of a new form.
+- Signed-in submissions get their own success text (the account becomes active on approval) instead of "sign in with
+  {email}"; a failing status lookup on `/apply` / `/account` falls back to the form / generic pending card.
 
 ## 3. Error handling
 Server Actions validate with Zod, let RLS/RPCs decide, map codes to results as in `src/lib/access/actions.ts`
@@ -160,7 +169,8 @@ data in logs (only error codes).
 ## 4. Testing
 - **pgTAP** (first, before code) for every rule, including the must-fail cases:
   - anon cannot set `profile_id`; authenticated can only set their own; one open application per account;
-  - Turkish mobile CHECK accepts `+905…`, rejects `+904…`, ignores non-`+90` numbers;
+  - Turkish mobile rule (trigger) accepts `+905…`, rejects `+904…`, ignores non-`+90` numbers, and only runs when
+    `phone` is set or changed;
   - corrections: review/decide may update name/phone/email, others may not; email is normalised;
   - activation by `profile_id`, by email, after email correction; never touches active/inactive; copies the name;
   - `link_application` / `linkable_accounts`: permission, not-linkable cases (already linked, rejected, target not
@@ -173,7 +183,7 @@ data in logs (only error codes).
   without application sees the CTA; in-app notice with an Instagram user agent.
 
 ## 5. Rollout
-Standard: merge → `db push --dry-run` → check production rows against the mobile rule → `db push` →
+Standard: merge → `db push --dry-run` → `db push` (the mobile rule is a trigger, so legacy rows need no check) →
 `test db` on production → push `main`. Update `docs/application-form.md` (email/name hints, mobile rule, signed-in
 linking) and `docs/PLAN.md` (flow + decisions above). Learnings: Google `disallowed_useragent` in in-app browsers.
 

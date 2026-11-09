@@ -96,3 +96,13 @@ Bundled docs are the source of truth: `node_modules/next/dist/docs/` (grep them 
   client page that throws after mount works with a static build; delete it and re-run `pnpm build` before `tsc`
   (stale `.next/types` still reference the deleted page).
 - **Source:** `03-api-reference/03-file-conventions/error.md`; found by testing.
+
+### Catching errors around data calls in Server Components: `unstable_rethrow` first (2026-11-09)
+- **Need:** `/apply` and `/account` fall back (form / generic card) when `getMyApplicationStatus()` fails instead of
+  showing the error page.
+- **Cause:** a bare `catch` also swallows Next's control-flow errors (`notFound()`, `redirect()`, and request-time API
+  bailouts such as `cookies()`/`headers()` during prerendering) — our Supabase client awaits `connection()`/`cookies()`.
+- **Do:** `.catch((error) => { unstable_rethrow(error); console.error(<code only>); return fallback; })`
+  (`unstable_rethrow` from `next/navigation`, first statement in the catch). Our query helpers throw
+  `Error("<name> failed: <code>")`, so logging `error.message` contains no personal data.
+- **Source:** `03-api-reference/04-functions/unstable_rethrow.md`.

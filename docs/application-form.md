@@ -56,9 +56,12 @@ in the member profile.
 
 The form stays open to anonymous visitors. If the visitor is signed in, name and email are prefilled (editable) and the
 application is stored with `profile_id` = their account, so approval activates that account regardless of the email
-typed. An active member sees "already a member"; a pending account with an open application sees "under review".
-The success screen repeats the email ("after approval you sign in with the Google account for x@…; if wrong, message
-us on WhatsApp"). Staff can correct name, phone and email afterwards and link an application to an account by hand.
+typed. An active member sees "already a member", an inactive one "membership inactive, message us on WhatsApp"; a
+pending account with an open application sees "under review". After an anonymous submit the success screen repeats the
+email ("after approval you sign in with the Google account for x@…; if wrong, message us on WhatsApp"); after a
+signed-in submit it says "once approved, this account becomes active automatically". Staff can correct name, phone and
+email afterwards and link an application to an account by hand; the application page shows the linked account's
+sign-in email and warns when it differs from the application email.
 
 ## Stored automatically
 

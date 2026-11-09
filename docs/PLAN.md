@@ -65,8 +65,13 @@ open to anonymous visitors; instead:
 - **Lists:** applications filter "Onaylandı, giriş yapmadı" (approved, not linked); pending members show a
   "Başvurdu" / "Başvurusu yok" badge.
 - **Mobile rule:** Turkish numbers must be `+905…` (form + DB trigger).
+- **Linked account check:** the application page shows the linked account's name and sign-in email to everyone with
+  `applications.view` (`application_account()` RPC) and warns when it differs from the application email; the approve
+  dialog names that account. Inactive members see "membership inactive" on `/apply` instead of a new form.
 - **Follow-up (KVKK):** retention of pending accounts that never apply (minimisation: delete or anonymise after a set
   period, to be decided with the other retention periods below).
+- **Follow-up:** `unlink_application` RPC (`applications.decide`, open applications only) so a wrong link can be undone
+  without SQL.
 
 ## Status (2026-11-08)
 
