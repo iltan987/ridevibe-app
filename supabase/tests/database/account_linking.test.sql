@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(47);
+select plan(58);
 
 -- ---------------------------------------------------------------------------
 -- Fixtures
@@ -17,6 +17,10 @@ select plan(47);
 --   4a5        "Zeynep Kaya", no application at all (linkable)
 --   4a6        has an open application with its sign-in email (matched)
 --   4a7        an application with its email exists but belongs to someone else
+--   4a8        has a *rejected* linked application (re-applied under another email)
+--   4a9        older rejected linked application + newer unlinked one with its email
+--   4aa        inactive (suspended) account
+--   4ab        has an open unlinked application with its own email
 --   4c1–4c3    keyset fixtures; 470–48a: 27 accounts for the page size
 -- ---------------------------------------------------------------------------
 insert into auth.users (id, email, raw_user_meta_data) values
@@ -33,6 +37,10 @@ insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-0000000004a5', 'unmatched@pgtap.invalid', '{"full_name": "Zeynep Kaya"}'),
   ('00000000-0000-0000-0000-0000000004a6', 'matched@pgtap.invalid', '{"full_name": "Google Name"}'),
   ('00000000-0000-0000-0000-0000000004a7', 'shared@pgtap.invalid', '{"full_name": "Google Name"}'),
+  ('00000000-0000-0000-0000-0000000004a8', 'rejected-before@pgtap.invalid', '{"full_name": "Google Name"}'),
+  ('00000000-0000-0000-0000-0000000004a9', 'mixed@pgtap.invalid', '{"full_name": "Google Name"}'),
+  ('00000000-0000-0000-0000-0000000004aa', 'suspended@pgtap.invalid', '{"full_name": "Google Name"}'),
+  ('00000000-0000-0000-0000-0000000004ab', 'self-match@pgtap.invalid', '{"full_name": "Google Name"}'),
   ('00000000-0000-0000-0000-0000000004c1', 'keyset-1@pgtap.invalid', '{"full_name": "Keyset Bir"}'),
   ('00000000-0000-0000-0000-0000000004c2', 'keyset-2@pgtap.invalid', '{"full_name": "Keyset İki"}'),
   ('00000000-0000-0000-0000-0000000004c3', 'keyset-3@pgtap.invalid', '{"full_name": "Keyset Üç"}');
@@ -57,6 +65,7 @@ update public.profiles set role_id = '00000000-0000-0000-0000-0000000004e2', sta
 update public.profiles set role_id = '00000000-0000-0000-0000-0000000004e3', status = 'active'
   where id = '00000000-0000-0000-0000-0000000004d3';
 update public.profiles set status = 'active' where id = '00000000-0000-0000-0000-0000000004d4';
+update public.profiles set status = 'inactive' where id = '00000000-0000-0000-0000-0000000004aa';
 update public.profiles set role_id = (select id from public.roles where is_admin), status = 'active'
   where id in ('00000000-0000-0000-0000-0000000004d5', '00000000-0000-0000-0000-0000000004d6');
 update public.profiles set created_at = '2026-01-03 12:00+00' where id = '00000000-0000-0000-0000-0000000004c1';
@@ -97,6 +106,14 @@ select pg_temp.apply('00000000-0000-0000-0000-000000000455', 'app-five@pgtap.inv
 select pg_temp.apply('00000000-0000-0000-0000-000000000456', 'Matched@PgTap.invalid', 'contacted');
 select pg_temp.apply('00000000-0000-0000-0000-000000000457', 'shared@pgtap.invalid',
   app_profile => '00000000-0000-0000-0000-0000000004d4');
+select pg_temp.apply('00000000-0000-0000-0000-000000000458', 'rejected-before@pgtap.invalid', 'rejected',
+  app_profile => '00000000-0000-0000-0000-0000000004a8');
+select pg_temp.apply('00000000-0000-0000-0000-000000000459', 'new-other@pgtap.invalid');
+select pg_temp.apply('00000000-0000-0000-0000-00000000045a', 'mixed-old@pgtap.invalid', 'rejected',
+  app_profile => '00000000-0000-0000-0000-0000000004a9');
+select pg_temp.apply('00000000-0000-0000-0000-00000000045b', 'mixed@pgtap.invalid');
+update public.applications set created_at = '2026-01-01 12:00+00' where id = '00000000-0000-0000-0000-00000000045a';
+select pg_temp.apply('00000000-0000-0000-0000-00000000045c', 'self-match@pgtap.invalid');
 
 -- ---------------------------------------------------------------------------
 -- link_application
@@ -169,11 +186,39 @@ select throws_ok(
   'P0002', null,
   'an application cannot be linked to an account that already has one'
 );
+select throws_ok(
+  $$ select public.link_application('00000000-0000-0000-0000-000000000455', '00000000-0000-0000-0000-0000000004aa') $$,
+  'P0002', null,
+  'an application cannot be linked to an inactive account'
+);
+select throws_ok(
+  $$ select public.link_application('00000000-0000-0000-0000-000000000455', '00000000-0000-0000-0000-0000000004a6') $$,
+  'P0002', null,
+  'an application cannot be linked to an account whose email matches another open application'
+);
+select lives_ok(
+  $$ select public.link_application('00000000-0000-0000-0000-00000000045c', '00000000-0000-0000-0000-0000000004ab') $$,
+  'the application that matches the account by email can itself be linked to it'
+);
 reset role;
 select is((select profile_id from public.applications where id = '00000000-0000-0000-0000-000000000455'), null,
   'refused links change nothing');
 select is(pg_temp.profile_of('00000000-0000-0000-0000-0000000004d4'), 'active|Mert Member',
   'refused links leave the active account untouched');
+
+-- A rejected linked application doesn't block linking a new one.
+select pg_temp.login('00000000-0000-0000-0000-0000000004d1');
+select ok(
+  exists (select 1 from public.linkable_accounts('rejected-before@') where id = '00000000-0000-0000-0000-0000000004a8'),
+  'an account whose only linked application was rejected is linkable'
+);
+select lives_ok(
+  $$ select public.link_application('00000000-0000-0000-0000-000000000459', '00000000-0000-0000-0000-0000000004a8') $$,
+  'a new application can be linked to an account with a rejected linked application'
+);
+reset role;
+select is((select profile_id from public.applications where id = '00000000-0000-0000-0000-000000000459'),
+  '00000000-0000-0000-0000-0000000004a8'::uuid, 'the new application now belongs to that account');
 
 -- ---------------------------------------------------------------------------
 -- linkable_accounts (scoped to fixtures by search / id prefix)
@@ -238,6 +283,16 @@ select is(
   (select count(*)::int from public.linkable_accounts('bulk-')), 26,
   'returns at most PAGE_SIZE + 1 (26) rows'
 );
+select throws_ok(
+  $$ select * from public.linkable_accounts('keyset-', '2026-01-03 12:00+00', null) $$,
+  '22023', null,
+  'a cursor without after_id is rejected'
+);
+select throws_ok(
+  $$ select * from public.linkable_accounts('keyset-', null, '00000000-0000-0000-0000-0000000004c1') $$,
+  '22023', null,
+  'a cursor without after_created is rejected'
+);
 reset role;
 
 select pg_temp.login('00000000-0000-0000-0000-0000000004d2');
@@ -272,6 +327,11 @@ select pg_temp.login('00000000-0000-0000-0000-0000000004a5');
 select is(public.my_application_status(), null, 'no application → null');
 reset role;
 
+select pg_temp.login('00000000-0000-0000-0000-0000000004a9');
+select is(public.my_application_status(), 'new'::public.application_status,
+  'the latest application counts, whether linked or matched by email');
+reset role;
+
 set local role anon;
 select throws_ok('select public.my_application_status()', '42501', null, 'anon cannot call my_application_status');
 reset role;
@@ -296,6 +356,22 @@ select throws_ok(
   $$ select * from public.pending_application_flags(array['00000000-0000-0000-0000-0000000004a5']::uuid[]) $$,
   '42501', null,
   'a decider without members.manage cannot read the flags'
+);
+reset role;
+
+select pg_temp.login('00000000-0000-0000-0000-0000000004d4');
+select throws_ok(
+  $$ select * from public.pending_application_flags(array['00000000-0000-0000-0000-0000000004a5']::uuid[]) $$,
+  '42501', null,
+  'a plain member cannot read the flags'
+);
+reset role;
+
+set local role anon;
+select throws_ok(
+  $$ select * from public.pending_application_flags(array['00000000-0000-0000-0000-0000000004a5']::uuid[]) $$,
+  '42501', null,
+  'anon cannot read the flags'
 );
 reset role;
 

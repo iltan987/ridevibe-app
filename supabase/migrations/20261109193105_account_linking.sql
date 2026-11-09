@@ -25,7 +25,21 @@ begin
   end if;
 
   perform 1 from public.profiles p where p.id = target_id and p.status = 'pending' for update;
-  if not found or exists (select 1 from public.applications a where a.profile_id = target_id) then
+  if not found
+    or exists (
+      select 1 from public.applications a
+      where a.profile_id = target_id and a.status in ('new', 'contacted', 'approved')
+    )
+    or exists (
+      select 1
+      from public.applications a
+      join public.member_contacts c on c.profile_id = target_id
+      where a.id <> application_id
+        and a.profile_id is null
+        and a.status in ('new', 'contacted', 'approved')
+        and private.normalize_email(a.email) = private.normalize_email(c.email)
+    )
+  then
     raise exception 'account % not found or not linkable', target_id using errcode = 'P0002';
   end if;
 
@@ -63,6 +77,10 @@ begin
     raise exception 'missing permission applications.decide' using errcode = '42501';
   end if;
 
+  if (after_created is null) <> (after_id is null) then
+    raise exception 'after_created and after_id go together' using errcode = '22023';
+  end if;
+
   if nullif(btrim(search), '') is not null then
     pattern := '%' || replace(replace(replace(btrim(search), '\', '\\'), '%', '\%'), '_', '\_') || '%';
   end if;
@@ -72,7 +90,10 @@ begin
   from public.profiles p
   left join public.member_contacts c on c.profile_id = p.id
   where p.status = 'pending'
-    and not exists (select 1 from public.applications a where a.profile_id = p.id)
+    and not exists (
+      select 1 from public.applications a
+      where a.profile_id = p.id and a.status in ('new', 'contacted', 'approved')
+    )
     and not exists (
       select 1 from public.applications a
       where a.profile_id is null
@@ -95,23 +116,19 @@ CREATE OR REPLACE FUNCTION public.my_application_status()
   SECURITY DEFINER
   SET search_path TO ''
   AS $function$
-  select coalesce(
-    (
-      select a.status from public.applications a
-      where a.profile_id = (select auth.uid())
-      order by a.created_at desc, a.id desc
-      limit 1
-    ),
-    (
-      select a.status
-      from public.applications a
-      join public.member_contacts c on c.profile_id = (select auth.uid())
-      where a.profile_id is null
-        and private.normalize_email(a.email) = private.normalize_email(c.email)
-      order by a.created_at desc, a.id desc
-      limit 1
+  select a.status
+  from public.applications a
+  where a.profile_id = (select auth.uid())
+    or (
+      a.profile_id is null
+      and private.normalize_email(a.email) = (
+        select private.normalize_email(c.email)
+        from public.member_contacts c
+        where c.profile_id = (select auth.uid())
+      )
     )
-  );
+  order by a.created_at desc, a.id desc
+  limit 1;
 $function$;
 
 REVOKE ALL ON FUNCTION "public"."my_application_status"() FROM PUBLIC, "anon";

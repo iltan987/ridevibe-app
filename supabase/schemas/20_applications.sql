@@ -307,8 +307,10 @@ revoke all on function private.applications_after_approval() from public, anon, 
 -- ---------------------------------------------------------------------------
 
 -- The application must be unlinked and not rejected; the account must be
--- pending with no application of its own. Linking an approved application
--- activates the account; one under review activates on approval
+-- pending, with no open/approved application linked to it and no *other*
+-- open/approved unlinked application with its sign-in email (same rule as
+-- linkable_accounts; a rejected one doesn't count). Linking an approved
+-- application activates the account; one under review activates on approval
 -- (applications_after_approval). Never touches active/inactive accounts.
 create or replace function public.link_application(application_id uuid, target_id uuid)
 returns void
@@ -332,7 +334,21 @@ begin
   end if;
 
   perform 1 from public.profiles p where p.id = target_id and p.status = 'pending' for update;
-  if not found or exists (select 1 from public.applications a where a.profile_id = target_id) then
+  if not found
+    or exists (
+      select 1 from public.applications a
+      where a.profile_id = target_id and a.status in ('new', 'contacted', 'approved')
+    )
+    or exists (
+      select 1
+      from public.applications a
+      join public.member_contacts c on c.profile_id = target_id
+      where a.id <> application_id
+        and a.profile_id is null
+        and a.status in ('new', 'contacted', 'approved')
+        and private.normalize_email(a.email) = private.normalize_email(c.email)
+    )
+  then
     raise exception 'account % not found or not linkable', target_id using errcode = 'P0002';
   end if;
 
@@ -344,10 +360,11 @@ begin
 end;
 $$;
 
--- Pending accounts an application could be linked to: no application linked
--- to them and no open/approved unlinked application with their sign-in email
--- (those match automatically). Optional case-insensitive search on name or
--- email. Newest first, keyset by (created_at, id), PAGE_SIZE + 1 rows.
+-- Pending accounts an application could be linked to: no open/approved
+-- application linked to them and no open/approved unlinked application with
+-- their sign-in email (those match automatically). Optional case-insensitive
+-- search on name or email. Newest first, keyset by (created_at, id) — both or
+-- neither (22023) — PAGE_SIZE + 1 rows.
 create or replace function public.linkable_accounts(
   search text default null,
   after_created timestamptz default null,
@@ -366,6 +383,10 @@ begin
     raise exception 'missing permission applications.decide' using errcode = '42501';
   end if;
 
+  if (after_created is null) <> (after_id is null) then
+    raise exception 'after_created and after_id go together' using errcode = '22023';
+  end if;
+
   if nullif(btrim(search), '') is not null then
     pattern := '%' || replace(replace(replace(btrim(search), '\', '\\'), '%', '\%'), '_', '\_') || '%';
   end if;
@@ -375,7 +396,10 @@ begin
   from public.profiles p
   left join public.member_contacts c on c.profile_id = p.id
   where p.status = 'pending'
-    and not exists (select 1 from public.applications a where a.profile_id = p.id)
+    and not exists (
+      select 1 from public.applications a
+      where a.profile_id = p.id and a.status in ('new', 'contacted', 'approved')
+    )
     and not exists (
       select 1 from public.applications a
       where a.profile_id is null
@@ -391,8 +415,8 @@ $$;
 
 -- ---------------------------------------------------------------------------
 -- The applicant's own status (applicants can't read applications): the
--- latest application linked to the caller, else the latest unlinked one with
--- their sign-in email; null if none.
+-- status of the latest application that is linked to the caller or unlinked
+-- with their sign-in email (e.g. a new one after a rejection); null if none.
 -- ---------------------------------------------------------------------------
 create or replace function public.my_application_status()
 returns public.application_status
@@ -401,23 +425,19 @@ stable
 security definer
 set search_path = ''
 as $$
-  select coalesce(
-    (
-      select a.status from public.applications a
-      where a.profile_id = (select auth.uid())
-      order by a.created_at desc, a.id desc
-      limit 1
-    ),
-    (
-      select a.status
-      from public.applications a
-      join public.member_contacts c on c.profile_id = (select auth.uid())
-      where a.profile_id is null
-        and private.normalize_email(a.email) = private.normalize_email(c.email)
-      order by a.created_at desc, a.id desc
-      limit 1
+  select a.status
+  from public.applications a
+  where a.profile_id = (select auth.uid())
+    or (
+      a.profile_id is null
+      and private.normalize_email(a.email) = (
+        select private.normalize_email(c.email)
+        from public.member_contacts c
+        where c.profile_id = (select auth.uid())
+      )
     )
-  );
+  order by a.created_at desc, a.id desc
+  limit 1;
 $$;
 
 -- ---------------------------------------------------------------------------
