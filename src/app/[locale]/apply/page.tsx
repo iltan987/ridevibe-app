@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { useTranslations } from "next-intl";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
-import { ApplyForm } from "@/components/apply/apply-form";
+import { ApplyGate } from "@/components/apply/apply-gate";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -19,9 +19,10 @@ export default function ApplyPage() {
         <h1 className="heading text-3xl">{t("title")}</h1>
         <p className="text-muted-foreground">{t("intro")}</p>
       </header>
-      {/* The form reads UTM params from the URL (ad attribution). */}
+      {/* Request-time: the gate reads the session (signed-in prefill / notices)
+          and the form reads UTM params from the URL (ad attribution). */}
       <Suspense fallback={<Skeleton className="h-[60rem] w-full rounded-xl" />}>
-        <ApplyForm />
+        <ApplyGate />
       </Suspense>
     </section>
   );

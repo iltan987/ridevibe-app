@@ -33,13 +33,20 @@ import {
   RIDING_STYLES,
   UTM_KEYS,
 } from "@/lib/applications/options";
-import { type ApplicationFieldErrors, type ApplyErrorKey, validateApplication } from "@/lib/applications/schema";
+import { isGoogleMailAddress } from "@/lib/applications/contact";
+import {
+  type ApplicationFieldErrors,
+  type ApplyErrorKey,
+  isEmailAddress,
+  validateApplication,
+} from "@/lib/applications/schema";
 import { istanbulDistrictNames } from "@/lib/istanbul-districts";
 import { PhoneField } from "./phone-field";
 
 type Status = "idle" | "invalid" | "duplicate" | "error" | "success";
 
-export function ApplyForm() {
+/** `defaults`: name and sign-in email of a signed-in account (still editable). */
+export function ApplyForm({ defaults }: { defaults?: { fullName: string; email: string } }) {
   const t = useTranslations("Apply");
   const locale = useLocale();
   const searchParams = useSearchParams();
@@ -50,6 +57,9 @@ export function ApplyForm() {
   // Errors show for fields the person has left (blur) or after a submit attempt.
   const [touched, setTouched] = useState<ReadonlySet<string>>(new Set());
   const [submitAttempts, setSubmitAttempts] = useState(0);
+  // Typed email (for the non-Gmail note) and the email that was submitted (success card).
+  const [email, setEmail] = useState(defaults?.email ?? "");
+  const [submittedEmail, setSubmittedEmail] = useState("");
 
   // Conditional sections.
   const [cityChoice, setCityChoice] = useState<"istanbul" | "other">("istanbul");
@@ -105,7 +115,10 @@ export function ApplyForm() {
       } else {
         setErrors({});
         setStatus(result.status);
-        if (result.status === "success") window.scrollTo({ top: 0 });
+        if (result.status === "success") {
+          setSubmittedEmail(check.data.email);
+          window.scrollTo({ top: 0 });
+        }
       }
     });
   }
@@ -117,6 +130,12 @@ export function ApplyForm() {
           <CircleCheck className="size-8 text-status" aria-hidden />
           <CardTitle className="text-xl">{t("successTitle")}</CardTitle>
           <CardDescription>{t("successBody")}</CardDescription>
+          <CardDescription>
+            {t.rich("successEmail", {
+              email: submittedEmail,
+              b: (chunks) => <b className="font-semibold text-foreground wrap-anywhere">{chunks}</b>,
+            })}
+          </CardDescription>
           <Link href="/" className={buttonVariants({ variant: "outline", className: "mt-2" })}>
             {t("backHome")}
           </Link>
@@ -157,16 +176,26 @@ export function ApplyForm() {
       <FieldSet>
         <FieldLegend className="text-lg">{t("sections.about")}</FieldLegend>
         <FieldGroup>
-          <TextField name="full_name" label={t("fields.full_name")} error={error("full_name")} autoComplete="name" />
+          <TextField
+            name="full_name"
+            label={t("fields.full_name")}
+            hint={t("fields.fullNameHint")}
+            error={error("full_name")}
+            autoComplete="name"
+            defaultValue={defaults?.fullName}
+          />
           <PhoneField name="phone" label={t("fields.phone")} hint={t("fields.phoneHint")} error={error("phone")} />
           <TextField
             name="email"
             type="email"
             label={t("fields.email")}
             hint={t("fields.emailHint")}
+            note={isEmailAddress(email) && !isGoogleMailAddress(email) ? t("fields.emailNotGmail") : undefined}
             error={error("email")}
             autoComplete="email"
             inputMode="email"
+            defaultValue={defaults?.email}
+            onChange={(event) => setEmail(event.currentTarget.value)}
           />
           <TextField
             name="birth_date"
@@ -402,6 +431,7 @@ function TextField({
   name,
   label,
   hint,
+  note,
   optional,
   error,
   className,
@@ -410,6 +440,8 @@ function TextField({
   name: string;
   label: string;
   hint?: string;
+  /** Soft, non-blocking advice shown under the hint (not an error). */
+  note?: string;
   optional?: string;
   error?: string;
 } & Omit<React.ComponentProps<typeof Input>, "name">) {
@@ -420,6 +452,7 @@ function TextField({
       </FieldLabel>
       <Input id={name} name={name} aria-invalid={!!error} className={`h-10 md:h-9 ${className ?? ""}`} {...inputProps} />
       {hint && <FieldDescription>{hint}</FieldDescription>}
+      {note && <FieldDescription className="text-accent-text">{note}</FieldDescription>}
       <FieldError>{error}</FieldError>
     </Field>
   );

@@ -9,6 +9,12 @@
   banner and reported failure while the submit actually succeeded). Wait for the submit button to re-enable or for
   a state that only the new result produces.
 
+### Clearing an `<input type="email">` in puppeteer (2026-11-09)
+- **Symptom:** after `click({ clickCount: 3 })` + Backspace, typing appended to the old address (invalid email, the
+  submit failed for the wrong reason).
+- **Do:** `focus()`, then Ctrl+A, Backspace before typing.
+- **Source:** found by testing.
+
 ### After a client navigation the previous page is still in the DOM, hidden (2026-11-09)
 - **Symptom:** after switching TR → EN, a script saw "Türkçe" *and* "English" checked, and clicking "Türkçe" did
   nothing — it looked like the locale switch was broken (the design-system review reported it as a bug).

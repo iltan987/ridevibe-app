@@ -50,3 +50,12 @@ export async function getApplication(id: string) {
   if (error) throw new Error(`getApplication failed: ${error.code}`);
   return data;
 }
+
+/** Status of the signed-in user's latest application (linked, or unlinked with their sign-in email), or null. Signed-in only. */
+export async function getMyApplicationStatus(): Promise<ApplicationStatus | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("my_application_status");
+  if (error) throw new Error(`getMyApplicationStatus failed: ${error.code}`);
+  // The generated type says non-null, but the function returns null without an application.
+  return (data as ApplicationStatus | null) ?? null;
+}

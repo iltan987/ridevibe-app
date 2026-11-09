@@ -80,10 +80,12 @@
     },
     "fields": {
       "full_name": "Ad soyad",
+      "fullNameHint": "Kimliğindeki gibi ad ve soyadın.",
       "phone": "Telefon (WhatsApp)",
       "phoneHint": "Başvurun onaylanınca WhatsApp'tan yazacağız. Türkiye dışı numaralar için ülkeyi değiştirebilirsin.",
       "email": "E-posta",
-      "emailHint": "Giriş yapacağın Google hesabının e-postası olursa en iyisi.",
+      "emailHint": "Uygulamaya Google ile giriş yapacaksın. Giriş yapacağın Google hesabının e-postasını yaz.",
+      "emailNotGmail": "Bu adresle Google'a giriş yapabildiğinden emin misin? Emin değilsen Gmail adresini yaz.",
       "birth_date": "Doğum tarihi",
       "birthDateHint": "18 yaşından büyük olmalısın. Doğum gününü kutlamak için de kullanırız.",
       "city": "Şehir",
@@ -172,15 +174,25 @@
     "formHasErrors": "Lütfen işaretli alanları düzelt.",
     "successTitle": "Başvurun alındı!",
     "successBody": "Teşekkürler! Başvurunu inceleyip WhatsApp üzerinden seninle iletişime geçeceğiz.",
+    "successEmail": "Onaylanınca <b>{email}</b> Google hesabınla giriş yapacaksın. Bu adres yanlışsa bize WhatsApp'tan yaz.",
     "backHome": "Ana sayfaya dön",
     "duplicate": "Bu e-posta adresiyle henüz sonuçlanmamış bir başvurun var. Lütfen sonucunu bekle.",
     "genericError": "Bir şeyler ters gitti. Lütfen biraz sonra tekrar dene.",
+    "alreadyMember": {
+      "title": "Zaten üyesin",
+      "body": "Hesabın aktif, yeniden başvurman gerekmiyor."
+    },
+    "underReview": {
+      "title": "Başvurun inceleniyor",
+      "body": "Başvurunu aldık. İnceledikten sonra WhatsApp üzerinden sana ulaşacağız."
+    },
     "errors": {
       "required": "Bu alan zorunlu.",
       "tooShort": "Biraz daha detay yazar mısın?",
       "tooLong": "Bu metin çok uzun.",
       "invalidEmail": "Geçerli bir e-posta adresi gir.",
       "invalidPhone": "Geçerli bir telefon numarası gir (ör. 0532 123 45 67).",
+      "notTurkishMobile": "Türkiye numarası 5 ile başlayan bir cep telefonu olmalı (WhatsApp).",
       "invalidDate": "Geçerli bir tarih gir.",
       "tooYoung": "Başvurmak için 18 yaşından büyük olmalısın.",
       "invalidNumber": "Geçerli bir sayı gir.",

@@ -80,10 +80,12 @@
     },
     "fields": {
       "full_name": "Full name",
+      "fullNameHint": "Your first and last name, as on your ID.",
       "phone": "Phone (WhatsApp)",
       "phoneHint": "We'll message you on WhatsApp once approved. Change the country for non-Turkish numbers.",
       "email": "Email",
-      "emailHint": "Ideally the email of the Google account you'll sign in with.",
+      "emailHint": "You'll sign in to the app with Google. Enter the email of the Google account you'll use.",
+      "emailNotGmail": "Are you sure you can sign in to Google with this address? If not, use your Gmail address.",
       "birth_date": "Date of birth",
       "birthDateHint": "You must be over 18. We also use it to celebrate your birthday.",
       "city": "City",
@@ -172,15 +174,25 @@
     "formHasErrors": "Please fix the highlighted fields.",
     "successTitle": "Application received!",
     "successBody": "Thank you! We'll review your application and contact you on WhatsApp.",
+    "successEmail": "Once approved, you'll sign in with the <b>{email}</b> Google account. If this address is wrong, message us on WhatsApp.",
     "backHome": "Back to home",
     "duplicate": "You already have an open application with this email. Please wait for the result.",
     "genericError": "Something went wrong. Please try again in a moment.",
+    "alreadyMember": {
+      "title": "You're already a member",
+      "body": "Your account is active, so there's no need to apply again."
+    },
+    "underReview": {
+      "title": "Your application is under review",
+      "body": "We've received your application. Once we've reviewed it, we'll reach out to you on WhatsApp."
+    },
     "errors": {
       "required": "This field is required.",
       "tooShort": "Could you write a bit more?",
       "tooLong": "This text is too long.",
       "invalidEmail": "Enter a valid email address.",
       "invalidPhone": "Enter a valid phone number (e.g. 0532 123 45 67).",
+      "notTurkishMobile": "A Turkish number must be a mobile number starting with 5 (WhatsApp).",
       "invalidDate": "Enter a valid date.",
       "tooYoung": "You must be over 18 to apply.",
       "invalidNumber": "Enter a valid number.",

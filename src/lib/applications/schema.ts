@@ -2,6 +2,7 @@ import { isPossiblePhoneNumber } from "libphonenumber-js";
 import { z } from "zod";
 import { ISTANBUL, isIstanbulDistrict, sideOfDistrict } from "@/lib/istanbul-districts";
 import type { TablesInsert } from "@/lib/supabase/database.types";
+import { isTurkishMobileOrForeign } from "./contact";
 import {
   EVENT_INTERESTS,
   GROUP_EXPERIENCE,
@@ -21,6 +22,7 @@ export type ApplyErrorKey =
   | "tooLong"
   | "invalidEmail"
   | "invalidPhone"
+  | "notTurkishMobile"
   | "invalidDate"
   | "tooYoung"
   | "invalidNumber"
@@ -93,7 +95,9 @@ export const applicationSchema = z
         z
           .string()
           .regex(/^\+[1-9][0-9]{6,14}$/, err("invalidPhone"))
-          .refine((v) => isPossiblePhoneNumber(v), err("invalidPhone")),
+          .refine((v) => isPossiblePhoneNumber(v), err("invalidPhone"))
+          // Same rule as the DB trigger: +90 numbers must be mobiles (WhatsApp).
+          .refine(isTurkishMobileOrForeign, err("notTurkishMobile")),
       ),
     email: z
       .string(err("required"))
@@ -215,6 +219,9 @@ export const applicationSchema = z
       utm_term: v.utm_term ?? null,
     }),
   );
+
+/** Syntactically valid email (same check as the form's email field). */
+export const isEmailAddress = (value: string) => z.email().safeParse(value.trim()).success;
 
 export type ApplicationFieldErrors = Partial<Record<string, ApplyErrorKey>>;
 
