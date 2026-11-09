@@ -49,7 +49,14 @@
     "notMember": "Henüz üye değil misin?",
     "applyLink": "Kulübe başvur",
     "error": "Giriş tamamlanamadı. Lütfen tekrar dene.",
-    "notice": "Giriş yaptığında Google hesabındaki adın, e-posta adresin ve profil fotoğrafın yalnızca kulüp üyeliği işlemleri için kullanılır."
+    "notice": "Giriş yaptığında Google hesabındaki adın, e-posta adresin ve profil fotoğrafın yalnızca kulüp üyeliği işlemleri için kullanılır.",
+    "inApp": {
+      "title": "{app} içinde Google girişi çalışmıyor",
+      "body": "Google, uygulama içi tarayıcılarda girişe izin vermiyor. Sağ üstteki ⋯ menüsünden \"Tarayıcıda aç\"ı seç ya da bağlantıyı kopyalayıp Safari/Chrome'a yapıştır.",
+      "copy": "Bağlantıyı kopyala",
+      "copied": "Kopyalandı",
+      "openChrome": "Chrome'da aç"
+    }
   },
   "Account": {
     "title": "Hesabım",

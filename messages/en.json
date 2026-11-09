@@ -49,7 +49,14 @@
     "notMember": "Not a member yet?",
     "applyLink": "Apply to join",
     "error": "Sign-in couldn't be completed. Please try again.",
-    "notice": "When you sign in, the name, email address and profile photo from your Google account are used only for club membership."
+    "notice": "When you sign in, the name, email address and profile photo from your Google account are used only for club membership.",
+    "inApp": {
+      "title": "Google sign-in doesn't work inside {app}",
+      "body": "Google doesn't allow sign-in in in-app browsers. Open the ⋯ menu at the top right and choose \"Open in browser\", or copy the link and paste it into Safari/Chrome.",
+      "copy": "Copy link",
+      "copied": "Copied",
+      "openChrome": "Open in Chrome"
+    }
   },
   "Account": {
     "title": "My account",

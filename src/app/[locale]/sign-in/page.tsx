@@ -3,6 +3,7 @@ import { useTranslations } from "next-intl";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import { GoogleIcon } from "@/components/auth/google-icon";
+import { InAppBrowserNotice } from "@/components/auth/in-app-browser-notice";
 import { ClubBadge } from "@/components/brand/club-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,6 +31,7 @@ export default function SignInPage({ searchParams }: PageProps<"/[locale]/sign-i
           <CardDescription className="text-center">{t("signInDescription")}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
+          <InAppBrowserNotice />
           <Suspense fallback={<Skeleton className="h-9 w-full" />}>
             <SignInForm searchParams={searchParams} />
           </Suspense>
