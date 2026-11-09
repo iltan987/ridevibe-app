@@ -49,6 +49,14 @@
   `utm_campaign=smoke-test`, verify the row via `POSTGRES_URL_NON_POOLING` (`docker run --rm postgres:17-alpine
   psql "$URL" …`), then delete it.
 
+### pgTAP: planting rows that today's triggers would reject (2026-11-09)
+- **Need:** test that an old row (e.g. a `+90` landline from before the mobile rule) stays editable.
+- **Do:** as `postgres`, `set local session_replication_role = replica; update …; set local session_replication_role =
+  origin;` — skips (non-`always`) triggers for that statement; CHECK constraints still apply. Unlike
+  `alter table … disable trigger` it takes no table lock, so it is safe in `supabase test db --remote` runs. Works on
+  the local stack as `postgres`.
+- Column-level grant changes don't change `database.types.ts` (`pnpm db:types` yields no diff) — that's expected.
+
 ### Unit tests: `node --test` runs `*.test.ts` directly, no framework (2026-11-08)
 - Node 24 strips TypeScript types natively and its default test glob includes `**/*.test.ts` → `pnpm test`.
 - Limits: no path aliases (`@/…`) and imports need the `.ts` extension (`allowImportingTsExtensions` is on) →

@@ -179,9 +179,9 @@ select lives_ok(
 );
 
 select throws_ok(
-  $$ update public.applications set full_name = 'Changed' where email like '%@pgtap.invalid' $$,
+  $$ update public.applications set district = 'Changed' where email like '%@pgtap.invalid' $$,
   '42501', null,
-  'reviewers cannot edit applicant answers'
+  'reviewers cannot edit applicant answers (only contact corrections)'
 );
 
 select throws_ok(

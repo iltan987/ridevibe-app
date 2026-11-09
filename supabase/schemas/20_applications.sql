@@ -69,7 +69,7 @@ create table public.applications (
   admin_notes text check (char_length(admin_notes) <= 4000),
   reviewed_by uuid references public.profiles (id) on delete set null,
   reviewed_at timestamptz,
-  -- The member account this (approved) application was linked to.
+  -- The account this application belongs to (see the column comment below).
   profile_id uuid references public.profiles (id) on delete set null,
 
   created_at timestamptz not null default now(),
@@ -90,12 +90,17 @@ create table public.applications (
 );
 
 comment on table public.applications is 'Membership applications from the public form.';
+comment on column public.applications.profile_id is 'The account this application belongs to: set when submitted while signed in, when staff link it, or when an approved application is matched by email.';
 
 create index applications_status_created_idx on public.applications (status, created_at desc);
 
 -- One open application per email (a person can re-apply after a decision).
 create unique index applications_open_email_key on public.applications (lower(email))
   where status in ('new', 'contacted');
+
+-- One open application per account, too (the applicant may use another email).
+create unique index applications_open_profile_key on public.applications (profile_id)
+  where status in ('new', 'contacted') and profile_id is not null;
 
 -- No expression index on private.normalize_email(email) here: index
 -- expressions run with the *inserting* user's rights, and anon (the public
@@ -106,14 +111,13 @@ create trigger applications_set_updated_at
 before update on public.applications
 for each row execute function private.set_updated_at();
 
--- Validate/normalize on insert: 18+ (Istanbul date), trimmed lowercase email.
+-- Validate on insert: 18+ (Istanbul date).
 create or replace function private.applications_before_insert()
 returns trigger
 language plpgsql
 set search_path = ''
 as $$
 begin
-  new.email = lower(trim(new.email));
   if new.birth_date > ((now() at time zone 'Europe/Istanbul')::date - interval '18 years') then
     raise exception 'applicant must be at least 18 years old'
       using errcode = '23514', constraint = 'applications_min_age';
@@ -125,6 +129,32 @@ $$;
 create trigger applications_before_insert
 before insert on public.applications
 for each row execute function private.applications_before_insert();
+
+-- Contact fields, on submit and on staff corrections: trimmed lowercase email;
+-- a Turkish (+90) number must be a mobile (+905 + 9 digits). The phone rule
+-- only runs when the phone is set/changed, so old rows stay editable (e.g. an
+-- email correction) until someone touches their phone.
+create or replace function private.applications_normalize_contact()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  new.email = lower(trim(new.email));
+  if (TG_OP = 'INSERT' or new.phone is distinct from old.phone)
+    and new.phone like '+90%'
+    and new.phone !~ '^\+905[0-9]{9}$'
+  then
+    raise exception 'a Turkish phone number must be a mobile number (+905…)'
+      using errcode = '23514', constraint = 'applications_tr_mobile';
+  end if;
+  return new;
+end;
+$$;
+
+create trigger applications_normalize_contact
+before insert or update of phone, email on public.applications
+for each row execute function private.applications_normalize_contact();
 
 -- Stamp who reviewed and when, whenever the status changes.
 create or replace function private.applications_track_review()
@@ -171,12 +201,14 @@ before update on public.applications
 for each row execute function private.applications_check_decision();
 
 -- ---------------------------------------------------------------------------
--- Approval → membership. A *pending* account whose sign-in email matches an
--- approved application (normalize_email) is activated, linked to it, and gets
--- the application's city/district if it has none. Runs both when someone signs
--- in after approval (handle_new_user) and when an application is approved for
--- someone who already signed in (trigger below). Never touches active/inactive
--- accounts, so it can't undo a suspension.
+-- Approval → membership. A *pending* account with an approved application is
+-- activated: the application linked to it (profile_id) first, else one whose
+-- email matches the sign-in email (normalize_email) and isn't linked to anyone.
+-- The account gets the application's (staff-reviewed) name, and its
+-- city/district if it has none; an email match also links the application.
+-- Runs when someone signs in after approval (handle_new_user), and when an
+-- application is approved or its email corrected after approval (trigger
+-- below). Never touches active/inactive accounts, so it can't undo a suspension.
 -- ---------------------------------------------------------------------------
 
 create or replace function private.activate_from_approved_application(target_profile uuid)
@@ -188,20 +220,29 @@ as $$
 declare
   app record;
 begin
-  select a.id, a.city, a.district, a.side into app
+  select a.id, a.full_name, a.city, a.district, a.side, a.profile_id into app
   from public.applications a
-  join public.member_contacts c on c.profile_id = target_profile
   where a.status = 'approved'
-    and a.profile_id is null
-    and private.normalize_email(a.email) = private.normalize_email(c.email)
+    and a.profile_id = target_profile
   order by a.reviewed_at desc nulls last, a.created_at desc
   limit 1;
   if not found then
-    return;
+    select a.id, a.full_name, a.city, a.district, a.side, a.profile_id into app
+    from public.applications a
+    join public.member_contacts c on c.profile_id = target_profile
+    where a.status = 'approved'
+      and a.profile_id is null
+      and private.normalize_email(a.email) = private.normalize_email(c.email)
+    order by a.reviewed_at desc nulls last, a.created_at desc
+    limit 1;
+    if not found then
+      return;
+    end if;
   end if;
 
   update public.profiles p
   set status = 'active',
+      full_name = app.full_name,
       city = case when p.district is null then app.city else p.city end,
       side = case when p.district is null then app.side else p.side end,
       district = coalesce(p.district, app.district)
@@ -210,7 +251,9 @@ begin
     return;
   end if;
 
-  update public.applications set profile_id = target_profile where id = app.id;
+  if app.profile_id is null then
+    update public.applications set profile_id = target_profile where id = app.id;
+  end if;
 end;
 $$;
 
@@ -221,30 +264,42 @@ security definer
 set search_path = ''
 as $$
 begin
-  perform private.activate_from_approved_application(c.profile_id)
-  from public.member_contacts c
-  where private.normalize_email(c.email) = private.normalize_email(new.email);
+  if new.profile_id is not null then
+    perform private.activate_from_approved_application(new.profile_id);
+  else
+    perform private.activate_from_approved_application(c.profile_id)
+    from public.member_contacts c
+    where private.normalize_email(c.email) = private.normalize_email(new.email);
+  end if;
   return null;
 end;
 $$;
 
--- WHEN keeps the profile_id update above from re-firing this trigger.
+-- Fires on approval and on an email correction of an approved application.
+-- `update of status, email` + WHEN keep the profile_id update above from
+-- re-firing this trigger.
 create trigger applications_after_approval
-after update of status on public.applications
-for each row when (new.status = 'approved' and old.status is distinct from new.status)
+after update of status, email on public.applications
+for each row when (
+  new.status = 'approved'
+  and (old.status is distinct from new.status or old.email is distinct from new.email)
+)
 execute function private.applications_after_approval();
 
 revoke all on function private.activate_from_approved_application(uuid) from public, anon, authenticated;
 revoke all on function private.applications_after_approval() from public, anon, authenticated;
 
 revoke all on function private.applications_before_insert() from public, anon, authenticated;
+revoke all on function private.applications_normalize_contact() from public, anon, authenticated;
 revoke all on function private.applications_track_review() from public, anon, authenticated;
 revoke all on function private.applications_check_decision() from public, anon, authenticated;
 
 -- ---------------------------------------------------------------------------
 -- Privileges: the public may only INSERT the applicant columns (no status,
--- notes or review fields). Reading, reviewing and deleting (KVKK
--- erasure) each need a permission (05_roles.sql).
+-- notes or review fields); signed-in applicants may also set profile_id to
+-- their own account (policy below). Reading, reviewing (status, notes and
+-- contact corrections) and deleting (KVKK erasure) each need a permission
+-- (05_roles.sql).
 -- ---------------------------------------------------------------------------
 
 revoke all on table public.applications from anon, authenticated;
@@ -256,9 +311,10 @@ grant insert (
   event_interests, other_event_interests, expectations, alienating_behaviors, consent_privacy, consent_rules,
   consent_photos, privacy_notice_version, utm_source, utm_medium, utm_campaign, utm_content, utm_term
 ) on table public.applications to anon, authenticated;
+grant insert (profile_id) on table public.applications to authenticated;
 
 grant select on table public.applications to authenticated;
-grant update (status, admin_notes) on table public.applications to authenticated;
+grant update (status, admin_notes, full_name, phone, email) on table public.applications to authenticated;
 grant delete on table public.applications to authenticated;
 
 alter table public.applications enable row level security;
@@ -266,8 +322,14 @@ alter table public.applications enable row level security;
 create policy "applications: anyone can submit a new application"
 on public.applications
 for insert
-to anon, authenticated
+to anon
 with check (status = 'new');
+
+create policy "applications: signed-in users can submit for their own account"
+on public.applications
+for insert
+to authenticated
+with check (status = 'new' and (profile_id is null or profile_id = (select auth.uid())));
 
 create policy "applications: readable with applications.view"
 on public.applications
