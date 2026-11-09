@@ -74,7 +74,7 @@ async function ApplicationsList({
             key={s}
             href={{ pathname: "/admin/applications", query: { status: s } }}
             aria-current={s === status ? "page" : undefined}
-            className="flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-medium text-muted-foreground aria-[current=page]:border-primary aria-[current=page]:bg-primary aria-[current=page]:text-primary-foreground"
+            className="flex shrink-0 items-center gap-1.5 rounded-full border border-input px-3.5 py-1.5 text-sm font-medium text-muted-foreground aria-[current=page]:border-primary aria-[current=page]:bg-primary aria-[current=page]:text-primary-foreground"
           >
             {t(`statuses.${s}`)}
             <span className="tabular-nums opacity-70">{counts[s]}</span>

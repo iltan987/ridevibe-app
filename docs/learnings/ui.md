@@ -26,7 +26,14 @@
 
 ### Outline button border is barely visible (2026-11-07)
 - Fixed in the design system: outline buttons use `border-input` in both themes (`border-transparent` lives in the
-  non-outline variants so `buttonVariants()` on `Link` works). `/admin/members` filter pills still use `border-border`.
+  non-outline variants so `buttonVariants()` on `Link` works). Same for hand-made controls: a bare `border` uses
+  `--border` (a divider colour, ~1.2:1) — give pills/toggles `border-input` (the admin status filters do).
+
+### Accessible name must contain the visible label (2026-11-09)
+- **Symptom:** locale switcher showed "TR" but its `aria-label` was "Dil" — voice-control users saying "TR" miss it
+  (WCAG 2.5.3 Label in Name, Lighthouse `label-content-name-mismatch`).
+- **Do:** when a control has visible text, an `aria-label` must include it: `LocaleSwitcher.current` = "Dil: {code}".
+  Icon-only controls (theme switch) just need a label.
 
 ### CSS `uppercase` on a `tr` page dots English i's (2026-11-09)
 - **Symptom:** brand rendered as "RİDE & VİBE" in mockups with `text-transform: uppercase`.

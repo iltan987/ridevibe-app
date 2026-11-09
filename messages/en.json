@@ -13,6 +13,7 @@
   },
   "LocaleSwitcher": {
     "label": "Language",
+    "current": "Language: {code}",
     "tr": "Türkçe",
     "en": "English"
   },

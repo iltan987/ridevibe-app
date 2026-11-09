@@ -13,6 +13,7 @@
   },
   "LocaleSwitcher": {
     "label": "Dil",
+    "current": "Dil: {code}",
     "tr": "Türkçe",
     "en": "English"
   },
