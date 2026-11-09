@@ -13,7 +13,7 @@ import { ApplicationReviewPanel } from "@/components/admin/application-review-pa
 import { getPathname, Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { can } from "@/lib/auth/permissions";
-import { getApplication } from "@/lib/applications/queries";
+import { getApplication, getApplicationAccount } from "@/lib/applications/queries";
 import { requirePermission } from "@/lib/auth/require-access";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -48,8 +48,9 @@ async function ApplicationDetail({ params }: { params: PageProps<"/[locale]/admi
   const { id } = await params;
   const me = await requirePermission("applications.view", `/admin/applications/${id}`);
 
-  const [a, t, tApply, format] = await Promise.all([
+  const [a, account, t, tApply, format] = await Promise.all([
     getApplication(id),
+    getApplicationAccount(id),
     getTranslations("Admin"),
     getTranslations("Apply"),
     getFormatter(),
@@ -66,7 +67,7 @@ async function ApplicationDetail({ params }: { params: PageProps<"/[locale]/admi
       ? t("review.decidedBy", { name: a.reviewer.full_name, date: format.dateTime(new Date(a.reviewed_at), { dateStyle: "medium", timeStyle: "short" }) })
       : t("review.decidedByUnknown", { date: format.dateTime(new Date(a.reviewed_at), { dateStyle: "medium", timeStyle: "short" }) })
     : null;
-  // Linked = profile_id. The `member` join can be null even then: profiles RLS
+  // Linked = profile_id. The account details come from an RPC: profiles RLS
   // hides pending accounts from staff without members.manage.
   const linked = !!a.profile_id;
   const inviteHref = a.status === "approved" && !linked ? await whatsAppInvite(a) : null;
@@ -108,10 +109,8 @@ async function ApplicationDetail({ params }: { params: PageProps<"/[locale]/admi
         canDecide={canDecide}
         canDelete={can(me.access, "applications.delete")}
         decidedLabel={decidedLabel}
-        linkedLabel={
-          linked ? (a.member?.full_name ? t("review.linked", { name: a.member.full_name }) : t("review.linkedUnknown")) : null
-        }
-        linkedInactive={a.member?.status === "inactive"}
+        linked={linked}
+        account={account}
         inviteHref={inviteHref}
         canLink={canDecide && !linked && a.status !== "rejected"}
       />

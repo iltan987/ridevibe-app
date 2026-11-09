@@ -57,9 +57,10 @@ export function ApplyForm({ defaults }: { defaults?: { fullName: string; email: 
   // Errors show for fields the person has left (blur) or after a submit attempt.
   const [touched, setTouched] = useState<ReadonlySet<string>>(new Set());
   const [submitAttempts, setSubmitAttempts] = useState(0);
-  // Typed email (for the non-Gmail note) and the email that was submitted (success card).
+  // Typed email (for the non-Gmail note) and what the success card says: the
+  // submitted email, or null when the application was linked to the signed-in account.
   const [email, setEmail] = useState(defaults?.email ?? "");
-  const [submittedEmail, setSubmittedEmail] = useState("");
+  const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
 
   // Conditional sections.
   const [cityChoice, setCityChoice] = useState<"istanbul" | "other">("istanbul");
@@ -116,7 +117,7 @@ export function ApplyForm({ defaults }: { defaults?: { fullName: string; email: 
         setErrors({});
         setStatus(result.status);
         if (result.status === "success") {
-          setSubmittedEmail(check.data.email);
+          setSubmittedEmail(result.linked ? null : check.data.email);
           window.scrollTo({ top: 0 });
         }
       }
@@ -131,10 +132,12 @@ export function ApplyForm({ defaults }: { defaults?: { fullName: string; email: 
           <CardTitle className="text-xl">{t("successTitle")}</CardTitle>
           <CardDescription>{t("successBody")}</CardDescription>
           <CardDescription>
-            {t.rich("successEmail", {
-              email: submittedEmail,
-              b: (chunks) => <b className="font-semibold text-foreground wrap-anywhere">{chunks}</b>,
-            })}
+            {submittedEmail === null
+              ? t("successSignedIn")
+              : t.rich("successEmail", {
+                  email: submittedEmail,
+                  b: (chunks) => <b className="font-semibold text-foreground wrap-anywhere">{chunks}</b>,
+                })}
           </CardDescription>
           <Link href="/" className={buttonVariants({ variant: "outline", className: "mt-2" })}>
             {t("backHome")}

@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageCircle, Trash2 } from "lucide-react";
+import { MessageCircle, TriangleAlert, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { type FormEvent, useState, useTransition } from "react";
 import {
@@ -21,7 +21,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { LinkAccountDialog } from "@/components/admin/link-account-dialog";
 import { useRouter } from "@/i18n/navigation";
 import type { AccessActionResult } from "@/lib/access/actions";
-import type { ApplicationStatus } from "@/lib/applications/queries";
+import { sameEmail } from "@/lib/applications/contact";
+import type { ApplicationAccount, ApplicationStatus } from "@/lib/applications/queries";
 import { deleteApplication, saveApplicationNotes, setApplicationStatus } from "@/lib/applications/review-actions";
 
 const STATUS_BADGE: Partial<Record<ApplicationStatus, "default" | "status">> = {
@@ -37,8 +38,8 @@ export function ApplicationReviewPanel({
   canDecide,
   canDelete,
   decidedLabel,
-  linkedLabel,
-  linkedInactive,
+  linked,
+  account,
   inviteHref,
   canLink,
 }: {
@@ -48,10 +49,10 @@ export function ApplicationReviewPanel({
   canDelete: boolean;
   /** "Name · date" of the last status change, if any. */
   decidedLabel: string | null;
-  /** Set while the application is linked to an account (profile_id, any status). */
-  linkedLabel: string | null;
-  /** The linked account is inactive (suspended): approval doesn't activate it. */
-  linkedInactive: boolean;
+  /** The application is linked to an account (profile_id, any status). */
+  linked: boolean;
+  /** The linked account (application_account RPC); null when unlinked (or gone meanwhile). */
+  account: ApplicationAccount | null;
   /** wa.me link with the invite text (approved applications only). */
   inviteHref: string | null;
   /** applications.decide, and the application is neither linked nor rejected. */
@@ -92,6 +93,14 @@ export function ApplicationReviewPanel({
     run("notes", () => saveApplicationNotes(id, notes));
   }
 
+  // Which account an approval activates: anyone signed in can submit someone
+  // else's name and phone, so show the sign-in email and flag a mismatch.
+  const accountName = account ? [account.fullName, account.email].filter(Boolean).join(" · ") : "";
+  const linkedLabel = linked ? (accountName ? t("review.account", { account: accountName }) : t("review.linkedUnknown")) : null;
+  const mismatchedEmail = account?.email && !sameEmail(application.email, account.email) ? account.email : null;
+  // In the approve dialog, the email identifies the account best.
+  const dialogAccount = account?.email || account?.fullName || "";
+
   const message = (what: "status" | "notes") =>
     result?.what === what &&
     (result.status === "ok" ? (
@@ -105,11 +114,13 @@ export function ApplicationReviewPanel({
   const dialog = confirm && {
     approved: {
       title: t("review.approveTitle"),
-      body: !linkedLabel
+      body: !linked
         ? t("review.approveBody", { name: application.name, email: application.email })
-        : linkedInactive
-          ? t("review.approveBodyLinkedInactive", { name: application.name })
-          : t("review.approveBodyLinked", { name: application.name }),
+        : !dialogAccount
+          ? t("review.approveBodyLinkedUnknown", { name: application.name })
+          : account?.status === "inactive"
+            ? t("review.approveBodyLinkedInactive", { account: dialogAccount })
+            : t("review.approveBodyLinked", { name: application.name, account: dialogAccount }),
     },
     rejected: { title: t("review.rejectTitle"), body: t("review.rejectBody", { name: application.name }) },
     reopen: { title: t("review.reopen"), body: t("review.reopenBody") },
@@ -162,7 +173,15 @@ export function ApplicationReviewPanel({
         {(linkedLabel || status === "approved" || canLink) && (
           <div className="flex flex-col gap-2 rounded-lg border bg-muted/30 p-3">
             {linkedLabel ? (
-              <p className="text-sm font-medium">{linkedLabel}</p>
+              <>
+                <p className="text-sm font-medium wrap-anywhere">{linkedLabel}</p>
+                {mismatchedEmail && (
+                  <p role="note" className="flex gap-2 rounded-lg border border-sun/40 bg-sun/10 p-3 text-sm wrap-anywhere">
+                    <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
+                    <span>{t("review.emailMismatch", { appEmail: application.email, accountEmail: mismatchedEmail })}</span>
+                  </p>
+                )}
+              </>
             ) : (
               <p className="text-sm text-muted-foreground">
                 {/* Only those who can link get pointed to "Link to account". */}

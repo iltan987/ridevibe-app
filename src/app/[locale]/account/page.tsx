@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { useTranslations } from "next-intl";
 import { getLocale, getTranslations } from "next-intl/server";
+import { unstable_rethrow } from "next/navigation";
 import { Suspense } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -82,13 +83,24 @@ async function AccountDetails() {
 
 /** Pending members: tell them whether they still need to apply. */
 async function PendingCard() {
-  const [application, t] = await Promise.all([getMyApplicationStatus(), getTranslations("Account")]);
+  const [application, t] = await Promise.all([
+    // On failure show the generic pending card. The message only carries the
+    // error code, no personal data (KVKK).
+    getMyApplicationStatus().catch((error: unknown) => {
+      unstable_rethrow(error);
+      console.error("PendingCard:", error instanceof Error ? error.message : "getMyApplicationStatus failed");
+      return "failed" as const;
+    }),
+    getTranslations("Account"),
+  ]);
   const kind =
-    application === null
-      ? "notApplied"
-      : application === "new" || application === "contacted"
-        ? "underReview"
-        : "pending";
+    application === "failed"
+      ? "pending"
+      : application === null
+        ? "notApplied"
+        : application === "new" || application === "contacted"
+          ? "underReview"
+          : "pending";
 
   return (
     <Card className="border-sun/40 bg-sun/10">

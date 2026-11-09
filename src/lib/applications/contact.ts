@@ -9,3 +9,21 @@ export function isGoogleMailAddress(email: string): boolean {
   const domain = email.trim().toLowerCase().split("@").pop();
   return domain === "gmail.com" || domain === "googlemail.com";
 }
+
+/**
+ * Same as `private.normalize_email` (00_private.sql): trimmed and lowercased; for Gmail/Google Mail the dots and
+ * the `+tag` in the local part are dropped and the domain becomes gmail.com. Keep both in sync.
+ */
+export function normalizeEmail(email: string): string {
+  const e = email.trim().toLowerCase();
+  const [local = "", domain = ""] = e.split("@");
+  if (domain === "gmail.com" || domain === "googlemail.com") {
+    return `${local.split("+")[0].replaceAll(".", "")}@gmail.com`;
+  }
+  return e;
+}
+
+/** True when both addresses reach the same mailbox as far as account matching is concerned (`normalizeEmail`). */
+export function sameEmail(a: string, b: string): boolean {
+  return normalizeEmail(a) === normalizeEmail(b);
+}

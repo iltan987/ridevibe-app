@@ -76,7 +76,7 @@
     "pendingTitle": "Your membership is awaiting approval",
     "pendingBody": "You're signed in, but an admin hasn't approved your account yet. Once approved, you'll get access to everything.",
     "notAppliedTitle": "You haven't applied yet",
-    "notAppliedBody": "Fill in the application form to become a member. Your details are filled in for you.",
+    "notAppliedBody": "Fill in the application form to become a member. Your details are filled in for you. If you already applied with another email, don't apply again; message us on WhatsApp and we'll link your account.",
     "applyNow": "Apply",
     "underReviewTitle": "Your application is under review",
     "underReviewBody": "Once it's approved, your account becomes active automatically."
@@ -188,6 +188,7 @@
     "successTitle": "Application received!",
     "successBody": "Thank you! We'll review your application and contact you on WhatsApp.",
     "successEmail": "Once approved, you'll sign in with the <b>{email}</b> Google account. If this address is wrong, message us on WhatsApp.",
+    "successSignedIn": "Once approved, this account becomes active automatically.",
     "backHome": "Back to home",
     "duplicate": "You already have an open application. Please wait for the result.",
     "genericError": "Something went wrong. Please try again in a moment.",
@@ -198,6 +199,10 @@
     "underReview": {
       "title": "Your application is under review",
       "body": "We've received your application. Once we've reviewed it, we'll reach out to you on WhatsApp."
+    },
+    "inactive": {
+      "title": "Your membership is currently inactive",
+      "body": "If you'd like to rejoin, message us on WhatsApp."
     },
     "errors": {
       "required": "This field is required.",
@@ -345,8 +350,9 @@
       "reopen": "Undo decision",
       "approveTitle": "Approve this application?",
       "approveBody": "{name} becomes an active member automatically when they sign in with Google using this email ({email}); if they use another account, link it with “Link to account”. Send the WhatsApp invite after approving.",
-      "approveBodyLinked": "{name} becomes an active member right away through the linked account. Let them know on WhatsApp after approving.",
-      "approveBodyLinkedInactive": "{name}'s linked account is inactive; approving doesn't reactivate it. Reactivate it on the Members page if needed.",
+      "approveBodyLinked": "The linked account {account} becomes an active member right away (as {name}). Let them know on WhatsApp after approving.",
+      "approveBodyLinkedUnknown": "{name} becomes an active member right away through the linked account. Let them know on WhatsApp after approving.",
+      "approveBodyLinkedInactive": "The linked account {account} is inactive; approving doesn't reactivate it. Reactivate it on the Members page if needed.",
       "rejectTitle": "Reject this application?",
       "rejectBody": "{name} can apply again later.",
       "reopenBody": "The application goes back to “Contacted”. An account that was already activated stays active; deactivate it on the Members page if needed.",
@@ -359,7 +365,8 @@
       "decidedBy": "{name} · {date}",
       "decidedByUnknown": "Changed by: unknown · {date}",
       "noPermission": "You don't have permission to change this application's status.",
-      "linked": "Linked account: {name}",
+      "account": "Account: {account}",
+      "emailMismatch": "Heads up: the application was made with {appEmail}, but the linked account's email is {accountEmail}. Before approving, confirm that the person uses this account.",
       "linkedUnknown": "Linked to an account",
       "notLinked": "Hasn't signed in yet. Send the invite; they become active automatically when they sign in with the email from the application. If they signed in with a different Google account, link it with “Link to account”.",
       "notLinkedNoLink": "Hasn't signed in yet. Send the invite; they become active automatically when they sign in with the email from the application.",

@@ -43,18 +43,41 @@ export async function countApplicationsByStatus() {
   return Object.fromEntries(counts) as Record<ApplicationFilter, number>;
 }
 
+const isUuidLike = (id: string) => /^[0-9a-f-]{36}$/i.test(id);
+
 export async function getApplication(id: string) {
-  if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
+  if (!isUuidLike(id)) return null;
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("applications")
-    .select(
-      "*, reviewer:profiles!applications_reviewed_by_fkey(full_name), member:profiles!applications_profile_id_fkey(full_name, status)",
-    )
+    .select("*, reviewer:profiles!applications_reviewed_by_fkey(full_name)")
     .eq("id", id)
     .maybeSingle();
   if (error) throw new Error(`getApplication failed: ${error.code}`);
   return data;
+}
+
+export type ApplicationAccount = {
+  id: string;
+  fullName: string;
+  /** Sign-in email; null if the account has no contact row. */
+  email: string | null;
+  status: Enums<"member_status">;
+};
+
+/**
+ * The account an application is linked to (applications.view), or null when unlinked. Uses an RPC because profiles
+ * RLS hides pending/inactive accounts and sign-in emails from staff without members.manage.
+ */
+export async function getApplicationAccount(applicationId: string): Promise<ApplicationAccount | null> {
+  // Runs alongside getApplication on the detail page: a malformed id must give 404, not a uuid cast error.
+  if (!isUuidLike(applicationId)) return null;
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("application_account", { application_id: applicationId }).maybeSingle();
+  if (error) throw new Error(`getApplicationAccount failed: ${error.code}`);
+  if (!data) return null;
+  // Generated types say non-null; email is null without a member_contacts row.
+  return { id: data.id, fullName: data.full_name, email: (data.email as string | null) ?? null, status: data.status };
 }
 
 /** Status of the signed-in user's latest application (linked, or unlinked with their sign-in email), or null. Signed-in only. */
