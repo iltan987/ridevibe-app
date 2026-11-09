@@ -86,3 +86,11 @@
 - **Cause:** in `language sql` function `profile_of(email text)`, `where u.email = email` compared the column to
   itself.
 - **Do:** name parameters so they can't collide with columns (`user_email`, `target_id`).
+
+### Same-event triggers fire in name order (2026-11-09)
+- **Symptom (avoided):** a `before update` guard comparing `new.email` with `old.email` would have treated
+  `RIGHT@x` → `right@x` as a change, because the normalising trigger (`applications_normalize_contact`) runs *after*
+  `applications_check_decision`.
+- **Cause:** PostgreSQL fires triggers of the same timing/event alphabetically by name.
+- **Do:** in a guard trigger, compare the normalised value (`lower(trim(new.email))`), or name triggers so the
+  normaliser sorts first.

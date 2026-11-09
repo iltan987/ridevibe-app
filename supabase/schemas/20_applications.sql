@@ -179,6 +179,12 @@ for each row execute function private.applications_track_review();
 -- `applications.decide`; RLS only checks `applications.review` (policies can't
 -- compare old and new values). Applies to signed-in users only, so trusted
 -- security-definer code (e.g. linking an approved application) isn't blocked.
+-- Changing the email of an *approved* application needs decide too: it re-runs
+-- activation (applications_after_approval), i.e. it chooses which account the
+-- approval activates. Name/phone corrections (any status) and email
+-- corrections on new/contacted applications only need review. The email is
+-- compared normalised because this trigger runs before
+-- applications_normalize_contact (triggers fire in name order).
 create or replace function private.applications_check_decision()
 returns trigger
 language plpgsql
@@ -186,8 +192,11 @@ set search_path = ''
 as $$
 begin
   if current_user = 'authenticated'
-    and new.status is distinct from old.status
-    and (new.status in ('approved', 'rejected') or old.status in ('approved', 'rejected'))
+    and (
+      (new.status is distinct from old.status
+        and (new.status in ('approved', 'rejected') or old.status in ('approved', 'rejected')))
+      or (old.status = 'approved' and lower(trim(new.email)) is distinct from old.email)
+    )
     and not private.has_permission('applications.decide')
   then
     raise exception 'missing permission applications.decide' using errcode = '42501';

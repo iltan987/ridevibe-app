@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(17);
+select plan(21);
 
 -- Fixtures: a reviewer (view + review), a decider (view + decide), two
 -- pending accounts that sign in before applying.
@@ -76,6 +76,22 @@ begin
 end;
 $$;
 
+-- Runs a statement and returns 'SQLSTATE|constraint' of the error it raises
+-- (the app maps the constraint name), or 'no error'.
+create function pg_temp.error_of(stmt text) returns text language plpgsql as $$
+declare
+  err_state text;
+  err_constraint text;
+begin
+  execute stmt;
+  return 'no error';
+exception when others then
+  get stacked diagnostics err_state = returned_sqlstate, err_constraint = constraint_name;
+  return err_state || '|' || coalesce(nullif(err_constraint, ''), '-');
+end;
+$$;
+grant execute on function pg_temp.error_of(text) to anon, authenticated;
+
 create function pg_temp.profile_of(user_email text) returns text language sql as $$
   select p.status || '|' || p.full_name
   from public.profiles p join auth.users u on u.id = p.id where u.email = user_email;
@@ -113,10 +129,10 @@ reset role;
 -- Turkish mobile rule and email normalisation on submit
 -- ---------------------------------------------------------------------------
 set local role anon;
-select throws_ok(
-  $$ select pg_temp.apply('landline@pgtap.invalid', '+904001234567') $$,
-  '23514', null,
-  'a +90 number that is not a mobile (+905…) is rejected'
+select is(
+  pg_temp.error_of($$ select pg_temp.apply('landline@pgtap.invalid', '+904001234567') $$),
+  '23514|applications_tr_mobile',
+  'a +90 number that is not a mobile (+905…) is rejected (applications_tr_mobile)'
 );
 select lives_ok(
   $$ select pg_temp.apply('mobile@pgtap.invalid', '+905001234567') $$,
@@ -141,6 +157,10 @@ select pg_temp.apply('legacy@pgtap.invalid');
 set local session_replication_role = replica;
 update public.applications set phone = '+904001234567' where email = 'legacy@pgtap.invalid';
 set local session_replication_role = origin;
+select is(
+  (select phone from public.applications where email = 'legacy@pgtap.invalid'), '+904001234567',
+  'fixture: an old row holds a +90 non-mobile number'
+);
 
 select pg_temp.login('00000000-0000-0000-0000-0000000003b1');
 select lives_ok(
@@ -153,14 +173,19 @@ select is(
   'Gerçek Ad|+905321112233|new@pgtap.invalid',
   'corrections are stored, the email lowercased'
 );
-select throws_ok(
-  $$ update public.applications set phone = '+904441112233' where email = 'new@pgtap.invalid' $$,
-  '23514', null,
-  'a correction to a +90 non-mobile number is rejected'
+select is(
+  pg_temp.error_of($$ update public.applications set phone = '+904441112233' where email = 'new@pgtap.invalid' $$),
+  '23514|applications_tr_mobile',
+  'a correction to a +90 non-mobile number is rejected (applications_tr_mobile)'
 );
 select lives_ok(
   $$ update public.applications set email = 'legacy2@pgtap.invalid' where email = 'legacy@pgtap.invalid' $$,
   'an old row with a non-mobile +90 number can still get an email correction'
+);
+select is(
+  (select phone || '|' || email from public.applications where email like 'legacy%@pgtap.invalid'),
+  '+904001234567|legacy2@pgtap.invalid',
+  'the old phone is kept, the email corrected'
 );
 select throws_ok(
   $$ update public.applications set district = 'X' where email = 'new@pgtap.invalid' $$,
@@ -183,8 +208,20 @@ reset role;
 insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-0000000003a3', 'right@pgtap.invalid', '{"full_name": "Right Google"}');
 select pg_temp.approve(pg_temp.app_id('wrong@pgtap.invalid'));
+-- On an approved application the email chooses which account activates: that
+-- is a decision (applications.decide), not a review correction.
 select pg_temp.login('00000000-0000-0000-0000-0000000003b1');
-update public.applications set email = 'right@pgtap.invalid' where email = 'wrong@pgtap.invalid';
+select throws_ok(
+  $$ update public.applications set email = 'right@pgtap.invalid' where email = 'wrong@pgtap.invalid' $$,
+  '42501', null,
+  'reviewers cannot change the email of an approved application (needs applications.decide)'
+);
+reset role;
+select pg_temp.login('00000000-0000-0000-0000-0000000003d1');
+select lives_ok(
+  $$ update public.applications set email = 'right@pgtap.invalid' where email = 'wrong@pgtap.invalid' $$,
+  'deciders can change the email of an approved application'
+);
 reset role;
 select is(
   pg_temp.profile_of('right@pgtap.invalid') || '|' ||

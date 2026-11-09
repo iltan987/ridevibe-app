@@ -82,6 +82,26 @@ begin
 end;
 $function$;
 
+CREATE OR REPLACE FUNCTION private.applications_check_decision()
+  RETURNS TRIGGER
+  LANGUAGE plpgsql
+  SET search_path TO ''
+  AS $function$
+begin
+  if current_user = 'authenticated'
+    and (
+      (new.status is distinct from old.status
+        and (new.status in ('approved', 'rejected') or old.status in ('approved', 'rejected')))
+      or (old.status = 'approved' and lower(trim(new.email)) is distinct from old.email)
+    )
+    and not private.has_permission('applications.decide')
+  then
+    raise exception 'missing permission applications.decide' using errcode = '42501';
+  end if;
+  return new;
+end;
+$function$;
+
 CREATE OR REPLACE FUNCTION private.applications_normalize_contact()
   RETURNS TRIGGER
   LANGUAGE plpgsql
