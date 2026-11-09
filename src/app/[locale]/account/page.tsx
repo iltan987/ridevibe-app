@@ -4,9 +4,11 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getPathname, redirect } from "@/i18n/navigation";
+import { Link, getPathname, redirect } from "@/i18n/navigation";
+import { getMyApplicationStatus } from "@/lib/applications/queries";
 import { getCurrentUser } from "@/lib/auth/user";
 import { initials } from "@/lib/initials";
 
@@ -45,14 +47,7 @@ async function AccountDetails() {
 
   return (
     <>
-      {profile?.status === "pending" && (
-        <Card className="border-sun/40 bg-sun/10">
-          <CardHeader>
-            <CardTitle>{t("pendingTitle")}</CardTitle>
-            <CardDescription>{t("pendingBody")}</CardDescription>
-          </CardHeader>
-        </Card>
-      )}
+      {profile?.status === "pending" && <PendingCard />}
       <Card>
         <CardHeader className="flex flex-row items-center gap-4">
           <Avatar className="size-14">
@@ -82,5 +77,30 @@ async function AccountDetails() {
         )}
       </Card>
     </>
+  );
+}
+
+/** Pending members: tell them whether they still need to apply. */
+async function PendingCard() {
+  const [application, t] = await Promise.all([getMyApplicationStatus(), getTranslations("Account")]);
+  const kind =
+    application === null
+      ? "notApplied"
+      : application === "new" || application === "contacted"
+        ? "underReview"
+        : "pending";
+
+  return (
+    <Card className="border-sun/40 bg-sun/10">
+      <CardHeader className="items-start gap-3">
+        <CardTitle>{t(`${kind}Title`)}</CardTitle>
+        <CardDescription>{t(`${kind}Body`)}</CardDescription>
+        {kind === "notApplied" && (
+          <Link href="/apply" className={buttonVariants({ className: "mt-2" })}>
+            {t("applyNow")}
+          </Link>
+        )}
+      </CardHeader>
+    </Card>
   );
 }

@@ -66,7 +66,12 @@
       "admin": "Yönetici"
     },
     "pendingTitle": "Üyeliğin onay bekliyor",
-    "pendingBody": "Giriş yaptın ama hesabın henüz bir yönetici tarafından onaylanmadı. Onaylandığında tüm özelliklere erişebileceksin."
+    "pendingBody": "Giriş yaptın ama hesabın henüz bir yönetici tarafından onaylanmadı. Onaylandığında tüm özelliklere erişebileceksin.",
+    "notAppliedTitle": "Henüz başvurmadın",
+    "notAppliedBody": "Üye olmak için başvuru formunu doldur. Bilgilerin hazır gelecek.",
+    "applyNow": "Başvur",
+    "underReviewTitle": "Başvurun inceleniyor",
+    "underReviewBody": "Onaylandığında hesabın otomatik olarak aktif olur."
   },
   "Apply": {
     "title": "Kulübe başvur",

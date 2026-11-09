@@ -66,7 +66,12 @@
       "admin": "Admin"
     },
     "pendingTitle": "Your membership is awaiting approval",
-    "pendingBody": "You're signed in, but an admin hasn't approved your account yet. Once approved, you'll get access to everything."
+    "pendingBody": "You're signed in, but an admin hasn't approved your account yet. Once approved, you'll get access to everything.",
+    "notAppliedTitle": "You haven't applied yet",
+    "notAppliedBody": "Fill in the application form to become a member. Your details are filled in for you.",
+    "applyNow": "Apply",
+    "underReviewTitle": "Your application is under review",
+    "underReviewBody": "Once it's approved, your account becomes active automatically."
   },
   "Apply": {
     "title": "Apply to join",
