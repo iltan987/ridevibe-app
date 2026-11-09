@@ -111,7 +111,12 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "keep_alive":
+            "application_account":
+{ Args: { "application_id": string }; Returns: {
+              "email": string,"full_name": string,"id": string,"status": Database["public"]['Enums']["member_status"]
+            }[]
+                           },
+"keep_alive":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
 "link_application":

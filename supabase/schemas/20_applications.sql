@@ -413,6 +413,33 @@ begin
 end;
 $$;
 
+-- The account an application is linked to (applications.view): id, name,
+-- sign-in email and status, so staff can check *which* account an approval
+-- activates (anyone signed in can submit someone else's name and phone). Zero
+-- rows when the application is unlinked or doesn't exist. Security definer:
+-- profiles RLS hides pending/inactive accounts and member_contacts from staff
+-- without members.manage.
+create or replace function public.application_account(application_id uuid)
+returns table (id uuid, full_name text, email text, status public.member_status)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+begin
+  if not private.has_permission('applications.view') then
+    raise exception 'missing permission applications.view' using errcode = '42501';
+  end if;
+
+  return query
+  select p.id, p.full_name, c.email, p.status
+  from public.applications a
+  join public.profiles p on p.id = a.profile_id
+  left join public.member_contacts c on c.profile_id = p.id
+  where a.id = application_account.application_id;
+end;
+$$;
+
 -- ---------------------------------------------------------------------------
 -- The applicant's own status (applicants can't read applications): the
 -- status of the latest application that is linked to the caller or unlinked
@@ -473,10 +500,12 @@ $$;
 
 revoke all on function public.link_application(uuid, uuid) from public, anon;
 revoke all on function public.linkable_accounts(text, timestamptz, uuid) from public, anon;
+revoke all on function public.application_account(uuid) from public, anon;
 revoke all on function public.my_application_status() from public, anon;
 revoke all on function public.pending_application_flags(uuid[]) from public, anon;
 grant execute on function public.link_application(uuid, uuid) to authenticated;
 grant execute on function public.linkable_accounts(text, timestamptz, uuid) to authenticated;
+grant execute on function public.application_account(uuid) to authenticated;
 grant execute on function public.my_application_status() to authenticated;
 grant execute on function public.pending_application_flags(uuid[]) to authenticated;
 

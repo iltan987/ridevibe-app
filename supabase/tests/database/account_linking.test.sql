@@ -1,10 +1,11 @@
 -- Run with: pnpm db:test
--- Linking applications to accounts, the applicant's own status, "applied?"
--- flags on the members list, and staff name corrections.
+-- Linking applications to accounts, the linked account shown to staff, the
+-- applicant's own status, "applied?" flags on the members list, and staff name
+-- corrections.
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(58);
+select plan(65);
 
 -- ---------------------------------------------------------------------------
 -- Fixtures
@@ -303,6 +304,73 @@ reset role;
 select pg_temp.login('00000000-0000-0000-0000-0000000004d4');
 select throws_ok('select * from public.linkable_accounts()', '42501', null,
   'a plain member cannot list linkable accounts');
+reset role;
+
+-- ---------------------------------------------------------------------------
+-- application_account (fixtures …0005xx): the linked account for anyone with
+-- applications.view, even without members.manage (RLS hides pending profiles).
+--   5d1  viewer with only applications.view
+--   5a1  pending account, signs in with another email than the application's
+--   5a2  inactive (suspended) account
+-- ---------------------------------------------------------------------------
+insert into auth.users (id, email, raw_user_meta_data) values
+  ('00000000-0000-0000-0000-0000000005d1', 'pgtap-viewer@pgtap.invalid', '{"full_name": "Vera Viewer"}'),
+  ('00000000-0000-0000-0000-0000000005a1', 'other-account@pgtap.invalid', '{"full_name": "Google Name"}'),
+  ('00000000-0000-0000-0000-0000000005a2', 'suspended-acct@pgtap.invalid', '{"full_name": "Pasif Hesap"}');
+insert into public.roles (id, name) values ('00000000-0000-0000-0000-0000000005e1', 'pgtap-viewer');
+insert into public.role_permissions (role_id, permission) values
+  ('00000000-0000-0000-0000-0000000005e1', 'applications.view');
+update public.profiles set role_id = '00000000-0000-0000-0000-0000000005e1', status = 'active'
+  where id = '00000000-0000-0000-0000-0000000005d1';
+update public.profiles set status = 'inactive' where id = '00000000-0000-0000-0000-0000000005a2';
+select pg_temp.apply('00000000-0000-0000-0000-000000000551', 'real-person@pgtap.invalid', 'contacted',
+  app_profile => '00000000-0000-0000-0000-0000000005a1');
+select pg_temp.apply('00000000-0000-0000-0000-000000000552', 'suspended-app@pgtap.invalid', 'contacted',
+  app_profile => '00000000-0000-0000-0000-0000000005a2');
+select pg_temp.apply('00000000-0000-0000-0000-000000000553', 'unlinked-app@pgtap.invalid');
+
+select pg_temp.login('00000000-0000-0000-0000-0000000005d1');
+select results_eq(
+  $$ select id, full_name, email, status::text from public.application_account('00000000-0000-0000-0000-000000000551') $$,
+  $$ values ('00000000-0000-0000-0000-0000000005a1'::uuid, 'Google Name', 'other-account@pgtap.invalid', 'pending') $$,
+  'a viewer without members.manage sees the linked pending account with its sign-in email'
+);
+select is(
+  (select status::text from public.application_account('00000000-0000-0000-0000-000000000552')), 'inactive',
+  'the status of an inactive linked account is reported'
+);
+select is(
+  (select count(*)::int from public.application_account('00000000-0000-0000-0000-000000000553')), 0,
+  'an unlinked application has no account row'
+);
+select is(
+  (select count(*)::int from public.application_account('00000000-0000-0000-0000-0000000005ff')), 0,
+  'an unknown application has no account row'
+);
+reset role;
+
+select pg_temp.login('00000000-0000-0000-0000-0000000004d4');
+select throws_ok(
+  $$ select * from public.application_account('00000000-0000-0000-0000-000000000551') $$,
+  '42501', null,
+  'a plain member cannot read the linked account'
+);
+reset role;
+
+select pg_temp.login('00000000-0000-0000-0000-0000000004d3');
+select throws_ok(
+  $$ select * from public.application_account('00000000-0000-0000-0000-000000000551') $$,
+  '42501', null,
+  'members.manage without applications.view cannot read the linked account'
+);
+reset role;
+
+set local role anon;
+select throws_ok(
+  $$ select * from public.application_account('00000000-0000-0000-0000-000000000551') $$,
+  '42501', null,
+  'anon cannot read the linked account'
+);
 reset role;
 
 -- ---------------------------------------------------------------------------
