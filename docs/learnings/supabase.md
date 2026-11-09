@@ -73,6 +73,9 @@
 - `select("…, profiles(count)")` returns `[{ count }]` per row (respects RLS); `role:roles(...)` via a FK column
   returns an object or null, typed correctly by generated types.
 - Generated RPC arg types are non-nullable even when SQL accepts null (`set_member_role(…, null)`) → cast at the call.
+- Return types too (2026-11-09): `my_application_status()` is typed `application_status` but returns null when there
+  is no application; `linkable_accounts().email` is typed `string` but is null without a `member_contacts` row →
+  treat RPC results as nullable in app code.
 
 ### Expression indexes run with the inserting user's rights (2026-11-08)
 - **Symptom:** after adding `create index … on applications (private.normalize_email(email))`, the public form

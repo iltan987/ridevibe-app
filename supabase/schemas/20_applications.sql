@@ -298,6 +298,168 @@ execute function private.applications_after_approval();
 revoke all on function private.activate_from_approved_application(uuid) from public, anon, authenticated;
 revoke all on function private.applications_after_approval() from public, anon, authenticated;
 
+-- ---------------------------------------------------------------------------
+-- Linking an application to an account (applications.decide), for when the
+-- applicant signed in with another email than the one on the form. Security
+-- definer: deciders may lack members.manage, so RLS would hide pending
+-- profiles and their sign-in emails from them. Only these RPCs expose them,
+-- and only the pending, unmatched ones.
+-- ---------------------------------------------------------------------------
+
+-- The application must be unlinked and not rejected; the account must be
+-- pending with no application of its own. Linking an approved application
+-- activates the account; one under review activates on approval
+-- (applications_after_approval). Never touches active/inactive accounts.
+create or replace function public.link_application(application_id uuid, target_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  app_status public.application_status;
+begin
+  if not private.has_permission('applications.decide') then
+    raise exception 'missing permission applications.decide' using errcode = '42501';
+  end if;
+
+  select a.status into app_status
+  from public.applications a
+  where a.id = application_id and a.profile_id is null and a.status <> 'rejected'
+  for update;
+  if not found then
+    raise exception 'application % not found or not linkable', application_id using errcode = 'P0002';
+  end if;
+
+  perform 1 from public.profiles p where p.id = target_id and p.status = 'pending' for update;
+  if not found or exists (select 1 from public.applications a where a.profile_id = target_id) then
+    raise exception 'account % not found or not linkable', target_id using errcode = 'P0002';
+  end if;
+
+  update public.applications a set profile_id = target_id where a.id = application_id;
+
+  if app_status = 'approved' then
+    perform private.activate_from_approved_application(target_id);
+  end if;
+end;
+$$;
+
+-- Pending accounts an application could be linked to: no application linked
+-- to them and no open/approved unlinked application with their sign-in email
+-- (those match automatically). Optional case-insensitive search on name or
+-- email. Newest first, keyset by (created_at, id), PAGE_SIZE + 1 rows.
+create or replace function public.linkable_accounts(
+  search text default null,
+  after_created timestamptz default null,
+  after_id uuid default null
+)
+returns table (id uuid, full_name text, avatar_url text, email text, created_at timestamptz)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  pattern text;
+begin
+  if not private.has_permission('applications.decide') then
+    raise exception 'missing permission applications.decide' using errcode = '42501';
+  end if;
+
+  if nullif(btrim(search), '') is not null then
+    pattern := '%' || replace(replace(replace(btrim(search), '\', '\\'), '%', '\%'), '_', '\_') || '%';
+  end if;
+
+  return query
+  select p.id, p.full_name, p.avatar_url, c.email, p.created_at
+  from public.profiles p
+  left join public.member_contacts c on c.profile_id = p.id
+  where p.status = 'pending'
+    and not exists (select 1 from public.applications a where a.profile_id = p.id)
+    and not exists (
+      select 1 from public.applications a
+      where a.profile_id is null
+        and a.status in ('new', 'contacted', 'approved')
+        and private.normalize_email(a.email) = private.normalize_email(c.email)
+    )
+    and (pattern is null or p.full_name ilike pattern or c.email ilike pattern)
+    and (after_created is null or (p.created_at, p.id) < (after_created, after_id))
+  order by p.created_at desc, p.id desc
+  limit 26;
+end;
+$$;
+
+-- ---------------------------------------------------------------------------
+-- The applicant's own status (applicants can't read applications): the
+-- latest application linked to the caller, else the latest unlinked one with
+-- their sign-in email; null if none.
+-- ---------------------------------------------------------------------------
+create or replace function public.my_application_status()
+returns public.application_status
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select coalesce(
+    (
+      select a.status from public.applications a
+      where a.profile_id = (select auth.uid())
+      order by a.created_at desc, a.id desc
+      limit 1
+    ),
+    (
+      select a.status
+      from public.applications a
+      join public.member_contacts c on c.profile_id = (select auth.uid())
+      where a.profile_id is null
+        and private.normalize_email(a.email) = private.normalize_email(c.email)
+      order by a.created_at desc, a.id desc
+      limit 1
+    )
+  );
+$$;
+
+-- ---------------------------------------------------------------------------
+-- "Applied?" for a page of the members list (members.manage): whether an
+-- open or approved application is linked to the profile, or is unlinked and
+-- has its sign-in email. Booleans only — no application data.
+-- ---------------------------------------------------------------------------
+create or replace function public.pending_application_flags(profile_ids uuid[])
+returns table (profile_id uuid, has_application boolean)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+begin
+  if not private.has_permission('members.manage') then
+    raise exception 'missing permission members.manage' using errcode = '42501';
+  end if;
+
+  return query
+  select ids.pid, exists (
+    select 1 from public.applications a
+    where a.status in ('new', 'contacted', 'approved')
+      and (
+        a.profile_id = ids.pid
+        or (a.profile_id is null and private.normalize_email(a.email) = private.normalize_email(c.email))
+      )
+  )
+  from unnest(profile_ids) as ids (pid)
+  left join public.member_contacts c on c.profile_id = ids.pid;
+end;
+$$;
+
+revoke all on function public.link_application(uuid, uuid) from public, anon;
+revoke all on function public.linkable_accounts(text, timestamptz, uuid) from public, anon;
+revoke all on function public.my_application_status() from public, anon;
+revoke all on function public.pending_application_flags(uuid[]) from public, anon;
+grant execute on function public.link_application(uuid, uuid) to authenticated;
+grant execute on function public.linkable_accounts(text, timestamptz, uuid) to authenticated;
+grant execute on function public.my_application_status() to authenticated;
+grant execute on function public.pending_application_flags(uuid[]) to authenticated;
+
 revoke all on function private.applications_before_insert() from public, anon, authenticated;
 revoke all on function private.applications_normalize_contact() from public, anon, authenticated;
 revoke all on function private.applications_track_review() from public, anon, authenticated;
