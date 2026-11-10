@@ -46,7 +46,7 @@ export function UserMenuDropdown({
           <AvatarFallback>{initials(name)}</AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-48">
+      <DropdownMenuContent keepMounted align="end" className="min-w-48">
         <DropdownMenuGroup>
           <DropdownMenuLabel className="truncate">{name}</DropdownMenuLabel>
         </DropdownMenuGroup>

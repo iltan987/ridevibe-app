@@ -118,9 +118,13 @@ Bundled docs are the source of truth: `node_modules/next/dist/docs/` (grep them 
   | pager "Next" (same route, `cursor`) | yes | same |
   | bottom tab (other route) | yes | static shell prefetched, so true only ~100 ms |
   | user-dropdown item (other route) | yes, but not visible | the menu closes ~120 ms after the tap and unmounts its items, so the child unmounts while still pending (never `pending false`); navigation kept going for 3 s |
-- **Cause:** prefetching only covers the static shell; a dynamic `searchParams` page still fetches on tap, so pending
-  is reported for same-route navigations. Dropdown content lives in a portal that unmounts on close.
+- **Cause:** likely: prefetching only covers the static shell, so a dynamic `searchParams` page still fetches on tap
+  and pending is reported for same-route navigations (observed, not verified in Next internals). Dropdown content lives
+  in a portal that unmounts on close.
 - **Do:** a `useLinkStatus` indicator is enough for chips, pager and tabs (no extra fallback needed). For dropdown
-  items put the feedback outside the menu (e.g. a pending state on the trigger/avatar or the header), not inside the item.
+  items pass `keepMounted` to the menu portal (`DropdownMenuContent keepMounted`): the closed popup stays in the DOM
+  (positioner `hidden`, zero size, not focusable), so the item's `LinkPending` stays mounted and `pending` stays true
+  until the page changes. Verified: pending span present 1.2 s after the tap, Escape/arrow keys still work.
+- **Not tested:** the locale switcher (it passes `locale` to `Link`) was not part of the spike.
 - **Gotcha (E2E):** `a[href*="/admin/applications"]` also matches the filter chips; match the menu item inside `[role=menu]`.
 - **Source:** found by testing.
