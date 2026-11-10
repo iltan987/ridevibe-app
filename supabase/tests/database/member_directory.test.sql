@@ -68,12 +68,12 @@ select is(
 select results_eq(
   $$ select birth_month::int, birth_day::int, instagram, jsonb_array_length(motorcycles), motorcycles -> 0 ->> 'brand',
             motorcycles -> 1 ->> 'brand', pg_typeof(birth_month)::text
-     from public.member_directory(search => 'celik cem') $$,
+     from public.member_directory(search => 'celik cem pgtapuye') $$,
   $$ values (3, 12, 'celik.cem', 2, 'Honda', 'Vespa', 'smallint') $$,
   'Çelik: birthday, instagram and 2 bikes in creation order'
 );
 select is(
-  (select motorcycles -> 1 from public.member_directory(search => 'celik cem')),
+  (select motorcycles -> 1 from public.member_directory(search => 'celik cem pgtapuye')),
   '{"brand": "Vespa", "model": "Primavera", "cc": null}'::jsonb,
   'a bike without cc keeps a null cc'
 );
