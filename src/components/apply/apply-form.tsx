@@ -381,6 +381,7 @@ export function ApplyForm({ defaults }: { defaults?: { fullName: string; email: 
           )}
           <TextAreaField name="expectations" label={t("fields.expectations")} error={error("expectations")} />
           <TextAreaField name="alienating_behaviors" label={t("fields.alienating_behaviors")} error={error("alienating_behaviors")} />
+          <TextAreaField name="conflict_handling" label={t("fields.conflict_handling")} error={error("conflict_handling")} />
         </FieldGroup>
       </FieldSet>
 

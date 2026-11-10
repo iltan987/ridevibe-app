@@ -15,6 +15,14 @@
 - **Do:** `focus()`, then Ctrl+A, Backspace before typing.
 - **Source:** found by testing.
 
+### E2E: visiting `/en/...` makes later `/` visits English in the same browser (2026-11-10)
+- **Symptom:** after checking `/en/apply`, a script loading `/apply` got the English form and English errors, although
+  Chrome ran with `--accept-lang=tr`.
+- **Cause:** next-intl remembers the chosen locale in the `NEXT_LOCALE` cookie and redirects `/` paths to it.
+- **Do:** check each locale in a fresh context (`browser.createBrowserContext()`), or Turkish first; and always pass
+  `--accept-lang=tr` + `Accept-Language: tr` for Turkish checks.
+- **Source:** found by testing (conflict-question E2E).
+
 ### After a client navigation the previous page is still in the DOM, hidden (2026-11-09)
 - **Symptom:** after switching TR → EN, a script saw "Türkçe" *and* "English" checked, and clicking "Türkçe" did
   nothing — it looked like the locale switch was broken (the design-system review reported it as a bug).

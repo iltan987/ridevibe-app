@@ -146,6 +146,7 @@ export const applicationSchema = z
     other_event_interests: optionalText(300),
     expectations: text(10, 1000),
     alienating_behaviors: text(3, 1000),
+    conflict_handling: text(3, 1000),
 
     consent_privacy: z.literal("on", err("mustAccept")).transform(() => true),
     consent_rules: z.literal("on", err("mustAccept")).transform(() => true),
@@ -215,6 +216,7 @@ export const applicationSchema = z
       other_event_interests: v.event_interests.includes("other") ? v.other_event_interests! : null,
       expectations: v.expectations,
       alienating_behaviors: v.alienating_behaviors,
+      conflict_handling: v.conflict_handling,
       consent_privacy: v.consent_privacy,
       consent_rules: v.consent_rules,
       consent_photos: v.consent_photos,
