@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(17);
+select plan(18);
 
 -- Fixtures (postgres bypasses RLS). Ids 0000…0201–0206; every query is scoped to them.
 -- 201 active, no birth date; 202 active, no birth date; 203 active, birth date from an application;
@@ -36,7 +36,11 @@ create function pg_temp.adult_limit() returns date language sql as $$
   select ((now() at time zone 'Europe/Istanbul')::date - interval '18 years')::date;
 $$;
 
--- Anonymous: no execute grant
+-- Anonymous: no execute grant (pinned directly; the call below would also fail the active check)
+select ok(
+  not has_function_privilege('anon', 'public.set_my_birth_date(date)', 'execute'),
+  'anon has no execute grant on set_my_birth_date'
+);
 set local role anon;
 select throws_ok(
   $$ select public.set_my_birth_date('1990-05-17') $$,

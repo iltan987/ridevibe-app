@@ -4,6 +4,8 @@
 
 /** Birth dates must be strictly after this day. */
 export const EARLIEST_BIRTH_DATE_EXCLUSIVE = "1920-01-01";
+/** The earliest allowed birth date (input `min`). */
+export const EARLIEST_BIRTH_DATE = "1920-01-02";
 
 /** Today's date in Istanbul as `YYYY-MM-DD`. */
 export function istanbulToday() {

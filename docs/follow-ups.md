@@ -61,8 +61,14 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 - **History of staff corrections** (2026-11-09, spec) — name/phone/email corrections only bump `updated_at`; who
   changed what is not recorded. Add an audit trail if disputes come up.
 - **Applicants editing their own application** (2026-11-09, spec) — out of scope; staff correct it instead.
-- **Staff correction of member profile data** (2026-11-10, members) — birth date, Instagram and bikes copied from the
-  application can only be fixed by the member (or SQL). Add staff RPCs (like `set_member_name`) if members ask.
+- **Staff correction of member profile data** (2026-11-10, members) — Instagram and bikes can only be fixed by the
+  member; the birth date is read-only for members once stored (the `/account` hint "ask the club team" means SQL
+  today). Add staff RPCs (like `set_member_name`) if members ask.
+- **Birth-date entry: main "Kaydet" ignores a typed date** (2026-11-11, birth-date-once review) — the one-time date
+  field sits inside the visibility card; typing a date and pressing the card's main "Kaydet" saves visibility only
+  ("Kaydedildi.") and drops the date. Softened by the disabled switch + "save it first" hint. Fix: show a hint or run
+  `setBirthDate` first when the field is filled. Also no confirm step before the irreversible save (a wrong year from
+  a mobile picker sticks until staff fix it by SQL); consider showing the formatted date to confirm.
 - **Medical notes and "first-aid trained" flag** (2026-11-10, idea) — free-text medical notes and a flag for members
   who can give first aid; belongs with the safety data (2a′), special-category data rules apply.
 - **Navigation review once events exist** (2026-11-10, members) — the bottom tab bar has 5 tabs at 390px after

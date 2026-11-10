@@ -1,12 +1,12 @@
 // Run with: pnpm test
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { latestAdultBirthDate } from "../birth-date.ts";
+import { istanbulToday, latestAdultBirthDate } from "../birth-date.ts";
 import { birthDateSchema, locationSchema, motorcycleSchema, normalizeInstagram, visibilitySchema } from "./schema.ts";
 
 test("birthDateSchema accepts an adult ISO date", () => {
   assert.deepEqual(birthDateSchema.safeParse({ birth_date: "1990-05-17" }).data, { birth_date: "1990-05-17" });
-  const limit = latestAdultBirthDate(new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(new Date()));
+  const limit = latestAdultBirthDate(istanbulToday());
   assert.equal(birthDateSchema.safeParse({ birth_date: limit }).success, true);
 });
 

@@ -8,7 +8,7 @@ import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { setBirthDate, updateVisibility } from "@/lib/members/actions";
-import { latestAdultBirthDate } from "@/lib/birth-date";
+import { EARLIEST_BIRTH_DATE, latestAdultBirthDate } from "@/lib/birth-date";
 import { normalizeInstagram } from "@/lib/members/schema";
 import { ActionStatus, useProfileAction } from "./use-profile-action";
 
@@ -139,7 +139,7 @@ function BirthDateFields({ entry }: { entry: ReturnType<typeof useBirthDateEntry
           type="date"
           value={value}
           onChange={(event) => setValue(event.target.value)}
-          min="1920-01-02"
+          min={EARLIEST_BIRTH_DATE}
           max={latestAdultBirthDate()}
           autoComplete="bday"
           aria-invalid={!!error}
