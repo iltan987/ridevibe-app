@@ -4,6 +4,7 @@ import { Link2 } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 import { useRef, useState, useTransition } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -28,9 +29,20 @@ const SEARCH_DELAY_MS = 300;
 /**
  * "Link to account": pick a pending account (e.g. the applicant signed in with
  * another Google account than the email on the form) and link the application
- * to it. Accounts whose name resembles the applicant's come first on each page.
+ * to it. Approved applications can also go to an active account without an
+ * application (staff activated it before the application was matched); that
+ * only attaches the application. Accounts whose name resembles the applicant's
+ * come first on each page.
  */
-export function LinkAccountDialog({ applicationId, applicationName }: { applicationId: string; applicationName: string }) {
+export function LinkAccountDialog({
+  applicationId,
+  applicationName,
+  approved,
+}: {
+  applicationId: string;
+  applicationName: string;
+  approved: boolean;
+}) {
   const t = useTranslations("Admin");
   const format = useFormatter();
   const [open, setOpen] = useState(false);
@@ -52,7 +64,7 @@ export function LinkAccountDialog({ applicationId, applicationName }: { applicat
     setFailure(null);
     let result: Awaited<ReturnType<typeof findLinkableAccounts>>;
     try {
-      result = await findLinkableAccounts({ search, cursor });
+      result = await findLinkableAccounts({ search, cursor, includeActive: approved });
     } catch {
       // Network failure / server error: the action throws instead of returning.
       result = { status: "error" };
@@ -123,7 +135,10 @@ export function LinkAccountDialog({ applicationId, applicationName }: { applicat
             <DialogHeader>
               <DialogTitle>{t("link.confirmTitle")}</DialogTitle>
               <DialogDescription>
-                {t("link.confirm", { application: applicationName, account: accountName(selected) })}
+                {t(selected.status === "active" ? "link.confirmActive" : "link.confirm", {
+                  application: applicationName,
+                  account: accountName(selected),
+                })}
               </DialogDescription>
             </DialogHeader>
             {failureMessage}
@@ -140,7 +155,7 @@ export function LinkAccountDialog({ applicationId, applicationName }: { applicat
           <>
             <DialogHeader>
               <DialogTitle>{t("link.title")}</DialogTitle>
-              <DialogDescription>{t("link.description")}</DialogDescription>
+              <DialogDescription>{t(approved ? "link.descriptionApproved" : "link.description")}</DialogDescription>
             </DialogHeader>
             <Field>
               <FieldLabel htmlFor="link-account-search">{t("link.search")}</FieldLabel>
@@ -171,7 +186,14 @@ export function LinkAccountDialog({ applicationId, applicationName }: { applicat
                           <AvatarFallback>{initials(accountName(account))}</AvatarFallback>
                         </Avatar>
                         <span className="flex min-w-0 flex-col">
-                          <span className="truncate font-medium">{account.full_name || "—"}</span>
+                          <span className="flex min-w-0 items-center gap-2">
+                            <span className="truncate font-medium">{account.full_name || "—"}</span>
+                            {account.status === "active" && (
+                              <Badge variant="secondary" className="shrink-0">
+                                {t("link.activeMember")}
+                              </Badge>
+                            )}
+                          </span>
                           <span className="truncate text-xs text-muted-foreground">{account.email ?? t("members.noEmail")}</span>
                           <span className="text-xs text-muted-foreground">
                             {t("link.signedUp", { date: format.dateTime(new Date(account.created_at), { dateStyle: "medium" }) })}
@@ -189,7 +211,7 @@ export function LinkAccountDialog({ applicationId, applicationName }: { applicat
                 </div>
               )}
               {loaded && !loading && !failure && !items.length && (
-                <p className="text-sm text-muted-foreground">{t("link.empty")}</p>
+                <p className="text-sm text-muted-foreground">{t(approved ? "link.emptyApproved" : "link.empty")}</p>
               )}
               {nextCursor && (
                 <Button

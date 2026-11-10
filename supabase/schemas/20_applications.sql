@@ -305,15 +305,19 @@ revoke all on function private.applications_after_approval() from public, anon, 
 -- applicant signed in with another email than the one on the form. Security
 -- definer: deciders may lack members.manage, so RLS would hide pending
 -- profiles and their sign-in emails from them. Only these RPCs expose them,
--- and only the pending, unmatched ones.
+-- and only the unmatched pending ones (plus, for approved applications, active
+-- accounts without an application: staff activated them before their
+-- application could be matched).
 -- ---------------------------------------------------------------------------
 
 -- The application must be unlinked and not rejected; the account must be
--- pending, with no open/approved application linked to it and no *other*
--- open/approved unlinked application with its sign-in email (same rule as
--- linkable_accounts; a rejected one doesn't count). Linking an approved
--- application activates the account; one under review activates on approval
--- (applications_after_approval). Never touches active/inactive accounts.
+-- pending (or active, for an approved application), with no open/approved
+-- application linked to it and no *other* open/approved unlinked application
+-- with its sign-in email (same rule as linkable_accounts; a rejected one
+-- doesn't count). Linking an approved application activates a pending account;
+-- one under review activates on approval (applications_after_approval). An
+-- active account only gets the application attached (status, name and role
+-- stay). Never touches inactive accounts.
 create or replace function public.link_application(application_id uuid, target_id uuid)
 returns void
 language plpgsql
@@ -322,6 +326,7 @@ set search_path = ''
 as $$
 declare
   app_status public.application_status;
+  target_status public.member_status;
 begin
   if not private.has_permission('applications.decide') then
     raise exception 'missing permission applications.decide' using errcode = '42501';
@@ -335,7 +340,11 @@ begin
     raise exception 'application % not found or not linkable', application_id using errcode = 'P0002';
   end if;
 
-  perform 1 from public.profiles p where p.id = target_id and p.status = 'pending' for update;
+  select p.status into target_status
+  from public.profiles p
+  where p.id = target_id
+    and (p.status = 'pending' or (p.status = 'active' and app_status = 'approved'))
+  for update;
   if not found
     or exists (
       select 1 from public.applications a
@@ -356,23 +365,27 @@ begin
 
   update public.applications a set profile_id = target_id where a.id = application_id;
 
-  if app_status = 'approved' then
+  if app_status = 'approved' and target_status = 'pending' then
     perform private.activate_from_approved_application(target_id);
   end if;
 end;
 $$;
 
--- Pending accounts an application could be linked to: no open/approved
--- application linked to them and no open/approved unlinked application with
--- their sign-in email (those match automatically). Optional case-insensitive
--- search on name or email. Newest first, keyset by (created_at, id) — both or
--- neither (22023) — PAGE_SIZE + 1 rows.
+-- Pending accounts an application could be linked to (with include_active,
+-- for approved applications: active ones too): no open/approved application
+-- linked to them and no open/approved unlinked application with their sign-in
+-- email (those match automatically). Optional case-insensitive search on name
+-- or email. Newest first, keyset by (created_at, id) — both or neither
+-- (22023) — PAGE_SIZE + 1 rows.
 create or replace function public.linkable_accounts(
   search text default null,
   after_created timestamptz default null,
-  after_id uuid default null
+  after_id uuid default null,
+  include_active boolean default false
 )
-returns table (id uuid, full_name text, avatar_url text, email text, created_at timestamptz)
+returns table (
+  id uuid, full_name text, avatar_url text, email text, created_at timestamptz, status public.member_status
+)
 language plpgsql
 stable
 security definer
@@ -394,10 +407,10 @@ begin
   end if;
 
   return query
-  select p.id, p.full_name, p.avatar_url, c.email, p.created_at
+  select p.id, p.full_name, p.avatar_url, c.email, p.created_at, p.status
   from public.profiles p
   left join public.member_contacts c on c.profile_id = p.id
-  where p.status = 'pending'
+  where (p.status = 'pending' or (include_active and p.status = 'active'))
     and not exists (
       select 1 from public.applications a
       where a.profile_id = p.id and a.status in ('new', 'contacted', 'approved')
@@ -501,12 +514,12 @@ end;
 $$;
 
 revoke all on function public.link_application(uuid, uuid) from public, anon;
-revoke all on function public.linkable_accounts(text, timestamptz, uuid) from public, anon;
+revoke all on function public.linkable_accounts(text, timestamptz, uuid, boolean) from public, anon;
 revoke all on function public.application_account(uuid) from public, anon;
 revoke all on function public.my_application_status() from public, anon;
 revoke all on function public.pending_application_flags(uuid[]) from public, anon;
 grant execute on function public.link_application(uuid, uuid) to authenticated;
-grant execute on function public.linkable_accounts(text, timestamptz, uuid) to authenticated;
+grant execute on function public.linkable_accounts(text, timestamptz, uuid, boolean) to authenticated;
 grant execute on function public.application_account(uuid) to authenticated;
 grant execute on function public.my_application_status() to authenticated;
 grant execute on function public.pending_application_flags(uuid[]) to authenticated;

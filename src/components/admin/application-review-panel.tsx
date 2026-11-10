@@ -195,7 +195,7 @@ export function ApplicationReviewPanel({
                     <MessageCircle aria-hidden /> {t("review.sendInvite")}
                   </a>
                 )}
-                {canLink && <LinkAccountDialog applicationId={id} applicationName={application.name} />}
+                {canLink && <LinkAccountDialog applicationId={id} applicationName={application.name} approved={status === "approved"} />}
               </div>
             )}
           </div>
