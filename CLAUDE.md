@@ -133,6 +133,10 @@ kill $(ss -ltnp | grep ':3123 ' | grep -oP 'pid=\K[0-9]+')   # stop a local serv
   utilities; orange text uses `text-accent-text`, not `text-primary`. Brand: `Wordmark` / `ClubBadge`
   (`src/components/brand/`). Theme: dark default via `src/lib/theme.ts` + inline head script, switcher in the header
   only; never read cookies for theme (keeps routes static).
+- **Loading states:** a new page's skeleton copies the structure of what replaces it (`data-skeleton` /
+  `data-skeleton-result` attributes, measured with JS off: `docs/learnings/testing.md`, `scripts/e2e/`); links from
+  `@/i18n/navigation` already show pending feedback (progress bar + dim); no `loading.tsx` unless the dev
+  instant-navigation check flags the segment (`docs/learnings/nextjs.md`).
 - Mobile-first: design for ~390px first; the bottom tab bar is the main navigation on phones.
 - Primary nav items live in `src/components/layout/nav-items.ts`.
 - Server Actions: validate with Zod, let RLS decide, map error codes to results, call `refresh()` (`next/cache`)

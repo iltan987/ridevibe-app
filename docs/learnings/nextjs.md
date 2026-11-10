@@ -147,3 +147,21 @@ Bundled docs are the source of truth: `node_modules/next/dist/docs/` (grep them 
   abort requests with the `next-router-prefetch` header and delay the `rsc` ones. Re-tapping the active tab refetches
   the URL, so the bar can show for about its latency.
 - **Source:** found by testing (throttled puppeteer E2E in the session scratchpad).
+
+### Instant-navigation dev check: nothing flagged, so no `loading.tsx` (2026-11-10)
+- **Symptom:** unclear whether `cacheComponents` + `partialPrefetching` still need `loading.tsx` for instant navigations.
+- **Cause:** Next 16 validates every Page segment in `next dev` (`validationLevel: 'warning'`, see
+  `node_modules/next/dist/docs/01-app/02-guides/instant-navigation.md` "Validate instant navigation") for both page
+  loads and client navigations, reporting blocking data / missing `<Suspense>` in the dev overlay and terminal.
+  *Checked:* every `page.tsx` under `src/app/[locale]` (home, events, gallery, privacy, sign-in, apply, account,
+  admin applications / detail / members / roles, unknown path), signed out and as admin, by direct load and by
+  `window.next.router.push` from `/events`. *Result:* no instant-navigation message for any real route, no overlay
+  issue, no console error. Only output (dev server terminal and overlay, unknown path only):
+  `Error: Route "/[locale]/[...rest]": Could not validate `instant` because an error prevented the target segment from
+  rendering.` (cause `NEXT_HTTP_ERROR_FALLBACK;404`: the catch-all page calls `notFound()` by design), and on a direct
+  load of an unknown path `Encountered a script tag while rendering React component` from `ThemeScript` (dev-only,
+  pre-existing, unrelated; tracked in `docs/follow-ups.md`).
+- **Do:** pages own their `<Suspense>` boundaries (skeleton = the page's fallback); add a `loading.tsx` only for a
+  segment the dev check flags. Re-run the check (visit each route, direct and client-side, watch overlay + terminal)
+  when adding a page.
+- **Source:** found by running the dev check on `feat/loading-states`.
