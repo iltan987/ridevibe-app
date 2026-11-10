@@ -10,18 +10,6 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ## Next up (iltan asked for these; start in a new session)
 
-- **Members without a birth date can enter it once** (2026-11-11, iltan) — iltan and Samet (activated by hand,
-  no application) have no birth date, so "show my birthday" stays disabled. Bounded fix, design proposed in chat
-  (iltan wants it in its own session; confirm the design there): RPC `public.set_my_birth_date(new_date date)`,
-  security definer — own row only, active members only, only while `member_details.birth_date` is null, same rules as
-  the application form (≥ 18 in Istanbul time, after 1920-01-01); refuses with 42501 (not active / already set) or
-  23514 (invalid / under 18). A column grant can't express "only once". On `/account` ("Shown to other members"):
-  date field + save when no birth date is stored, hint "you can enter this once; to change it later, ask the club
-  team"; then read-only and the birthday switch becomes usable. `setBirthDate` Server Action (Zod, reuse the form's
-  18+ check, `refresh()`), TR/EN messages. pgTAP first (once ok, second fails, under-18/invalid fail,
-  pending/inactive/anon fail, nobody sets someone else's), unit tests, members E2E check for the no-birth-date member.
-  Branch `fix/birth-date-once`; rollout = migration dry run → push → `test db --remote` → deploy.
-
 - **Safety data (2a′)** (2026-11-10, iltan) — next step after Members in `docs/PLAN.md`: emergency contact, blood type
   with explicit consent (special-category data), plate per bike, a new `members.safety`-style permission, separate
   consents and the privacy text. Through the usual design → plan → build flow.
@@ -138,6 +126,9 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 - **Unit-test gaps** — NFD / `i̇` input for name matching; WhatsApp, Instagram-Android and `BytedanceWebview` user
   agents for in-app detection.
 - **"Not signed in" filter predicate duplicated** in list and count (`src/lib/applications/queries.ts`); could drift.
+- **Birth-date entry: "already set" shows "no permission"** (2026-11-11, birth-date-once) — `set_my_birth_date`
+  refuses with 42501 both for "not active" and "already set" (e.g. saved in a second tab); `setBirthDate` maps it to
+  the generic `forbidden` message. Only reachable with a stale page; a distinct errcode/message would fix it.
 - **Contact editor shows the generic "invalid" message** for a DB `23514` (only reachable by bypassing Zod).
 - **Rename dialog can be closed mid-save** (`src/components/admin/member-name-dialog.tsx`) — a failure after closing is
   lost; also its failure type includes an unreachable `duplicate`.
@@ -174,6 +165,7 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 - **`AccountSkeleton` only mirrors the active-member page** (2026-11-10, members) — pending and inactive accounts see a
   shorter page (no profile sections, or only the photo consent), so their skeleton overshoots. The status is
   request-time data, so the fallback can't know it. (Default-state heights are measured: all Δh 0, 2026-11-10.)
+  Members without a birth date (2026-11-11) see a taller visibility card (date field, hint, button) than the skeleton.
 - **Locale switcher shows no pending feedback** (2026-11-10, loading-states) — it uses `router.replace` in a
   transition, not a `Link`, so neither the progress bar nor the dim appears (it still switches and re-enables its
   button). Could drive the pending store from `useTransition`.

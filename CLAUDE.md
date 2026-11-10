@@ -83,7 +83,8 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   Trigger functions in `private` fired by anon/authenticated writes must be `security definer` too.
 - **Member data:** `profiles` is readable by every active member (no private columns there); `member_details`
   (birth date, Instagram, opt-in flags, photo consent) and `member_motorcycles` are own row + `members.manage` only;
-  other members' data only via the `public.member_directory` RPC. Members can't edit `full_name`/`avatar_url`
+  other members' data only via the `public.member_directory` RPC. Birth date is read-only; members without one enter it
+  once via `public.set_my_birth_date`. Members can't edit `full_name`/`avatar_url`
   (staff: `set_member_name`). Names are tidied on insert only (`private.tidy_name`: Turkish rules, mixed case
   untouched); staff corrections are stored as typed.
 - Turkish text in SQL: `lower/upper/ilike` mishandle `İ/ı` (`lower('İ')` = `i̇`) — search with `private.search_fold`,

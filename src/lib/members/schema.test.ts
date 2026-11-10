@@ -1,7 +1,24 @@
 // Run with: pnpm test
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { locationSchema, motorcycleSchema, normalizeInstagram, visibilitySchema } from "./schema.ts";
+import { latestAdultBirthDate } from "../birth-date.ts";
+import { birthDateSchema, locationSchema, motorcycleSchema, normalizeInstagram, visibilitySchema } from "./schema.ts";
+
+test("birthDateSchema accepts an adult ISO date", () => {
+  assert.deepEqual(birthDateSchema.safeParse({ birth_date: "1990-05-17" }).data, { birth_date: "1990-05-17" });
+  const limit = latestAdultBirthDate(new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(new Date()));
+  assert.equal(birthDateSchema.safeParse({ birth_date: limit }).success, true);
+});
+
+test("birthDateSchema maps errors to profile keys", () => {
+  const key = (birth_date: unknown) => birthDateSchema.safeParse({ birth_date }).error?.issues[0]?.message;
+  assert.equal(key(""), "required");
+  assert.equal(key(undefined), "required");
+  assert.equal(key("17.05.1990"), "invalidDate");
+  assert.equal(key("1990-02-30"), "invalidDate");
+  assert.equal(key("1920-01-01"), "invalidDate");
+  assert.equal(key("2099-01-01"), "tooYoung");
+});
 
 test("normalizeInstagram accepts handles and profile URLs", () => {
   for (const raw of [

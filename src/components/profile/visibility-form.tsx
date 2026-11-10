@@ -7,7 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { updateVisibility } from "@/lib/members/actions";
+import { setBirthDate, updateVisibility } from "@/lib/members/actions";
+import { latestAdultBirthDate } from "@/lib/birth-date";
 import { normalizeInstagram } from "@/lib/members/schema";
 import { ActionStatus, useProfileAction } from "./use-profile-action";
 
@@ -19,7 +20,10 @@ type Props = {
   birthDate: string | null;
 };
 
-/** Instagram handle plus what the member list may show. The birth date itself is read-only. */
+/**
+ * Instagram handle plus what the member list may show. The birth date is read-only once stored; members without one
+ * (activated by hand, no application) can enter it once here.
+ */
 export function VisibilityForm({ instagram, showInstagram, showBirthday, birthDate }: Props) {
   const t = useTranslations("Profile");
   const format = useFormatter();
@@ -27,6 +31,7 @@ export function VisibilityForm({ instagram, showInstagram, showBirthday, birthDa
   const [handle, setHandle] = useState(instagram ?? "");
   const [instagramOn, setInstagramOn] = useState(showInstagram);
   const [birthdayOn, setBirthdayOn] = useState(birthDate ? showBirthday : false);
+  const birthDateEntry = useBirthDateEntry();
 
   function onSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -69,6 +74,8 @@ export function VisibilityForm({ instagram, showInstagram, showBirthday, birthDa
             <Switch checked={instagramOn} onCheckedChange={setInstagramOn} />
           </label>
 
+          {!birthDate && <BirthDateFields entry={birthDateEntry} />}
+
           <div className="flex flex-col gap-1">
             <label
               className="flex min-h-10 items-center justify-between gap-4 text-sm has-enabled:cursor-pointer"
@@ -93,7 +100,61 @@ export function VisibilityForm({ instagram, showInstagram, showBirthday, birthDa
             <ActionStatus result={result} />
           </div>
         </form>
+        {/* Outside the form above: forms can't nest. The birth-date controls join it via their `form` attribute. */}
+        {!birthDate && (
+          <form id={BIRTH_DATE_FORM_ID} onSubmit={birthDateEntry.onSubmit} noValidate aria-busy={birthDateEntry.isPending} />
+        )}
       </CardContent>
     </Card>
+  );
+}
+
+const BIRTH_DATE_FORM_ID = "profile-birth-date-form";
+
+/** One-time birth-date entry (members without one). Enter in the date field saves only the date. */
+function useBirthDateEntry() {
+  const { isPending, result, run, fieldError } = useProfileAction();
+  const [value, setValue] = useState("");
+
+  function onSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    run(() => setBirthDate({ birth_date: value }));
+  }
+
+  return { isPending, result, value, setValue, onSubmit, error: fieldError("birth_date") };
+}
+
+/** Controls of the birth-date entry; they sit inside the visibility form but belong to `BIRTH_DATE_FORM_ID`. */
+function BirthDateFields({ entry }: { entry: ReturnType<typeof useBirthDateEntry> }) {
+  const t = useTranslations("Profile");
+  const { isPending, result, value, setValue, error } = entry;
+
+  return (
+    <div className="flex flex-col gap-3">
+      <Field data-invalid={!!error}>
+        <FieldLabel htmlFor="profile-birth-date">{t("birthDate")}</FieldLabel>
+        <Input
+          id="profile-birth-date"
+          form={BIRTH_DATE_FORM_ID}
+          type="date"
+          value={value}
+          onChange={(event) => setValue(event.target.value)}
+          min="1920-01-02"
+          max={latestAdultBirthDate()}
+          autoComplete="bday"
+          aria-invalid={!!error}
+          aria-describedby="profile-birth-date-hint"
+          className="h-10 md:h-9"
+        />
+        <FieldDescription id="profile-birth-date-hint">{t("birthDateOnceHint")}</FieldDescription>
+        <FieldError>{error}</FieldError>
+      </Field>
+      <div className="flex items-center gap-3">
+        <Button type="submit" form={BIRTH_DATE_FORM_ID} variant="outline" disabled={isPending}>
+          {t("saveBirthDate")}
+        </Button>
+        <ActionStatus result={result} />
+      </div>
+    </div>
   );
 }

@@ -5,6 +5,8 @@ import { z } from "zod";
 import { PRIVACY_NOTICE_VERSION } from "@/lib/applications/options";
 import { createClient } from "@/lib/supabase/server";
 import {
+  type BirthDateInput,
+  birthDateSchema,
   firstErrorPerField,
   type LocationInput,
   locationSchema,
@@ -73,6 +75,19 @@ export async function updateVisibility(input: VisibilityInput): Promise<ProfileA
 
   const { data, error } = await supabase.from("member_details").update(parsed.data).eq("profile_id", userId).select("profile_id");
   return finish(error, data, "updateVisibility");
+}
+
+/** One-time entry for members without a birth date; the RPC refuses (42501) once one is stored. */
+export async function setBirthDate(input: BirthDateInput): Promise<ProfileActionResult> {
+  const parsed = birthDateSchema.safeParse(input);
+  if (!parsed.success) return { status: "invalid", fieldErrors: firstErrorPerField(parsed.error.issues) };
+  const { supabase, userId } = await currentUserId();
+  if (!userId) return { status: "forbidden" };
+
+  const { error } = await supabase.rpc("set_my_birth_date", { new_date: parsed.data.birth_date });
+  if (error) return fail(error, "setBirthDate");
+  refresh();
+  return { status: "ok" };
 }
 
 export async function updatePhotoConsent(consent: boolean): Promise<ProfileActionResult> {

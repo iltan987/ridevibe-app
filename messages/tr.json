@@ -130,7 +130,9 @@
     "instagramPlaceholder": "@kullaniciadi",
     "showInstagram": "Instagram'ımı üye listesinde göster",
     "showBirthday": "Doğum günümü (gün ve ay) göster",
-    "birthdayMissing": "Kayıtlı bir doğum tarihin yok.",
+    "birthdayMissing": "Doğum gününü göstermek için önce doğum tarihini kaydet.",
+    "birthDateOnceHint": "Doğum tarihini bir kez girebilirsin; sonra değiştirmek için kulüp ekibine yaz.",
+    "saveBirthDate": "Doğum tarihini kaydet",
     "birthDate": "Doğum tarihi",
     "photoConsent": "Fotoğraf izni",
     "photoConsentLabel": "Etkinliklerde çekilen ve beni gösteren fotoğrafların kulüp galerisinde paylaşılmasına açık rıza veriyorum.",
@@ -148,7 +150,9 @@
       "tooLong": "Çok uzun.",
       "invalidNumber": "50 ile 3000 arasında bir sayı gir.",
       "invalidInstagram": "Geçerli bir Instagram kullanıcı adı ya da bağlantısı gir.",
-      "invalidDistrict": "Listeden bir ilçe seç."
+      "invalidDistrict": "Listeden bir ilçe seç.",
+      "invalidDate": "Geçerli bir tarih gir.",
+      "tooYoung": "18 yaşından büyük olmalısın."
     }
   },
   "Apply": {
