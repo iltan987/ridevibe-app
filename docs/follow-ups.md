@@ -74,8 +74,8 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   fallback (request-time data, so not possible behind the current Suspense).
 - **Non-Gmail note on `/apply`** has no `aria-live`, so screen readers don't hear it appear.
 - **In-app notice on `/sign-in`** — appears after hydration (layout shift, inherent to the static page); the copied URL
-  keeps `?next`/`?error`; the "copied" live region sits inside `role="alert"` (possible double announcement); light-theme
-  muted text on the tint is ~4.6–5.0:1 (passes AA, thin margin).
+  keeps `?next`/`?error`; the "copied" live region sits inside `role="alert"` (possible double announcement);
+  light-theme muted text on the tint is ~4.6–5.0:1 (passes AA, thin margin).
 - **Link-account dialog** — focus isn't moved between the list and confirm steps; results/empty state have no live
   region.
 - **`src/components/ui/dialog.tsx` default "Close" labels are English** — both current dialogs pass
@@ -102,8 +102,6 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 - **Learnings wording** (2026-11-10, loading-states review) — the `useLinkStatus` entry in `docs/learnings/nextjs.md`
   still says "likely"/"observed, not verified" about prefetch covering only the static shell; confirm against the
   Next docs or leave as is.
-- **`skeletons.mjs` only startup-checked** (2026-11-10, loading-states review) — after the move to `scripts/e2e/` it
-  was only checked for startup; run it once fully.
 - **Import order nit** in `src/app/[locale]/admin/applications/page.tsx` (2026-11-10, loading-states review).
 - **Dev-only "script tag" console error on unknown paths** (2026-11-10, loading-states) — a direct load of a 404 path
   in `pnpm dev` logs "Encountered a script tag while rendering React component" from `ThemeScript`
