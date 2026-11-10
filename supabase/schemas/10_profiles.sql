@@ -51,8 +51,10 @@ $$;
 
 revoke all on function private.profiles_tidy_name() from public, anon, authenticated;
 
+-- Insert only (form submissions, sign-ups): staff corrections (set_member_name, the
+-- application contact editor) are stored as typed, so an ALL-CAPS word like "XYZ" sticks.
 create trigger profiles_tidy_name
-before insert or update of full_name on public.profiles
+before insert on public.profiles
 for each row execute function private.profiles_tidy_name();
 
 -- ---------------------------------------------------------------------------

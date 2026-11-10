@@ -114,8 +114,10 @@ All in `supabase/schemas/` (declarative), every table with RLS **and** explicit 
    - idempotent (safe to re-run).
    Called from `private.activate_from_approved_application` (after the profile is activated) and from
    `public.link_application`'s attach-to-active-account branch (today it copies nothing).
-3. **Name tidying:** BEFORE insert / update of `full_name` triggers on `applications` and `profiles` call
-   `private.tidy_name` (§3). The private trigger function works for anonymous form inserts, as
+3. **Name tidying:** BEFORE insert triggers on `applications` and `profiles` call `private.tidy_name` (§3).
+   Updates are not tidied (changed 2026-11-11): staff corrections (`set_member_name`, the application contact editor)
+   are stored as typed (trimmed), so an ALL-CAPS word like "XYZ Lojistik" can be saved; activation copies an
+   already-tidy (or staff-corrected) application name. The private trigger function works for anonymous form inserts, as
    `private.applications_normalize_contact` already does.
 4. **Backfill** (hand-written DML in the migration, after the DDL):
    1. insert `member_details` for every profile without one;
@@ -137,7 +139,7 @@ All in `supabase/schemas/` (declarative), every table with RLS **and** explicit 
 - Per word part:
   1. **all lowercase** → first letter upper-cased, rest unchanged;
   2. **ALL CAPS** (≥ 2 letters) → first letter kept, rest lower-cased;
-  3. **mixed case** → left alone (`McLaren`, `DeLuca`; makes staff corrections stick);
+  3. **mixed case** → left alone (`McLaren`, `DeLuca`);
   4. the particles `de, da, di, du, van, von, der, den, la, le` stay lowercase when typed lowercase and not the first
      word.
 - **Turkish vs. English casing only differs for i:** Turkish `i ↔ İ`, `ı ↔ I`; English `i ↔ I`. Implemented with explicit
@@ -150,7 +152,7 @@ All in `supabase/schemas/` (declarative), every table with RLS **and** explicit 
     Turkish casing; harmless because profile names come from Google (mixed case → untouched), a tidied application
     name, or staff input. The one-off backfill (and its preview) instead uses the locale of the profile's newest linked
     approved application when there is one, so an English-form `JOHN SMITH` becomes `John Smith` on both rows.
-- Known misfires (accepted, staff fix them and the fix sticks via rule 3): a foreigner filling the **Turkish** form in
+- Known misfires (accepted, staff fix them; staff edits are not re-tidied, §2.3): a foreigner filling the **Turkish** form in
   lowercase (`ian` → `İan`); an all-caps name typed on a non-Turkish keyboard (`CELIK` → `Celık`), or ASCII on the
   English form (`ilker` → `Ilker`, consistent with the ASCII spelling).
 - Examples: `kerim çelik` → `Kerim Çelik`; `AYŞE NUR YILMAZ` → `Ayşe Nur Yılmaz`; `ilker  ışık` (tr) → `İlker Işık`;

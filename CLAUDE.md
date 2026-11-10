@@ -84,7 +84,8 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
 - **Member data:** `profiles` is readable by every active member (no private columns there); `member_details`
   (birth date, Instagram, opt-in flags, photo consent) and `member_motorcycles` are own row + `members.manage` only;
   other members' data only via the `public.member_directory` RPC. Members can't edit `full_name`/`avatar_url`
-  (staff: `set_member_name`). Names are tidied by triggers (`private.tidy_name`: Turkish rules, mixed case untouched).
+  (staff: `set_member_name`). Names are tidied on insert only (`private.tidy_name`: Turkish rules, mixed case
+  untouched); staff corrections are stored as typed.
 - Turkish text in SQL: `lower/upper/ilike` mishandle `İ/ı` (`lower('İ')` = `i̇`) — search with `private.search_fold`,
   sort with `collate "tr-x-icu"`.
 - **Roles & permissions** (`supabase/schemas/05_roles.sql`): admins create roles and tick permissions

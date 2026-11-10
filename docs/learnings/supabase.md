@@ -122,6 +122,14 @@
   `private.*` helpers `security definer` with `set search_path = ''`.
 - **Source:** `supabase/schemas/02_names.sql`, Members Task 1.
 
+### A tidy-on-update trigger overrides staff corrections (2026-11-11)
+- **Symptom:** staff couldn't save "XYZ Lojistik" on production: it came back as "Xyz Lojistik".
+- **Cause:** the name-tidy triggers ran `before insert or update of full_name`; `tidy_name` lowers every ALL-CAPS
+  word, so "mixed case is left alone" only protected corrections without an ALL-CAPS word.
+- **Do:** normalise user input on INSERT only when staff may later correct it on purpose; let staff updates store
+  what they typed. Test the update path with the exact value that the normaliser would change.
+- **Source:** `supabase/schemas/10_profiles.sql`, `20_applications.sql`, `tidy_name.test.sql`.
+
 ### Turkish sort order and search: ICU collation + `private.search_fold` (2026-11-10)
 - **Symptom:** default collation sorts `Çelik`/`İlker` after `Z`; `ilike '%ilker%'` doesn't find `İlker` and
   `'%ISIK%'` doesn't find `Işık` (`ilike` doesn't fold `İ/ı`).
