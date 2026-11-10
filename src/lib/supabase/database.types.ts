@@ -51,6 +51,26 @@ isOneToOne: true
       referencedColumns: ["id"]
     }
                   ]
+                },"member_details": {
+                  Row: {
+                    "birth_date": string | null,"consent_photos": boolean,"consent_photos_at": string | null,"consent_photos_version": string | null,"instagram": string | null,"profile_id": string,"show_birthday": boolean,"show_instagram": boolean,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "birth_date"?: string | null,"consent_photos"?: boolean,"consent_photos_at"?: string | null,"consent_photos_version"?: string | null,"instagram"?: string | null,"profile_id": string,"show_birthday"?: boolean,"show_instagram"?: boolean,"updated_at"?: string
+                  }
+                  Update: {
+                    "birth_date"?: string | null,"consent_photos"?: boolean,"consent_photos_at"?: string | null,"consent_photos_version"?: string | null,"instagram"?: string | null,"profile_id"?: string,"show_birthday"?: boolean,"show_instagram"?: boolean,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "member_details_profile_id_fkey"
+      columns: ["profile_id"]
+isOneToOne: true
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"profiles": {
                   Row: {
                     "avatar_url": string | null,"city": string,"created_at": string,"district": string | null,"full_name": string,"id": string,"preferred_locale": string,"role_id": string | null,"side": Database["public"]['Enums']["istanbul_side"] | null,"status": Database["public"]['Enums']["member_status"],"updated_at": string

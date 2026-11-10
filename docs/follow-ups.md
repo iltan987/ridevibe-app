@@ -23,9 +23,6 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ## Open decisions (need iltan)
 
-- **Lock the member name after activation?** (2026-11-09, application gaps) — staff can now correct names and the
-  approved application's name is copied to the profile, but members can still change their own `full_name`
-  (`profiles` update grant), so a nickname can come back. Decide in the Members iteration.
 - **Ban evasion vs. linking** (2026-11-09, application gaps) — when the ban list is built (PLAN "Member conduct"),
   check new applications *and* staff links (`link_application`) against it.
 

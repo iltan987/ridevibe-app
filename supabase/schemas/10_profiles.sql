@@ -127,7 +127,9 @@ grant execute on function private.has_permission(public.permission) to authentic
 
 revoke all on table public.profiles from anon, authenticated;
 grant select on table public.profiles to authenticated;
-grant update (full_name, avatar_url, preferred_locale, city, district, side)
+-- No full_name (name lock: staff correct names via set_member_name) and no avatar_url
+-- (the directory shows avatars to every member; a self-set URL could log viewers' IPs).
+grant update (preferred_locale, city, district, side)
   on table public.profiles to authenticated;
 
 alter table public.profiles enable row level security;
@@ -315,7 +317,7 @@ $$;
 
 -- members.manage: correct a member's name (e.g. the Google account name isn't
 -- the real one). Trimmed, 2–120 characters. Only admins may rename an admin.
--- Members still edit their own name via the profiles update grant.
+-- Members cannot edit their own name (no profiles update grant on full_name).
 create or replace function public.set_member_name(target_id uuid, new_name text)
 returns void
 language plpgsql
@@ -381,6 +383,7 @@ begin
       then new.raw_user_meta_data ->> 'avatar_url' end
   );
   insert into public.member_contacts (profile_id, email) values (new.id, new.email);
+  insert into public.member_details (profile_id) values (new.id);
   perform private.activate_from_approved_application(new.id);
   return new;
 end;
