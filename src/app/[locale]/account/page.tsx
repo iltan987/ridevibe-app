@@ -24,7 +24,7 @@ export default function AccountPage() {
   return (
     <section className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-6 px-4 py-10">
       <h1 className="heading text-3xl">{t("title")}</h1>
-      <Suspense fallback={<Skeleton className="h-40 w-full rounded-xl" />}>
+      <Suspense fallback={<AccountSkeleton />}>
         <AccountDetails />
       </Suspense>
     </section>
@@ -49,7 +49,7 @@ async function AccountDetails() {
   return (
     <>
       {profile?.status === "pending" && <PendingCard />}
-      <Card>
+      <Card data-skeleton-result="account">
         <CardHeader className="flex flex-row items-center gap-4">
           <Avatar className="size-14">
             {profile?.avatar_url && (
@@ -113,6 +113,29 @@ async function PendingCard() {
           </Link>
         )}
       </CardHeader>
+    </Card>
+  );
+}
+
+/** Mirrors the account card of a member: avatar + name/email header, status and role rows. */
+function AccountSkeleton() {
+  return (
+    <Card data-skeleton="account">
+      <CardHeader className="flex flex-row items-center gap-4">
+        <Skeleton className="size-14 rounded-full" />
+        <div className="flex min-w-0 flex-col gap-1">
+          <Skeleton className="my-1 h-4 w-32" />
+          <Skeleton className="my-1 h-3.5 w-44" />
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-[auto_1fr] items-center gap-x-6 gap-y-3">
+          <Skeleton className="h-4 w-12" />
+          <Skeleton className="h-[21px] w-16 rounded-full" />
+          <Skeleton className="h-4 w-8" />
+          <Skeleton className="h-5 w-20" />
+        </div>
+      </CardContent>
     </Card>
   );
 }

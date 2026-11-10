@@ -32,7 +32,7 @@ export default function SignInPage({ searchParams }: PageProps<"/[locale]/sign-i
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <InAppBrowserNotice />
-          <Suspense fallback={<Skeleton className="h-9 w-full" />}>
+          <Suspense fallback={<Skeleton data-skeleton="sign-in" className="h-9 w-full rounded-lg" />}>
             <SignInForm searchParams={searchParams} />
           </Suspense>
           <p className="text-xs text-muted-foreground">
@@ -70,7 +70,7 @@ async function SignInForm({
   const next = safeNextPath(params.next, getPathname({ href: "/account", locale }));
 
   return (
-    <form action={signInWithGoogle} className="flex flex-col gap-3">
+    <form action={signInWithGoogle} data-skeleton-result="sign-in" className="flex flex-col gap-3">
       {params.error && (
         <p role="alert" className="text-sm text-destructive">
           {t("error")}

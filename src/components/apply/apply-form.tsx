@@ -176,7 +176,7 @@ export function ApplyForm({ defaults }: { defaults?: { fullName: string; email: 
       </div>
 
       {/* 1. About you */}
-      <FieldSet>
+      <FieldSet data-skeleton-result="apply">
         <FieldLegend className="text-lg">{t("sections.about")}</FieldLegend>
         <FieldGroup>
           <TextField

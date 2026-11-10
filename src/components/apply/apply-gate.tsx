@@ -36,7 +36,7 @@ export async function ApplyGate() {
 async function Notice({ kind }: { kind: "alreadyMember" | "underReview" | "inactive" }) {
   const t = await getTranslations("Apply");
   return (
-    <Card>
+    <Card data-skeleton-result="apply">
       <CardHeader className="items-start gap-3">
         <CardTitle className="text-xl">{t(`${kind}.title`)}</CardTitle>
         <CardDescription>{t(`${kind}.body`)}</CardDescription>
