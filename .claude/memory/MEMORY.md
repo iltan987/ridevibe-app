@@ -6,3 +6,4 @@
 - [Paginate every list](feedback-paginate-lists.md) — no fixed caps like .limit(200); club grew to ~130 in 2 weeks
 - [Fix environment yourself](feedback-fix-environment-yourself.md) — start Docker Desktop etc. from WSL before calling it a blocker
 - [Agentic workflow](feedback-agentic-workflow.md) — phases via superpowers: spec → plan → subagent build+TDD → verify → independent review
+- [Track follow-ups](feedback-track-follow-ups.md) — deferred/parked/out-of-scope items go to docs/follow-ups.md; read it before planning

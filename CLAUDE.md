@@ -21,6 +21,11 @@ announcements, photo galleries, attendance. Plan and decisions: `docs/PLAN.md`. 
   completion` (lint, tsc, test, db:test, build, browser E2E) → `requesting-code-review` (+ `/security-review` for
   RLS/grant changes) → iltan reviews → merge. Small fixes skip design/plan. No git worktrees (one local Supabase DB);
   no PRs (local `--no-ff` merge). End of session: `claude-md-management:revise-claude-md`.
+- **Follow-ups — read before, write after.** `docs/follow-ups.md` is the one backlog of everything consciously not
+  done: open decisions, deferred features, parked edge cases, review minors, polish. Read it before planning. Every
+  item deferred, parked or declared out of scope (incl. "minor (deferred)"/"parked" lines from review ledgers in
+  `.superpowers/`, which are git-ignored and deleted after a plan) goes there in the same commit as the work, before
+  any scratch workspace is deleted. Remove items when done or dropped.
 - **Nothing project-related lives only on one PC.** Claude Code settings, permissions, plugins and auto memory are
   committed in `.claude/` (memory in `.claude/memory/` via `autoMemoryDirectory`); durable rules still belong here or
   in `docs/`. Final assets go into `docs/` (not `.superpowers/`, the Desktop or the scratchpad); only secrets stay
