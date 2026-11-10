@@ -11,8 +11,15 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 ## Next up (iltan asked for these; start in a new session)
 
 - **Members iteration** (2026-11-10, iltan) — MVP step 2 in `docs/PLAN.md`: member directory (name, district/side,
-  bike) and "my profile" editing, through the usual design → plan → build flow. Decide "Lock the member name after
-  activation?" (below) at the start.
+  bike) and "my profile" editing, through the usual design → plan → build flow. Decided with iltan (2026-11-10):
+  - **Tidy name capitalization** (required): iltan hand-fixed several names like "Kerim çelik". Title-case with
+    Turkish rules (`i` → `İ`, `ı` → `I`); decide in the design whether at submit (server action, so lists look right),
+    on approval when the name is copied to the profile, or both, plus a one-off backfill of existing rows; mind
+    particles ("de", "van") and names already mixed-case.
+  - **No nickname field** for now (add only if members ask).
+  - **Name lock:** Claude recommends locking `full_name` for active/inactive members (drop it from the members'
+    update grant; staff correct via `set_member_name`); iltan to confirm at the start. Also check whether a Google
+    sign-in can overwrite the profile name after sign-up.
 
 ## Open decisions (need iltan)
 
