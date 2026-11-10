@@ -1,10 +1,34 @@
 // Members directory + profile editing E2E. Needs a production server on :3123 (pnpm build && pnpm start -p 3123),
-// email sign-in enabled locally and these fixtures (see docs/learnings/testing.md and scripts/e2e/README.md):
-//   member@test.local        active, "Test Üye", Kadıköy, birth date set, no bikes, no Instagram
-//   second@test.local        active, "Çelik Fixture", Beşiktaş, bike Honda CB500, birthday + Instagram "celikfx" shown
+// email sign-in enabled locally (docs/learnings/testing.md, "Testing as a signed-in user locally") and these fixtures:
+//   member@test.local        active, "Test Üye", Kadıköy, birth date 17 May, no bikes, no Instagram
+//   second@test.local        active, "Çelik Fixture", Beşiktaş, bike Honda CB500, birthday 9 March + Instagram "celikfx" shown
 //   nobirth@test.local       active, no birth date
 //   pending-noapp@test.local pending
 //   + 26 more active profiles (so the directory has 29 members > PAGE_SIZE 25)
+// Fixture recipe (local stack only; the DB must hold no other active members, e.g. right after `pnpm db:reset`):
+//   1. Users that sign in, via the admin API (password test-password-123; SECRET_KEY from `pnpm exec supabase status -o env`):
+//        for u in member second nobirth pending-noapp; do curl -sf -o /dev/null -X POST \
+//          http://127.0.0.1:54321/auth/v1/admin/users -H "apikey: $SECRET_KEY" -H "Content-Type: application/json" \
+//          -d "{\"email\":\"$u@test.local\",\"password\":\"test-password-123\",\"email_confirm\":true}"; done
+//   2. The rest by SQL: docker exec -i supabase_db_ridevibe psql -U postgres -v ON_ERROR_STOP=1 <<'SQL'
+//        insert into auth.users (id, email, raw_user_meta_data)
+//          select gen_random_uuid(), format('fx%s@fixture.invalid', g), jsonb_build_object('full_name', 'Fixture Üye ' || g)
+//          from generate_series(1, 26) g;
+//        update profiles set status = 'active' where id in (select id from auth.users where email like '%@fixture.invalid'
+//          or email in ('member@test.local', 'second@test.local', 'nobirth@test.local'));
+//        update profiles p set full_name = v.name, district = v.district, side = v.side::istanbul_side
+//          from auth.users u, (values ('member@test.local', 'Test Üye', 'Kadıköy', 'asian'),
+//            ('second@test.local', 'Çelik Fixture', 'Beşiktaş', 'european'), ('nobirth@test.local', 'Tarihsiz Fixture', null, null),
+//            ('pending-noapp@test.local', 'Bekleyen Fixture', null, null)) v(email, name, district, side)
+//          where u.email = v.email and p.id = u.id;
+//        update member_details d set birth_date = '1990-05-17' from auth.users u where u.email = 'member@test.local' and d.profile_id = u.id;
+//        update member_details d set birth_date = '1992-03-09', instagram = 'celikfx', show_instagram = true, show_birthday = true
+//          from auth.users u where u.email = 'second@test.local' and d.profile_id = u.id;
+//        insert into member_motorcycles (profile_id, brand, model, cc)
+//          select id, 'Honda', 'CB500', 500 from auth.users where email = 'second@test.local';
+//      SQL
+//   Cleanup: delete from auth.users where email like '%@fixture.invalid' or email in ('member@test.local',
+//     'second@test.local', 'nobirth@test.local', 'pending-noapp@test.local');  (cascades to profiles and member data)
 // Env: PUPPETEER_DIR (required), OUT_DIR (screenshots, default: OS temp dir), DB_CONTAINER (default supabase_db_ridevibe).
 // The script plants and removes extra bikes for the 10-bike cap through `docker exec psql` (local database only).
 import { execFileSync } from "node:child_process";
@@ -107,7 +131,7 @@ const MEMBER_ID = sql("select id from auth.users where email = 'member@test.loca
 // Start from a known state (re-runs).
 sql(`delete from member_motorcycles where profile_id = '${MEMBER_ID}'`);
 sql(`update profiles set district = 'Kadıköy', side = 'asian' where id = '${MEMBER_ID}'`);
-sql(`update member_details set instagram = null, show_instagram = false, show_birthday = false, consent_photos = false, consent_photos_at = null where profile_id = '${MEMBER_ID}'`);
+sql(`update member_details set instagram = null, show_instagram = false, show_birthday = false, consent_photos = false, consent_photos_at = null, consent_photos_version = null where profile_id = '${MEMBER_ID}'`);
 
 // 1 anonymous
 {
@@ -180,7 +204,7 @@ sql(`update member_details set instagram = null, show_instagram = false, show_bi
 
   // name locked
   const nameInputs = await page.evaluate(() => [...document.querySelectorAll("input")].filter((i) => i.getBoundingClientRect().width > 0 && (/name/i.test(i.name) || i.value === "Test Üye")).map((i) => i.name || i.id));
-  const hint = (await bodyText(page)).includes("İsim değişikliği için kulüp ekibine yazın.");
+  const hint = (await bodyText(page)).includes("İsim değişikliği için kulüp ekibine yaz.");
   check("account: no name input, hint shown", nameInputs.filter((n) => !/city|district|brand|model/.test(n)).length === 0 && hint, JSON.stringify(nameInputs));
 
   // district
@@ -252,6 +276,8 @@ sql(`update member_details set instagram = null, show_instagram = false, show_bi
   await (await switchFor(page, "Doğum günümü")).asElement().click();
   await saveNth(page, 1);
   check("visibility: save shows 'Kaydedildi.'", !!(await hasText(page, /Kaydedildi\./)));
+  const igNow = await page.$eval("#profile-instagram", (i) => i.value);
+  check("visibility: input shows the normalised handle right after saving", igNow === "testig", igNow);
   await go(page, "/account");
   const ig = await page.$eval("#profile-instagram", (i) => i.value);
   check("visibility: Instagram URL normalised to handle", ig === "testig", ig);
@@ -277,11 +303,23 @@ sql(`update member_details set instagram = null, show_instagram = false, show_bi
 
   // photo consent
   await go(page, "/account");
-  check("consent: no date before any choice", !(await bodyText(page)).includes("İzin verdin"));
-  await (await switchFor(page, "Kulüp etkinliklerinde")).asElement().click();
+  const before = await bodyText(page);
+  check("consent: neutral 'not given' without a date before any choice", before.includes("İzin verilmedi.") && !before.includes("İzin verdin"));
+  await (await switchFor(page, "kulüp galerisinde paylaşılmasına")).asElement().click();
   await saveNth(page, 2);
   check("consent: saving shows the date", !!(await hasText(page, /İzin verdin \(\d{1,2} \p{L}+ \d{4}\)\./u)));
   await shot(page, "consent");
+  // Saving an unchanged consent is ok but writes nothing (version and timestamp stay together).
+  const consentRow = () => sql(`select consent_photos_at || '|' || coalesce(consent_photos_version, '') from member_details where profile_id = '${MEMBER_ID}'`);
+  sql(`update member_details set consent_photos_version = 'stale' where profile_id = '${MEMBER_ID}'`);
+  const stamped = consentRow();
+  await go(page, "/account");
+  await saveNth(page, 2);
+  check("consent: re-saving unchanged consent shows 'Kaydedildi.' and writes nothing", !!(await hasText(page, /Kaydedildi\./)) && consentRow() === stamped, consentRow());
+  // Withdrawing: neutral wording, version written with the change.
+  await (await switchFor(page, "kulüp galerisinde paylaşılmasına")).asElement().click();
+  await saveNth(page, 2);
+  check("consent: withdrawing shows 'İzin verilmedi.' and stores the notice version", !!(await hasText(page, /İzin verilmedi\./)) && !consentRow().endsWith("|stale"), consentRow());
   await ctx.close();
 }
 

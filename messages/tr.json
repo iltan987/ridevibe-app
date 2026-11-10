@@ -101,7 +101,7 @@
     "instagram": "Instagram: @{handle}"
   },
   "Profile": {
-    "nameHint": "İsim değişikliği için kulüp ekibine yazın.",
+    "nameHint": "İsim değişikliği için kulüp ekibine yaz.",
     "location": "Konum",
     "city": "Şehir",
     "cityIstanbul": "İstanbul",
@@ -133,10 +133,10 @@
     "birthdayMissing": "Kayıtlı bir doğum tarihin yok.",
     "birthDate": "Doğum tarihi",
     "photoConsent": "Fotoğraf izni",
-    "photoConsentLabel": "Kulüp etkinliklerinde çekilen fotoğraf ve videolarda yer almama izin veriyorum.",
+    "photoConsentLabel": "Etkinliklerde çekilen ve beni gösteren fotoğrafların kulüp galerisinde paylaşılmasına açık rıza veriyorum.",
     "privacyLink": "Aydınlatma metni",
     "consentGiven": "İzin verdin ({date}).",
-    "consentWithdrawn": "İzni geri çektin ({date}).",
+    "consentNotGiven": "İzin verilmedi.",
     "save": "Kaydet",
     "saved": "Kaydedildi.",
     "errors": {

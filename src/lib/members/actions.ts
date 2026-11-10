@@ -81,12 +81,23 @@ export async function updatePhotoConsent(consent: boolean): Promise<ProfileActio
   const { supabase, userId } = await currentUserId();
   if (!userId) return { status: "forbidden" };
 
+  // Only an actual change writes the version, so it always belongs to the stamped consent_photos_at.
   const { data, error } = await supabase
     .from("member_details")
     .update({ consent_photos: parsed.data, consent_photos_version: PRIVACY_NOTICE_VERSION })
     .eq("profile_id", userId)
+    .neq("consent_photos", parsed.data)
     .select("profile_id");
-  return finish(error, data, "updatePhotoConsent");
+  if (error || data?.length) return finish(error, data, "updatePhotoConsent");
+
+  // Nothing changed: either the value was already saved (ok) or the row is hidden/missing.
+  const { data: current, error: readError } = await supabase
+    .from("member_details")
+    .select("profile_id")
+    .eq("profile_id", userId)
+    .eq("consent_photos", parsed.data)
+    .maybeSingle();
+  return finish(readError, current ? [current] : null, "updatePhotoConsent");
 }
 
 export async function addMotorcycle(input: MotorcycleInput): Promise<ProfileActionResult> {

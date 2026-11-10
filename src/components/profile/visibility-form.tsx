@@ -8,6 +8,7 @@ import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { updateVisibility } from "@/lib/members/actions";
+import { normalizeInstagram } from "@/lib/members/schema";
 import { ActionStatus, useProfileAction } from "./use-profile-action";
 
 type Props = {
@@ -29,7 +30,12 @@ export function VisibilityForm({ instagram, showInstagram, showBirthday, birthDa
 
   function onSubmit(event: React.FormEvent) {
     event.preventDefault();
-    run(() => updateVisibility({ instagram: handle, show_instagram: instagramOn, show_birthday: birthdayOn }));
+    const submitted = handle;
+    run(
+      () => updateVisibility({ instagram: submitted, show_instagram: instagramOn, show_birthday: birthdayOn }),
+      // Show the handle as saved ("@x" or a profile URL is stored as "x").
+      () => setHandle(normalizeInstagram(submitted) ?? ""),
+    );
   }
 
   const instagramError = fieldError("instagram");

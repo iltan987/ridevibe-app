@@ -133,10 +133,10 @@
     "birthdayMissing": "No birth date on file.",
     "birthDate": "Birth date",
     "photoConsent": "Photo consent",
-    "photoConsentLabel": "I agree to appear in photos and videos taken at club events.",
+    "photoConsentLabel": "I give my explicit consent for photos of me taken at events to be shared in the club gallery.",
     "privacyLink": "Privacy notice",
     "consentGiven": "You gave consent ({date}).",
-    "consentWithdrawn": "You withdrew consent ({date}).",
+    "consentNotGiven": "Consent not given.",
     "save": "Save",
     "saved": "Saved.",
     "errors": {

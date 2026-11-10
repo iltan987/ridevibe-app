@@ -42,7 +42,8 @@ export function PhotoConsentForm({ consent, consentAt }: { consent: boolean; con
             <Link href="/privacy" className="underline underline-offset-4 hover:text-foreground">
               {t("privacyLink")}
             </Link>
-            {date && <> · {consent ? t("consentGiven", { date }) : t("consentWithdrawn", { date })}</>}
+            {/* One row can't tell "withdrawn" from "declined on the application": stay neutral, no date. */}
+            {consent ? date && <> · {t("consentGiven", { date })}</> : <> · {t("consentNotGiven")}</>}
           </p>
           <div className="flex items-center gap-3">
             <Button type="submit" disabled={isPending}>

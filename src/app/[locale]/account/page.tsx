@@ -159,7 +159,8 @@ function AccountSkeleton() {
         <Skeleton className="h-8 w-20" />
       </SectionSkeleton>
       <SectionSkeleton id="profile-consent">
-        <Skeleton className="h-10 w-full" />
+        {/* consent label: 3 lines on phones, 2 from sm (Turkish copy) */}
+        <Skeleton className="h-15 w-full sm:h-10" />
         <Skeleton className="h-5 w-40" />
         <Skeleton className="h-8 w-20" />
       </SectionSkeleton>
