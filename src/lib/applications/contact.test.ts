@@ -1,7 +1,7 @@
 // Run with: pnpm test
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { isGoogleMailAddress, isTurkishMobileOrForeign, normalizeEmail, sameEmail } from "./contact.ts";
+import { isGoogleMailAddress, isTurkishMobileOrForeign, normalizeEmail, sameEmail, whatsAppUrl } from "./contact.ts";
 
 test("accepts Turkish mobile numbers and foreign numbers", () => {
   assert.equal(isTurkishMobileOrForeign("+905001234567"), true);
@@ -30,4 +30,12 @@ test("sameEmail compares normalised addresses", () => {
   assert.equal(sameEmail("ali.veli@gmail.com", "AliVeli+r@googlemail.com"), true);
   assert.equal(sameEmail("ali@icloud.com", "ali@gmail.com"), false);
   assert.equal(sameEmail("a.b@icloud.com", "ab@icloud.com"), false);
+});
+
+test("whatsAppUrl uses api.whatsapp.com (wa.me's redirect turns emoji into U+FFFD on desktop) and keeps emoji", () => {
+  assert.equal(whatsAppUrl("+90 546 123 45 67"), "https://api.whatsapp.com/send?phone=905461234567");
+  const url = new URL(whatsAppUrl("+905461234567", "Merhaba Ali! 🏍️ Hoş geldin & selam"));
+  assert.equal(url.origin + url.pathname, "https://api.whatsapp.com/send");
+  assert.equal(url.searchParams.get("phone"), "905461234567");
+  assert.equal(url.searchParams.get("text"), "Merhaba Ali! 🏍️ Hoş geldin & selam");
 });

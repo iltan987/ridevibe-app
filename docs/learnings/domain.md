@@ -9,7 +9,16 @@
 - 39 districts: 25 European, 14 Asian; Adalar counts as Asian. List + side mapping in `src/lib/istanbul-districts.ts`.
 
 ### Turkish phone habits (2026-11-08)
-- People type `0546…` (trunk 0) or `90546…`; store E.164 `+905461234567`. WhatsApp link: `https://wa.me/<digits>`.
+- People type `0546…` (trunk 0) or `90546…`; store E.164 `+905461234567`. WhatsApp link: `whatsAppUrl()` in
+  `src/lib/applications/contact.ts` (`api.whatsapp.com/send?phone=<digits>`, see below).
+
+### WhatsApp prefilled text: emoji become "�" on desktop with wa.me (2026-11-10)
+- **Symptom:** the approval invite showed `Merhaba Kerim! �` when sent from a PC; on phones the 🏍️ was fine.
+- **Cause:** phones open `wa.me` in the app directly; desktop browsers follow wa.me's redirect to
+  `api.whatsapp.com/send/`, which rewrites every emoji in `text` to `%EF%BF%BD` (U+FFFD). Verified with
+  `curl -sI "https://wa.me/905000000000?text=Hi%20%F0%9F%8F%8D%EF%B8%8F"` → `location: …text=Hi+%EF%BF%BD`.
+- **Do:** link to `https://api.whatsapp.com/send?phone=<digits>&text=<encodeURIComponent(text)>` (`whatsAppUrl()`);
+  it keeps the emoji and still opens the app on phones.
 
 ### KVKK essentials used so far (not legal advice) (2026-11-07)
 - Privacy notice (aydınlatma metni, art. 10) required; consents separate and never pre-ticked; photo sharing needs

@@ -23,7 +23,7 @@ take applications, manage members, publish events/announcements, share event pho
 | Domain | `ridevibe.com.tr`, DNS on Vercel nameservers | All DNS records (site, email) managed from the Vercel CLI |
 | Email | Deferred until a feature needs it; then Resend on `ridevibe.com.tr` | Resend's test sender can only mail the account owner |
 | Accounts | All services under iltan's personal accounts (2FA on) | iltan administers the software; no shared passwords |
-| Member messaging | WhatsApp deep links (`wa.me`) + Web Push | The club already lives in a WhatsApp group |
+| Member messaging | WhatsApp deep links (`api.whatsapp.com/send`, not `wa.me`: see learnings/domain.md) + Web Push | The club already lives in a WhatsApp group |
 
 ## Who sees what
 
@@ -94,7 +94,7 @@ Build in this order, one branch each:
 5. Right after the MVP: **event photo gallery** (Cloudflare R2).
 
 **Joining after approval (decided 2026-11-08):** staff add approved people to the club WhatsApp group **manually**,
-and send the sign-in invite with the one-tap `wa.me` button on the application page. No automation for now.
+and send the sign-in invite with the one-tap WhatsApp button on the application page. No automation for now.
 
 **Design system decided (2026-11-09):** "Gece + turkuaz" — dark default with light option, orange `#F98D2F` primary,
 teal for positive/status, Saira type, traced R&V wordmark and club badge. Spec:
@@ -113,7 +113,7 @@ Never use unofficial WhatsApp Web automation (Baileys, whatsapp-web.js): against
 
 Decision (iltan, 2026-11-08): **not now** — too much setup for the benefit. If built, it must be **optional**: an
 admin on/off switch in the app (plus "off" automatically when the API credentials aren't configured), with the
-manual `wa.me` button always available as the fallback. KVKK: Meta as a processor abroad → privacy notice.
+manual WhatsApp button always available as the fallback. KVKK: Meta as a processor abroad → privacy notice.
 
 ## Member conduct: notes, warnings, bans (planned, step 2b)
 

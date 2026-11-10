@@ -4,6 +4,15 @@ export function isTurkishMobileOrForeign(e164: string): boolean {
   return /^\+905\d{9}$/.test(e164);
 }
 
+/**
+ * WhatsApp chat link, optionally with a prefilled message. Uses api.whatsapp.com, not wa.me: on desktop wa.me
+ * redirects there and turns every emoji in `text` into "�" (U+FFFD) on the way; phones open wa.me in the app directly.
+ */
+export function whatsAppUrl(phone: string, text?: string): string {
+  const url = `https://api.whatsapp.com/send?phone=${phone.replace(/\D/g, "")}`;
+  return text === undefined ? url : `${url}&text=${encodeURIComponent(text)}`;
+}
+
 /** True for Gmail / Google Mail addresses (the domain is compared trimmed and lowercased). */
 export function isGoogleMailAddress(email: string): boolean {
   const domain = email.trim().toLowerCase().split("@").pop();

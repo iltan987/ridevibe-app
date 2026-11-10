@@ -53,7 +53,7 @@ export function ApplicationReviewPanel({
   linked: boolean;
   /** The linked account (application_account RPC); null when unlinked (or gone meanwhile). */
   account: ApplicationAccount | null;
-  /** wa.me link with the invite text (approved applications only). */
+  /** WhatsApp link with the invite text (approved applications only). */
   inviteHref: string | null;
   /** applications.decide, and the application is neither linked nor rejected. */
   canLink: boolean;
