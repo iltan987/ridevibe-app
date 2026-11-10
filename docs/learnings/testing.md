@@ -112,3 +112,17 @@
   below it even when every height matches.
 - **Source:** found by testing (loading-states Task 6). Wrapping hints (`FieldDescription`) change heights between
   390px and 1280px, so measure both viewports.
+
+### Members E2E fixtures: plant `side`, use `docker exec -i`, measure skeletons against a typical card (2026-11-10)
+- **Symptom 1:** the "Avrupa" side chip showed 0 members and a fixture card showed "Beşiktaş" without "· Avrupa", although
+  `district` was set. **Cause:** `profiles.side` is derived by the app (`updateLocation`), not by a trigger; profiles
+  planted with SQL have `side = null` and count only in "Tümü". **Do:** set `district` *and* `side` in fixture SQL
+  (`scripts/e2e/members-e2e.mjs` resets both for its test member).
+- **Symptom 2:** `docker exec supabase_db_ridevibe psql … <<EOF` printed nothing and changed nothing. **Cause:** without
+  `-i` docker does not forward stdin. **Do:** `docker exec -i`, plus `-v ON_ERROR_STOP=1` so a failed statement is loud.
+- **Symptom 3:** `skeletons.mjs` reported `members-row` -24px. **Cause:** it measures the *first* visible row, which was
+  the one fixture with bike + birthday + Instagram (114px; name+location only is 74px, plus one bike 94px). **Do:** make
+  the first row (sort order) a typical card before judging; the skeleton mirrors name + location + one bike (94px).
+- Puppeteer: `page.evaluate` can't take a `RegExp` (it arrives as `{}`): pass `source` and `flags`. Saving a section on
+  `/account`: dialogs are closed, so the visible "Kaydet" submit buttons are location, visibility, photo consent in order.
+- **Source:** found by testing (members Task 12).

@@ -121,8 +121,7 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 ### Loading states
 - **`AccountSkeleton` only mirrors the active-member page** (2026-11-10, members) — pending and inactive accounts see a
   shorter page (no profile sections, or only the photo consent), so their skeleton overshoots. The status is
-  request-time data, so the fallback can't know it. The section skeleton heights are rough, not measured
-  (`scripts/e2e/skeletons.mjs`).
+  request-time data, so the fallback can't know it. (Default-state heights are measured: all Δh 0, 2026-11-10.)
 - **Locale switcher shows no pending feedback** (2026-11-10, loading-states) — it uses `router.replace` in a
   transition, not a `Link`, so neither the progress bar nor the dim appears (it still switches and re-enables its
   button). Could drive the pending store from `useTransition`.
@@ -150,8 +149,9 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 - **Re-run the instant-navigation dev check when adding pages** (2026-11-10, loading-states) — see
   `docs/learnings/nextjs.md`; the `/[locale]/[...rest]` catch-all always logs "Could not validate `instant`"
   (it calls `notFound()` by design).
-- **Members skeleton card height** (2026-11-10, members review) — the directory card skeleton uses `h-22.5`, not yet
-  measured with `scripts/e2e/skeletons.mjs`.
+- **Members skeleton card height varies** (2026-11-10, members E2E) — the card skeleton is 94px (name, location, one
+  bike, measured); real cards are 74px (no bike) to 114px+ (bike + birthday + Instagram, more bikes), so the list can
+  jump a little on load. Accepted: card content varies per member.
 
 ### Tooling
 - **Supabase CLI 3.1.0 is available** (2026-11-10; installed 3.0.0).

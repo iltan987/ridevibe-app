@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 /**
  * Fallback for the member directory: total + profile link row, search row, the three side chips and 4 cards.
- * Mirrors the page layout (sections `gap-6` apart); card height is a typical card (name, location, one bike).
+ * Mirrors the page layout (sections `gap-6` apart); card height is a typical card (name, location, one bike = 94px; measured).
  */
 export function DirectorySkeleton() {
   return (
@@ -22,7 +22,7 @@ export function DirectorySkeleton() {
       </div>
       <div className="flex flex-col gap-2">
         {[0, 1, 2, 3].map((i) => (
-          <Skeleton key={i} data-skeleton="members-row" className="h-22.5 w-full rounded-xl" />
+          <Skeleton key={i} data-skeleton="members-row" className="h-23.5 w-full rounded-xl" />
         ))}
       </div>
     </div>
