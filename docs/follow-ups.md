@@ -8,6 +8,23 @@ holds the rest and links there.
 
 Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred / risk if left.`
 
+## Next up (iltan asked for these; start in a new session)
+
+- **Loading states iteration** (2026-11-10, iltan) — one branch, through the usual design → plan → build flow:
+  1. **Make skeletons match the real layout.** iltan noticed a small layout jump when data replaces a skeleton (e.g.
+     skeleton height ≠ real button height). Audit every `<Suspense fallback>` (`/apply`, `/account`, `/sign-in`,
+     `/admin/applications` + detail, `/admin/members`, `/admin/roles`, header user menu, link-account dialog) at 390px
+     and desktop, in both themes, and size each skeleton like what replaces it. Includes the `/apply` 60rem skeleton
+     that collapses to a small notice card (see Polish below).
+  2. **Decide whether we need `loading.tsx`.** With `cacheComponents` + `partialPrefetching` the static shell is
+     prefetched and per-section `<Suspense>` already streams; check the Next 16 docs
+     (`node_modules/next/dist/docs/`) for what `loading.tsx` adds in this setup and add it only where a route has no
+     instant shell.
+  3. **Click/navigation indicator.** Today nothing reacts between tapping a link or bottom-tab item and the new page
+     appearing (feels frozen on slow mobile data). Options to evaluate: pending state on the tapped nav item
+     (`useLinkStatus` in Next 16, check docs), a thin top progress bar, or both. Must not break static rendering or
+     the Turkish-uppercase/`Wordmark` rules.
+
 ## Open decisions (need iltan)
 
 - **Lock the member name after activation?** (2026-11-09, application gaps) — staff can now correct names and the
