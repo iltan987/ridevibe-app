@@ -342,21 +342,26 @@ sql(`update member_details set birth_date = null, show_birthday = true where pro
   await ctx.close();
 }
 
-// 5 member without a birth date: enters it once, then it is read-only
+// 5 member without a birth date: enters it once, then it is read-only. Birthday is opt-out (on by default).
 {
+  const switchState = async (page) =>
+    (await switchFor(page, "Doğum günümü")).asElement().evaluate((s) => ({
+      enabled: !s.hasAttribute("disabled") && s.getAttribute("aria-disabled") !== "true" && s.dataset.disabled === undefined,
+      checked: s.getAttribute("aria-checked"),
+    }));
+  const stored = () => sql(`select coalesce(birth_date::text, 'null') || '|' || show_birthday from member_details where profile_id = '${NOBIRTH_ID}'`);
   const { ctx, page } = await fresh("nobirth@test.local");
   await go(page, "/account");
-  const sw = (await switchFor(page, "Doğum günümü")).asElement();
-  const state = await sw.evaluate((s) => ({ disabled: s.hasAttribute("disabled") || s.getAttribute("aria-disabled") === "true" || s.dataset.disabled !== undefined, checked: s.getAttribute("aria-checked") }));
-  check("no birth date: birthday switch disabled and off", state.disabled && state.checked === "false", JSON.stringify(state));
+  const state = await switchState(page);
+  check("no birth date: birthday switch enabled and shows the stored 'on'", state.enabled && state.checked === "true", JSON.stringify(state));
   const text = await bodyText(page);
-  check("no birth date: 'save it first' and 'once' hints shown", text.includes("Doğum gününü göstermek için önce doğum tarihini kaydet.") && text.includes("Doğum tarihini bir kez girebilirsin"));
+  check("no birth date: 'shown once saved' and 'once' hints shown", text.includes("Doğum tarihini kaydettiğinde doğum günün (gün ve ay) gösterilir") && text.includes("Doğum tarihini bir kez girebilirsin"));
   await shot(page, "no-birthdate");
 
-  // Saving visibility while the switch is disabled must keep the stored default (on), not write "off".
+  // Saving visibility without touching the switch keeps the stored default (on).
   await saveNth(page, 1);
   await hasText(page, /Kaydedildi\./);
-  check("no birth date: saving visibility keeps show_birthday on", sql(`select show_birthday from member_details where profile_id = '${NOBIRTH_ID}'`) === "t");
+  check("no birth date: saving visibility keeps show_birthday on", stored() === "null|true", stored());
   await go(page, "/account");
 
   const input = await find(page, "#profile-birth-date");
@@ -365,22 +370,31 @@ sql(`update member_details set birth_date = null, show_birthday = true where pro
   check("birth date: empty is rejected", !!(await hasText(page, /Bu alan zorunlu\./)));
   await setInputValue(page, "#profile-birth-date", "2015-01-01");
   await click(page, "button", "^Doğum tarihini kaydet$");
-  check("birth date: under 18 is rejected", !!(await hasText(page, /18 yaşından büyük olmalısın\./)) && sql(`select coalesce(birth_date::text, 'null') from member_details where profile_id = '${NOBIRTH_ID}'`) === "null");
+  check("birth date: under 18 is rejected", !!(await hasText(page, /18 yaşından büyük olmalısın\./)) && stored().startsWith("null|"), stored());
 
-  // Enter in the date field saves the date only (its own form), not the visibility form.
+  // Turn the birthday off first, then save the date with Enter (its own form): it must never be shown.
+  await (await switchFor(page, "Doğum günümü")).asElement().click();
   await setInputValue(page, "#profile-birth-date", "1988-07-04");
   await page.focus("#profile-birth-date");
   await page.keyboard.press("Enter");
   const shown = await hasText(page, /Doğum tarihi\s*4 Temmuz 1988/);
   check("birth date: Enter saves it, shown read-only, field gone", !!shown && !(await find(page, "#profile-birth-date")));
-  check("birth date: stored in the DB", sql(`select birth_date from member_details where profile_id = '${NOBIRTH_ID}'`) === "1988-07-04");
-  const after = await (await switchFor(page, "Doğum günümü")).asElement().evaluate((s) => ({ enabled: !s.hasAttribute("disabled") && s.getAttribute("aria-disabled") !== "true" && s.dataset.disabled === undefined, checked: s.getAttribute("aria-checked") }));
-  check("birth date: birthday switch enabled and on (opt-out default), 'missing' hint gone", after.enabled && after.checked === "true" && !(await bodyText(page)).includes("önce doğum tarihini kaydet"), JSON.stringify(after));
+  check("birth date: stored with the switch as shown (off)", stored() === "1988-07-04|false", stored());
+  const after = await switchState(page);
+  check("birth date: switch still off after saving, hint gone", after.enabled && after.checked === "false" && !(await bodyText(page)).includes("kaydettiğinde doğum günün"), JSON.stringify(after));
   await shot(page, "birthdate-saved");
+  await go(page, "/members?q=Tarihsiz");
+  const hidden = await memberCard(page, "Tarihsiz Fixture");
+  check("birth date: directory hides the birthday the member turned off", !!hidden && !/Temmuz/.test(hidden), JSON.stringify(hidden));
 
+  // Switching it on later shows it.
+  await go(page, "/account");
+  await (await switchFor(page, "Doğum günümü")).asElement().click();
+  await saveNth(page, 1);
+  await hasText(page, /Kaydedildi\./);
   await go(page, "/members?q=Tarihsiz");
   const card = await memberCard(page, "Tarihsiz Fixture");
-  check("birth date: directory shows the birthday without switching anything on", !!card && /4 Temmuz/.test(card), JSON.stringify(card));
+  check("birth date: directory shows the birthday once switched on", !!card && /4 Temmuz/.test(card), JSON.stringify(card));
   await ctx.close();
 }
 

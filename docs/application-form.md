@@ -14,7 +14,7 @@ in the member profile.
 | Full name | text | yes | Hint: first and last name as on the ID (staff can correct it; the member profile takes the name from the approved application) |
 | Phone (WhatsApp) | phone, default +90 | yes | Used for the WhatsApp invite on approval. Turkish numbers must be mobile (`+905` + 9 digits), enforced in the form and by a DB trigger on insert / phone change |
 | Email | email | yes | Hint: they sign in with Google, so use that Google account's email. Non-blocking note under the field when the domain isn't gmail.com/googlemail.com (not shown when it equals the signed-in user's own email) |
-| Birth date | date | yes | Must be 18+. Purpose (age check, birthday greetings) stated in privacy notice. Members can hide their birthday from other members |
+| Birth date | date | yes | Must be 18+. Purpose (age check, birthday greetings) stated in privacy notice. Shown to other members (day and month) by default; members can hide it on `/account` |
 | City | select, default Istanbul | yes | Editable |
 | District | select (Istanbul districts) / text for other cities | yes | |
 | Side | Asian / European | auto | Derived from district for Istanbul |

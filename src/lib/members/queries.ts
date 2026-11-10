@@ -110,7 +110,7 @@ export async function getMyProfile(): Promise<MyProfile | null> {
     side: profile.data.side,
     birthDate: details.data?.birth_date ?? null,
     instagram: details.data?.instagram ?? null,
-    showBirthday: details.data?.show_birthday ?? false,
+    showBirthday: details.data?.show_birthday ?? true, // schema default (opt-out)
     showInstagram: details.data?.show_instagram ?? false,
     consentPhotos: details.data?.consent_photos ?? false,
     consentPhotosAt: details.data?.consent_photos_at ?? null,

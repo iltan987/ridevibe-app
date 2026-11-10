@@ -2,6 +2,10 @@
 
 Status: **agreed in chat with iltan (2026-11-10)**, awaiting spec review. MVP step 2a in `docs/PLAN.md`.
 
+> **Superseded 2026-11-11:** the birthday is **opt-out** now (`show_birthday` defaults to true, existing members were
+> switched on; iltan asked the members). Wherever this spec says birthday "opt-in, off by default", read opt-out.
+> Instagram stays opt-in.
+
 ## Why
 
 MVP step 2: active members can see who is in the club (name, district/side, bikes) and keep their own profile up to
