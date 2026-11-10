@@ -13,6 +13,7 @@ import { ApplicationReviewPanel } from "@/components/admin/application-review-pa
 import { getPathname, Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { can } from "@/lib/auth/permissions";
+import { whatsAppUrl } from "@/lib/applications/contact";
 import { getApplication, getApplicationAccount } from "@/lib/applications/queries";
 import { requirePermission } from "@/lib/auth/require-access";
 
@@ -60,7 +61,6 @@ async function ApplicationDetail({ params }: { params: PageProps<"/[locale]/admi
   const list = (values: string[], key: "languages" | "riding_styles" | "event_interests") =>
     values.map((v) => tApply(`options.${key}.${v}` as Parameters<typeof tApply>[0])).join(", ");
   const yesNo = (v: boolean) => tApply(v ? "options.yes" : "options.no");
-  const waNumber = a.phone.replace(/\D/g, "");
 
   const decidedLabel = a.reviewed_at
     ? a.reviewer?.full_name
@@ -91,7 +91,7 @@ async function ApplicationDetail({ params }: { params: PageProps<"/[locale]/admi
           {t("submittedAt")}: {format.dateTime(new Date(a.created_at), { dateStyle: "long", timeStyle: "short" })}
         </p>
         <div className="flex flex-wrap gap-2">
-          <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noreferrer" className={buttonVariants({ size: "sm" })}>
+          <a href={whatsAppUrl(a.phone)} target="_blank" rel="noreferrer" className={buttonVariants({ size: "sm" })}>
             <MessageCircle aria-hidden /> {t("contact.whatsapp")}
           </a>
           <a href={`tel:${a.phone}`} className={buttonVariants({ size: "sm", variant: "outline" })}>
@@ -196,7 +196,7 @@ async function ApplicationDetail({ params }: { params: PageProps<"/[locale]/admi
   );
 }
 
-/** wa.me link with the approval invite, written in the applicant's language. */
+/** WhatsApp link with the approval invite, written in the applicant's language. */
 async function whatsAppInvite(a: { full_name: string; email: string; phone: string; locale: string }) {
   const locale = hasLocale(routing.locales, a.locale) ? a.locale : routing.defaultLocale;
   const [t, h] = await Promise.all([getTranslations({ locale, namespace: "Admin.invite" }), headers()]);
@@ -204,7 +204,7 @@ async function whatsAppInvite(a: { full_name: string; email: string; phone: stri
   const proto = h.get("x-forwarded-proto") ?? (host?.startsWith("localhost") ? "http" : "https");
   const url = `${proto}://${host}${getPathname({ href: "/sign-in", locale })}`;
   const text = t("message", { name: a.full_name.split(" ")[0], email: a.email, url });
-  return `https://wa.me/${a.phone.replace(/\D/g, "")}?text=${encodeURIComponent(text)}`;
+  return whatsAppUrl(a.phone, text);
 }
 
 /** `top`: content above the rows that brings its own markup (e.g. the contact editor). */
