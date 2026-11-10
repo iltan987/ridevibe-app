@@ -134,6 +134,8 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   functions, rolled back, so it runs *before* the push); iltan runs it in their own terminal, never via `!`.
 - New column the form writes: nullable in the DB (old rows), required in Zod; `db push` before pushing `main`.
 - Deploy status: `vercel ls ridevibe-app --environment production 2>&1` (prints to stderr; top row: Building → Ready).
+  To wait, test only the newest row (`… | grep -m1 "●" | grep -qE "Ready|Error|Canceled"`): older rows already say
+  Ready.
 - Check crons/requests: `vercel --scope <team> logs requests --project ridevibe-app --environment production --json
   --since 45m -q 'requestPath:"/api/keep-alive"'` (Hobby keeps < 1 h; fields under `.data`).
 
