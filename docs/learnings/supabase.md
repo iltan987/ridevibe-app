@@ -18,6 +18,10 @@
 ### `pnpm db:reset` wipes local auth users (2026-11-07)
 - **Do:** to apply new migrations locally while keeping data/sign-ins, use `pnpm exec supabase migration up`.
   After a reset, sign in again and re-run the admin bootstrap SQL (README).
+- **Symptom (2026-11-10, members):** after an iteration whose subagents ran `db:reset` many times, iltan's local
+  `/members` said "you haven't applied yet": the sign-in had re-created their account as a fresh `pending` profile
+  without a role. **Do:** at the end of any iteration that reset the DB, tell iltan and restore their local admin
+  (status `active` + admin role) before handing over for browser review.
 
 ### Data API exposure: policies alone are not enough (2026-11-07)
 - **Cause:** on existing/most projects new `public` tables get ALL privileges for `anon`/`authenticated` by default;
