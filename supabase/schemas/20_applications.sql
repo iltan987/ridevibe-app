@@ -286,8 +286,66 @@ begin
   if app.profile_id is null then
     update public.applications set profile_id = target_profile where id = app.id;
   end if;
+
+  perform private.fill_member_from_application(target_profile, app.id);
 end;
 $$;
+
+-- ---------------------------------------------------------------------------
+-- Copy what the applicant told us into the member: birth date, Instagram, photo consent and
+-- one bike. Only fills gaps, so it is idempotent and never overwrites what the member
+-- edited: null birth date / Instagram; consent only if never decided (consent_photos_at is
+-- null), stamped with the application's time and notice version; a bike only for an
+-- owner with non-blank brand and model and no bikes yet. Creates a missing details row.
+-- Called after an activation and when an approved application is attached to an active account.
+-- ---------------------------------------------------------------------------
+
+create or replace function private.fill_member_from_application(target_profile uuid, application_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  app record;
+begin
+  select a.birth_date, a.instagram, a.consent_photos, a.created_at, a.privacy_notice_version,
+         a.owns_motorcycle, btrim(a.motorcycle_brand) as brand, btrim(a.motorcycle_model) as model,
+         a.motorcycle_cc
+    into app
+  from public.applications a
+  where a.id = application_id;
+  if not found then
+    return;
+  end if;
+
+  insert into public.member_details (profile_id) values (target_profile)
+  on conflict (profile_id) do nothing;
+
+  update public.member_details d
+  set birth_date = coalesce(d.birth_date, app.birth_date),
+      instagram = coalesce(d.instagram, app.instagram)
+  where d.profile_id = target_profile;
+
+  -- consent_photos_at is set explicitly so the stamp trigger keeps it.
+  update public.member_details d
+  set consent_photos = app.consent_photos,
+      consent_photos_at = app.created_at,
+      consent_photos_version = app.privacy_notice_version
+  where d.profile_id = target_profile and d.consent_photos_at is null;
+
+  if app.owns_motorcycle
+    and coalesce(app.brand, '') <> ''
+    and coalesce(app.model, '') <> ''
+    and not exists (select 1 from public.member_motorcycles m where m.profile_id = target_profile)
+  then
+    insert into public.member_motorcycles (profile_id, brand, model, cc)
+    values (target_profile, app.brand, app.model, app.motorcycle_cc);
+  end if;
+end;
+$$;
+
+revoke all on function private.fill_member_from_application(uuid, uuid) from public, anon, authenticated;
 
 create or replace function private.applications_after_approval()
 returns trigger
@@ -388,6 +446,8 @@ begin
 
   if app_status = 'approved' and target_status = 'pending' then
     perform private.activate_from_approved_application(target_id);
+  elsif app_status = 'approved' then
+    perform private.fill_member_from_application(target_id, application_id);
   end if;
 end;
 $$;
