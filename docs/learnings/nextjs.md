@@ -128,3 +128,19 @@ Bundled docs are the source of truth: `node_modules/next/dist/docs/` (grep them 
 - **Not tested:** the locale switcher (it passes `locale` to `Link`) was not part of the spike.
 - **Gotcha (E2E):** `a[href*="/admin/applications"]` also matches the filter chips; match the menu item inside `[role=menu]`.
 - **Source:** found by testing.
+
+### Pending-navigation bar: hidden old route, prefetched tabs, locale switcher (2026-11-10)
+- **Symptom:** list card -> detail on a slow server: `[data-link-pending]` stays in the DOM and `useLinkStatus` says
+  pending, but no bar and no dim. Prefetched bottom tabs never show the bar either.
+- **Cause:** when the target route has a prefetched `loading.tsx`, Next commits it at once (URL changes, skeleton shows)
+  and keeps the old page hidden (`display: none`) while the data streams in. Effects of the hidden page are cleaned up,
+  so `beginNavigation()`'s cleanup runs and the store drops to 0 (the stale marker stays in the hidden DOM; its
+  dim animation cannot run on a hidden element). Prefetched static tabs commit within ~100 ms, under the 150 ms delay.
+  The locale switcher uses `router.replace` in a transition (no `Link`), so it shows neither bar nor dim; it still
+  switches and re-enables its button.
+- **Do:** treat the loading skeleton as the feedback for routes that have one; the bar covers un-prefetched / same-route
+  navigations. In E2E count only visible markers and, to test the bar on a tab, abort requests with the
+  `next-router-prefetch` header and delay the `rsc` ones. Re-tapping the active tab refetches the URL, so the bar can
+  show for ~its latency.
+- **Source:** found by testing (`nav-e2e.mjs`).
+
