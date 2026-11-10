@@ -29,10 +29,103 @@ export default async function ApplicationDetailPage({ params }: PageProps<"/[loc
       <Link href="/admin/applications" className="text-sm text-muted-foreground hover:text-foreground">
         ← {t("back")}
       </Link>
-      <Suspense fallback={<Skeleton className="h-[40rem] w-full rounded-xl" />}>
+      <Suspense fallback={<DetailSkeleton />}>
         <ApplicationDetail params={params} />
       </Suspense>
     </section>
+  );
+}
+
+/**
+ * Mirrors a new, unlinked application as seen by a reviewer: header (name, date, contact buttons), the review card
+ * and the first two section cards. Sizes are the real ones (text-2xl line = h-8, sm button = h-7, button = h-8).
+ */
+function DetailSkeleton() {
+  return (
+    <div data-skeleton="detail" className="flex flex-col gap-6">
+      <div data-skeleton="detail-header" className="flex flex-col gap-3">
+        <div className="flex h-8 items-center">
+          <Skeleton className="h-6 w-44" />
+        </div>
+        <div className="flex h-5 items-center">
+          <Skeleton className="h-3.5 w-56" />
+        </div>
+        <div className="flex gap-2">
+          <Skeleton className="h-7 w-26" />
+          <Skeleton className="h-7 w-16" />
+          <Skeleton className="h-7 w-22" />
+        </div>
+      </div>
+
+      <Card data-skeleton="detail-review">
+        <CardHeader>
+          <div className="flex h-5.5 items-center">
+            <Skeleton className="h-4 w-32" />
+          </div>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-5">
+          <div className="flex flex-wrap gap-2">
+            <Skeleton className="h-8 w-31" />
+            <Skeleton className="h-8 w-17" />
+            <Skeleton className="h-8 w-17" />
+          </div>
+          <Skeleton className="h-21.5 w-full rounded-lg" />
+          <div className="flex flex-col gap-2">
+            <Skeleton className="h-5 w-16" />
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-10.5 w-full sm:h-5.25" />
+            <Skeleton className="h-8 w-26" />
+          </div>
+          <Skeleton className="h-8 w-33" />
+        </CardContent>
+      </Card>
+
+      <SectionSkeleton name="detail-section" top rows={3} />
+      <SectionSkeleton rows={5} />
+    </div>
+  );
+}
+
+/** A section card: title line, optional contact block (two rows + edit button), then label/value rows. */
+function SectionSkeleton({ name, top = false, rows }: { name?: string; top?: boolean; rows: number }) {
+  return (
+    <Card data-skeleton={name}>
+      <CardHeader>
+        <div className="flex h-5.5 items-center">
+          <Skeleton className="h-4 w-28" />
+        </div>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-3">
+        {top && (
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex flex-col gap-3">
+              <SkeletonRow width="w-28" />
+              <SkeletonRow width="w-32" />
+            </div>
+            <Skeleton className="h-7 w-22" />
+          </div>
+        )}
+        <div className="flex flex-col gap-3">
+          {Array.from({ length: rows }, (_, i) => (
+            <SkeletonRow key={i} width="w-full max-w-64" />
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+/** Same box as `Row`: label (text-xs, h-4) + value (text-sm, h-5), gap-0.5. */
+function SkeletonRow({ width }: { width: string }) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <div className="flex h-4 items-center">
+        <Skeleton className="h-2.5 w-24" />
+      </div>
+      <div className="flex h-5 items-center">
+        <Skeleton className={`h-3.5 ${width}`} />
+      </div>
+    </div>
   );
 }
 
@@ -82,8 +175,8 @@ async function ApplicationDetail({ params }: { params: PageProps<"/[locale]/admi
   );
 
   return (
-    <>
-      <header className="flex flex-col gap-3">
+    <div data-skeleton-result="detail" className="flex flex-col gap-6">
+      <header data-skeleton-result="detail-header" className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="text-2xl font-bold tracking-tight">{a.full_name}</h1>
         </div>
@@ -192,7 +285,7 @@ async function ApplicationDetail({ params }: { params: PageProps<"/[locale]/admi
         <p className="text-sm">{a.consent_photos ? t("consentPhotosYes") : t("consentPhotosNo")}</p>
         <p className="text-xs text-muted-foreground">{t("noticeVersion", { version: a.privacy_notice_version })}</p>
       </Section>
-    </>
+    </div>
   );
 }
 
@@ -210,7 +303,7 @@ async function whatsAppInvite(a: { full_name: string; email: string; phone: stri
 /** `top`: content above the rows that brings its own markup (e.g. the contact editor). */
 function Section({ title, top, children }: { title: string; top?: ReactNode; children: ReactNode }) {
   return (
-    <Card>
+    <Card data-skeleton-result="detail-section">
       <CardHeader>
         <CardTitle>{title}</CardTitle>
       </CardHeader>

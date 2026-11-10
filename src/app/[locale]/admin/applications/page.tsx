@@ -4,7 +4,6 @@ import { getFormatter, getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "@/i18n/navigation";
 import {
   APPLICATION_FILTERS,
@@ -13,6 +12,7 @@ import {
   listApplications,
 } from "@/lib/applications/queries";
 import { requirePermission } from "@/lib/auth/require-access";
+import { ListSkeleton } from "@/components/admin/list-skeleton";
 import { Pager } from "@/components/admin/pager";
 import { decodeCursor } from "@/lib/pagination";
 
@@ -27,21 +27,10 @@ export default function ApplicationsPage({ searchParams }: PageProps<"/[locale]/
   return (
     <section className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8">
       <h1 className="heading text-3xl">{t("applications")}</h1>
-      <Suspense fallback={<ListSkeleton />}>
+      <Suspense fallback={<ListSkeleton rows={6} rowClassName="h-26" />}>
         <ApplicationsList searchParams={searchParams} />
       </Suspense>
     </section>
-  );
-}
-
-function ListSkeleton() {
-  return (
-    <div className="flex flex-col gap-3">
-      <Skeleton className="h-9 w-full" />
-      {Array.from({ length: 4 }, (_, i) => (
-        <Skeleton key={i} className="h-24 w-full rounded-xl" />
-      ))}
-    </div>
   );
 }
 
@@ -68,7 +57,7 @@ async function ApplicationsList({
 
   return (
     <>
-      <nav className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+      <nav data-skeleton-result="admin-chips" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
         {APPLICATION_FILTERS.map((s) => (
           <Link
             key={s}
@@ -87,7 +76,7 @@ async function ApplicationsList({
       ) : (
         <ul className="flex flex-col gap-3">
           {page.items.map((a) => (
-            <li key={a.id}>
+            <li key={a.id} data-skeleton-result="admin-row">
               <Link href={`/admin/applications/${a.id}`} className="block rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
                 <Card className="transition-colors hover:bg-muted/40">
                   <CardContent className="flex flex-col gap-2">

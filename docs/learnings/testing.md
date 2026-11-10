@@ -105,5 +105,10 @@
   `skeletons.mjs <baseUrl> <out.md> [routes…]` (see the task notes in `.superpowers/` while they exist). Skeleton rule:
   copy the structure of the most common result (same Card, paddings, row/input heights, responsive heights like
   `h-10 md:h-9`), not one grey block.
+- **Several roots per fallback / fragment results:** give each part its own name (`admin-chips`, `admin-row`,
+  `detail-review`, …; the script takes the first visible element per name). A result that is a fragment has no box:
+  wrap it in a `div` with the same `flex flex-col gap-6` as the parent and mark that wrapper. Compare also each
+  element's `top`, not only heights: an optional paragraph (members pending hint, 4 lines on a phone) shifts everything
+  below it even when every height matches.
 - **Source:** found by testing (loading-states Task 6). Wrapping hints (`FieldDescription`) change heights between
   390px and 1280px, so measure both viewports.

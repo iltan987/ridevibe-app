@@ -107,3 +107,11 @@
   `transition-property`, so the colour transitions stay intact. Verified: opacity 0.70-0.77 mid-fade, 0.6 at the end.
 - **Source:** found by testing.
 
+### Skeleton of a Card that wraps one child (a form) must wrap its children too (2026-11-10)
+- **Symptom:** a role-editor skeleton built from `Card > CardHeader + CardContent + CardFooter` was 27px taller than the
+  real card.
+- **Cause:** `Card` is `flex flex-col gap-(--card-spacing)`. The real `RoleEditor` has a single child (`<form>`), so no
+  gap between header, content and footer; the skeleton had three children and got two extra 16px gaps.
+- **Do:** mirror the child structure, not just the card: put the parts in one `<div>` like the form. Copy-dependent
+  heights (permission descriptions wrap to two lines on a phone, one on desktop; one of five stays one line) need
+  responsive classes (`h-10.5 sm:h-5.25`); tailwind 4 accepts `h-5.25`/`h-8.5` etc., no pixel literals needed.

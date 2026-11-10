@@ -128,7 +128,7 @@ export function ApplicationReviewPanel({
   }[confirm.kind];
 
   return (
-    <Card aria-busy={isPending}>
+    <Card aria-busy={isPending} data-skeleton-result="detail-review">
       <CardHeader>
         <CardTitle className="flex flex-wrap items-center gap-2">
           {t("review.title")}

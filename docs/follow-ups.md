@@ -84,6 +84,11 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 ### UI / accessibility
 - **`/apply` notice cards** — the 60rem skeleton collapses to a small card (layout jump), and the form intro still shows
   above "already a member" / "under review".
+- **Admin skeletons mirror only the default state** — members list: the `pending` tab (rows 147px phone / 107px desktop
+  plus the 4-line hint); on `?status=active` the rows are 170/82px and there is no hint (jump up to ~45px). Application
+  detail: a `new`, unlinked application; an approved one has a taller review card (+99px phone, +19px desktop), shifting
+  the section cards below it. Fix would need the tab/status in the fallback (request-time data, so not possible behind
+  the current Suspense).
 - **Non-Gmail note on `/apply`** has no `aria-live`, so screen readers don't hear it appear.
 - **In-app notice on `/sign-in`** — appears after hydration (layout shift, inherent to the static page); the copied URL
   keeps `?next`/`?error`; the "copied" live region sits inside `role="alert"` (possible double announcement); light-theme
