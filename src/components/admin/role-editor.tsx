@@ -67,7 +67,7 @@ export function RoleEditor({
   const nameId = `role-${role.id}-name`;
 
   return (
-    <Card>
+    <Card data-skeleton-result="roles-editor">
       <form onSubmit={onSubmit} aria-busy={isPending}>
         <CardHeader>
           <Field>

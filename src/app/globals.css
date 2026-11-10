@@ -141,11 +141,35 @@
   html {
     @apply font-sans;
   }
+  /* Dim the tapped link. An animation (not a transition) so it also fades on links whose
+     utility classes (`transition-colors`) override `transition-property`. */
+  a:has(> [data-link-pending]) {
+    animation: link-pending-dim 150ms forwards;
+  }
   :root {
     color-scheme: light;
   }
   .dark {
     color-scheme: dark;
+  }
+}
+
+@keyframes link-pending-dim {
+  to {
+    opacity: 0.6;
+  }
+}
+
+/* Top progress bar: quick start to 30 %, then a slow crawl towards 90 %. */
+@keyframes nav-progress {
+  from {
+    transform: scaleX(0);
+  }
+  2.5% {
+    transform: scaleX(0.3);
+  }
+  to {
+    transform: scaleX(0.9);
   }
 }
 

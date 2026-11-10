@@ -20,7 +20,7 @@ import { routing } from "@/i18n/routing";
 // interactive switcher streams in; the fallback is the same button, disabled.
 export function LocaleSwitcher() {
   return (
-    <Suspense fallback={<LocaleButton disabled />}>
+    <Suspense fallback={<LocaleButton disabled data-skeleton="locale-switcher" />}>
       <LocaleSwitcherMenu />
     </Suspense>
   );
@@ -61,7 +61,7 @@ function LocaleSwitcherMenu() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger render={<LocaleButton disabled={isPending} />} />
+      <DropdownMenuTrigger render={<LocaleButton disabled={isPending} data-skeleton-result="locale-switcher" />} />
       <DropdownMenuContent align="end">
         <DropdownMenuGroup>
           <DropdownMenuLabel>{t("label")}</DropdownMenuLabel>

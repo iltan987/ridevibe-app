@@ -106,3 +106,62 @@ Bundled docs are the source of truth: `node_modules/next/dist/docs/` (grep them 
   (`unstable_rethrow` from `next/navigation`, first statement in the catch). Our query helpers throw
   `Error("<name> failed: <code>")`, so logging `error.message` contains no personal data.
 - **Source:** `03-api-reference/04-functions/unstable_rethrow.md`.
+
+### `useLinkStatus` with partial prefetching: pending works for same-route taps, not inside dropdown menus (2026-11-10)
+- **Test:** production build, 390×844, throttled (400 kbps / 400 ms), a throwaway client child in each `Link` logging
+  `useLinkStatus().pending`; tapped after prefetches settled and immediately after load (same result both times).
+  Also with every RSC request delayed 2.5 s to emulate a slow server.
+
+  | link kind | `pending true` logged? | notes |
+  |---|---|---|
+  | filter chip (same route, other `searchParams`) | yes (~30 ms after tap) | stays true until the new page swaps in, even though the route was prefetched |
+  | pager "Next" (same route, `cursor`) | yes | same |
+  | bottom tab (other route) | yes | static shell prefetched, so true only ~100 ms |
+  | user-dropdown item (other route) | yes, but not visible | the menu closes ~120 ms after the tap and unmounts its items, so the child unmounts while still pending (never `pending false`); navigation kept going for 3 s |
+- **Cause:** likely: prefetching only covers the static shell, so a dynamic `searchParams` page still fetches on tap
+  and pending is reported for same-route navigations (observed, not verified in Next internals). Dropdown content lives
+  in a portal that unmounts on close.
+- **Do:** a `useLinkStatus` indicator is enough for chips, pager and tabs (no extra fallback needed). For dropdown
+  items pass `keepMounted` to the menu portal (`DropdownMenuContent keepMounted`): the closed popup stays in the DOM
+  (positioner `hidden`, zero size, not focusable), so the item's `LinkPending` stays mounted and `pending` stays true
+  until the page changes. Verified: pending span present 1.2 s after the tap, Escape/arrow keys still work.
+- **Not tested:** the locale switcher (`router.replace` in a transition, no `Link`): see the next entry.
+- **Gotcha (E2E):** `a[href*="/admin/applications"]` also matches the filter chips; match the menu item inside `[role=menu]`.
+- **Source:** found by testing.
+
+### Pending-navigation bar: hidden old route, prefetched tabs, locale switcher (2026-11-10)
+- **Symptom:** list card -> detail on a slow server: `[data-link-pending]` stays in the DOM and `useLinkStatus` says
+  pending, but no bar and no dim. Prefetched bottom tabs never show the bar either.
+- **Cause:** the repo has no `loading.tsx`; the skeleton is the page's own `<Suspense fallback>` (e.g.
+  `src/app/[locale]/admin/applications/[id]/page.tsx`) inside the prefetched App Shell.
+  *Observed:* on tap the URL changes and the fallback shows at once (~30 ms), the old page's link has zero size
+  (hidden), the marker span stays in the DOM, the bar and the dim never appear, and everything is clear after the
+  data renders. Prefetched static tabs commit within ~100 ms, under the 150 ms delay.
+  *Inferred, not verified in Next internals:* the old page is kept hidden in an `<Activity>`, its effects are cleaned
+  up, so `beginNavigation()`'s cleanup runs and the store drops to 0; the stale marker's dim animation cannot run on a
+  hidden element.
+  The locale switcher uses `router.replace` in a transition (no `Link`), so it shows neither bar nor dim; it still
+  switches and re-enables its button.
+- **Do:** treat the page's Suspense fallback (skeleton) as the feedback for routes whose shell is prefetched; the bar
+  covers un-prefetched / same-route navigations. In E2E count only visible markers and, to test the bar on a tab,
+  abort requests with the `next-router-prefetch` header and delay the `rsc` ones. Re-tapping the active tab refetches
+  the URL, so the bar can show for about its latency.
+- **Source:** found by testing (throttled puppeteer E2E in the session scratchpad).
+
+### Instant-navigation dev check: nothing flagged, so no `loading.tsx` (2026-11-10)
+- **Symptom:** unclear whether `cacheComponents` + `partialPrefetching` still need `loading.tsx` for instant navigations.
+- **Cause:** Next 16 validates every Page segment in `next dev` (`validationLevel: 'warning'`, see
+  `node_modules/next/dist/docs/01-app/02-guides/instant-navigation.md` "Validate instant navigation") for both page
+  loads and client navigations, reporting blocking data / missing `<Suspense>` in the dev overlay and terminal.
+  *Checked:* every `page.tsx` under `src/app/[locale]` (home, events, gallery, privacy, sign-in, apply, account,
+  admin applications / detail / members / roles, unknown path), signed out and as admin, by direct load and by
+  `window.next.router.push` from `/events`. *Result:* no instant-navigation message for any real route, no overlay
+  issue, no console error. Only output (dev server terminal and overlay, unknown path only):
+  `Error: Route "/[locale]/[...rest]": Could not validate `instant` because an error prevented the target segment from
+  rendering.` (cause `NEXT_HTTP_ERROR_FALLBACK;404`: the catch-all page calls `notFound()` by design), and on a direct
+  load of an unknown path `Encountered a script tag while rendering React component` from `ThemeScript` (dev-only,
+  pre-existing, unrelated; tracked in `docs/follow-ups.md`).
+- **Do:** pages own their `<Suspense>` boundaries (skeleton = the page's fallback); add a `loading.tsx` only for a
+  segment the dev check flags. Re-run the check (visit each route, direct and client-side, watch overlay + terminal)
+  when adding a page.
+- **Source:** found by running the dev check on `feat/loading-states`.

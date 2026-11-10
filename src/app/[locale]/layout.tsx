@@ -3,6 +3,7 @@ import { Saira } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getTranslations } from "next-intl/server";
 import { locale } from "next/root-params";
+import { NavigationProgress } from "@/components/layout/navigation-progress";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
@@ -48,6 +49,7 @@ export default async function LocaleLayout({
       </head>
       <body className="flex min-h-full flex-col">
         <NextIntlClientProvider>
+          <NavigationProgress />
           <SiteHeader />
           {/* Bottom padding keeps content clear of the mobile tab bar. */}
           <main className="flex flex-1 flex-col pb-20 md:pb-0">{children}</main>

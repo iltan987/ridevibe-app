@@ -1,6 +1,6 @@
 # Loading states — design
 
-Status: **agreed** in chat with iltan (2026-11-10); to be built on `feat/loading-states`.
+Status: **implemented** on `feat/loading-states` (2026-11-10); agreed in chat with iltan.
 
 ## Why
 

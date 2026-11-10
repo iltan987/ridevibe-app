@@ -61,7 +61,7 @@ export function MemberRow({
   const next = NEXT_STATUS[member.status];
 
   return (
-    <li className="flex flex-col gap-3 rounded-xl border p-3 sm:flex-row sm:flex-wrap sm:items-center" aria-busy={isPending}>
+    <li data-skeleton-result="admin-row" className="flex flex-col gap-3 rounded-xl border p-3 sm:flex-row sm:flex-wrap sm:items-center" aria-busy={isPending}>
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <Avatar className="size-10">
           {member.avatarUrl && <AvatarImage src={member.avatarUrl} alt="" referrerPolicy="no-referrer" />}

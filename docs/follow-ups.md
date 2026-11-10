@@ -8,23 +8,6 @@ holds the rest and links there.
 
 Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred / risk if left.`
 
-## Next up (iltan asked for these; start in a new session)
-
-- **Loading states iteration** (2026-11-10, iltan) — one branch, through the usual design → plan → build flow:
-  1. **Make skeletons match the real layout.** iltan noticed a small layout jump when data replaces a skeleton (e.g.
-     skeleton height ≠ real button height). Audit every `<Suspense fallback>` (`/apply`, `/account`, `/sign-in`,
-     `/admin/applications` + detail, `/admin/members`, `/admin/roles`, header user menu, link-account dialog) at 390px
-     and desktop, in both themes, and size each skeleton like what replaces it. Includes the `/apply` 60rem skeleton
-     that collapses to a small notice card (see Polish below).
-  2. **Decide whether we need `loading.tsx`.** With `cacheComponents` + `partialPrefetching` the static shell is
-     prefetched and per-section `<Suspense>` already streams; check the Next 16 docs
-     (`node_modules/next/dist/docs/`) for what `loading.tsx` adds in this setup and add it only where a route has no
-     instant shell.
-  3. **Click/navigation indicator.** Today nothing reacts between tapping a link or bottom-tab item and the new page
-     appearing (feels frozen on slow mobile data). Options to evaluate: pending state on the tapped nav item
-     (`useLinkStatus` in Next 16, check docs), a thin top progress bar, or both. Must not break static rendering or
-     the Turkish-uppercase/`Wordmark` rules.
-
 ## Open decisions (need iltan)
 
 - **Lock the member name after activation?** (2026-11-09, application gaps) — staff can now correct names and the
@@ -82,17 +65,51 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   lost; also its failure type includes an unreachable `duplicate`.
 
 ### UI / accessibility
-- **`/apply` notice cards** — the 60rem skeleton collapses to a small card (layout jump), and the form intro still shows
-  above "already a member" / "under review".
+- **`/apply` notice cards** (2026-11-10, loading-states) — the form intro still shows above "already a member" /
+  "under review". (The skeleton's jump to a small card is part of the admin/state-dependent skeleton item below.)
+- **Admin skeletons mirror only the default state** (2026-11-10, loading-states) — members list: the `pending` tab
+  (rows 147px phone / 107px desktop plus the 4-line hint); on `?status=active` the rows are 170/82px and there is no
+  hint (jump up to ~45px). Application detail: a `new`, unlinked application; an approved one has a taller review
+  card (+99px phone, +19px desktop), shifting the section cards below it. Fix would need the tab/status in the
+  fallback (request-time data, so not possible behind the current Suspense).
 - **Non-Gmail note on `/apply`** has no `aria-live`, so screen readers don't hear it appear.
 - **In-app notice on `/sign-in`** — appears after hydration (layout shift, inherent to the static page); the copied URL
-  keeps `?next`/`?error`; the "copied" live region sits inside `role="alert"` (possible double announcement); light-theme
-  muted text on the tint is ~4.6–5.0:1 (passes AA, thin margin).
+  keeps `?next`/`?error`; the "copied" live region sits inside `role="alert"` (possible double announcement);
+  light-theme muted text on the tint is ~4.6–5.0:1 (passes AA, thin margin).
 - **Link-account dialog** — focus isn't moved between the list and confirm steps; results/empty state have no live
   region.
 - **`src/components/ui/dialog.tsx` default "Close" labels are English** — both current dialogs pass
   `showCloseButton={false}`; a future caller using the defaults would leak English.
 - **`Admin.empty`** ("No applications with this status") reads oddly on the "Not signed in" tab.
+
+### Loading states
+- **Locale switcher shows no pending feedback** (2026-11-10, loading-states) — it uses `router.replace` in a
+  transition, not a `Link`, so neither the progress bar nor the dim appears (it still switches and re-enables its
+  button). Could drive the pending store from `useTransition`.
+- **Skeleton magic numbers** (2026-11-10, loading-states review) — measured heights (`h-[19.25px]`, `h-26`,
+  `h-36.75 sm:h-26.75`, `h-21.5`, …) in `ApplySkeleton` and the admin skeletons (~160 lines of mirrored markup) drift
+  when the real markup changes; add pointer comments in the real components. Line/hint counts hidden at `sm` are tuned
+  to Turkish copy, English not measured. Re-run `scripts/e2e/skeletons.mjs` after UI changes.
+- **User-menu skeleton fidelity** (2026-11-10, loading-states review) — exact in Turkish only (the English button is
+  narrower); signed-in avatar 32px vs skeleton 28px (-4px). Cleanups in `user-menu.tsx`: comment says "Giriş yap"
+  (string is "Giriş Yap"), one long unformatted line, `Line` helper uses a template literal instead of `cn`, the
+  `md:h-8` row is undocumented.
+- **Pending dim polish** (2026-11-10, loading-states review) — no fade-out when pending ends (animation is removed),
+  undocumented; the 150 ms opacity animation still runs under `prefers-reduced-motion` (low risk).
+- **`pending-store.ts` robustness and tests** (2026-11-10, loading-states review) — a throwing listener stops later
+  listeners in `emit`; the subscribe test also asserts unrelated getters and there is no double-subscribe /
+  unsubscribe test.
+- **Learnings wording** (2026-11-10, loading-states review) — the `useLinkStatus` entry in `docs/learnings/nextjs.md`
+  still says "likely"/"observed, not verified" about prefetch covering only the static shell; confirm against the
+  Next docs or leave as is.
+- **Import order nit** in `src/app/[locale]/admin/applications/page.tsx` (2026-11-10, loading-states review).
+- **Dev-only "script tag" console error on unknown paths** (2026-11-10, loading-states) — a direct load of a 404 path
+  in `pnpm dev` logs "Encountered a script tag while rendering React component" from `ThemeScript`
+  (`src/components/theme/theme-script.tsx`, rendered by `[locale]/layout.tsx`); the 404 is client-rendered there.
+  Harmless in production; find out whether a `<template>`-free workaround is needed.
+- **Re-run the instant-navigation dev check when adding pages** (2026-11-10, loading-states) — see
+  `docs/learnings/nextjs.md`; the `/[locale]/[...rest]` catch-all always logs "Could not validate `instant`"
+  (it calls `notFound()` by design).
 
 ### Tooling
 - **Supabase CLI 3.1.0 is available** (2026-11-10; installed 3.0.0).

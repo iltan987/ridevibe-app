@@ -3,11 +3,11 @@ import type { Metadata } from "next";
 import { useTranslations } from "next-intl";
 import { getFormatter, getTranslations } from "next-intl/server";
 import { Suspense } from "react";
+import { ListSkeleton } from "@/components/admin/list-skeleton";
 import { MemberRow } from "@/components/admin/member-row";
 import { Pager } from "@/components/admin/pager";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "@/i18n/navigation";
 import { countMembersByStatus, getPendingApplicationFlags, listMembers, listRoles, MEMBER_STATUSES, type MemberStatus } from "@/lib/access/queries";
 import { requirePermission } from "@/lib/auth/require-access";
@@ -24,21 +24,10 @@ export default function MembersPage({ searchParams }: PageProps<"/[locale]/admin
   return (
     <section className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8">
       <h1 className="heading text-3xl">{t("title")}</h1>
-      <Suspense fallback={<ListSkeleton />}>
+      <Suspense fallback={<ListSkeleton rows={4} rowClassName="h-36.75 sm:h-26.75" listClassName="gap-2" search hint />}>
         <MembersList searchParams={searchParams} />
       </Suspense>
     </section>
-  );
-}
-
-function ListSkeleton() {
-  return (
-    <div className="flex flex-col gap-3">
-      <Skeleton className="h-9 w-full" />
-      {Array.from({ length: 5 }, (_, i) => (
-        <Skeleton key={i} className="h-16 w-full rounded-xl" />
-      ))}
-    </div>
   );
 }
 
@@ -73,7 +62,7 @@ async function MembersList({ searchParams }: { searchParams: PageProps<"/[locale
 
   return (
     <>
-      <nav className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+      <nav data-skeleton-result="admin-chips" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
         {MEMBER_STATUSES.map((s) => (
           <Link
             key={s}
@@ -88,7 +77,7 @@ async function MembersList({ searchParams }: { searchParams: PageProps<"/[locale
       </nav>
 
       {/* GET form without action: submits to this page with only these fields (drops the cursor). */}
-      <form role="search" className="flex gap-2">
+      <form role="search" data-skeleton-result="admin-search" className="flex gap-2">
         <input type="hidden" name="status" value={status} />
         <Input name="q" type="search" defaultValue={query} placeholder={t("search")} aria-label={t("search")} maxLength={60} />
         <Button type="submit" variant="outline" aria-label={t("searchButton")}>

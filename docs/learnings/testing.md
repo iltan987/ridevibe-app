@@ -91,3 +91,24 @@
   `insert … generate_series`; keyset order (`created_at desc, id desc`) then falls back to random UUIDs.
 - **Do:** after seeding, `update public.profiles p set created_at = u.created_at from auth.users u where u.id = p.id …`.
 - **Source:** found by testing (Task 7 E2E).
+
+### Measuring Suspense fallbacks: JavaScript off keeps the fallback visible (2026-11-10)
+- **Symptom:** a skeleton's size can't be compared with its content in the browser: the fallback is replaced within
+  milliseconds, and a screenshot or `getBoundingClientRect()` after load only sees the result.
+- **Cause:** React streams Suspense content as a hidden `<template>` plus a tiny inline script that swaps it in. Without
+  scripts nothing swaps: the fallback stays visible and the content waits in the template.
+- **Do:** `page.setJavaScriptEnabled(false)`, load, measure the fallback root; then JS on + `networkidle0`, measure the
+  result root (visible elements only: old routes stay hidden in the DOM). Mark both in the markup
+  (`data-skeleton="name"` / `data-skeleton-result="name"`) and compare heights (pass: |Δh| ≤ 4px). Check the trick
+  first (fallback visible, non-zero size). With JS off the inline theme script doesn't run: toggle `dark` on `<html>`
+  via `page.evaluate` (still works) or note that heights didn't change between themes (they didn't here). Script:
+  `skeletons.mjs <baseUrl> <out.md> [routes…]` (committed in `scripts/e2e/`, see its README for setup). Skeleton rule:
+  copy the structure of the most common result (same Card, paddings, row/input heights, responsive heights like
+  `h-10 md:h-9`), not one grey block.
+- **Several roots per fallback / fragment results:** give each part its own name (`admin-chips`, `admin-row`,
+  `detail-review`, …; the script takes the first visible element per name). A result that is a fragment has no box:
+  wrap it in a `div` with the same `flex flex-col gap-6` as the parent and mark that wrapper. Compare also each
+  element's `top`, not only heights: an optional paragraph (members pending hint, 4 lines on a phone) shifts everything
+  below it even when every height matches.
+- **Source:** found by testing (loading-states Task 6). Wrapping hints (`FieldDescription`) change heights between
+  390px and 1280px, so measure both viewports.
