@@ -102,7 +102,7 @@
   (`data-skeleton="name"` / `data-skeleton-result="name"`) and compare heights (pass: |Δh| ≤ 4px). Check the trick
   first (fallback visible, non-zero size). With JS off the inline theme script doesn't run: toggle `dark` on `<html>`
   via `page.evaluate` (still works) or note that heights didn't change between themes (they didn't here). Script:
-  `skeletons.mjs <baseUrl> <out.md> [routes…]` (see the task notes in `.superpowers/` while they exist). Skeleton rule:
+  `skeletons.mjs <baseUrl> <out.md> [routes…]` (committed in `scripts/e2e/`, see its README for setup). Skeleton rule:
   copy the structure of the most common result (same Card, paddings, row/input heights, responsive heights like
   `h-10 md:h-9`), not one grey block.
 - **Several roots per fallback / fragment results:** give each part its own name (`admin-chips`, `admin-row`,
