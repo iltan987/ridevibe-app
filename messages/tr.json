@@ -6,6 +6,7 @@
   "Nav": {
     "home": "Ana Sayfa",
     "events": "Etkinlikler",
+    "members": "Üyeler",
     "gallery": "Galeri",
     "apply": "Başvur",
     "signIn": "Giriş Yap",
@@ -80,6 +81,24 @@
     "applyNow": "Başvur",
     "underReviewTitle": "Başvurun inceleniyor",
     "underReviewBody": "Onaylandığında hesabın otomatik olarak aktif olur."
+  },
+  "Members": {
+    "title": "Üyeler",
+    "total": "{count} üye",
+    "search": "Üye ara",
+    "searchLabel": "Üyelerde ara",
+    "sides": {
+      "all": "Tümü",
+      "asian": "Anadolu",
+      "european": "Avrupa"
+    },
+    "editProfile": "Profilimi düzenle",
+    "empty": "Henüz listelenecek üye yok.",
+    "noResults": "Aramanla eşleşen üye bulunamadı.",
+    "activeOnlyTitle": "Üye listesi aktif üyelere açık",
+    "activeOnlyBody": "Üyeleri görmek için üyeliğinin aktif olması gerekiyor.",
+    "birthday": "🎂 {date}",
+    "instagram": "Instagram: @{handle}"
   },
   "Apply": {
     "title": "Kulübe başvur",

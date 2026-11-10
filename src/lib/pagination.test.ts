@@ -62,6 +62,12 @@ test("name cursor round-trips, including | and quotes", () => {
   }
 });
 
+test("name cursor round-trips a 120-character name of 4-byte characters", () => {
+  const cursor = { name: "😀".repeat(120), id };
+  assert.deepEqual(decodeNameCursor(encodeNameCursor(cursor)), cursor);
+  assert.equal(decodeNameCursor(encodeNameCursor({ name: "😀".repeat(121), id })), null);
+});
+
 test("rejects malformed name cursors", () => {
   const enc = (v: unknown) => Buffer.from(typeof v === "string" ? v : JSON.stringify(v)).toString("base64url");
   for (const value of [

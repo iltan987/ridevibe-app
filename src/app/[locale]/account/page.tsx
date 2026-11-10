@@ -1,15 +1,13 @@
 import type { Metadata } from "next";
 import { useTranslations } from "next-intl";
 import { getLocale, getTranslations } from "next-intl/server";
-import { unstable_rethrow } from "next/navigation";
 import { Suspense } from "react";
+import { PendingCard } from "@/components/account/pending-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Link, getPathname, redirect } from "@/i18n/navigation";
-import { getMyApplicationStatus } from "@/lib/applications/queries";
+import { getPathname, redirect } from "@/i18n/navigation";
 import { getCurrentUser } from "@/lib/auth/user";
 import { initials } from "@/lib/initials";
 
@@ -78,42 +76,6 @@ async function AccountDetails() {
         )}
       </Card>
     </>
-  );
-}
-
-/** Pending members: tell them whether they still need to apply. */
-async function PendingCard() {
-  const [application, t] = await Promise.all([
-    // On failure show the generic pending card. The message only carries the
-    // error code, no personal data (KVKK).
-    getMyApplicationStatus().catch((error: unknown) => {
-      unstable_rethrow(error);
-      console.error("PendingCard:", error instanceof Error ? error.message : "getMyApplicationStatus failed");
-      return "failed" as const;
-    }),
-    getTranslations("Account"),
-  ]);
-  const kind =
-    application === "failed"
-      ? "pending"
-      : application === null
-        ? "notApplied"
-        : application === "new" || application === "contacted"
-          ? "underReview"
-          : "pending";
-
-  return (
-    <Card className="border-sun/40 bg-sun/10">
-      <CardHeader className="items-start gap-3">
-        <CardTitle>{t(`${kind}Title`)}</CardTitle>
-        <CardDescription>{t(`${kind}Body`)}</CardDescription>
-        {kind === "notApplied" && (
-          <Link href="/apply" className={buttonVariants({ className: "mt-2" })}>
-            {t("applyNow")}
-          </Link>
-        )}
-      </CardHeader>
-    </Card>
   );
 }
 

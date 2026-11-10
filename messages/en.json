@@ -6,6 +6,7 @@
   "Nav": {
     "home": "Home",
     "events": "Events",
+    "members": "Members",
     "gallery": "Gallery",
     "apply": "Apply",
     "signIn": "Sign in",
@@ -80,6 +81,24 @@
     "applyNow": "Apply",
     "underReviewTitle": "Your application is under review",
     "underReviewBody": "Once it's approved, your account becomes active automatically."
+  },
+  "Members": {
+    "title": "Members",
+    "total": "{count, plural, one {# member} other {# members}}",
+    "search": "Search members",
+    "searchLabel": "Search members",
+    "sides": {
+      "all": "All",
+      "asian": "Asian side",
+      "european": "European side"
+    },
+    "editProfile": "Edit my profile",
+    "empty": "No members to show yet.",
+    "noResults": "No members match your search.",
+    "activeOnlyTitle": "The member list is for active members",
+    "activeOnlyBody": "Your membership needs to be active to see other members.",
+    "birthday": "🎂 {date}",
+    "instagram": "Instagram: @{handle}"
   },
   "Apply": {
     "title": "Apply to join",

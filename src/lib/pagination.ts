@@ -32,7 +32,7 @@ export function encodeNameCursor({ name, id }: NameCursor) {
 
 /** Parses an untrusted `?cursor=` value for name-ordered lists; null when absent or malformed. */
 export function decodeNameCursor(value: unknown): NameCursor | null {
-  if (typeof value !== "string" || value.length > 400) return null;
+  if (typeof value !== "string" || value.length > 1000) return null;
   let parsed: unknown;
   try {
     parsed = JSON.parse(Buffer.from(value, "base64url").toString("utf8"));
@@ -42,7 +42,9 @@ export function decodeNameCursor(value: unknown): NameCursor | null {
   if (!Array.isArray(parsed) || parsed.length !== 2) return null;
   const [name, id] = parsed;
   if (typeof name !== "string" || typeof id !== "string") return null;
-  if (name.length < 1 || name.length > 120 || !UUID.test(id)) return null;
+  // Count code points (the DB limit is in characters), not UTF-16 units: emoji take two.
+  const length = Array.from(name).length;
+  if (length < 1 || length > 120 || !UUID.test(id)) return null;
   return { name, id };
 }
 

@@ -12,7 +12,7 @@ export async function Pager({
   nextCursor,
   onFirstPage,
 }: {
-  pathname: "/admin/members" | "/admin/applications";
+  pathname: "/admin/members" | "/admin/applications" | "/members";
   query: Query;
   nextCursor: string | null;
   onFirstPage: boolean;
