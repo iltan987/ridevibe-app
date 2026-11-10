@@ -10,15 +10,6 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ## Next up (iltan asked for these; start in a new session)
 
-- **Staff name corrections are re-tidied (ALL-CAPS words can't be saved)** (2026-11-11, iltan, production) — iltan
-  couldn't save "XYZ Lojistik": the `applications_tidy_name` / `profiles_tidy_name` triggers run on `insert or update
-  of full_name`, and `private.tidy_name` lowers every ALL-CAPS word ("XYZ" → "Xyz"), so the spec's "staff corrections
-  stick" only holds for mixed-case words. Fix: tidy on INSERT only (form submissions, Google sign-ups); staff edits
-  (`set_member_name`, the application contact editor) are stored as typed. Nothing needs tidying on update (activation
-  copies an already-tidy name; applicants can't edit). Update `tidy_name.test.sql` (staff update stays verbatim, incl.
-  an ALL-CAPS word), spec §2.3/§3 and CLAUDE.md "Member data" line; migration → usual rollout. Then iltan re-types
-  "XYZ Lojistik". Small; can share a session and rollout with the birth-date fix below.
-
 - **Members without a birth date can enter it once** (2026-11-11, iltan) — iltan and Samet (activated by hand,
   no application) have no birth date, so "show my birthday" stays disabled. Bounded fix, design proposed in chat
   (iltan wants it in its own session; confirm the design there): RPC `public.set_my_birth_date(new_date date)`,

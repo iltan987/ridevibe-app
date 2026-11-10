@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(24);
+select plan(26);
 
 -- ---------------------------------------------------------------------------
 -- private.tidy_name: pure function checks
@@ -61,17 +61,29 @@ select is(
 select set_config('role', 'authenticated', true),
        set_config('request.jwt.claims',
          json_build_object('sub', '00000000-0000-0000-0000-000000000101', 'role', 'authenticated')::text, true);
-update public.applications set full_name = 'mehmet öz' where email = 'tidy-en@pgtap.invalid';
+update public.applications set full_name = 'XYZ lojistik' where email = 'tidy-en@pgtap.invalid';
 reset role;
+-- Staff corrections are stored as typed: an ALL-CAPS word ("XYZ") must survive.
 select is(
   (select full_name from public.applications where email = 'tidy-en@pgtap.invalid'),
-  'Mehmet Öz', 'staff name update is tidied');
+  'XYZ lojistik', 'staff application name update is stored as typed');
 
 insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-000000000102', 'pgtap-tidy-zeynep@pgtap.invalid', '{"full_name": "ZEYNEP KAYA"}');
 select is(
   (select full_name from public.profiles where id = '00000000-0000-0000-0000-000000000102'),
   'Zeynep Kaya', 'sign-up creates a tidied profile name');
+
+select set_config('role', 'authenticated', true),
+       set_config('request.jwt.claims',
+         json_build_object('sub', '00000000-0000-0000-0000-000000000101', 'role', 'authenticated')::text, true);
+select lives_ok(
+  $$ select public.set_member_name('00000000-0000-0000-0000-000000000102', '  XYZ lojistik ') $$,
+  'staff can rename a member');
+reset role;
+select is(
+  (select full_name from public.profiles where id = '00000000-0000-0000-0000-000000000102'),
+  'XYZ lojistik', 'set_member_name stores the name as typed (trimmed only)');
 
 select * from finish();
 rollback;
