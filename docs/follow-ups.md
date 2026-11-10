@@ -8,6 +8,12 @@ holds the rest and links there.
 
 Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred / risk if left.`
 
+## Next up (iltan asked for these; start in a new session)
+
+- **Members iteration** (2026-11-10, iltan) — MVP step 2 in `docs/PLAN.md`: member directory (name, district/side,
+  bike) and "my profile" editing, through the usual design → plan → build flow. Decide "Lock the member name after
+  activation?" (below) at the start.
+
 ## Open decisions (need iltan)
 
 - **Lock the member name after activation?** (2026-11-09, application gaps) — staff can now correct names and the
