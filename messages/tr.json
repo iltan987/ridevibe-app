@@ -264,10 +264,6 @@
       "duplicate": "Bu isimde bir rol zaten var.",
       "error": "Bir şeyler ters gitti. Lütfen tekrar dene."
     },
-    "pagination": {
-      "next": "Sonraki sayfa",
-      "first": "İlk sayfa"
-    },
     "members": {
       "title": "Üyeler ve erişim",
       "statuses": {
@@ -408,6 +404,10 @@
     "invite": {
       "message": "Merhaba {name}! 🏍️ Ride & Vibe başvurun onaylandı, aramıza hoş geldin!\n\nÜyeliğini tamamlamak için başvuruda verdiğin e-postanın ({email}) Google hesabıyla giriş yap:\n{url}\n\nBu e-posta bir Google hesabı değilse bu mesaja yanıt ver, hesabını birlikte bağlayalım."
     }
+  },
+  "Pagination": {
+    "next": "Sonraki sayfa",
+    "first": "İlk sayfa"
   },
   "NotFound": {
     "title": "Sayfa bulunamadı",

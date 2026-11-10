@@ -13,7 +13,7 @@ import {
 } from "@/lib/applications/queries";
 import { requirePermission } from "@/lib/auth/require-access";
 import { ListSkeleton } from "@/components/admin/list-skeleton";
-import { Pager } from "@/components/admin/pager";
+import { Pager } from "@/components/pager";
 import { decodeCursor } from "@/lib/pagination";
 
 export async function generateMetadata(): Promise<Metadata> {

@@ -264,10 +264,6 @@
       "duplicate": "A role with this name already exists.",
       "error": "Something went wrong. Please try again."
     },
-    "pagination": {
-      "next": "Next page",
-      "first": "First page"
-    },
     "members": {
       "title": "Members & access",
       "statuses": {
@@ -408,6 +404,10 @@
     "invite": {
       "message": "Hi {name}! 🏍️ Your Ride & Vibe application has been approved, welcome aboard!\n\nTo complete your membership, sign in with the Google account of the email you applied with ({email}):\n{url}\n\nIf that email isn't a Google account, just reply here and we'll link your account together."
     }
+  },
+  "Pagination": {
+    "next": "Next page",
+    "first": "First page"
   },
   "NotFound": {
     "title": "Page not found",

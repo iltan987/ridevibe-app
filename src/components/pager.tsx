@@ -18,7 +18,7 @@ export async function Pager({
   onFirstPage: boolean;
 }) {
   if (!nextCursor && onFirstPage) return null;
-  const t = await getTranslations("Admin.pagination");
+  const t = await getTranslations("Pagination");
   const clean = (q: Query) => Object.fromEntries(Object.entries(q).filter(([, v]) => v)) as Record<string, string>;
 
   return (

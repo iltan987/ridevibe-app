@@ -23,17 +23,45 @@ export function decodeCursor(value: unknown): Cursor | null {
   return { createdAt, id };
 }
 
+// Name cursor for lists ordered by (name, id) — the member directory (Turkish collation lives in the DB).
+export type NameCursor = { name: string; id: string };
+
+export function encodeNameCursor({ name, id }: NameCursor) {
+  return Buffer.from(JSON.stringify([name, id])).toString("base64url");
+}
+
+/** Parses an untrusted `?cursor=` value for name-ordered lists; null when absent or malformed. */
+export function decodeNameCursor(value: unknown): NameCursor | null {
+  if (typeof value !== "string" || value.length > 400) return null;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(Buffer.from(value, "base64url").toString("utf8"));
+  } catch {
+    return null;
+  }
+  if (!Array.isArray(parsed) || parsed.length !== 2) return null;
+  const [name, id] = parsed;
+  if (typeof name !== "string" || typeof id !== "string") return null;
+  if (name.length < 1 || name.length > 120 || !UUID.test(id)) return null;
+  return { name, id };
+}
+
 /** PostgREST `.or()` filter: rows that come after `cursor` in (created_at desc, id desc) order. */
 export function afterCursorFilter({ createdAt, id }: Cursor) {
   return `created_at.lt."${createdAt}",and(created_at.eq."${createdAt}",id.lt.${id})`;
 }
 
-/** Fetch PAGE_SIZE + 1 rows; this splits them into the page and the next cursor. */
-export function toPage<T extends { created_at: string; id: string }>(rows: T[], size = PAGE_SIZE) {
+/** Fetch size + 1 rows; this splits them into the page and the next cursor (built from the last item on the page). */
+export function splitPage<T>(rows: T[], size: number, cursorOf: (last: T) => string) {
   const items = rows.slice(0, size);
   const last = items.at(-1);
-  const nextCursor = rows.length > size && last ? encodeCursor({ createdAt: last.created_at, id: last.id }) : null;
+  const nextCursor = rows.length > size && last !== undefined ? cursorOf(last) : null;
   return { items, nextCursor };
+}
+
+/** Fetch PAGE_SIZE + 1 rows; this splits them into the page and the next cursor. */
+export function toPage<T extends { created_at: string; id: string }>(rows: T[], size = PAGE_SIZE) {
+  return splitPage(rows, size, (last) => encodeCursor({ createdAt: last.created_at, id: last.id }));
 }
 
 /** Escapes `%`, `_` and `\` for a PostgREST `ilike` contains-search. */

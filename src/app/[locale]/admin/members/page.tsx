@@ -5,7 +5,7 @@ import { getFormatter, getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import { ListSkeleton } from "@/components/admin/list-skeleton";
 import { MemberRow } from "@/components/admin/member-row";
-import { Pager } from "@/components/admin/pager";
+import { Pager } from "@/components/pager";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "@/i18n/navigation";
