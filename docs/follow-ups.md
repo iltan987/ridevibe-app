@@ -10,6 +10,18 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ## Next up (iltan asked for these; start in a new session)
 
+- **Members without a birth date can enter it once** (2026-11-11, iltan) — iltan and Samet (activated by hand,
+  no application) have no birth date, so "show my birthday" stays disabled. Bounded fix, design proposed in chat
+  (iltan wants it in its own session; confirm the design there): RPC `public.set_my_birth_date(new_date date)`,
+  security definer — own row only, active members only, only while `member_details.birth_date` is null, same rules as
+  the application form (≥ 18 in Istanbul time, after 1920-01-01); refuses with 42501 (not active / already set) or
+  23514 (invalid / under 18). A column grant can't express "only once". On `/account` ("Shown to other members"):
+  date field + save when no birth date is stored, hint "you can enter this once; to change it later, ask the club
+  team"; then read-only and the birthday switch becomes usable. `setBirthDate` Server Action (Zod, reuse the form's
+  18+ check, `refresh()`), TR/EN messages. pgTAP first (once ok, second fails, under-18/invalid fail,
+  pending/inactive/anon fail, nobody sets someone else's), unit tests, members E2E check for the no-birth-date member.
+  Branch `fix/birth-date-once`; rollout = migration dry run → push → `test db --remote` → deploy.
+
 - **Safety data (2a′)** (2026-11-10, iltan) — next step after Members in `docs/PLAN.md`: emergency contact, blood type
   with explicit consent (special-category data), plate per bike, a new `members.safety`-style permission, separate
   consents and the privacy text. Through the usual design → plan → build flow.
