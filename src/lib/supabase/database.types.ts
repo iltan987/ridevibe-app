@@ -71,6 +71,26 @@ isOneToOne: true
       referencedColumns: ["id"]
     }
                   ]
+                },"member_motorcycles": {
+                  Row: {
+                    "brand": string,"cc": number | null,"created_at": string,"id": string,"model": string,"profile_id": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "brand": string,"cc"?: number | null,"created_at"?: string,"id"?: string,"model": string,"profile_id": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "brand"?: string,"cc"?: number | null,"created_at"?: string,"id"?: string,"model"?: string,"profile_id"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "member_motorcycles_profile_id_fkey"
+      columns: ["profile_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"profiles": {
                   Row: {
                     "avatar_url": string | null,"city": string,"created_at": string,"district": string | null,"full_name": string,"id": string,"preferred_locale": string,"role_id": string | null,"side": Database["public"]['Enums']["istanbul_side"] | null,"status": Database["public"]['Enums']["member_status"],"updated_at": string
