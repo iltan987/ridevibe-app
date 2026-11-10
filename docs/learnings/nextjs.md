@@ -106,3 +106,21 @@ Bundled docs are the source of truth: `node_modules/next/dist/docs/` (grep them 
   (`unstable_rethrow` from `next/navigation`, first statement in the catch). Our query helpers throw
   `Error("<name> failed: <code>")`, so logging `error.message` contains no personal data.
 - **Source:** `03-api-reference/04-functions/unstable_rethrow.md`.
+
+### `useLinkStatus` with partial prefetching: pending works for same-route taps, not inside dropdown menus (2026-11-10)
+- **Test:** production build, 390×844, throttled (400 kbps / 400 ms), a throwaway client child in each `Link` logging
+  `useLinkStatus().pending`; tapped after prefetches settled and immediately after load (same result both times).
+  Also with every RSC request delayed 2.5 s to emulate a slow server.
+
+  | link kind | `pending true` logged? | notes |
+  |---|---|---|
+  | filter chip (same route, other `searchParams`) | yes (~30 ms after tap) | stays true until the new page swaps in, even though the route was prefetched |
+  | pager "Next" (same route, `cursor`) | yes | same |
+  | bottom tab (other route) | yes | static shell prefetched, so true only ~100 ms |
+  | user-dropdown item (other route) | yes, but not visible | the menu closes ~120 ms after the tap and unmounts its items, so the child unmounts while still pending (never `pending false`); navigation kept going for 3 s |
+- **Cause:** prefetching only covers the static shell; a dynamic `searchParams` page still fetches on tap, so pending
+  is reported for same-route navigations. Dropdown content lives in a portal that unmounts on close.
+- **Do:** a `useLinkStatus` indicator is enough for chips, pager and tabs (no extra fallback needed). For dropdown
+  items put the feedback outside the menu (e.g. a pending state on the trigger/avatar or the header), not inside the item.
+- **Gotcha (E2E):** `a[href*="/admin/applications"]` also matches the filter chips; match the menu item inside `[role=menu]`.
+- **Source:** found by testing.
