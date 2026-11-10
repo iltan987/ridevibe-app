@@ -182,6 +182,10 @@ async function ApplicationDetail({ params }: { params: PageProps<"/[locale]/admi
         </Row>
         <Row label={tApply("fields.expectations")} block>{a.expectations}</Row>
         <Row label={tApply("fields.alienating_behaviors")} block>{a.alienating_behaviors}</Row>
+        {/* Asked since 2026-11-10; older applications have no answer. */}
+        {a.conflict_handling && (
+          <Row label={tApply("fields.conflict_handling")} block>{a.conflict_handling}</Row>
+        )}
       </Section>
 
       <Section title={t("consents")}>

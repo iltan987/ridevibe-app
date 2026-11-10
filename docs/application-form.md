@@ -43,6 +43,7 @@ in the member profile.
 | Events you'd like to join | multi-select: weekend day rides, multi-day tours, camping, breakfast/coffee meetups, riding & safety training, off-road days, track days, maintenance workshops, social/charity rides | yes | Drives event planning |
 | What do you expect from the club? | short text | yes | Replaces a generic "why do you want to join" |
 | What behaviours in a community would alienate you? | short text | yes | Kept from the current Google Form |
+| How would you handle a disagreement with another group member during an event? | short text | yes | Added 2026-11-10 at Samet's request; DB column nullable (older applications have no answer) |
 
 ## 4. Consents (separate checkboxes, never pre-ticked)
 

@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(24);
+select plan(26);
 
 -- ---------------------------------------------------------------------------
 -- Fixtures: an admin, a reviewer (view + review), a decider (view + decide)
@@ -52,6 +52,7 @@ begin
     'event_interests', array['day_rides','coffee_meetups'],
     'expectations', 'Güvenli grup sürüşleri ve yeni arkadaşlar.',
     'alienating_behaviors', 'Kural tanımayan, tehlikeli sürüş.',
+    'conflict_handling', 'Önce sakinleşir, molada konuşurum.',
     'consent_privacy', true, 'consent_rules', true, 'consent_photos', false,
     'privacy_notice_version', 'test', 'utm_source', 'instagram', 'utm_campaign', 'nov-2026'
   ) || overrides);
@@ -60,13 +61,13 @@ begin
     locale, full_name, phone, email, birth_date, city, district, side, instagram, languages, other_languages,
     license_class, riding_years, owns_motorcycle, motorcycle_brand, motorcycle_model, motorcycle_cc,
     riding_styles, group_experience, in_other_clubs, other_club_names, heard_from, referrer_name,
-    event_interests, other_event_interests, expectations, alienating_behaviors, consent_privacy, consent_rules,
+    event_interests, other_event_interests, expectations, alienating_behaviors, conflict_handling, consent_privacy, consent_rules,
     consent_photos, privacy_notice_version, utm_source, utm_medium, utm_campaign, utm_content, utm_term
   ) values (
     r.locale, r.full_name, r.phone, r.email, r.birth_date, r.city, r.district, r.side, r.instagram, r.languages, r.other_languages,
     r.license_class, r.riding_years, r.owns_motorcycle, r.motorcycle_brand, r.motorcycle_model, r.motorcycle_cc,
     r.riding_styles, r.group_experience, r.in_other_clubs, r.other_club_names, r.heard_from, r.referrer_name,
-    r.event_interests, r.other_event_interests, r.expectations, r.alienating_behaviors, r.consent_privacy, r.consent_rules,
+    r.event_interests, r.other_event_interests, r.expectations, r.alienating_behaviors, r.conflict_handling, r.consent_privacy, r.consent_rules,
     r.consent_photos, r.privacy_notice_version, r.utm_source, r.utm_medium, r.utm_campaign, r.utm_content, r.utm_term
   );
 end;
@@ -145,9 +146,21 @@ select throws_ok(
   '23514', null,
   'phone numbers must be normalized to E.164'
 );
+
+select throws_ok(
+  $$ select pg_temp.submit('{"email": "shortconflict@pgtap.invalid", "conflict_handling": "x"}') $$,
+  '23514', null,
+  'the disagreement answer must be 3–1000 characters'
+);
+
+-- Nullable in the DB (older applications have no answer); the form requires it.
+select lives_ok(
+  $$ select pg_temp.submit('{"email": "noconflict@pgtap.invalid", "conflict_handling": null}') $$,
+  'an application without a disagreement answer is still valid in the DB'
+);
 reset role;
 -- Keep exactly one fixture application for the review tests below.
-delete from public.applications where email = 'blicense@pgtap.invalid';
+delete from public.applications where email in ('blicense@pgtap.invalid', 'noconflict@pgtap.invalid');
 
 select is(
   (select email || '|' || status from public.applications where email like '%@pgtap.invalid'),

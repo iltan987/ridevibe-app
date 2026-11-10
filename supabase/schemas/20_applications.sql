@@ -51,6 +51,8 @@ create table public.applications (
   other_event_interests text check (char_length(other_event_interests) <= 300),
   expectations text not null check (char_length(expectations) between 10 and 1000),
   alienating_behaviors text not null check (char_length(alienating_behaviors) between 3 and 1000),
+  -- Added 2026-11-10 (Samet). Nullable: older applications have no answer; the form requires it.
+  conflict_handling text check (char_length(conflict_handling) between 3 and 1000),
 
   -- Consents (KVKK): stored with the notice version the applicant saw.
   consent_privacy boolean not null check (consent_privacy),
@@ -528,8 +530,8 @@ grant insert (
   locale, full_name, phone, email, birth_date, city, district, side, instagram, languages, other_languages,
   license_class, riding_years, owns_motorcycle, motorcycle_brand, motorcycle_model, motorcycle_cc,
   riding_styles, group_experience, in_other_clubs, other_club_names, heard_from, referrer_name,
-  event_interests, other_event_interests, expectations, alienating_behaviors, consent_privacy, consent_rules,
-  consent_photos, privacy_notice_version, utm_source, utm_medium, utm_campaign, utm_content, utm_term
+  event_interests, other_event_interests, expectations, alienating_behaviors, conflict_handling,
+  consent_privacy, consent_rules, consent_photos, privacy_notice_version, utm_source, utm_medium, utm_campaign, utm_content, utm_term
 ) on table public.applications to anon, authenticated;
 grant insert (profile_id) on table public.applications to authenticated;
 
