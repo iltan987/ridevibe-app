@@ -61,9 +61,10 @@ pnpm db:reset                 # rebuild local DB from migrations (+ seed)
 pnpm db:migration <name>      # generate a migration from supabase/schemas (review it!)
 pnpm db:test                  # pgTAP tests in supabase/tests/database
 pnpm db:types                 # regenerate src/lib/supabase/database.types.ts
-pnpm exec supabase migration up   # apply new migrations locally, keeping data (db:reset wipes auth users)
+pnpm exec supabase migration up   # apply new migrations locally, keeping data (db:reset wipes auth users; after
+                                  # an iteration that reset, restore iltan's local admin before browser review)
 kill $(ss -ltnp | grep ':3123 ' | grep -oP 'pid=\K[0-9]+')   # stop a local server; never `pkill -f` (kills own shell)
-PUPPETEER_DIR=<dir> node scripts/e2e/nav-e2e.mjs   # browser E2E vs `pnpm start -p 3123` (setup: scripts/e2e/README.md)
+PUPPETEER_DIR=~/e2e-tools node scripts/e2e/{nav,members}-e2e.mjs   # browser E2E vs `pnpm start -p 3123` (setup: scripts/e2e/README.md)
 ```
 
 Signed-in local E2E needs email sign-in: `SUPABASE_AUTH_EMAIL_ENABLED=true pnpm exec supabase start` (temporary;
@@ -79,6 +80,13 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   grant only what is needed (column-level `update` grants for user-editable fields). Policies alone are not enough.
 - Security-definer helpers live in the non-exposed `private` schema with `set search_path = ''` and fully qualified
   names. Use `(select auth.uid())` / `(select private.has_permission('…'))` in policies (evaluated once per query).
+  Trigger functions in `private` fired by anon/authenticated writes must be `security definer` too.
+- **Member data:** `profiles` is readable by every active member (no private columns there); `member_details`
+  (birth date, Instagram, opt-in flags, photo consent) and `member_motorcycles` are own row + `members.manage` only;
+  other members' data only via the `public.member_directory` RPC. Members can't edit `full_name`/`avatar_url`
+  (staff: `set_member_name`). Names are tidied by triggers (`private.tidy_name`: Turkish rules, mixed case untouched).
+- Turkish text in SQL: `lower/upper/ilike` mishandle `İ/ı` (`lower('İ')` = `i̇`) — search with `private.search_fold`,
+  sort with `collate "tr-x-icu"`.
 - **Roles & permissions** (`supabase/schemas/05_roles.sql`): admins create roles and tick permissions
   (`public.permission` enum); each profile has at most one `role_id` (null = regular member). The built-in admin role
   (`roles.is_admin`) has every permission plus admin-only powers (editing roles, assigning roles). Only **active**
@@ -90,7 +98,8 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
 - Anything that decides which account becomes active (approve, `link_application`, editing the email of an approved
   application) requires `applications.decide`; `applications.profile_id` = the account an application belongs to.
   Linking targets pending accounts; approved applications may also go to an active account without one (attach only).
-- Every permission rule gets a pgTAP test, including the "must fail" cases.
+- Every permission rule gets a pgTAP test, including the "must fail" cases. pgTAP also runs against production at
+  rollout: scope every assertion to fixture ids/tokens, never to real rows.
 - Generated migrations may DROP a replaced column before its data is copied: move the DROP to the end and add the
   hand-written data step in between. Seed rows the app relies on (e.g. built-in roles) go in the migration.
 - Never put a `private.*` function in an index/default on a table that anon/authenticated write (it runs with the
@@ -120,6 +129,8 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   for a preview first: previews use the production DB.
 - Before `db push`, run read-only checks for anything a new constraint/unique index could reject:
   `docker run --rm postgres:17-alpine psql "$URL" -c "set default_transaction_read_only = on" -c "<query>"`.
+- A migration that rewrites production data gets a read-only preview in `scripts/sql/` (pg_temp copies of new
+  functions, rolled back, so it runs *before* the push); iltan runs it in their own terminal, never via `!`.
 - New column the form writes: nullable in the DB (old rows), required in Zod; `db push` before pushing `main`.
 - Deploy status: `vercel ls ridevibe-app --environment production 2>&1` (prints to stderr; top row: Building → Ready).
 - Check crons/requests: `vercel --scope <team> logs requests --project ridevibe-app --environment production --json
