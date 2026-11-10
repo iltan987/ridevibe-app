@@ -130,7 +130,9 @@
     "instagramPlaceholder": "@username",
     "showInstagram": "Show my Instagram in the member list",
     "showBirthday": "Show my birthday (day and month)",
-    "birthdayMissing": "No birth date on file.",
+    "birthdayMissing": "Save your birth date first to show your birthday.",
+    "birthDateOnceHint": "You can enter this once; to change it later, ask the club team.",
+    "saveBirthDate": "Save birth date",
     "birthDate": "Birth date",
     "photoConsent": "Photo consent",
     "photoConsentLabel": "I give my explicit consent for photos of me taken at events to be shared in the club gallery.",
@@ -148,7 +150,9 @@
       "tooLong": "Too long.",
       "invalidNumber": "Enter a number between 50 and 3000.",
       "invalidInstagram": "Enter a valid Instagram username or link.",
-      "invalidDistrict": "Pick a district from the list."
+      "invalidDistrict": "Pick a district from the list.",
+      "invalidDate": "Enter a valid date.",
+      "tooYoung": "You must be over 18."
     }
   },
   "Apply": {

@@ -18,7 +18,7 @@ create table public.member_details (
 );
 
 comment on table public.member_details is 'Private member data: birth date, Instagram, directory visibility switches, photo consent.';
-comment on column public.member_details.birth_date is 'Copied from the approved application; read-only for the member.';
+comment on column public.member_details.birth_date is 'Copied from the approved application, or entered once by the member via set_my_birth_date.';
 comment on column public.member_details.consent_photos_at is 'Stamped by trigger when consent_photos changes (or copied from an application); null = never decided.';
 comment on column public.member_details.consent_photos_version is 'Privacy-notice version the member saw when deciding; written by the app with the consent.';
 
@@ -65,6 +65,42 @@ using (
   profile_id = (select auth.uid())
   or (select private.has_permission('members.manage'))
 );
+
+-- Members activated without an application have no birth date. They may enter it once
+-- (a column grant can't say "only while null"); later changes go through the club team.
+-- Same rules as the application form: after 1920-01-01 and 18+ by the Istanbul date.
+-- 42501: not an active member, or a birth date is already stored. 23514: invalid date.
+create or replace function public.set_my_birth_date(new_date date)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if not private.is_active_member() then
+    raise exception 'only active members can set a birth date' using errcode = '42501';
+  end if;
+
+  perform 1 from public.member_details d
+  where d.profile_id = (select auth.uid()) and d.birth_date is null
+  for update;
+  if not found then
+    raise exception 'birth date is already set' using errcode = '42501';
+  end if;
+
+  if new_date is null
+     or new_date <= date '1920-01-01'
+     or new_date > ((now() at time zone 'Europe/Istanbul')::date - interval '18 years') then
+    raise exception 'birth date must be after 1920-01-01 and at least 18 years ago'
+      using errcode = '23514';
+  end if;
+
+  update public.member_details set birth_date = new_date where profile_id = (select auth.uid());
+end;
+$$;
+
+revoke all on function public.set_my_birth_date(date) from public, anon;
+grant execute on function public.set_my_birth_date(date) to authenticated;
 
 -- Any status: withdrawing photo consent must stay possible after membership ends (KVKK).
 create policy "member_details: update own"

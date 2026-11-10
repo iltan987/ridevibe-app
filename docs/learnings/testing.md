@@ -126,3 +126,14 @@
 - Puppeteer: `page.evaluate` can't take a `RegExp` (it arrives as `{}`): pass `source` and `flags`. Saving a section on
   `/account`: dialogs are closed, so the visible "Kaydet" submit buttons are location, visibility, photo consent in order.
 - **Source:** found by testing (members Task 12).
+
+### Members E2E on a DB with other active members; setting `type=date` values (2026-11-11)
+- **Symptom:** the members E2E expects exactly 29 active members ("29 üye", 25 + 4 on the pager), but a local DB that
+  wasn't just reset also holds seed members and iltan's admin.
+- **Do:** instead of `db:reset` (wipes iltan's account), save the ids of the active non-fixture profiles to the
+  scratchpad, set them `inactive` for the run, then set exactly those ids back to `active` and delete the fixtures.
+- Date inputs: typing into `type=date` depends on the browser's locale (`mm/dd/yyyy` in headless Chrome). Set the value
+  through the native setter + an `input` event inside `page.evaluate`, looking the input up by selector
+  (`setInputValue` in `scripts/e2e/members-e2e.mjs`). Reusing an `ElementHandle` from `page.evaluateHandle` for this
+  threw "Argument should belong to the same JavaScript world as target object" (cause not investigated).
+- **Source:** found by testing (birth-date-once).

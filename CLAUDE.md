@@ -32,6 +32,9 @@ announcements, photo galleries, attendance. Plan and decisions: `docs/PLAN.md`. 
   out. New machine: README "New machine setup".
 - **Fix the environment yourself** before calling it a blocker: e.g. Docker down → start
   `"/mnt/c/Program Files/Docker/Docker/Docker Desktop.exe" &` and wait for `/var/run/docker.sock`.
+- **Remove dead code.** Unused exports, helpers, messages, flags and leftovers from replaced approaches go in the same
+  change that makes them dead, unless there is a stated reason to keep them. Also do a periodic dead-code sweep
+  (`docs/follow-ups.md`).
 - **Missing tool → ask, never skip.** If a step needs something not installed (CLI, package, browser tooling), ask
   iltan to approve the install or to set it up; don't drop the step or swap in a weaker check.
 
@@ -83,7 +86,8 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   Trigger functions in `private` fired by anon/authenticated writes must be `security definer` too.
 - **Member data:** `profiles` is readable by every active member (no private columns there); `member_details`
   (birth date, Instagram, opt-in flags, photo consent) and `member_motorcycles` are own row + `members.manage` only;
-  other members' data only via the `public.member_directory` RPC. Members can't edit `full_name`/`avatar_url`
+  other members' data only via the `public.member_directory` RPC. Birth date is read-only; members without one enter it
+  once via `public.set_my_birth_date`. Members can't edit `full_name`/`avatar_url`
   (staff: `set_member_name`). Names are tidied on insert only (`private.tidy_name`: Turkish rules, mixed case
   untouched); staff corrections are stored as typed.
 - Turkish text in SQL: `lower/upper/ilike` mishandle `İ/ı` (`lower('İ')` = `i̇`) — search with `private.search_fold`,

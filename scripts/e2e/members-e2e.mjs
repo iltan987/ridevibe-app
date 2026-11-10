@@ -2,7 +2,7 @@
 // email sign-in enabled locally (docs/learnings/testing.md, "Testing as a signed-in user locally") and these fixtures:
 //   member@test.local        active, "Test Üye", Kadıköy, birth date 17 May, no bikes, no Instagram
 //   second@test.local        active, "Çelik Fixture", Beşiktaş, bike Honda CB500, birthday 9 March + Instagram "celikfx" shown
-//   nobirth@test.local       active, no birth date
+//   nobirth@test.local       active, no birth date (the script resets it; section 5 enters one)
 //   pending-noapp@test.local pending
 //   + 26 more active profiles (so the directory has 29 members > PAGE_SIZE 25)
 // Fixture recipe (local stack only; the DB must hold no other active members, e.g. right after `pnpm db:reset`):
@@ -127,11 +127,26 @@ const saveNth = async (page, n) => {
   return true;
 };
 
+/** Sets a controlled input's value the way React notices (typing into type=date depends on the browser locale). */
+async function setInputValue(page, selector, value) {
+  await page.evaluate(
+    (selector, value) => {
+      const input = document.querySelector(selector);
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(input, value);
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    },
+    selector,
+    value,
+  );
+}
+
 const MEMBER_ID = sql("select id from auth.users where email = 'member@test.local'");
+const NOBIRTH_ID = sql("select id from auth.users where email = 'nobirth@test.local'");
 // Start from a known state (re-runs).
 sql(`delete from member_motorcycles where profile_id = '${MEMBER_ID}'`);
 sql(`update profiles set district = 'Kadıköy', side = 'asian' where id = '${MEMBER_ID}'`);
 sql(`update member_details set instagram = null, show_instagram = false, show_birthday = false, consent_photos = false, consent_photos_at = null, consent_photos_version = null where profile_id = '${MEMBER_ID}'`);
+sql(`update member_details set birth_date = null, show_birthday = false where profile_id = '${NOBIRTH_ID}'`);
 
 // 1 anonymous
 {
@@ -323,15 +338,42 @@ sql(`update member_details set instagram = null, show_instagram = false, show_bi
   await ctx.close();
 }
 
-// 5 member without a birth date
+// 5 member without a birth date: enters it once, then it is read-only
 {
   const { ctx, page } = await fresh("nobirth@test.local");
   await go(page, "/account");
   const sw = (await switchFor(page, "Doğum günümü")).asElement();
   const state = await sw.evaluate((s) => ({ disabled: s.hasAttribute("disabled") || s.getAttribute("aria-disabled") === "true" || s.dataset.disabled !== undefined, checked: s.getAttribute("aria-checked") }));
   check("no birth date: birthday switch disabled and off", state.disabled && state.checked === "false", JSON.stringify(state));
-  check("no birth date: hint shown", (await bodyText(page)).includes("Kayıtlı bir doğum tarihin yok."));
+  const text = await bodyText(page);
+  check("no birth date: 'save it first' and 'once' hints shown", text.includes("Doğum gününü göstermek için önce doğum tarihini kaydet.") && text.includes("Doğum tarihini bir kez girebilirsin"));
   await shot(page, "no-birthdate");
+
+  const input = await find(page, "#profile-birth-date");
+  check("no birth date: date field shown", !!input && (await input.evaluate((i) => i.type)) === "date");
+  await click(page, "button", "^Doğum tarihini kaydet$");
+  check("birth date: empty is rejected", !!(await hasText(page, /Bu alan zorunlu\./)));
+  await setInputValue(page, "#profile-birth-date", "2015-01-01");
+  await click(page, "button", "^Doğum tarihini kaydet$");
+  check("birth date: under 18 is rejected", !!(await hasText(page, /18 yaşından büyük olmalısın\./)) && sql(`select coalesce(birth_date::text, 'null') from member_details where profile_id = '${NOBIRTH_ID}'`) === "null");
+
+  // Enter in the date field saves the date only (its own form), not the visibility form.
+  await setInputValue(page, "#profile-birth-date", "1988-07-04");
+  await page.focus("#profile-birth-date");
+  await page.keyboard.press("Enter");
+  const shown = await hasText(page, /Doğum tarihi\s*4 Temmuz 1988/);
+  check("birth date: Enter saves it, shown read-only, field gone", !!shown && !(await find(page, "#profile-birth-date")));
+  check("birth date: stored in the DB", sql(`select birth_date from member_details where profile_id = '${NOBIRTH_ID}'`) === "1988-07-04");
+  const enabled = await (await switchFor(page, "Doğum günümü")).asElement().evaluate((s) => !s.hasAttribute("disabled") && s.getAttribute("aria-disabled") !== "true" && s.dataset.disabled === undefined);
+  check("birth date: birthday switch enabled, 'missing' hint gone", enabled && !(await bodyText(page)).includes("önce doğum tarihini kaydet"));
+  await shot(page, "birthdate-saved");
+
+  await (await switchFor(page, "Doğum günümü")).asElement().click();
+  await saveNth(page, 1);
+  await hasText(page, /Kaydedildi\./);
+  await go(page, "/members?q=Tarihsiz");
+  const card = await memberCard(page, "Tarihsiz Fixture");
+  check("birth date: directory shows the birthday once switched on", !!card && /4 Temmuz/.test(card), JSON.stringify(card));
   await ctx.close();
 }
 

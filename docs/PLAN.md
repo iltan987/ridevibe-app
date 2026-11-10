@@ -92,6 +92,7 @@ Build in this order, one branch each:
 2. **2a Members** ✅ (2026-11-10) — member directory at `/members` (active members see name, photo, district/side,
    motorcycles; birth day/month and Instagram only when the member opts in) and "my profile" on `/account` (location,
    motorcycles, visibility, photo consent). Tidy name capitalization (Turkish rules) and name lock for active members.
+   Members without a birth date (activated by hand) can enter it once on `/account` (2026-11-11).
    Spec: `docs/superpowers/specs/2026-11-10-members-design.md`.
    2a′. **Safety data** (next) — emergency contact, blood type with explicit consent, plate per bike, a new
    `members.safety`-style permission, consents, privacy text.

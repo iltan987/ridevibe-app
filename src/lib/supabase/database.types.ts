@@ -193,6 +193,9 @@ isOneToOne: false
                            },
 "set_member_status":
 { Args: { "new_status": Database["public"]['Enums']["member_status"],"target_id": string }; Returns: undefined
+                           },
+"set_my_birth_date":
+{ Args: { "new_date": string }; Returns: undefined
                            }
           }
           Enums: {

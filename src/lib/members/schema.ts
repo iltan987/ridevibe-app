@@ -1,9 +1,17 @@
 import { z } from "zod";
+import { EARLIEST_BIRTH_DATE_EXCLUSIVE, isAtLeast18 } from "../birth-date.ts";
 import { ISTANBUL, isIstanbulDistrict, sideOfDistrict } from "../istanbul-districts.ts";
 
 // Shared by the profile forms (instant feedback) and the server actions (the
 // real check). Error messages are translation keys under Profile.errors.*.
-export type ProfileErrorKey = "required" | "tooLong" | "invalidNumber" | "invalidInstagram" | "invalidDistrict";
+export type ProfileErrorKey =
+  | "required"
+  | "tooLong"
+  | "invalidNumber"
+  | "invalidInstagram"
+  | "invalidDistrict"
+  | "invalidDate"
+  | "tooYoung";
 
 const err = (key: ProfileErrorKey) => ({ error: key });
 
@@ -68,6 +76,18 @@ export const visibilitySchema = z.object({
 });
 
 export type VisibilityInput = z.input<typeof visibilitySchema>;
+
+/** One-time entry for members without a birth date (set_my_birth_date); same rules as the application form. */
+export const birthDateSchema = z.object({
+  birth_date: z
+    .string(err("required"))
+    .min(1, err("required"))
+    .pipe(z.iso.date(err("invalidDate")))
+    .refine((v) => v > EARLIEST_BIRTH_DATE_EXCLUSIVE, err("invalidDate"))
+    .refine((v) => isAtLeast18(v), err("tooYoung")),
+});
+
+export type BirthDateInput = z.input<typeof birthDateSchema>;
 
 const motorcycleText = z.string(err("required")).trim().min(1, err("required")).max(60, err("tooLong"));
 

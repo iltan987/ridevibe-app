@@ -45,3 +45,12 @@
 - **Do:** `submitApplication` deliberately skips `refresh()` (exception to the Server Action convention); the next
   visit to `/apply` shows the notice anyway.
 - **Source:** design decision from how `ApplyGate` and `refresh()` work (not reproduced in a browser).
+
+### A form inside a form: link controls with the `form` attribute, render the `<form>` outside (2026-11-11)
+- **Symptom:** the one-time birth-date entry inside the visibility card did nothing on submit: no request, no error.
+- **Cause:** its (empty) `<form id>` was rendered by a child component that sat *inside* the visibility `<form>`, so the
+  forms were nested after all. Nested forms are invalid HTML; the browser ignores the inner form when submitting.
+- **Do:** render the extra `<form id=… onSubmit=…/>` as a sibling *after* the outer form and point its controls at it
+  with `form={id}` (input and submit button). Enter in such an input submits only that form. Example:
+  `src/components/profile/visibility-form.tsx` (`BIRTH_DATE_FORM_ID`).
+- **Source:** found by testing (members E2E, birth-date-once).

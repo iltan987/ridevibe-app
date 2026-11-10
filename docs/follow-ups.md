@@ -10,18 +10,6 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ## Next up (iltan asked for these; start in a new session)
 
-- **Members without a birth date can enter it once** (2026-11-11, iltan) — iltan and Samet (activated by hand,
-  no application) have no birth date, so "show my birthday" stays disabled. Bounded fix, design proposed in chat
-  (iltan wants it in its own session; confirm the design there): RPC `public.set_my_birth_date(new_date date)`,
-  security definer — own row only, active members only, only while `member_details.birth_date` is null, same rules as
-  the application form (≥ 18 in Istanbul time, after 1920-01-01); refuses with 42501 (not active / already set) or
-  23514 (invalid / under 18). A column grant can't express "only once". On `/account` ("Shown to other members"):
-  date field + save when no birth date is stored, hint "you can enter this once; to change it later, ask the club
-  team"; then read-only and the birthday switch becomes usable. `setBirthDate` Server Action (Zod, reuse the form's
-  18+ check, `refresh()`), TR/EN messages. pgTAP first (once ok, second fails, under-18/invalid fail,
-  pending/inactive/anon fail, nobody sets someone else's), unit tests, members E2E check for the no-birth-date member.
-  Branch `fix/birth-date-once`; rollout = migration dry run → push → `test db --remote` → deploy.
-
 - **Safety data (2a′)** (2026-11-10, iltan) — next step after Members in `docs/PLAN.md`: emergency contact, blood type
   with explicit consent (special-category data), plate per bike, a new `members.safety`-style permission, separate
   consents and the privacy text. Through the usual design → plan → build flow.
@@ -48,6 +36,11 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ## Open decisions (need iltan)
 
+- **Dead-code tool?** (2026-11-11, iltan) — which tool, if any, for the dead-code sweep (Tooling). Candidates to
+  compare when we talk: `knip` (unused files, exports, dependencies; Next.js plugin), `ts-prune`/`ts-unused-exports`
+  (exports only), TypeScript's `noUnusedLocals`/`noUnusedParameters` and ESLint rules (locals only), or no tool (manual
+  search). Research current status/maintenance before recommending; installing anything needs iltan's OK.
+
 - **Vercel Web Analytics and Speed Insights?** (2026-11-10, iltan asked) — Claude's recommendation: **add Web
   Analytics** (page views, referrers, the Instagram-ad funnel; cookieless, data anonymised with a daily-rotating request
   hash; Hobby includes 50,000 events/month, collection pauses (no bill) when exceeded) and **skip Speed Insights for
@@ -73,8 +66,14 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 - **History of staff corrections** (2026-11-09, spec) — name/phone/email corrections only bump `updated_at`; who
   changed what is not recorded. Add an audit trail if disputes come up.
 - **Applicants editing their own application** (2026-11-09, spec) — out of scope; staff correct it instead.
-- **Staff correction of member profile data** (2026-11-10, members) — birth date, Instagram and bikes copied from the
-  application can only be fixed by the member (or SQL). Add staff RPCs (like `set_member_name`) if members ask.
+- **Staff correction of member profile data** (2026-11-10, members) — Instagram and bikes can only be fixed by the
+  member; the birth date is read-only for members once stored (the `/account` hint "ask the club team" means SQL
+  today). Add staff RPCs (like `set_member_name`) if members ask.
+- **Birth-date entry: main "Kaydet" ignores a typed date** (2026-11-11, birth-date-once review) — the one-time date
+  field sits inside the visibility card; typing a date and pressing the card's main "Kaydet" saves visibility only
+  ("Kaydedildi.") and drops the date. Softened by the disabled switch + "save it first" hint. Fix: show a hint or run
+  `setBirthDate` first when the field is filled. Also no confirm step before the irreversible save (a wrong year from
+  a mobile picker sticks until staff fix it by SQL); consider showing the formatted date to confirm.
 - **Medical notes and "first-aid trained" flag** (2026-11-10, idea) — free-text medical notes and a flag for members
   who can give first aid; belongs with the safety data (2a′), special-category data rules apply.
 - **Navigation review once events exist** (2026-11-10, members) — the bottom tab bar has 5 tabs at 390px after
@@ -138,6 +137,9 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 - **Unit-test gaps** — NFD / `i̇` input for name matching; WhatsApp, Instagram-Android and `BytedanceWebview` user
   agents for in-app detection.
 - **"Not signed in" filter predicate duplicated** in list and count (`src/lib/applications/queries.ts`); could drift.
+- **Birth-date entry: "already set" shows "no permission"** (2026-11-11, birth-date-once) — `set_my_birth_date`
+  refuses with 42501 both for "not active" and "already set" (e.g. saved in a second tab); `setBirthDate` maps it to
+  the generic `forbidden` message. Only reachable with a stale page; a distinct errcode/message would fix it.
 - **Contact editor shows the generic "invalid" message** for a DB `23514` (only reachable by bypassing Zod).
 - **Rename dialog can be closed mid-save** (`src/components/admin/member-name-dialog.tsx`) — a failure after closing is
   lost; also its failure type includes an unreachable `duplicate`.
@@ -174,6 +176,7 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 - **`AccountSkeleton` only mirrors the active-member page** (2026-11-10, members) — pending and inactive accounts see a
   shorter page (no profile sections, or only the photo consent), so their skeleton overshoots. The status is
   request-time data, so the fallback can't know it. (Default-state heights are measured: all Δh 0, 2026-11-10.)
+  Members without a birth date (2026-11-11) see a taller visibility card (date field, hint, button) than the skeleton.
 - **Locale switcher shows no pending feedback** (2026-11-10, loading-states) — it uses `router.replace` in a
   transition, not a `Link`, so neither the progress bar nor the dim appears (it still switches and re-enables its
   button). Could drive the pending store from `useTransition`.
@@ -206,6 +209,9 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   jump a little on load. Accepted: card content varies per member.
 
 ### Tooling
+- **Dead-code sweep** (2026-11-11, iltan) — iltan wants dead code removed when there is no reason to keep it, and a
+  sweep now and then. First sweep: unused exports/files/dependencies (tool still open, see "Dead-code tool?" under
+  Open decisions), unused message keys in `messages/*.json`, stale comments and follow-up items that point at removed code.
 - **Supabase CLI 3.1.0 is available** (2026-11-10; installed 3.0.0).
 - **Members E2E looseness** (2026-11-10, members review) — some assertions are loose or vacuous in
   `scripts/e2e/members-e2e.mjs`: pending "no member cards" (passes if the list simply didn't render), "remaining 4

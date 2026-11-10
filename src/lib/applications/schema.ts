@@ -1,5 +1,6 @@
 import { isPossiblePhoneNumber } from "libphonenumber-js";
 import { z } from "zod";
+import { EARLIEST_BIRTH_DATE_EXCLUSIVE, isAtLeast18 } from "@/lib/birth-date";
 import { ISTANBUL, isIstanbulDistrict, sideOfDistrict } from "@/lib/istanbul-districts";
 import type { TablesInsert } from "@/lib/supabase/database.types";
 import { isTurkishMobileOrForeign } from "./contact";
@@ -71,17 +72,6 @@ export function normalizePhone(input: string) {
   return `+${digits}`;
 }
 
-// Today's date in Istanbul as YYYY-MM-DD (same rule as the DB trigger).
-function istanbulToday() {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(new Date());
-}
-
-export function isAtLeast18(birthDate: string, today = istanbulToday()) {
-  const [y, m, d] = today.split("-").map(Number);
-  const limit = `${String(y - 18).padStart(4, "0")}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-  return birthDate <= limit;
-}
-
 // Contact fields: shared by the public form and staff corrections (contactSchema).
 const fullNameField = text(2, 120);
 
@@ -116,7 +106,7 @@ export const applicationSchema = z
       .string(err("required"))
       .min(1, err("required"))
       .pipe(z.iso.date(err("invalidDate")))
-      .refine((v) => v > "1920-01-01", err("invalidDate"))
+      .refine((v) => v > EARLIEST_BIRTH_DATE_EXCLUSIVE, err("invalidDate"))
       .refine((v) => isAtLeast18(v), err("tooYoung")),
     city_choice: z.enum(["istanbul", "other"], err("required")),
     city: optionalText(80),
