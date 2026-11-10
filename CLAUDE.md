@@ -107,7 +107,8 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   the fewest columns (mask emails), never write personal data into the repo or logs.
 - **Deleting an account** (no in-app delete): only on iltan's explicit OK; first check status/role/linked application
   and `applications.reviewed_by`, then `DELETE {SUPABASE_URL}/auth/v1/admin/users/<id>` with `SUPABASE_SECRET_KEY`
-  (cascades profile + member_contacts; applications become unlinked, `reviewed_by` → null).
+  (cascades profile, member_contacts, member_details and member_motorcycles; applications become unlinked,
+  `reviewed_by` → null).
 - **Auth/config as code:** production overrides live in `[remotes.production]` in `supabase/config.toml`. Always run
   `pnpm exec supabase config diff --remote=igqqicbfejhnsggfuydh` and review before `config push --remote=… --yes`.
   Local defaults must not leak into production — pin hosted values in the remote block when the diff shows them.

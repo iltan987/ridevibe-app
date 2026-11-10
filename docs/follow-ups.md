@@ -18,6 +18,9 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 - **Ban evasion vs. linking** (2026-11-09, application gaps) — when the ban list is built (PLAN "Member conduct"),
   check new applications *and* staff links (`link_application`) against it.
+- **Privacy notice: directory purpose and legal basis** (2026-11-10, members review) — sections 3/4 of the notice
+  (purposes, legal basis) don't mention the in-club member directory (name, district, bikes, opt-in birthday and
+  Instagram shown to active members). Question for the lawyer review of the notice.
 
 ## Features
 
@@ -62,16 +65,19 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   trigger runs before the RLS check, so a foreign-profile insert on a target with 10 bikes gets `23514` instead of
   `42501` (tiny info leak, briefly locks the target profile); fix: early-return when `new.profile_id <> auth.uid()`
   or `for no key update`. (d) The photo-consent fill helper updates `member_details` unconditionally, bumping
-  `updated_at` for every backfilled profile. (e) The backfill's "newest approved" order lacks a final `id desc`
-  tiebreak. (f) The search-pattern block is duplicated in `member_directory` and its count RPC; extract
-  `private.search_pattern` if a third caller appears.
+  `updated_at` for every backfilled profile. (e) The search-pattern block is duplicated in `member_directory` and its
+  count RPC; extract `private.search_pattern` if a third caller appears. (f) `consent_photos_version` is
+  member-writable free text (≤ 40 chars; the action writes `PRIVACY_NOTICE_VERSION` only on a real change); could be
+  set server-side (trigger) instead of granted.
 - **Members pgTAP gaps** (2026-11-10, members review) — owner `INSERT` into `member_details` (no grant) not asserted;
   motorcycle edge cases (cc = 3001, pending/inactive update/delete, manager/anon writes) and a stale comment near
   line 298 of the motorcycles test; no test that an application with `consent_photos = false` copies its stamp; the
-  null-Instagram directory assertion is weak (passes regardless of the flag).
+  null-Instagram directory assertion is weak (passes regardless of the flag); no negative tests for the name-tidy
+  triggers (a null name would become `''` via `coalesce`; unreachable: `full_name` is `not null` on both tables).
 - **Verify private function grants on production** (2026-11-10, members review) — generated migrations revoke the new
   `private.*` functions only `FROM PUBLIC`, while the schema files also name `anon, authenticated`. After `db push`,
-  check with `has_function_privilege` that anon/authenticated cannot execute them.
+  check with `has_function_privilege` that anon/authenticated cannot execute them (query in the rollout section of
+  `docs/superpowers/plans/2026-11-10-members.md`, step 4).
 - **Email matching scans `applications`** (2026-11-09) — `private.normalize_email` can't be indexed on a table anon
   writes. Fine at today's volume (tens of rows); revisit if applications reach thousands.
 - **pgTAP gaps** (2026-11-09) — no test for an *inactive* staff member holding `applications.view` /
@@ -155,3 +161,8 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ### Tooling
 - **Supabase CLI 3.1.0 is available** (2026-11-10; installed 3.0.0).
+- **Members E2E looseness** (2026-11-10, members review) — some assertions are loose or vacuous in
+  `scripts/e2e/members-e2e.mjs`: pending "no member cards" (passes if the list simply didn't render), "remaining 4
+  members" accepts 1..4 cards, the English check is a loose regexp; bikes planted for the 10-bike cap stay if a check
+  throws mid-run (the next run resets them); the instant-navigation check is evidenced only by the dev log and the
+  browser console.
