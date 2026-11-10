@@ -18,6 +18,10 @@
 ### `pnpm db:reset` wipes local auth users (2026-11-07)
 - **Do:** to apply new migrations locally while keeping data/sign-ins, use `pnpm exec supabase migration up`.
   After a reset, sign in again and re-run the admin bootstrap SQL (README).
+- **Symptom (2026-11-10, members):** after an iteration whose subagents ran `db:reset` many times, iltan's local
+  `/members` said "you haven't applied yet": the sign-in had re-created their account as a fresh `pending` profile
+  without a role. **Do:** at the end of any iteration that reset the DB, tell iltan and restore their local admin
+  (status `active` + admin role) before handing over for browser review.
 
 ### Data API exposure: policies alone are not enough (2026-11-07)
 - **Cause:** on existing/most projects new `public` tables get ALL privileges for `anon`/`authenticated` by default;
@@ -106,3 +110,35 @@
 - **Do:** derive state from the FK column itself (`!!a.profile_id`); use the embed only for optional extras (name,
   status) and have a fallback label.
 - **Source:** code review of Task 7, verified in the browser with a view+review+decide role.
+
+### Turkish i-letters break `lower()`/`upper()`; trigger helpers need `security definer` (2026-11-10)
+- **Symptom:** `lower('İ')` returns `i̇` (i + combining dot), `upper('i')` returns `I` not `İ`, so "ILKER"/"ilker"
+  tidy to wrong names. Separately, a `before insert` trigger calling `private.*` helpers failed for anon with
+  "permission denied for schema private".
+- **Cause:** the DB case functions are not locale-aware by default; a trigger function runs with the writer's rights,
+  and the helper call inside it is permission-checked (only the trigger function's own EXECUTE is skipped).
+- **Do:** `translate()` the Turkish i-letters before case functions (`lower(translate(s, 'İI', 'iı'))`,
+  `upper(translate(s, 'iı', 'İI'))`; non-Turkish: `translate(s, 'İ', 'I')` first). Make trigger functions that call
+  `private.*` helpers `security definer` with `set search_path = ''`.
+- **Source:** `supabase/schemas/02_names.sql`, Members Task 1.
+
+### Turkish sort order and search: ICU collation + `private.search_fold` (2026-11-10)
+- **Symptom:** default collation sorts `Çelik`/`İlker` after `Z`; `ilike '%ilker%'` doesn't find `İlker` and
+  `'%ISIK%'` doesn't find `Işık` (`ilike` doesn't fold `İ/ı`).
+- **Do:** order with `collate "tr-x-icu"` (local PG 17 image has it; **check the hosted DB in rollout** before
+  `db push`). Search with `private.search_fold(col) like '%' || escaped(private.search_fold(term)) || '%'`
+  (`translate` of Turkish letters + `lower`); escape `\`, `%`, `_` in the term.
+- **Also:** a plpgsql function can't have a parameter with the same name as an output column (`parameter name "side"
+  used more than once`) → `member_directory` takes `side_filter`.
+- **Source:** `supabase/schemas/30_member_directory.sql`, Members Task 5.
+
+### Previewing a data migration on production before its functions exist (2026-11-10)
+- **Symptom:** the first name-tidy preview called `private.tidy_name(...)`, but rollout runs the preview *before*
+  `db push`, when the function doesn't exist on production yet → it would just fail.
+- **Cause:** a preview that reuses helpers from the migration depends on the migration.
+- **Do:** make preview scripts self-contained: `begin;` → `create function pg_temp.f(...)` (exact copy of the schema
+  body, with a "keep in sync" comment) → `set transaction read only;` → the select → `rollback;`. Functions in
+  `pg_temp` are never found via `search_path`: always call them as `pg_temp.f(...)`. Switching to read-only after the
+  DDL in the same transaction is allowed (only read-only → read-write is refused). Test it locally after dropping the
+  real helpers inside the same rolled-back transaction. The preview's casing/ordering rules must match the migration's.
+- **Source:** `scripts/sql/name-tidy-preview.sql`, members final review.

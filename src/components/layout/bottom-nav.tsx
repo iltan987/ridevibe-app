@@ -27,7 +27,7 @@ function BottomNavLinks({ pathname }: { pathname?: string }) {
       aria-label={t("menu")}
       className="fixed inset-x-0 bottom-0 z-40 border-t bg-card pb-[env(safe-area-inset-bottom)] md:hidden"
     >
-      <ul className="mx-auto grid max-w-md grid-cols-4">
+      <ul className="mx-auto grid max-w-md grid-cols-5">
         {navItems.map(({ href, labelKey, icon: Icon }) => (
           <li key={href}>
             <Link

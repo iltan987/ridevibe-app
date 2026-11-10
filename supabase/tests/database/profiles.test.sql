@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(24);
+select plan(26);
 
 -- ---------------------------------------------------------------------------
 -- Fixtures (run as postgres, which bypasses RLS). All queries below are scoped
@@ -95,9 +95,21 @@ select is(
 );
 
 select lives_ok(
-  $$ update public.profiles set full_name = 'Mert M.', district = 'Kadıköy', side = 'asian'
+  $$ update public.profiles set district = 'Kadıköy', side = 'asian'
      where id = '00000000-0000-0000-0000-00000000000b' $$,
   'member can update their own personal fields'
+);
+
+select throws_ok(
+  $$ update public.profiles set full_name = 'Mert M.' where id = '00000000-0000-0000-0000-00000000000b' $$,
+  '42501', null,
+  'member cannot change their own name (name lock)'
+);
+
+select throws_ok(
+  $$ update public.profiles set avatar_url = 'https://x.invalid/a.png' where id = '00000000-0000-0000-0000-00000000000b' $$,
+  '42501', null,
+  'member cannot change their own avatar_url'
 );
 
 select throws_ok(
@@ -112,12 +124,12 @@ select throws_ok(
   'member cannot change their own status column'
 );
 
-update public.profiles set full_name = 'hacked' where id = '00000000-0000-0000-0000-00000000000d';
+update public.profiles set district = 'hacked' where id = '00000000-0000-0000-0000-00000000000d';
 reset role;
 
 select is(
-  (select full_name from public.profiles where id = '00000000-0000-0000-0000-00000000000d'),
-  'Orhan Other',
+  (select coalesce(district, 'none') from public.profiles where id = '00000000-0000-0000-0000-00000000000d'),
+  'none',
   'member cannot update someone else''s profile'
 );
 

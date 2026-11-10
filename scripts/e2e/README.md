@@ -8,6 +8,11 @@ Run against a **local** stack only (local Supabase + a server on port 3123); nev
 - `nav-e2e.mjs` — navigation progress bar / pending dim checks (PASS/FAIL lines, exit code != 0 on failure).
   Needs a production build served on 3123: `pnpm build && pnpm start -p 3123`.
   Screenshots go to `OUT_DIR` (default temp).
+- `members-e2e.mjs` — `/members` directory and `/account` profile editing (PASS/FAIL lines, exit code != 0 on failure).
+  Needs `member@test.local` (active, "Test Üye"), `second@test.local` ("Çelik Fixture", Beşiktaş + `side`, bike,
+  birthday + Instagram shown), `nobirth@test.local` (active, no birth date), `pending-noapp@test.local`, and 26 more
+  active profiles (29 active in total, so the pager appears); fixture recipe in the header of the script. It plants and
+  removes bikes through `docker exec … psql` (`DB_CONTAINER`, local only). Screenshots go to `OUT_DIR`.
 - `skeletons.mjs <baseUrl> <out.md> [routes…]` — measures each `data-skeleton` fallback against its
   `data-skeleton-result` (JS off vs on); see `docs/learnings/testing.md`.
 

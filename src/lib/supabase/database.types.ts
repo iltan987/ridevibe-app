@@ -51,6 +51,46 @@ isOneToOne: true
       referencedColumns: ["id"]
     }
                   ]
+                },"member_details": {
+                  Row: {
+                    "birth_date": string | null,"consent_photos": boolean,"consent_photos_at": string | null,"consent_photos_version": string | null,"instagram": string | null,"profile_id": string,"show_birthday": boolean,"show_instagram": boolean,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "birth_date"?: string | null,"consent_photos"?: boolean,"consent_photos_at"?: string | null,"consent_photos_version"?: string | null,"instagram"?: string | null,"profile_id": string,"show_birthday"?: boolean,"show_instagram"?: boolean,"updated_at"?: string
+                  }
+                  Update: {
+                    "birth_date"?: string | null,"consent_photos"?: boolean,"consent_photos_at"?: string | null,"consent_photos_version"?: string | null,"instagram"?: string | null,"profile_id"?: string,"show_birthday"?: boolean,"show_instagram"?: boolean,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "member_details_profile_id_fkey"
+      columns: ["profile_id"]
+isOneToOne: true
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"member_motorcycles": {
+                  Row: {
+                    "brand": string,"cc": number | null,"created_at": string,"id": string,"model": string,"profile_id": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "brand": string,"cc"?: number | null,"created_at"?: string,"id"?: string,"model": string,"profile_id": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "brand"?: string,"cc"?: number | null,"created_at"?: string,"id"?: string,"model"?: string,"profile_id"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "member_motorcycles_profile_id_fkey"
+      columns: ["profile_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"profiles": {
                   Row: {
                     "avatar_url": string | null,"city": string,"created_at": string,"district": string | null,"full_name": string,"id": string,"preferred_locale": string,"role_id": string | null,"side": Database["public"]['Enums']["istanbul_side"] | null,"status": Database["public"]['Enums']["member_status"],"updated_at": string
@@ -125,6 +165,16 @@ isOneToOne: false
 "linkable_accounts":
 { Args: { "after_created"?: string,"after_id"?: string,"include_active"?: boolean,"search"?: string }; Returns: {
               "avatar_url": string,"created_at": string,"email": string,"full_name": string,"id": string,"status": Database["public"]['Enums']["member_status"]
+            }[]
+                           },
+"member_directory":
+{ Args: { "after_id"?: string,"after_name"?: string,"page_size"?: number,"search"?: string,"side_filter"?: Database["public"]['Enums']["istanbul_side"] }; Returns: {
+              "avatar_url": string,"birth_day": number,"birth_month": number,"district": string,"full_name": string,"id": string,"instagram": string,"motorcycles": Json,"side": Database["public"]['Enums']["istanbul_side"]
+            }[]
+                           },
+"member_directory_counts":
+{ Args: { "search"?: string }; Returns: {
+              "asian": number,"european": number,"total": number
             }[]
                            },
 "my_application_status":

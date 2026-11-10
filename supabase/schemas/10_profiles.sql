@@ -34,6 +34,27 @@ create trigger profiles_set_updated_at
 before update on public.profiles
 for each row execute function private.set_updated_at();
 
+-- security definer: the trigger fires with the writer's rights (anon for the public
+-- form), who may not call private.* helpers.
+create or replace function private.profiles_tidy_name()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  new.full_name = private.tidy_name(
+    new.full_name, private.uses_turkish_casing(new.full_name, new.preferred_locale));
+  return new;
+end;
+$$;
+
+revoke all on function private.profiles_tidy_name() from public, anon, authenticated;
+
+create trigger profiles_tidy_name
+before insert or update of full_name on public.profiles
+for each row execute function private.profiles_tidy_name();
+
 -- ---------------------------------------------------------------------------
 -- Access helpers (security definer so they can read profiles/roles without
 -- recursing into their RLS policies). Only *active* members have any rights.
@@ -106,7 +127,9 @@ grant execute on function private.has_permission(public.permission) to authentic
 
 revoke all on table public.profiles from anon, authenticated;
 grant select on table public.profiles to authenticated;
-grant update (full_name, avatar_url, preferred_locale, city, district, side)
+-- No full_name (name lock: staff correct names via set_member_name) and no avatar_url
+-- (the directory shows avatars to every member; a self-set URL could log viewers' IPs).
+grant update (preferred_locale, city, district, side)
   on table public.profiles to authenticated;
 
 alter table public.profiles enable row level security;
@@ -294,7 +317,7 @@ $$;
 
 -- members.manage: correct a member's name (e.g. the Google account name isn't
 -- the real one). Trimmed, 2–120 characters. Only admins may rename an admin.
--- Members still edit their own name via the profiles update grant.
+-- Members cannot edit their own name (no profiles update grant on full_name).
 create or replace function public.set_member_name(target_id uuid, new_name text)
 returns void
 language plpgsql
@@ -360,6 +383,7 @@ begin
       then new.raw_user_meta_data ->> 'avatar_url' end
   );
   insert into public.member_contacts (profile_id, email) values (new.id, new.email);
+  insert into public.member_details (profile_id) values (new.id);
   perform private.activate_from_approved_application(new.id);
   return new;
 end;

@@ -6,6 +6,7 @@
   "Nav": {
     "home": "Home",
     "events": "Events",
+    "members": "Members",
     "gallery": "Gallery",
     "apply": "Apply",
     "signIn": "Sign in",
@@ -80,6 +81,75 @@
     "applyNow": "Apply",
     "underReviewTitle": "Your application is under review",
     "underReviewBody": "Once it's approved, your account becomes active automatically."
+  },
+  "Members": {
+    "title": "Members",
+    "total": "{count, plural, one {# member} other {# members}}",
+    "search": "Search members",
+    "searchLabel": "Search members",
+    "sides": {
+      "all": "All",
+      "asian": "Asian side",
+      "european": "European side"
+    },
+    "editProfile": "Edit my profile",
+    "empty": "No members to show yet.",
+    "noResults": "No members match your search.",
+    "activeOnlyTitle": "The member list is for active members",
+    "activeOnlyBody": "Your membership needs to be active to see other members.",
+    "birthday": "🎂 {date}",
+    "instagram": "Instagram: @{handle}"
+  },
+  "Profile": {
+    "nameHint": "To change your name, ask the club team.",
+    "location": "Location",
+    "city": "City",
+    "cityIstanbul": "Istanbul",
+    "cityOther": "Another city",
+    "cityName": "City name",
+    "district": "District",
+    "districtPlaceholder": "Select district",
+    "motorcycles": "My motorcycles",
+    "noMotorcycles": "You haven't added a motorcycle yet.",
+    "addMotorcycle": "Add motorcycle",
+    "editMotorcycle": "Edit motorcycle",
+    "editMotorcycleLabel": "Edit {name}",
+    "deleteMotorcycleLabel": "Delete {name}",
+    "brand": "Brand",
+    "model": "Model",
+    "cc": "Engine size (cc)",
+    "optional": "optional",
+    "limitReached": "You can add up to 10 motorcycles.",
+    "deleteTitle": "Delete motorcycle",
+    "deleteConfirm": "Are you sure you want to delete {name}?",
+    "confirmDelete": "Delete",
+    "cancel": "Cancel",
+    "visibility": "Visibility",
+    "visibilityHint": "What you turn on is visible to other active members in the member list.",
+    "instagram": "Instagram username",
+    "instagramPlaceholder": "@username",
+    "showInstagram": "Show my Instagram in the member list",
+    "showBirthday": "Show my birthday (day and month)",
+    "birthdayMissing": "No birth date on file.",
+    "birthDate": "Birth date",
+    "photoConsent": "Photo consent",
+    "photoConsentLabel": "I give my explicit consent for photos of me taken at events to be shared in the club gallery.",
+    "privacyLink": "Privacy notice",
+    "consentGiven": "You gave consent ({date}).",
+    "consentNotGiven": "Consent not given.",
+    "save": "Save",
+    "saved": "Saved.",
+    "errors": {
+      "invalid": "Something is wrong with the details, check and try again.",
+      "forbidden": "You don't have permission to do this.",
+      "limit": "You can add up to 10 motorcycles.",
+      "error": "Something went wrong. Please try again.",
+      "required": "This field is required.",
+      "tooLong": "Too long.",
+      "invalidNumber": "Enter a number between 50 and 3000.",
+      "invalidInstagram": "Enter a valid Instagram username or link.",
+      "invalidDistrict": "Pick a district from the list."
+    }
   },
   "Apply": {
     "title": "Apply to join",
@@ -264,10 +334,6 @@
       "duplicate": "A role with this name already exists.",
       "error": "Something went wrong. Please try again."
     },
-    "pagination": {
-      "next": "Next page",
-      "first": "First page"
-    },
     "members": {
       "title": "Members & access",
       "statuses": {
@@ -408,6 +474,10 @@
     "invite": {
       "message": "Hi {name}! 🏍️ Your Ride & Vibe application has been approved, welcome aboard!\n\nTo complete your membership, sign in with the Google account of the email you applied with ({email}):\n{url}\n\nIf that email isn't a Google account, just reply here and we'll link your account together."
     }
+  },
+  "Pagination": {
+    "next": "Next page",
+    "first": "First page"
   },
   "NotFound": {
     "title": "Page not found",

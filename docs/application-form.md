@@ -64,6 +64,11 @@ signed-in submit it says "once approved, this account becomes active automatical
 email afterwards and link an application to an account by hand; the application page shows the linked account's
 sign-in email and warns when it differs from the application email.
 
+## After approval
+
+On approval, birth date, Instagram, photo consent and the motorcycle are copied to the member profile; photo consent
+is then changed on `/account`.
+
 ## Stored automatically
 
 Submission time, form language, UTM source/medium/campaign/content, status (`new` → `contacted` → `approved` /

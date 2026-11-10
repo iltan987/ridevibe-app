@@ -10,24 +10,45 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ## Next up (iltan asked for these; start in a new session)
 
-- **Members iteration** (2026-11-10, iltan) — MVP step 2 in `docs/PLAN.md`: member directory (name, district/side,
-  bike) and "my profile" editing, through the usual design → plan → build flow. Decided with iltan (2026-11-10):
-  - **Tidy name capitalization** (required): iltan hand-fixed several names like "Kerim çelik". Title-case with
-    Turkish rules (`i` → `İ`, `ı` → `I`); decide in the design whether at submit (server action, so lists look right),
-    on approval when the name is copied to the profile, or both, plus a one-off backfill of existing rows; mind
-    particles ("de", "van") and names already mixed-case.
-  - **No nickname field** for now (add only if members ask).
-  - **Name lock:** Claude recommends locking `full_name` for active/inactive members (drop it from the members'
-    update grant; staff correct via `set_member_name`); iltan to confirm at the start. Also check whether a Google
-    sign-in can overwrite the profile name after sign-up.
+- **Safety data (2a′)** (2026-11-10, iltan) — next step after Members in `docs/PLAN.md`: emergency contact, blood type
+  with explicit consent (special-category data), plate per bike, a new `members.safety`-style permission, separate
+  consents and the privacy text. Through the usual design → plan → build flow.
+- **List UX iteration: instant filtering, clean URLs, page numbers, caching** (2026-11-10, iltan, after testing
+  `/members`) — applies to `/members` and the admin lists (`/admin/members`, `/admin/applications`). Design first;
+  points iltan raised:
+  - **Feels like a reload:** a side chip or a name search goes back to the server and waits. Wanted: instant results
+    from data already loaded. Options to weigh: load all active members once and filter on the client (≈150–300 rows
+    is small, but it conflicts with the "every list paginates" rule, so that rule needs a decision), or keep server
+    filtering with transitions, a debounced search-as-you-type and the old list kept visible while loading.
+  - **Empty `?q=`:** clearing the search leaves `?q=` in the URL; drop empty params.
+  - **Cursor in the URL** (`?cursor=…`) looks bad. Page numbers (`?page=14`) would fix this and the next point.
+  - **Pagination design and logic:** with 300+ members you have to press "next" 13 times to reach page 14. Wanted:
+    numbered pages / jump to page (or another pattern, e.g. "load more"); offset pagination is fine at this size but
+    replaces the keyset convention in CLAUDE.md, so decide it explicitly. Also restyle the pager.
+  - **Caching:** e.g. Next 16 `use cache` + `cacheTag` for directory data (the same for every active member;
+    invalidate on profile/bike changes with `updateTag`), keeping the auth check outside the cached part.
+- **Theme script error on language switch** (2026-11-10, iltan) — switching the language logs "Encountered a script
+  tag while rendering React component" from `ThemeScript` (`src/components/theme/theme-script.tsx`, rendered in the
+  `<head>` of `[locale]/layout.tsx`): changing the `[locale]` root param re-renders the root layout on the client.
+  Same root cause as the older 404-path item below (merge both). Research the Next 16 way to ship a pre-paint script,
+  and check whether the client re-render also resets a light-theme user to dark (`<html className="… dark">`).
+  Small `fix/` branch.
 
 ## Open decisions (need iltan)
 
-- **Lock the member name after activation?** (2026-11-09, application gaps) — staff can now correct names and the
-  approved application's name is copied to the profile, but members can still change their own `full_name`
-  (`profiles` update grant), so a nickname can come back. Decide in the Members iteration.
+- **Vercel Web Analytics and Speed Insights?** (2026-11-10, iltan asked) — Claude's recommendation: **add Web
+  Analytics** (page views, referrers, the Instagram-ad funnel; cookieless, data anonymised with a daily-rotating request
+  hash; Hobby includes 50,000 events/month, collection pauses (no bill) when exceeded) and **skip Speed Insights for
+  now** (Hobby free tier: 10,000 events per 30 days and only the overall score with 24 h / 7 day ranges; Core Web
+  Vitals detail needs Pro). If added: mention Vercel analytics in the privacy notice (Vercel is already listed as a
+  processor). Sources: vercel.com/docs/analytics, /docs/analytics/limits-and-pricing,
+  /docs/speed-insights/limits-and-pricing (checked 2026-11-10).
+
 - **Ban evasion vs. linking** (2026-11-09, application gaps) — when the ban list is built (PLAN "Member conduct"),
   check new applications *and* staff links (`link_application`) against it.
+- **Privacy notice: directory purpose and legal basis** (2026-11-10, members review) — sections 3/4 of the notice
+  (purposes, legal basis) don't mention the in-club member directory (name, district, bikes, opt-in birthday and
+  Instagram shown to active members). Question for the lawyer review of the notice.
 
 ## Features
 
@@ -40,6 +61,18 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 - **History of staff corrections** (2026-11-09, spec) — name/phone/email corrections only bump `updated_at`; who
   changed what is not recorded. Add an audit trail if disputes come up.
 - **Applicants editing their own application** (2026-11-09, spec) — out of scope; staff correct it instead.
+- **Staff correction of member profile data** (2026-11-10, members) — birth date, Instagram and bikes copied from the
+  application can only be fixed by the member (or SQL). Add staff RPCs (like `set_member_name`) if members ask.
+- **Medical notes and "first-aid trained" flag** (2026-11-10, idea) — free-text medical notes and a flag for members
+  who can give first aid; belongs with the safety data (2a′), special-category data rules apply.
+- **Navigation review once events exist** (2026-11-10, members) — the bottom tab bar has 5 tabs at 390px after
+  `/members`; re-check labels and spacing when Events lands.
+- **My garage** (2026-11-10, member request via iltan) — a personal garage per member: their bikes (today's
+  `member_motorcycles`) with important dates (insurance/sigorta, inspection/muayene, last and next service or
+  maintenance, …) and personal notes. Design questions: private to the owner (unlike the directory's brand/model/cc);
+  fixed date types vs. free-form entries; reminders before a date (Web Push / email, needs the notification work);
+  how it relates to the plate per bike planned in safety data (2a′) — consider designing the two together. KVKK:
+  plates, insurance details and notes are personal data; collect only what members choose to enter.
 
 ## Parked edge cases (known, judged harmless for now)
 
@@ -58,7 +91,27 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ### Database / tests
 - **Turkish case folding in `linkable_accounts` search** (2026-11-09) — `ilike` doesn't fold `ı/İ`
-  (`supabase/schemas/20_applications.sql`). Email search and name-match ordering compensate.
+  (`supabase/schemas/20_applications.sql`). Email search and name-match ordering compensate. Fix: reuse
+  `private.search_fold` (`30_member_directory.sql`) on both sides of the `like`.
+- **Members DB review minors** (2026-11-10, members review) — (a) `private.tidy_name(…, false)` maps `İ` to `I`, so
+  `'ÇELİK'` stays mixed-case with `turkish = false`; unreachable through the triggers (`İ` forces Turkish). (b)
+  Instagram check accepts `...` / a trailing `.` (same as `applications`; matches the spec). (c) The motorcycle cap
+  trigger runs before the RLS check, so a foreign-profile insert on a target with 10 bikes gets `23514` instead of
+  `42501` (tiny info leak, briefly locks the target profile); fix: early-return when `new.profile_id <> auth.uid()`
+  or `for no key update`. (d) The photo-consent fill helper updates `member_details` unconditionally, bumping
+  `updated_at` for every backfilled profile. (e) The search-pattern block is duplicated in `member_directory` and its
+  count RPC; extract `private.search_pattern` if a third caller appears. (f) `consent_photos_version` is
+  member-writable free text (≤ 40 chars; the action writes `PRIVACY_NOTICE_VERSION` only on a real change); could be
+  set server-side (trigger) instead of granted.
+- **Members pgTAP gaps** (2026-11-10, members review) — owner `INSERT` into `member_details` (no grant) not asserted;
+  motorcycle edge cases (cc = 3001, pending/inactive update/delete, manager/anon writes) and a stale comment near
+  line 298 of the motorcycles test; no test that an application with `consent_photos = false` copies its stamp; the
+  null-Instagram directory assertion is weak (passes regardless of the flag); no negative tests for the name-tidy
+  triggers (a null name would become `''` via `coalesce`; unreachable: `full_name` is `not null` on both tables).
+- **Verify private function grants on production** (2026-11-10, members review) — generated migrations revoke the new
+  `private.*` functions only `FROM PUBLIC`, while the schema files also name `anon, authenticated`. After `db push`,
+  check with `has_function_privilege` that anon/authenticated cannot execute them (query in the rollout section of
+  `docs/superpowers/plans/2026-11-10-members.md`, step 4).
 - **Email matching scans `applications`** (2026-11-09) — `private.normalize_email` can't be indexed on a table anon
   writes. Fine at today's volume (tens of rows); revisit if applications reach thousands.
 - **pgTAP gaps** (2026-11-09) — no test for an *inactive* staff member holding `applications.view` /
@@ -76,6 +129,12 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 - **Contact editor shows the generic "invalid" message** for a DB `23514` (only reachable by bypassing Zod).
 - **Rename dialog can be closed mid-save** (`src/components/admin/member-name-dialog.tsx`) — a failure after closing is
   lost; also its failure type includes an unreachable `duplicate`.
+- **Members profile validation edges** (2026-11-10, members review) — `city` / non-object input reaching the profile
+  action shows zod's default English message cast to `ProfileErrorKey` (only via direct endpoint calls; fix:
+  `z.string(err("required"))` or map unknown messages to `required`); the motorcycles `jsonb` cast in the directory
+  query has no element validation; `instagramUrl` doesn't encode the handle (safe: handles are `[A-Za-z0-9._]`);
+  city choice "other" accepts "İstanbul" (check form parity); `z.uuid` is strict about fixture-style ids;
+  `fail()` / `finish()` in the profile actions are untested.
 
 ### UI / accessibility
 - **`/apply` notice cards** (2026-11-10, loading-states) — the form intro still shows above "already a member" /
@@ -94,8 +153,15 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 - **`src/components/ui/dialog.tsx` default "Close" labels are English** — both current dialogs pass
   `showCloseButton={false}`; a future caller using the defaults would leak English.
 - **`Admin.empty`** ("No applications with this status") reads oddly on the "Not signed in" tab.
+- **Members directory a11y and polish** (2026-11-10, members review) — the side-chip `<nav>` has no `aria-label`; the
+  search input and its submit button share one `aria-label`. Account page: focus isn't moved after deleting a bike or
+  to the first invalid field; an invalid field may be announced twice; an empty `ActionStatus` leaves a gap; a
+  redundant cursor class.
 
 ### Loading states
+- **`AccountSkeleton` only mirrors the active-member page** (2026-11-10, members) — pending and inactive accounts see a
+  shorter page (no profile sections, or only the photo consent), so their skeleton overshoots. The status is
+  request-time data, so the fallback can't know it. (Default-state heights are measured: all Δh 0, 2026-11-10.)
 - **Locale switcher shows no pending feedback** (2026-11-10, loading-states) — it uses `router.replace` in a
   transition, not a `Link`, so neither the progress bar nor the dim appears (it still switches and re-enables its
   button). Could drive the pending store from `useTransition`.
@@ -123,6 +189,14 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 - **Re-run the instant-navigation dev check when adding pages** (2026-11-10, loading-states) — see
   `docs/learnings/nextjs.md`; the `/[locale]/[...rest]` catch-all always logs "Could not validate `instant`"
   (it calls `notFound()` by design).
+- **Members skeleton card height varies** (2026-11-10, members E2E) — the card skeleton is 94px (name, location, one
+  bike, measured); real cards are 74px (no bike) to 114px+ (bike + birthday + Instagram, more bikes), so the list can
+  jump a little on load. Accepted: card content varies per member.
 
 ### Tooling
 - **Supabase CLI 3.1.0 is available** (2026-11-10; installed 3.0.0).
+- **Members E2E looseness** (2026-11-10, members review) — some assertions are loose or vacuous in
+  `scripts/e2e/members-e2e.mjs`: pending "no member cards" (passes if the list simply didn't render), "remaining 4
+  members" accepts 1..4 cards, the English check is a loose regexp; bikes planted for the 10-bike cap stay if a check
+  throws mid-run (the next run resets them); the instant-navigation check is evidenced only by the dev log and the
+  browser console.

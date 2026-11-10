@@ -35,13 +35,20 @@ export function PrivacyTr() {
       <ul>
         <li>Üyelik ilişkisinin kurulması ve yürütülmesi için gerekli olması (KVKK m.5/2-c),</li>
         <li>Temel hak ve özgürlüklerinize zarar vermemek kaydıyla kulübün meşru menfaati (KVKK m.5/2-f): kulüp yönetimi, etkinlik güvenliği, tanıtım kanallarının ölçümü,</li>
-        <li>Fotoğraflarınızın galeride paylaşılması için açık rızanız (KVKK m.5/1). Bu rızayı istediğiniz zaman geri alabilirsiniz; geri almak üyeliğinizi etkilemez.</li>
+        <li>Fotoğraflarınızın galeride paylaşılması için açık rızanız (KVKK m.5/1). Bu rızayı istediğiniz zaman hesap sayfanızdan verebilir veya geri alabilirsiniz; geri almak üyeliğinizi etkilemez.</li>
       </ul>
 
       <h2>5. Verileri kimlerle paylaşıyoruz? Yurt dışına aktarım</h2>
       <p>
-        Verileriniz satılmaz ve reklam amacıyla üçüncü kişilerle paylaşılmaz. Hizmeti sunabilmek için aşağıdaki
-        hizmet sağlayıcılarını (veri işleyen) kullanıyoruz:
+        Verileriniz satılmaz ve reklam amacıyla üçüncü kişilerle paylaşılmaz.
+      </p>
+      <p>
+        Kulüp içinde: aktif üyeler, üye rehberinde adınızı, profil fotoğrafınızı, ilçenizi/yakanızı ve
+        motosikletlerinizi görebilir. Doğum gününüz (yalnızca gün ve ay) ve Instagram kullanıcı adınız yalnızca
+        profilinizde açarsanız gösterilir.
+      </p>
+      <p>
+        Hizmeti sunabilmek için aşağıdaki hizmet sağlayıcılarını (veri işleyen) kullanıyoruz:
       </p>
       <ul>
         <li><strong>Supabase</strong> — veritabanı ve kimlik doğrulama; veriler Avrupa Birliği&apos;nde (Frankfurt, Almanya) saklanır.</li>

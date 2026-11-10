@@ -1,8 +1,8 @@
-import { CalendarDays, House, Images, UserPlus, type LucideIcon } from "lucide-react";
+import { CalendarDays, House, Images, UserPlus, Users, type LucideIcon } from "lucide-react";
 
 export type NavItem = {
-  href: "/" | "/events" | "/gallery" | "/apply";
-  labelKey: "home" | "events" | "gallery" | "apply";
+  href: "/" | "/events" | "/members" | "/gallery" | "/apply";
+  labelKey: "home" | "events" | "members" | "gallery" | "apply";
   icon: LucideIcon;
 };
 
@@ -11,6 +11,7 @@ export type NavItem = {
 export const navItems: NavItem[] = [
   { href: "/", labelKey: "home", icon: House },
   { href: "/events", labelKey: "events", icon: CalendarDays },
+  { href: "/members", labelKey: "members", icon: Users },
   { href: "/gallery", labelKey: "gallery", icon: Images },
   { href: "/apply", labelKey: "apply", icon: UserPlus },
 ];
