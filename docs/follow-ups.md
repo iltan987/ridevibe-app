@@ -94,6 +94,10 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 - **`Admin.empty`** ("No applications with this status") reads oddly on the "Not signed in" tab.
 
 ### Loading states
+- **`AccountSkeleton` only mirrors the active-member page** (2026-11-10, members) — pending and inactive accounts see a
+  shorter page (no profile sections, or only the photo consent), so their skeleton overshoots. The status is
+  request-time data, so the fallback can't know it. The section skeleton heights are rough, not measured
+  (`scripts/e2e/skeletons.mjs`).
 - **Locale switcher shows no pending feedback** (2026-11-10, loading-states) — it uses `router.replace` in a
   transition, not a `Link`, so neither the progress bar nor the dim appears (it still switches and re-enables its
   button). Could drive the pending store from `useTransition`.

@@ -7,9 +7,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { LocationForm } from "@/components/profile/location-form";
+import { MotorcyclesSection } from "@/components/profile/motorcycles-section";
+import { PhotoConsentForm } from "@/components/profile/photo-consent-form";
+import { VisibilityForm } from "@/components/profile/visibility-form";
 import { getPathname, redirect } from "@/i18n/navigation";
 import { getCurrentUser } from "@/lib/auth/user";
 import { initials } from "@/lib/initials";
+import { getMyProfile } from "@/lib/members/queries";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("Account");
@@ -30,10 +35,11 @@ export default function AccountPage() {
 }
 
 async function AccountDetails() {
-  const [user, locale, t] = await Promise.all([
+  const [user, locale, t, tp] = await Promise.all([
     getCurrentUser(),
     getLocale(),
     getTranslations("Account"),
+    getTranslations("Profile"),
   ]);
 
   if (!user) {
@@ -43,6 +49,10 @@ async function AccountDetails() {
 
   const profile = user.profile;
   const name = profile?.full_name || user.email || "";
+  // Active members edit everything; inactive ones only keep the photo consent
+  // (withdrawal must stay possible). Pending accounts have no profile data yet.
+  const myProfile =
+    profile?.status === "active" || profile?.status === "inactive" ? await getMyProfile() : null;
 
   return (
     <>
@@ -58,6 +68,7 @@ async function AccountDetails() {
           <div className="min-w-0">
             <CardTitle className="truncate text-lg">{name}</CardTitle>
             {user.email && <CardDescription className="truncate">{user.email}</CardDescription>}
+            {profile && <p className="mt-1 text-xs text-muted-foreground">{tp("nameHint")}</p>}
           </div>
         </CardHeader>
         {profile && (
@@ -75,29 +86,73 @@ async function AccountDetails() {
           </CardContent>
         )}
       </Card>
+      {myProfile && (
+        <>
+          {profile?.status === "active" && (
+            <>
+              <LocationForm city={myProfile.city} district={myProfile.district} />
+              <MotorcyclesSection motorcycles={myProfile.motorcycles} />
+              <VisibilityForm
+                instagram={myProfile.instagram}
+                showInstagram={myProfile.showInstagram}
+                showBirthday={myProfile.showBirthday}
+                birthDate={myProfile.birthDate}
+              />
+            </>
+          )}
+          <PhotoConsentForm consent={myProfile.consentPhotos} consentAt={myProfile.consentPhotosAt} />
+        </>
+      )}
     </>
   );
 }
 
-/** Mirrors the account card of a member: avatar + name/email header, status and role rows. */
+/**
+ * Mirrors the default (active member) page: the account card plus the four
+ * profile sections. Pending and inactive pages are shorter (status is request-time data).
+ */
 function AccountSkeleton() {
   return (
-    <Card data-skeleton="account">
-      <CardHeader className="flex flex-row items-center gap-4">
-        <Skeleton className="size-14 rounded-full" />
-        <div className="flex min-w-0 flex-col gap-1">
-          <Skeleton className="my-1 h-4 w-32" />
-          <Skeleton className="my-1 h-3.5 w-44" />
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-[auto_1fr] items-center gap-x-6 gap-y-3">
-          <Skeleton className="h-4 w-12" />
-          <Skeleton className="h-[21px] w-16 rounded-full" />
-          <Skeleton className="h-4 w-8" />
-          <Skeleton className="h-5 w-20" />
-        </div>
-      </CardContent>
-    </Card>
+    <>
+      <Card data-skeleton="account">
+        <CardHeader className="flex flex-row items-center gap-4">
+          <Skeleton className="size-14 rounded-full" />
+          <div className="flex min-w-0 flex-col gap-1">
+            <Skeleton className="my-1 h-4 w-32" />
+            <Skeleton className="my-1 h-3.5 w-44" />
+            <Skeleton className="mt-1 h-3 w-56" />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-[auto_1fr] items-center gap-x-6 gap-y-3">
+            <Skeleton className="h-4 w-12" />
+            <Skeleton className="h-[21px] w-16 rounded-full" />
+            <Skeleton className="h-4 w-8" />
+            <Skeleton className="h-5 w-20" />
+          </div>
+        </CardContent>
+      </Card>
+      {[
+        // location: radios + district select + save
+        ["h-10 w-full", "h-10 w-full", "h-8 w-20"],
+        // motorcycles: one row + add button
+        ["h-8 w-full", "h-8 w-36"],
+        // visibility: instagram + two switches + save
+        ["h-10 w-full", "h-10 w-full", "h-10 w-full", "h-8 w-20"],
+        // photo consent: switch + link + save
+        ["h-10 w-full", "h-5 w-40", "h-8 w-20"],
+      ].map((rows, index) => (
+        <Card key={index}>
+          <CardHeader>
+            <Skeleton className="h-5 w-32" />
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            {rows.map((size, row) => (
+              <Skeleton key={row} className={size} />
+            ))}
+          </CardContent>
+        </Card>
+      ))}
+    </>
   );
 }
