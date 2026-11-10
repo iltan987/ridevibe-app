@@ -141,6 +141,12 @@
   html {
     @apply font-sans;
   }
+  a {
+    transition: opacity 150ms;
+  }
+  a:has(> [data-link-pending]) {
+    opacity: 0.6;
+  }
   :root {
     color-scheme: light;
   }
