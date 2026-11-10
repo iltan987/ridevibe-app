@@ -127,6 +127,7 @@
     "visibility": "Görünürlük",
     "visibilityHint": "Açtığın bilgiler üye listesinde diğer aktif üyelere görünür.",
     "instagram": "Instagram kullanıcı adı",
+    "instagramPlaceholder": "@kullaniciadi",
     "showInstagram": "Instagram'ımı üye listesinde göster",
     "showBirthday": "Doğum günümü (gün ve ay) göster",
     "birthdayMissing": "Kayıtlı bir doğum tarihin yok.",

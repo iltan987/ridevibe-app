@@ -127,6 +127,7 @@
     "visibility": "Visibility",
     "visibilityHint": "What you turn on is visible to other active members in the member list.",
     "instagram": "Instagram username",
+    "instagramPlaceholder": "@username",
     "showInstagram": "Show my Instagram in the member list",
     "showBirthday": "Show my birthday (day and month)",
     "birthdayMissing": "No birth date on file.",

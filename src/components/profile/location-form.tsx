@@ -17,7 +17,7 @@ type CityChoice = "istanbul" | "other";
 /** City and district; the side of the Bosphorus is derived on the server. */
 export function LocationForm({ city, district }: { city: string; district: string | null }) {
   const t = useTranslations("Profile");
-  const { isPending, result, run, fieldError } = useProfileAction();
+  const { isPending, result, setResult, run, fieldError } = useProfileAction();
   const [choice, setChoice] = useState<CityChoice>(city === ISTANBUL ? "istanbul" : "other");
 
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -36,7 +36,7 @@ export function LocationForm({ city, district }: { city: string; district: strin
   const districtError = fieldError("district");
 
   return (
-    <Card>
+    <Card data-skeleton-result="profile-location">
       <CardHeader>
         <CardTitle>{t("location")}</CardTitle>
       </CardHeader>
@@ -47,7 +47,10 @@ export function LocationForm({ city, district }: { city: string; district: strin
             <RadioGroup
               aria-labelledby="profile-city-choice"
               value={choice}
-              onValueChange={(v) => setChoice(v as CityChoice)}
+              onValueChange={(v) => {
+                setChoice(v as CityChoice);
+                setResult(null);
+              }}
               className="flex flex-wrap gap-2"
             >
               {(["istanbul", "other"] as const).map((value) => (

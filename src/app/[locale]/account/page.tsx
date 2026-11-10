@@ -120,7 +120,7 @@ function AccountSkeleton() {
           <div className="flex min-w-0 flex-col gap-1">
             <Skeleton className="my-1 h-4 w-32" />
             <Skeleton className="my-1 h-3.5 w-44" />
-            <Skeleton className="mt-1 h-3 w-56" />
+            <Skeleton className="mt-1 h-4 w-56" />
           </div>
         </CardHeader>
         <CardContent>
@@ -134,15 +134,15 @@ function AccountSkeleton() {
       </Card>
       {[
         // location: radios + district select + save
-        ["h-10 w-full", "h-10 w-full", "h-8 w-20"],
+        ["profile-location", "h-10 w-full", "h-10 w-full", "h-8 w-20"],
         // motorcycles: one row + add button
-        ["h-8 w-full", "h-8 w-36"],
+        ["profile-motorcycles", "h-8 w-full", "h-8 w-36"],
         // visibility: instagram + two switches + save
-        ["h-10 w-full", "h-10 w-full", "h-10 w-full", "h-8 w-20"],
+        ["profile-visibility", "h-10 w-full", "h-10 w-full", "h-10 w-full", "h-8 w-20"],
         // photo consent: switch + link + save
-        ["h-10 w-full", "h-5 w-40", "h-8 w-20"],
-      ].map((rows, index) => (
-        <Card key={index}>
+        ["profile-consent", "h-10 w-full", "h-5 w-40", "h-8 w-20"],
+      ].map(([id, ...rows]) => (
+        <Card key={id} data-skeleton={id}>
           <CardHeader>
             <Skeleton className="h-5 w-32" />
           </CardHeader>

@@ -21,7 +21,7 @@ export function PhotoConsentForm({ consent, consentAt }: { consent: boolean; con
     : null;
 
   return (
-    <Card>
+    <Card data-skeleton-result="profile-consent">
       <CardHeader>
         <CardTitle>{t("photoConsent")}</CardTitle>
       </CardHeader>

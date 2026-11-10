@@ -35,7 +35,7 @@ export function VisibilityForm({ instagram, showInstagram, showBirthday, birthDa
   const instagramError = fieldError("instagram");
 
   return (
-    <Card>
+    <Card data-skeleton-result="profile-visibility">
       <CardHeader>
         <CardTitle>{t("visibility")}</CardTitle>
         <CardDescription>{t("visibilityHint")}</CardDescription>
@@ -48,7 +48,7 @@ export function VisibilityForm({ instagram, showInstagram, showBirthday, birthDa
               id="profile-instagram"
               value={handle}
               onChange={(event) => setHandle(event.target.value)}
-              placeholder="@kullaniciadi"
+              placeholder={t("instagramPlaceholder")}
               maxLength={300}
               autoCapitalize="none"
               autoCorrect="off"
@@ -68,9 +68,9 @@ export function VisibilityForm({ instagram, showInstagram, showBirthday, birthDa
               className="flex min-h-10 items-center justify-between gap-4 text-sm has-enabled:cursor-pointer"
             >
               {t("showBirthday")}
-              <Switch checked={birthdayOn} onCheckedChange={setBirthdayOn} disabled={!birthDate} />
+              <Switch checked={birthdayOn} onCheckedChange={setBirthdayOn} disabled={!birthDate} aria-describedby={birthDate ? undefined : "profile-birthday-missing"} />
             </label>
-            {!birthDate && <FieldDescription>{t("birthdayMissing")}</FieldDescription>}
+            {!birthDate && <FieldDescription id="profile-birthday-missing">{t("birthdayMissing")}</FieldDescription>}
           </div>
 
           {birthDate && (

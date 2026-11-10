@@ -28,11 +28,13 @@ type Item = { id: string; brand: string; model: string; cc: number | null };
 export function MotorcyclesSection({ motorcycles }: { motorcycles: Item[] }) {
   const t = useTranslations("Profile");
   const { isPending, result, setResult, run } = useProfileAction();
-  const [toDelete, setToDelete] = useState<Item | null>(null);
+  // `target` outlives the dialog so its text doesn't blank while it animates closed.
+  const [target, setTarget] = useState<Item | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const full = motorcycles.length >= MAX_MOTORCYCLES;
 
   return (
-    <Card>
+    <Card data-skeleton-result="profile-motorcycles">
       <CardHeader>
         <CardTitle>{t("motorcycles")}</CardTitle>
       </CardHeader>
@@ -62,7 +64,8 @@ export function MotorcyclesSection({ motorcycles }: { motorcycles: Item[] }) {
                       aria-label={t("deleteMotorcycleLabel", { name })}
                       onClick={() => {
                         setResult(null);
-                        setToDelete(bike);
+                        setTarget(bike);
+                        setConfirmOpen(true);
                       }}
                     >
                       <Trash2 aria-hidden />
@@ -77,30 +80,35 @@ export function MotorcyclesSection({ motorcycles }: { motorcycles: Item[] }) {
         <div className="flex flex-col items-start gap-2">
           <MotorcycleDialog
             trigger={
-              <Button type="button" variant="outline" disabled={full}>
+              <Button type="button" variant="outline" disabled={full} aria-describedby={full ? "profile-motorcycle-limit" : undefined}>
                 <Plus aria-hidden /> {t("addMotorcycle")}
               </Button>
             }
           />
-          {full && <p className="text-sm text-muted-foreground">{t("limitReached")}</p>}
-          <ActionStatus result={toDelete ? null : result} showSaved={false} />
+          {full && (
+            <p id="profile-motorcycle-limit" className="text-sm text-muted-foreground">
+              {t("limitReached")}
+            </p>
+          )}
+          <ActionStatus result={confirmOpen ? null : result} showSaved={false} />
         </div>
       </CardContent>
 
-      <AlertDialog open={toDelete !== null} onOpenChange={(open) => !open && setToDelete(null)}>
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("deleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("deleteConfirm", { name: toDelete ? formatMotorcycle(toDelete) : "" })}
+              {t("deleteConfirm", { name: target ? formatMotorcycle(target) : "" })}
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <ActionStatus result={result} showSaved={false} />
           <AlertDialogFooter>
             <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
               disabled={isPending}
-              onClick={() => toDelete && run(() => deleteMotorcycle(toDelete.id), () => setToDelete(null))}
+              onClick={() => target && run(() => deleteMotorcycle(target.id), () => setConfirmOpen(false))}
             >
               {t("confirmDelete")}
             </AlertDialogAction>
