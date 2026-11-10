@@ -36,6 +36,11 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ## Open decisions (need iltan)
 
+- **Dead-code tool?** (2026-11-11, iltan) — which tool, if any, for the dead-code sweep (Tooling). Candidates to
+  compare when we talk: `knip` (unused files, exports, dependencies; Next.js plugin), `ts-prune`/`ts-unused-exports`
+  (exports only), TypeScript's `noUnusedLocals`/`noUnusedParameters` and ESLint rules (locals only), or no tool (manual
+  search). Research current status/maintenance before recommending; installing anything needs iltan's OK.
+
 - **Vercel Web Analytics and Speed Insights?** (2026-11-10, iltan asked) — Claude's recommendation: **add Web
   Analytics** (page views, referrers, the Instagram-ad funnel; cookieless, data anonymised with a daily-rotating request
   hash; Hobby includes 50,000 events/month, collection pauses (no bill) when exceeded) and **skip Speed Insights for
@@ -205,8 +210,8 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ### Tooling
 - **Dead-code sweep** (2026-11-11, iltan) — iltan wants dead code removed when there is no reason to keep it, and a
-  sweep now and then. First sweep: unused exports/files/dependencies (a tool such as `knip`, not installed: ask before
-  adding it), unused message keys in `messages/*.json`, stale comments and follow-up items that point at removed code.
+  sweep now and then. First sweep: unused exports/files/dependencies (tool still open, see "Dead-code tool?" under
+  Open decisions), unused message keys in `messages/*.json`, stale comments and follow-up items that point at removed code.
 - **Supabase CLI 3.1.0 is available** (2026-11-10; installed 3.0.0).
 - **Members E2E looseness** (2026-11-10, members review) — some assertions are loose or vacuous in
   `scripts/e2e/members-e2e.mjs`: pending "no member cards" (passes if the list simply didn't render), "remaining 4
