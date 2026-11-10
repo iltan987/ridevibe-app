@@ -89,7 +89,12 @@ Build in this order, one branch each:
 1. **Applications review workflow** ✅ (2026-11-08) — status changes + notes; on approval a WhatsApp invite with
    sign-in link; signing in with the same email (Gmail dots/+tags ignored) activates the member automatically.
    Different email → staff activate the pending sign-up on `/admin/members` (shows sign-in emails).
-2. **Members** — directory (name, district/side, bike) and "my profile" editing.
+2. **2a Members** ✅ (2026-11-10) — member directory at `/members` (active members see name, photo, district/side,
+   motorcycles; birth day/month and Instagram only when the member opts in) and "my profile" on `/account` (location,
+   motorcycles, visibility, photo consent). Tidy name capitalization (Turkish rules) and name lock for active members.
+   Spec: `docs/superpowers/specs/2026-11-10-members-design.md`.
+   2a′. **Safety data** (next) — emergency contact, blood type with explicit consent, plate per bike, a new
+   `members.safety`-style permission, consents, privacy text.
    2b. **Member conduct** — confidential staff notes, warnings, suspend/ban (see "Member conduct" below).
 3. **Events** — organizers create rides (date, route, capacity); rides have a **route** (path with start, stops,
    finish), not a single meeting point — see spec §6; members RSVP with a waiting list; home page shows upcoming events.

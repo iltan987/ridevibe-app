@@ -39,13 +39,20 @@ export function PrivacyEn() {
       <ul>
         <li>Necessity for establishing and performing the membership relationship (KVKK art. 5/2-c),</li>
         <li>The club&apos;s legitimate interest, provided it does not harm your fundamental rights (KVKK art. 5/2-f): running the club, event safety, measuring promotion channels,</li>
-        <li>Your explicit consent for sharing photos in the gallery (KVKK art. 5/1). You can withdraw it at any time without affecting your membership.</li>
+        <li>Your explicit consent for sharing photos in the gallery (KVKK art. 5/1). You can give or withdraw it at any time on your account page, without affecting your membership.</li>
       </ul>
 
       <h2>5. Who we share it with; transfers abroad</h2>
       <p>
-        Your data is never sold or shared with third parties for advertising. To provide the service we use these
-        service providers (data processors):
+        Your data is never sold or shared with third parties for advertising.
+      </p>
+      <p>
+        Within the club: active members can see your name, profile photo, district/side and motorcycles in the member
+        directory. Your birthday (day and month only) and Instagram username are shown only if you turn them on in your
+        profile.
+      </p>
+      <p>
+        To provide the service we use these service providers (data processors):
       </p>
       <ul>
         <li><strong>Supabase</strong> — database and authentication; data is stored in the European Union (Frankfurt, Germany).</li>
