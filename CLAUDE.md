@@ -81,6 +81,8 @@ kill $(ss -ltnp | grep ':3123 ' | grep -oP 'pid=\K[0-9]+')   # stop a local serv
   (`members.manage`). App side: `can(user.access, p)`, `requirePermission()` / `requireAdmin()` in
   `src/lib/auth/`. A new permission = enum value + policy/RPC check + pgTAP test + `Admin.permissions.*` messages.
 - Status: `pending` / `active` / `inactive`.
+- Anything that decides which account becomes active (approve, `link_application`, editing the email of an approved
+  application) requires `applications.decide`; `applications.profile_id` = the account an application belongs to.
 - Every permission rule gets a pgTAP test, including the "must fail" cases.
 - Generated migrations may DROP a replaced column before its data is copied: move the DROP to the end and add the
   hand-written data step in between. Seed rows the app relies on (e.g. built-in roles) go in the migration.
@@ -103,6 +105,10 @@ kill $(ss -ltnp | grep ':3123 ' | grep -oP 'pid=\K[0-9]+')   # stop a local serv
 - Rollout: merge → `db push` (dry-run first) → `test db --remote --yes` → push `main` (Vercel deploys). If the
   migration removes something old code uses, push `main` immediately after. Don't push branches with schema changes
   for a preview first: previews use the production DB.
+- Before `db push`, run read-only checks for anything a new constraint/unique index could reject:
+  `docker run --rm postgres:17-alpine psql "$URL" -c "set default_transaction_read_only = on" -c "<query>"`.
+- New column the form writes: nullable in the DB (old rows), required in Zod; `db push` before pushing `main`.
+- Deploy status: `vercel ls ridevibe-app --environment production` (top row: Building → Ready).
 - Check crons/requests: `vercel --scope <team> logs requests --project ridevibe-app --environment production --json
   --since 45m -q 'requestPath:"/api/keep-alive"'` (Hobby keeps < 1 h; fields under `.data`).
 
