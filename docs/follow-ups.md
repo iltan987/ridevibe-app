@@ -69,9 +69,9 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   "under review". (The skeleton's jump to a small card is part of the admin/state-dependent skeleton item below.)
 - **Admin skeletons mirror only the default state** (2026-11-10, loading-states) — members list: the `pending` tab
   (rows 147px phone / 107px desktop plus the 4-line hint); on `?status=active` the rows are 170/82px and there is no
-  hint (jump up to ~45px). Application detail: a `new`, unlinked application; an approved one has a taller review card (+99px phone, +19px desktop), shifting
-  the section cards below it. Fix would need the tab/status in the fallback (request-time data, so not possible behind
-  the current Suspense).
+  hint (jump up to ~45px). Application detail: a `new`, unlinked application; an approved one has a taller review
+  card (+99px phone, +19px desktop), shifting the section cards below it. Fix would need the tab/status in the
+  fallback (request-time data, so not possible behind the current Suspense).
 - **Non-Gmail note on `/apply`** has no `aria-live`, so screen readers don't hear it appear.
 - **In-app notice on `/sign-in`** — appears after hydration (layout shift, inherent to the static page); the copied URL
   keeps `?next`/`?error`; the "copied" live region sits inside `role="alert"` (possible double announcement); light-theme
@@ -95,14 +95,15 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   (string is "Giriş Yap"), one long unformatted line, `Line` helper uses a template literal instead of `cn`, the
   `md:h-8` row is undocumented.
 - **Pending dim polish** (2026-11-10, loading-states review) — no fade-out when pending ends (animation is removed),
-  undocumented; the 150 ms opacity animation still runs under `prefers-reduced-motion` (low risk). Also check the
-  hidden `keepMounted` user-menu links don't cause extra prefetches.
+  undocumented; the 150 ms opacity animation still runs under `prefers-reduced-motion` (low risk).
 - **`pending-store.ts` robustness and tests** (2026-11-10, loading-states review) — a throwing listener stops later
   listeners in `emit`; the subscribe test also asserts unrelated getters and there is no double-subscribe /
   unsubscribe test.
 - **Learnings wording** (2026-11-10, loading-states review) — the `useLinkStatus` entry in `docs/learnings/nextjs.md`
   still says "likely"/"observed, not verified" about prefetch covering only the static shell; confirm against the
   Next docs or leave as is.
+- **`skeletons.mjs` only startup-checked** (2026-11-10, loading-states review) — after the move to `scripts/e2e/` it
+  was only checked for startup; run it once fully.
 - **Import order nit** in `src/app/[locale]/admin/applications/page.tsx` (2026-11-10, loading-states review).
 - **Dev-only "script tag" console error on unknown paths** (2026-11-10, loading-states) — a direct load of a 404 path
   in `pnpm dev` logs "Encountered a script tag while rendering React component" from `ThemeScript`

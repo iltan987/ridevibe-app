@@ -1,6 +1,6 @@
 // Measures Suspense fallbacks against the content that replaces them.
 // Usage: node skeletons.mjs <baseUrl> <out.md> [routes…]      (default routes: / /sign-in /apply /account)
-// Env:   STATES=signed-out,member  (subset of: signed-out,pending-noapp,pending-app,member,admin)
+// Env:   STATES=signed-out,member,admin (default; also available: pending-noapp,pending-app, which need those users)
 //        VIEWPORTS=390,1280        THEMES=dark,light
 // How: fallback roots carry data-skeleton="<name>", result roots data-skeleton-result="<name>".
 //  - JS off (setJavaScriptEnabled(false)): the streamed content stays in hidden templates, the fallback stays visible
@@ -25,7 +25,7 @@ const ALL_STATES = {
   member: "member@test.local",
   admin: "admin@test.local",
 };
-const states = (process.env.STATES ?? Object.keys(ALL_STATES).join(",")).split(",");
+const states = (process.env.STATES ?? "signed-out,member,admin").split(",");
 const widths = (process.env.VIEWPORTS ?? "390,1280").split(",").map(Number);
 const themes = (process.env.THEMES ?? "dark,light").split(",");
 const heights = { 390: 844, 1280: 800 };

@@ -15,5 +15,7 @@ Run against a **local** stack only (local Supabase + a server on port 3123); nev
     npm install --prefix ~/e2e-tools puppeteer-core
     PUPPETEER_DIR=~/e2e-tools node scripts/e2e/nav-e2e.mjs
 
+The pending states of `skeletons.mjs` (`STATES=pending-noapp,pending-app`) need `pending-noapp@test.local` / `pending-app@test.local`, created via the recipe in `docs/learnings/testing.md`.
+
 Prerequisites (test users `admin@test.local` / `member@test.local`, seeded applications, email sign-in enabled locally):
 see `docs/learnings/testing.md`.

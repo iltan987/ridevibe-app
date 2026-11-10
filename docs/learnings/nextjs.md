@@ -125,7 +125,7 @@ Bundled docs are the source of truth: `node_modules/next/dist/docs/` (grep them 
   items pass `keepMounted` to the menu portal (`DropdownMenuContent keepMounted`): the closed popup stays in the DOM
   (positioner `hidden`, zero size, not focusable), so the item's `LinkPending` stays mounted and `pending` stays true
   until the page changes. Verified: pending span present 1.2 s after the tap, Escape/arrow keys still work.
-- **Not tested:** the locale switcher (it passes `locale` to `Link`) was not part of the spike.
+- **Not tested:** the locale switcher (`router.replace` in a transition, no `Link`): see the next entry.
 - **Gotcha (E2E):** `a[href*="/admin/applications"]` also matches the filter chips; match the menu item inside `[role=menu]`.
 - **Source:** found by testing.
 
