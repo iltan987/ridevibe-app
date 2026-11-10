@@ -108,7 +108,7 @@ kill $(ss -ltnp | grep ':3123 ' | grep -oP 'pid=\K[0-9]+')   # stop a local serv
 - Before `db push`, run read-only checks for anything a new constraint/unique index could reject:
   `docker run --rm postgres:17-alpine psql "$URL" -c "set default_transaction_read_only = on" -c "<query>"`.
 - New column the form writes: nullable in the DB (old rows), required in Zod; `db push` before pushing `main`.
-- Deploy status: `vercel ls ridevibe-app --environment production` (top row: Building → Ready).
+- Deploy status: `vercel ls ridevibe-app --environment production 2>&1` (prints to stderr; top row: Building → Ready).
 - Check crons/requests: `vercel --scope <team> logs requests --project ridevibe-app --environment production --json
   --since 45m -q 'requestPath:"/api/keep-alive"'` (Hobby keeps < 1 h; fields under `.data`).
 

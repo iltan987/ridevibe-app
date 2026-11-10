@@ -49,3 +49,10 @@
   Fields are under `.data` (`timestamp`, `httpStatus`, `userAgent`); cron calls show `vercel-cron/1.0`. Free-text
   `-q` isn't supported for requests — use `field:"value"`. Never pipe CLI errors into a filter that can hide them.
 - Verified 2026-11-08: keep-alive cron ran 19:17 UTC → 200.
+
+### `vercel ls` prints its table to stderr (2026-11-10)
+- **Symptom:** a wait-for-deploy loop (`vercel ls … 2>/dev/null | grep Ready`) never saw "Ready" and ran until its
+  timeout, although the deploy was ready after ~40 s.
+- **Cause:** the Vercel CLI writes the deployments table (and its status column) to stderr, not stdout.
+- **Do:** `vercel ls ridevibe-app --environment production 2>&1 | grep -m1 -E 'Ready|Error|Building|Queued|Canceled'`.
+- **Source:** found by testing (loading-states rollout).
