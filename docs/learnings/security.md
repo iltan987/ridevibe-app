@@ -28,3 +28,13 @@
   profile embed), warn when it differs from the application email (compare normalised: `normalizeEmail` in
   `src/lib/applications/contact.ts` mirrors `private.normalize_email`), and name that email in the approve dialog.
 - **Source:** final review of the application-gaps branch.
+
+### Activating an account by hand made its application unlinkable (2026-11-10)
+- **Symptom:** staff couldn't find a member in "Link to account"; she had put her iCloud address on the form and
+  signed in with Gmail. Production had 7 approved-but-unlinked applications and 7 active accounts without one.
+- **Cause:** `linkable_accounts` / `link_application` only accepted *pending* accounts (linking was the way to
+  activate). Her account had been activated directly (Members page), so it could never be linked afterwards.
+- **Do:** approved applications may also be linked to active accounts without an application (attach only, no
+  status/name/role change; new/contacted still pending-only; inactive never). When a rule protects a state change,
+  check what happens if staff reach the end state another way.
+- **Source:** found by investigating production (read-only queries), 2026-11-10.

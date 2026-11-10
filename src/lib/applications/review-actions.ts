@@ -108,15 +108,25 @@ export type LinkableAccount = {
   /** Sign-in email; null if the account has none on file. */
   email: string | null;
   created_at: string;
+  /** "active" only when active accounts were requested (approved applications). */
+  status: "pending" | "active";
 };
 
-/** Pending accounts an application can be linked to, newest first, one page (applications.decide). */
+/**
+ * Pending accounts an application can be linked to, newest first, one page (applications.decide). With
+ * `includeActive` (approved applications only) also active accounts that have no application yet.
+ */
 export async function findLinkableAccounts(input: {
   search?: string;
   cursor?: string | null;
+  includeActive?: boolean;
 }): Promise<{ items: LinkableAccount[]; nextCursor: string | null } | { status: "forbidden" | "error" }> {
   const parsed = z
-    .object({ search: z.string().max(200).optional(), cursor: z.string().max(200).nullish() })
+    .object({
+      search: z.string().max(200).optional(),
+      cursor: z.string().max(200).nullish(),
+      includeActive: z.boolean().optional(),
+    })
     .safeParse(input);
   if (!parsed.success) return { status: "error" };
   const cursor = parsed.data.cursor ? decodeCursor(parsed.data.cursor) : null;
@@ -127,6 +137,7 @@ export async function findLinkableAccounts(input: {
     search: parsed.data.search?.trim() || undefined,
     after_created: cursor?.createdAt,
     after_id: cursor?.id,
+    include_active: parsed.data.includeActive ?? false,
   });
   if (error) {
     if (error.code === "42501") return { status: "forbidden" };

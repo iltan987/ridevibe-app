@@ -123,8 +123,8 @@ isOneToOne: false
 { Args: { "application_id": string,"target_id": string }; Returns: undefined
                            },
 "linkable_accounts":
-{ Args: { "after_created"?: string,"after_id"?: string,"search"?: string }; Returns: {
-              "avatar_url": string,"created_at": string,"email": string,"full_name": string,"id": string
+{ Args: { "after_created"?: string,"after_id"?: string,"include_active"?: boolean,"search"?: string }; Returns: {
+              "avatar_url": string,"created_at": string,"email": string,"full_name": string,"id": string,"status": Database["public"]['Enums']["member_status"]
             }[]
                            },
 "my_application_status":
