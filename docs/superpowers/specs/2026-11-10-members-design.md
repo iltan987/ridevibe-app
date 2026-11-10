@@ -148,7 +148,8 @@ All in `supabase/schemas/` (declarative), every table with RLS **and** explicit 
   - `applications`: `locale` column (form language).
   - `profiles`: `preferred_locale`. The app never writes it today (always `tr`), so profile names effectively get
     Turkish casing; harmless because profile names come from Google (mixed case → untouched), a tidied application
-    name, or staff input.
+    name, or staff input. The one-off backfill (and its preview) instead uses the locale of the profile's newest linked
+    approved application when there is one, so an English-form `JOHN SMITH` becomes `John Smith` on both rows.
 - Known misfires (accepted, staff fix them and the fix sticks via rule 3): a foreigner filling the **Turkish** form in
   lowercase (`ian` → `İan`); an all-caps name typed on a non-Turkish keyboard (`CELIK` → `Celık`), or ASCII on the
   English form (`ilker` → `Ilker`, consistent with the ASCII spelling).
@@ -187,8 +188,9 @@ All in `supabase/schemas/` (declarative), every table with RLS **and** explicit 
   bikes the add button is disabled with an explanation.
 - **Shown to other members:** Instagram field; switches "Show my Instagram", "Show my birthday (day and month)".
   Birth date itself shown read-only.
-- **Photo consent:** switch, link to `/privacy`, "given / withdrawn on <date>". Also shown to inactive members, so they
-  can withdraw it.
+- **Photo consent:** switch with the application's consent wording (photos showing me shared in the club gallery),
+  link to `/privacy`, "given on <date>" or a neutral "not given" (no date: one row can't tell a withdrawal from a
+  "no" on the application). Also shown to inactive members, so they can withdraw it.
 - Each section saves on its own (small form, pending state on its button, success / error message).
 - Messages in `messages/tr.json` (source of truth) and `messages/en.json`; no hard-coded strings; dialogs pass
   translated close labels (see follow-up on `dialog.tsx`).

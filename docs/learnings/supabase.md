@@ -127,3 +127,14 @@
 - **Also:** a plpgsql function can't have a parameter with the same name as an output column (`parameter name "side"
   used more than once`) → `member_directory` takes `side_filter`.
 - **Source:** `supabase/schemas/30_member_directory.sql`, Members Task 5.
+
+### Previewing a data migration on production before its functions exist (2026-11-10)
+- **Symptom:** the first name-tidy preview called `private.tidy_name(...)`, but rollout runs the preview *before*
+  `db push`, when the function doesn't exist on production yet → it would just fail.
+- **Cause:** a preview that reuses helpers from the migration depends on the migration.
+- **Do:** make preview scripts self-contained: `begin;` → `create function pg_temp.f(...)` (exact copy of the schema
+  body, with a "keep in sync" comment) → `set transaction read only;` → the select → `rollback;`. Functions in
+  `pg_temp` are never found via `search_path`: always call them as `pg_temp.f(...)`. Switching to read-only after the
+  DDL in the same transaction is allowed (only read-only → read-write is refused). Test it locally after dropping the
+  real helpers inside the same rolled-back transaction. The preview's casing/ordering rules must match the migration's.
+- **Source:** `scripts/sql/name-tidy-preview.sql`, members final review.
