@@ -167,6 +167,16 @@ isOneToOne: false
               "avatar_url": string,"created_at": string,"email": string,"full_name": string,"id": string,"status": Database["public"]['Enums']["member_status"]
             }[]
                            },
+"member_directory":
+{ Args: { "after_id"?: string,"after_name"?: string,"page_size"?: number,"search"?: string,"side_filter"?: Database["public"]['Enums']["istanbul_side"] }; Returns: {
+              "avatar_url": string,"birth_day": number,"birth_month": number,"district": string,"full_name": string,"id": string,"instagram": string,"motorcycles": Json,"side": Database["public"]['Enums']["istanbul_side"]
+            }[]
+                           },
+"member_directory_counts":
+{ Args: { "search"?: string }; Returns: {
+              "asian": number,"european": number,"total": number
+            }[]
+                           },
 "my_application_status":
 { Args: Record<PropertyKey, never>; Returns: Database["public"]['Enums']["application_status"]
                            },

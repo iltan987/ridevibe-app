@@ -117,3 +117,13 @@
   `upper(translate(s, 'iı', 'İI'))`; non-Turkish: `translate(s, 'İ', 'I')` first). Make trigger functions that call
   `private.*` helpers `security definer` with `set search_path = ''`.
 - **Source:** `supabase/schemas/02_names.sql`, Members Task 1.
+
+### Turkish sort order and search: ICU collation + `private.search_fold` (2026-11-10)
+- **Symptom:** default collation sorts `Çelik`/`İlker` after `Z`; `ilike '%ilker%'` doesn't find `İlker` and
+  `'%ISIK%'` doesn't find `Işık` (`ilike` doesn't fold `İ/ı`).
+- **Do:** order with `collate "tr-x-icu"` (local PG 17 image has it; **check the hosted DB in rollout** before
+  `db push`). Search with `private.search_fold(col) like '%' || escaped(private.search_fold(term)) || '%'`
+  (`translate` of Turkish letters + `lower`); escape `\`, `%`, `_` in the term.
+- **Also:** a plpgsql function can't have a parameter with the same name as an output column (`parameter name "side"
+  used more than once`) → `member_directory` takes `side_filter`.
+- **Source:** `supabase/schemas/30_member_directory.sql`, Members Task 5.

@@ -55,7 +55,8 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ### Database / tests
 - **Turkish case folding in `linkable_accounts` search** (2026-11-09) — `ilike` doesn't fold `ı/İ`
-  (`supabase/schemas/20_applications.sql`). Email search and name-match ordering compensate.
+  (`supabase/schemas/20_applications.sql`). Email search and name-match ordering compensate. Fix: reuse
+  `private.search_fold` (`30_member_directory.sql`) on both sides of the `like`.
 - **Email matching scans `applications`** (2026-11-09) — `private.normalize_email` can't be indexed on a table anon
   writes. Fine at today's volume (tens of rows); revisit if applications reach thousands.
 - **pgTAP gaps** (2026-11-09) — no test for an *inactive* staff member holding `applications.view` /
