@@ -15,8 +15,7 @@ as $$
   select lower(translate(value, 'İIıÇçĞğÖöŞşÜü', 'iiiccggoossuu'));
 $$;
 
-revoke all on function private.search_fold(text) from public, anon;
-grant execute on function private.search_fold(text) to authenticated;
+revoke all on function private.search_fold(text) from public, anon, authenticated;
 
 -- The side filter is called side_filter: a parameter named side would clash with the output
 -- column side (plpgsql: "parameter name used more than once").

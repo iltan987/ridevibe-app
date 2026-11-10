@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(22);
+select plan(27);
 
 -- Fixtures (postgres bypasses RLS). Ids 0000…0191–0195; every query is scoped to them (or to the
 -- name token "Pgtapuye"). 191 Çelik (active, asian, 2 bikes, birthday + instagram shown),
@@ -28,7 +28,7 @@ update public.member_details set birth_date = '1990-03-12', instagram = 'celik.c
 update public.member_details set birth_date = '1985-07-01', instagram = 'ilker',
   show_birthday = false, show_instagram = false
   where profile_id = '00000000-0000-0000-0000-000000000192';
-update public.member_details set birth_date = null, show_birthday = true
+update public.member_details set birth_date = null, show_birthday = true, show_instagram = true
   where profile_id = '00000000-0000-0000-0000-000000000193';
 
 insert into public.member_motorcycles (profile_id, brand, model, cc, created_at) values
@@ -53,6 +53,7 @@ select throws_ok($$ select * from public.member_directory_counts() $$, '42501', 
 reset role;
 select pg_temp.login('00000000-0000-0000-0000-000000000195');
 select throws_ok($$ select * from public.member_directory() $$, '42501', null, 'inactive member cannot call member_directory');
+select throws_ok($$ select * from public.member_directory_counts() $$, '42501', null, 'inactive member cannot call member_directory_counts');
 reset role;
 
 -- Active caller
@@ -78,35 +79,45 @@ select is(
 );
 
 select results_eq(
-  $$ select birth_month, birth_day, instagram from public.member_directory(search => 'ilker') $$,
+  $$ select birth_month, birth_day, instagram from public.member_directory(search => 'ilker isik pgtapuye') $$,
   $$ values (null::smallint, null::smallint, null::text) $$,
   'İlker: hidden birthday and instagram come back null'
 );
 
 select results_eq(
   $$ select birth_month, birth_day, instagram, motorcycles, district, side
-     from public.member_directory(search => 'zehra') $$,
+     from public.member_directory(search => 'zehra 50%_off pgtapuye') $$,
   $$ values (null::smallint, null::smallint, null::text, '[]'::jsonb, null::text, null::public.istanbul_side) $$,
-  'Zehra: no birth date, no bikes, no district'
+  'Zehra: no birth date, no bikes, no district; show_instagram without an instagram is null'
 );
 
 -- Search: Turkish folding
-select is((select count(*)::int from public.member_directory(search => 'celik')), 1, 'search "celik" finds Çelik');
-select is((select count(*)::int from public.member_directory(search => 'ÇELİK')), 1, 'search "ÇELİK" finds Çelik');
-select is((select count(*)::int from public.member_directory(search => 'ilker')), 1, 'search "ilker" finds İlker');
-select is((select count(*)::int from public.member_directory(search => 'IŞIK')), 1, 'search "IŞIK" finds İlker');
+select is((select count(*)::int from public.member_directory(search => 'celik', page_size => 100) where id = '00000000-0000-0000-0000-000000000191'), 1, 'search "celik" finds Çelik');
+select is((select count(*)::int from public.member_directory(search => 'ÇELİK', page_size => 100) where id = '00000000-0000-0000-0000-000000000191'), 1, 'search "ÇELİK" finds Çelik');
+select is((select count(*)::int from public.member_directory(search => 'ilker', page_size => 100) where id = '00000000-0000-0000-0000-000000000192'), 1, 'search "ilker" finds İlker');
+select is((select count(*)::int from public.member_directory(search => 'IŞIK', page_size => 100) where id = '00000000-0000-0000-0000-000000000192'), 1, 'search "IŞIK" finds İlker');
 
 -- Search: wildcard characters are literal
 select results_eq(
-  $$ select id from public.member_directory(search => '50%') $$,
+  $$ select id from public.member_directory(search => '50%', page_size => 100)
+     where id in ('00000000-0000-0000-0000-000000000191', '00000000-0000-0000-0000-000000000192', '00000000-0000-0000-0000-000000000193') $$,
   $$ values ('00000000-0000-0000-0000-000000000193'::uuid) $$,
   'search "50%" finds Zehra only'
 );
 select is(
-  (select count(*)::int from public.member_directory(search => '%')
-    where id in ('00000000-0000-0000-0000-000000000191', '00000000-0000-0000-0000-000000000192')),
+  (select count(*)::int from public.member_directory(search => '%', page_size => 100) where id in ('00000000-0000-0000-0000-000000000191', '00000000-0000-0000-0000-000000000192')),
   0,
-  'search "%" alone is literal, not a wildcard'
+  'search "%" alone is literal: Çelik and İlker don''t match (only Zehra''s name contains it)'
+);
+select is(
+  (select count(*)::int from public.member_directory(search => '_', page_size => 100) where id in ('00000000-0000-0000-0000-000000000191', '00000000-0000-0000-0000-000000000192')),
+  0,
+  'search "_" alone is literal: Çelik and İlker don''t match (only Zehra''s name contains it)'
+);
+select is(
+  (select count(*)::int from public.member_directory(search => '\', page_size => 100) where id in ('00000000-0000-0000-0000-000000000191', '00000000-0000-0000-0000-000000000192', '00000000-0000-0000-0000-000000000193')),
+  0,
+  'search backslash alone is literal'
 );
 select is(
   (select count(*)::int from public.member_directory(search => '  pgtapuye  ')),
@@ -119,6 +130,16 @@ select results_eq(
   $$ select id from public.member_directory(search => 'pgtapuye', side_filter => 'asian') $$,
   $$ values ('00000000-0000-0000-0000-000000000191'::uuid) $$,
   'side asian returns Çelik only'
+);
+
+select results_eq(
+  $$ select id from public.member_directory(search => 'pgtapuye', side_filter => 'european') $$,
+  $$ values ('00000000-0000-0000-0000-000000000192'::uuid) $$,
+  'side european returns İlker only; side-less Zehra is excluded by any side filter'
+);
+select throws_ok(
+  $$ select * from public.member_directory(after_name => 'Çelik') $$,
+  '22023', null, 'after_name without after_id is rejected'
 );
 
 -- Order and keyset paging

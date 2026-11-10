@@ -124,8 +124,6 @@ REVOKE ALL ON FUNCTION "public"."member_directory_counts"(text) FROM PUBLIC, "an
 
 REVOKE ALL ON FUNCTION "private"."search_fold"(text) FROM PUBLIC;
 
-GRANT EXECUTE ON FUNCTION "private"."search_fold"(text) TO "authenticated";
-
 GRANT EXECUTE ON FUNCTION "public"."member_directory"(text, public.istanbul_side, text, uuid, integer) TO "authenticated";
 
 REVOKE ALL ON FUNCTION "public"."member_directory"(text, public.istanbul_side, text, uuid, integer) FROM "postgres";
