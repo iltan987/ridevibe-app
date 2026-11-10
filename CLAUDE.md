@@ -32,6 +32,8 @@ announcements, photo galleries, attendance. Plan and decisions: `docs/PLAN.md`. 
   out. New machine: README "New machine setup".
 - **Fix the environment yourself** before calling it a blocker: e.g. Docker down → start
   `"/mnt/c/Program Files/Docker/Docker/Docker Desktop.exe" &` and wait for `/var/run/docker.sock`.
+- **Missing tool → ask, never skip.** If a step needs something not installed (CLI, package, browser tooling), ask
+  iltan to approve the install or to set it up; don't drop the step or swap in a weaker check.
 
 ## Git
 
@@ -61,7 +63,11 @@ pnpm db:test                  # pgTAP tests in supabase/tests/database
 pnpm db:types                 # regenerate src/lib/supabase/database.types.ts
 pnpm exec supabase migration up   # apply new migrations locally, keeping data (db:reset wipes auth users)
 kill $(ss -ltnp | grep ':3123 ' | grep -oP 'pid=\K[0-9]+')   # stop a local server; never `pkill -f` (kills own shell)
+PUPPETEER_DIR=<dir> node scripts/e2e/nav-e2e.mjs   # browser E2E vs `pnpm start -p 3123` (setup: scripts/e2e/README.md)
 ```
+
+Signed-in local E2E needs email sign-in: `SUPABASE_AUTH_EMAIL_ENABLED=true pnpm exec supabase start` (temporary;
+recipe and test users in `docs/learnings/testing.md`), then restart normally and delete the test rows.
 
 ## Database (Supabase)
 
@@ -83,6 +89,7 @@ kill $(ss -ltnp | grep ':3123 ' | grep -oP 'pid=\K[0-9]+')   # stop a local serv
 - Status: `pending` / `active` / `inactive`.
 - Anything that decides which account becomes active (approve, `link_application`, editing the email of an approved
   application) requires `applications.decide`; `applications.profile_id` = the account an application belongs to.
+  Linking targets pending accounts; approved applications may also go to an active account without one (attach only).
 - Every permission rule gets a pgTAP test, including the "must fail" cases.
 - Generated migrations may DROP a replaced column before its data is copied: move the DROP to the end and add the
   hand-written data step in between. Seed rows the app relies on (e.g. built-in roles) go in the migration.
@@ -96,6 +103,11 @@ kill $(ss -ltnp | grep ':3123 ' | grep -oP 'pid=\K[0-9]+')   # stop a local serv
 - **Migrations:** `pnpm exec supabase db push --remote=<POSTGRES_URL_NON_POOLING> --dry-run` first, then without
   `--dry-run` + `--yes`; then run `supabase test db` against the same target. Get the URL with
   `vercel env pull --environment=production <file outside the repo>` and delete the file afterwards.
+- **Investigating production data:** read-only psql only (`set default_transaction_read_only = on`, see below), select
+  the fewest columns (mask emails), never write personal data into the repo or logs.
+- **Deleting an account** (no in-app delete): only on iltan's explicit OK; first check status/role/linked application
+  and `applications.reviewed_by`, then `DELETE {SUPABASE_URL}/auth/v1/admin/users/<id>` with `SUPABASE_SECRET_KEY`
+  (cascades profile + member_contacts; applications become unlinked, `reviewed_by` → null).
 - **Auth/config as code:** production overrides live in `[remotes.production]` in `supabase/config.toml`. Always run
   `pnpm exec supabase config diff --remote=igqqicbfejhnsggfuydh` and review before `config push --remote=… --yes`.
   Local defaults must not leak into production — pin hosted values in the remote block when the diff shows them.
@@ -137,6 +149,8 @@ kill $(ss -ltnp | grep ':3123 ' | grep -oP 'pid=\K[0-9]+')   # stop a local serv
   `data-skeleton-result` attributes, measured with JS off: `docs/learnings/testing.md`, `scripts/e2e/`); links from
   `@/i18n/navigation` already show pending feedback (progress bar + dim, or the page's skeleton when its shell is
   prefetched); no `loading.tsx` unless the dev instant-navigation check flags the segment (`docs/learnings/nextjs.md`).
+- WhatsApp links: `whatsAppUrl()` (`src/lib/applications/contact.ts`, `api.whatsapp.com/send`), never `wa.me` —
+  its desktop redirect turns emoji into "�".
 - Mobile-first: design for ~390px first; the bottom tab bar is the main navigation on phones.
 - Primary nav items live in `src/components/layout/nav-items.ts`.
 - Server Actions: validate with Zod, let RLS decide, map error codes to results, call `refresh()` (`next/cache`)
