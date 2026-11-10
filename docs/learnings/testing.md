@@ -136,4 +136,7 @@
   through the native setter + an `input` event inside `page.evaluate`, looking the input up by selector
   (`setInputValue` in `scripts/e2e/members-e2e.mjs`). Reusing an `ElementHandle` from `page.evaluateHandle` for this
   threw "Argument should belong to the same JavaScript world as target object" (cause not investigated).
+- Polling with `page.evaluate` while a navigation is in flight throws "Execution context was destroyed" (the search
+  step submits a form; seen twice in a row on 2026-11-11). `until()` in `members-e2e.mjs` treats that error as "not
+  yet" and polls again.
 - **Source:** found by testing (birth-date-once).

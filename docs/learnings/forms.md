@@ -54,3 +54,13 @@
   with `form={id}` (input and submit button). Enter in such an input submits only that form. Example:
   `src/components/profile/visibility-form.tsx` (`BIRTH_DATE_FORM_ID`).
 - **Source:** found by testing (members E2E, birth-date-once).
+
+### `useState(prop)` keeps its first value after `refresh()`; don't derive it from another prop (2026-11-11)
+- **Symptom:** after the one-time birth-date entry, the birthday switch showed "off" although the DB (and the
+  directory) said on; pressing the card's "Kaydet" would then have written `show_birthday = false`.
+- **Cause:** `useState(birthDate ? showBirthday : false)` ran once while `birthDate` was null. `refresh()` re-renders
+  the Server Component with new props, but a mounted client component keeps its state, so the switch stayed false.
+- **Do:** initialise state from the stored value only (`useState(showBirthday)`) and apply display conditions at
+  render (`checked={!!birthDate && birthdayOn}`). Never send a value the user couldn't see or change (a disabled
+  switch) as anything but the stored one. Example: `src/components/profile/visibility-form.tsx`.
+- **Source:** found by the members E2E (birthday-shown-by-default).

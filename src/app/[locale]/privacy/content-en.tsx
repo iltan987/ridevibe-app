@@ -48,8 +48,8 @@ export function PrivacyEn() {
       </p>
       <p>
         Within the club: active members can see your name, profile photo, district/side and motorcycles in the member
-        directory. Your birthday (day and month only) and Instagram username are shown only if you turn them on in your
-        profile.
+        directory. Your birthday (day and month only) is shown too; you can turn it off in your profile at any time. Your
+        Instagram username is shown only if you turn it on in your profile.
       </p>
       <p>
         To provide the service we use these service providers (data processors):

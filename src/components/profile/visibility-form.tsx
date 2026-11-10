@@ -30,7 +30,10 @@ export function VisibilityForm({ instagram, showInstagram, showBirthday, birthDa
   const { isPending, result, run, fieldError } = useProfileAction();
   const [handle, setHandle] = useState(instagram ?? "");
   const [instagramOn, setInstagramOn] = useState(showInstagram);
-  const [birthdayOn, setBirthdayOn] = useState(birthDate ? showBirthday : false);
+  // Keeps the stored value even without a birth date: the switch only *shows* off then (it is disabled), and saving
+  // the form must not overwrite the default. Gating the initial state on birthDate would stay stale after the
+  // one-time entry (refresh() brings the date, but useState keeps its first value).
+  const [birthdayOn, setBirthdayOn] = useState(showBirthday);
   const birthDateEntry = useBirthDateEntry();
 
   function onSubmit(event: React.FormEvent) {
@@ -81,7 +84,7 @@ export function VisibilityForm({ instagram, showInstagram, showBirthday, birthDa
               className="flex min-h-10 items-center justify-between gap-4 text-sm has-enabled:cursor-pointer"
             >
               {t("showBirthday")}
-              <Switch checked={birthdayOn} onCheckedChange={setBirthdayOn} disabled={!birthDate} aria-describedby={birthDate ? undefined : "profile-birthday-missing"} />
+              <Switch checked={!!birthDate && birthdayOn} onCheckedChange={setBirthdayOn} disabled={!birthDate} aria-describedby={birthDate ? undefined : "profile-birthday-missing"} />
             </label>
             {!birthDate && <FieldDescription id="profile-birthday-missing">{t("birthdayMissing")}</FieldDescription>}
           </div>

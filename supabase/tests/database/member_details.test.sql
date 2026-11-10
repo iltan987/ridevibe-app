@@ -34,10 +34,10 @@ select is(
 select is(
   (select count(*)::int from public.member_details
     where profile_id = '00000000-0000-0000-0000-000000000121'
-      and not show_birthday and not show_instagram and not consent_photos
+      and show_birthday and not show_instagram and not consent_photos
       and birth_date is null and instagram is null and consent_photos_at is null and consent_photos_version is null),
   1,
-  'a new details row has every flag false and no data'
+  'a new details row shows the birthday by default (opt-out), every other flag false, no data'
 );
 select ok(
   (select relrowsecurity from pg_class where oid = 'public.member_details'::regclass),

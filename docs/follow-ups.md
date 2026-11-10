@@ -52,8 +52,10 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 - **Ban evasion vs. linking** (2026-11-09, application gaps) — when the ban list is built (PLAN "Member conduct"),
   check new applications *and* staff links (`link_application`) against it.
 - **Privacy notice: directory purpose and legal basis** (2026-11-10, members review) — sections 3/4 of the notice
-  (purposes, legal basis) don't mention the in-club member directory (name, district, bikes, opt-in birthday and
-  Instagram shown to active members). Question for the lawyer review of the notice.
+  (purposes, legal basis) don't mention the in-club member directory (name, district, bikes, birthday, opt-in
+  Instagram shown to active members). Question for the lawyer review of the notice. Since 2026-11-11 the birthday is
+  **opt-out** (iltan asked the members; existing members were switched on by migration, notice section 5 updated):
+  ask which legal basis covers it (likely meşru menfaat rather than açık rıza, which can't be pre-ticked).
 
 ## Features
 

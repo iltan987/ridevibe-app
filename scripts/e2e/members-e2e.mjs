@@ -66,7 +66,11 @@ const bodyText = (page) => page.evaluate(() => document.body.innerText);
 async function until(page, fn, arg, ms = 10000) {
   const t0 = Date.now();
   while (Date.now() - t0 < ms) {
-    const v = await page.evaluate(fn, arg);
+    // A navigation in flight destroys the execution context: treat it as "not yet" and poll again.
+    const v = await page.evaluate(fn, arg).catch((e) => {
+      if (/Execution context was destroyed|Cannot find context/.test(e.message)) return null;
+      throw e;
+    });
     if (v) return v;
     await sleep(100);
   }
@@ -146,7 +150,7 @@ const NOBIRTH_ID = sql("select id from auth.users where email = 'nobirth@test.lo
 sql(`delete from member_motorcycles where profile_id = '${MEMBER_ID}'`);
 sql(`update profiles set district = 'Kadıköy', side = 'asian' where id = '${MEMBER_ID}'`);
 sql(`update member_details set instagram = null, show_instagram = false, show_birthday = false, consent_photos = false, consent_photos_at = null, consent_photos_version = null where profile_id = '${MEMBER_ID}'`);
-sql(`update member_details set birth_date = null, show_birthday = false where profile_id = '${NOBIRTH_ID}'`);
+sql(`update member_details set birth_date = null, show_birthday = true where profile_id = '${NOBIRTH_ID}'`); // the default (opt-out)
 
 // 1 anonymous
 {
@@ -349,6 +353,12 @@ sql(`update member_details set birth_date = null, show_birthday = false where pr
   check("no birth date: 'save it first' and 'once' hints shown", text.includes("Doğum gününü göstermek için önce doğum tarihini kaydet.") && text.includes("Doğum tarihini bir kez girebilirsin"));
   await shot(page, "no-birthdate");
 
+  // Saving visibility while the switch is disabled must keep the stored default (on), not write "off".
+  await saveNth(page, 1);
+  await hasText(page, /Kaydedildi\./);
+  check("no birth date: saving visibility keeps show_birthday on", sql(`select show_birthday from member_details where profile_id = '${NOBIRTH_ID}'`) === "t");
+  await go(page, "/account");
+
   const input = await find(page, "#profile-birth-date");
   check("no birth date: date field shown", !!input && (await input.evaluate((i) => i.type)) === "date");
   await click(page, "button", "^Doğum tarihini kaydet$");
@@ -364,16 +374,13 @@ sql(`update member_details set birth_date = null, show_birthday = false where pr
   const shown = await hasText(page, /Doğum tarihi\s*4 Temmuz 1988/);
   check("birth date: Enter saves it, shown read-only, field gone", !!shown && !(await find(page, "#profile-birth-date")));
   check("birth date: stored in the DB", sql(`select birth_date from member_details where profile_id = '${NOBIRTH_ID}'`) === "1988-07-04");
-  const enabled = await (await switchFor(page, "Doğum günümü")).asElement().evaluate((s) => !s.hasAttribute("disabled") && s.getAttribute("aria-disabled") !== "true" && s.dataset.disabled === undefined);
-  check("birth date: birthday switch enabled, 'missing' hint gone", enabled && !(await bodyText(page)).includes("önce doğum tarihini kaydet"));
+  const after = await (await switchFor(page, "Doğum günümü")).asElement().evaluate((s) => ({ enabled: !s.hasAttribute("disabled") && s.getAttribute("aria-disabled") !== "true" && s.dataset.disabled === undefined, checked: s.getAttribute("aria-checked") }));
+  check("birth date: birthday switch enabled and on (opt-out default), 'missing' hint gone", after.enabled && after.checked === "true" && !(await bodyText(page)).includes("önce doğum tarihini kaydet"), JSON.stringify(after));
   await shot(page, "birthdate-saved");
 
-  await (await switchFor(page, "Doğum günümü")).asElement().click();
-  await saveNth(page, 1);
-  await hasText(page, /Kaydedildi\./);
   await go(page, "/members?q=Tarihsiz");
   const card = await memberCard(page, "Tarihsiz Fixture");
-  check("birth date: directory shows the birthday once switched on", !!card && /4 Temmuz/.test(card), JSON.stringify(card));
+  check("birth date: directory shows the birthday without switching anything on", !!card && /4 Temmuz/.test(card), JSON.stringify(card));
   await ctx.close();
 }
 

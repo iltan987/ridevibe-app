@@ -44,8 +44,8 @@ export function PrivacyTr() {
       </p>
       <p>
         Kulüp içinde: aktif üyeler, üye rehberinde adınızı, profil fotoğrafınızı, ilçenizi/yakanızı ve
-        motosikletlerinizi görebilir. Doğum gününüz (yalnızca gün ve ay) ve Instagram kullanıcı adınız yalnızca
-        profilinizde açarsanız gösterilir.
+        motosikletlerinizi görebilir. Doğum gününüz (yalnızca gün ve ay) de gösterilir; dilediğiniz zaman
+        profilinizden kapatabilirsiniz. Instagram kullanıcı adınız yalnızca profilinizde açarsanız gösterilir.
       </p>
       <p>
         Hizmeti sunabilmek için aşağıdaki hizmet sağlayıcılarını (veri işleyen) kullanıyoruz:
