@@ -57,7 +57,8 @@ open to anonymous visitors; instead:
   on approval, or by staff via "Link to account" on the application page, `applications.decide`). Approval activates
   the linked account by `profile_id` first, then by email, and copies the approved application's name to the profile.
   An approved application can also be linked to an *active* account without an application (staff activated it
-  before the application was matched); that only attaches the application: status, name and role stay.
+  before the application was matched); that only attaches the application: status, name and role stay. So
+  `applications.decide` also shows the sign-in email of active members without an application (accepted 2026-11-10).
 - **Status / CTA:** `/account` for a pending member and `/apply` show "you haven't applied yet" (button to the form),
   "under review", or the generic pending text, based on `my_application_status()`.
 - **In-app browser notice** on `/sign-in` (Instagram, Facebook, TikTok, LinkedIn): Google blocks OAuth there
