@@ -40,6 +40,17 @@ export async function setMemberStatus(targetId: string, status: string): Promise
   return done(error, "setMemberStatus");
 }
 
+export async function setMemberName(targetId: string, name: string): Promise<AccessActionResult> {
+  const input = z.object({ targetId: uuid, name: z.string().trim().min(2).max(120) }).safeParse({ targetId, name });
+  if (!input.success) return { status: "invalid" };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_member_name", {
+    target_id: input.data.targetId,
+    new_name: input.data.name,
+  });
+  return done(error, "setMemberName");
+}
+
 /** `roleId` null = regular member without a role. */
 export async function setMemberRole(targetId: string, roleId: string | null): Promise<AccessActionResult> {
   const input = z.object({ targetId: uuid, roleId: uuid.nullable() }).safeParse({ targetId, roleId });

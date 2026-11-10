@@ -73,6 +73,9 @@
 - `select("…, profiles(count)")` returns `[{ count }]` per row (respects RLS); `role:roles(...)` via a FK column
   returns an object or null, typed correctly by generated types.
 - Generated RPC arg types are non-nullable even when SQL accepts null (`set_member_role(…, null)`) → cast at the call.
+- Return types too (2026-11-09): `my_application_status()` is typed `application_status` but returns null when there
+  is no application; `linkable_accounts().email` is typed `string` but is null without a `member_contacts` row →
+  treat RPC results as nullable in app code.
 
 ### Expression indexes run with the inserting user's rights (2026-11-08)
 - **Symptom:** after adding `create index … on applications (private.normalize_email(email))`, the public form
@@ -86,3 +89,20 @@
 - **Cause:** in `language sql` function `profile_of(email text)`, `where u.email = email` compared the column to
   itself.
 - **Do:** name parameters so they can't collide with columns (`user_email`, `target_id`).
+
+### Same-event triggers fire in name order (2026-11-09)
+- **Symptom (avoided):** a `before update` guard comparing `new.email` with `old.email` would have treated
+  `RIGHT@x` → `right@x` as a change, because the normalising trigger (`applications_normalize_contact`) runs *after*
+  `applications_check_decision`.
+- **Cause:** PostgreSQL fires triggers of the same timing/event alphabetically by name.
+- **Do:** in a guard trigger, compare the normalised value (`lower(trim(new.email))`), or name triggers so the
+  normaliser sorts first.
+
+### An embedded row hidden by RLS comes back as `null`, even though the FK is set (2026-11-09)
+- **Symptom:** application detail showed "not linked" (and offered linking) for an application with `profile_id` set,
+  for a decider without `members.manage`.
+- **Cause:** the `member:profiles!applications_profile_id_fkey(...)` embed obeys profiles RLS; pending profiles are
+  hidden from staff without `members.manage`, so the embed is `null`.
+- **Do:** derive state from the FK column itself (`!!a.profile_id`); use the embed only for optional extras (name,
+  status) and have a fallback label.
+- **Source:** code review of Task 7, verified in the browser with a view+review+decide role.

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { type AccessActionResult, setMemberRole, setMemberStatus } from "@/lib/access/actions";
 import type { MemberStatus } from "@/lib/access/queries";
+import { MemberNameDialog } from "@/components/admin/member-name-dialog";
 import { initials } from "@/lib/initials";
 
 export type MemberRowData = {
@@ -20,6 +21,8 @@ export type MemberRowData = {
   joinedLabel: string;
   roleId: string | null;
   roleLabel: string;
+  /** Pending tab only: has an open application. null/undefined = not shown. */
+  applied?: boolean | null;
 };
 
 const NEXT_STATUS = {
@@ -34,12 +37,14 @@ export function MemberRow({
   isSelf,
   canAssignRole,
   canChangeStatus,
+  canRename,
 }: {
   member: MemberRowData;
   roles: { id: string; label: string }[];
   isSelf: boolean;
   canAssignRole: boolean;
   canChangeStatus: boolean;
+  canRename: boolean;
 }) {
   const t = useTranslations("Admin");
   const [isPending, startTransition] = useTransition();
@@ -69,10 +74,15 @@ export function MemberRow({
           </p>
           <p className="truncate text-xs text-muted-foreground">{member.email ?? t("members.noEmail")}</p>
           <p className="text-xs text-muted-foreground">{member.joinedLabel}</p>
+          {member.applied != null && (
+            <Badge variant={member.applied ? "status" : "outline"} className="mt-1">
+              {t(member.applied ? "members.applied" : "members.notApplied")}
+            </Badge>
+          )}
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {/* Roles only matter for active members: activate first, then assign. */}
         {canAssignRole && !isSelf && member.status === "active" ? (
           <NativeSelect
@@ -96,6 +106,8 @@ export function MemberRow({
         ) : (
           member.roleId && <Badge variant="outline">{member.roleLabel}</Badge>
         )}
+
+        {canRename && <MemberNameDialog memberId={member.id} currentName={member.name} />}
 
         {canChangeStatus && !isSelf && (
           <Button

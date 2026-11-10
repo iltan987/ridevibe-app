@@ -111,8 +111,32 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "keep_alive":
+            "application_account":
+{ Args: { "application_id": string }; Returns: {
+              "email": string,"full_name": string,"id": string,"status": Database["public"]['Enums']["member_status"]
+            }[]
+                           },
+"keep_alive":
 { Args: Record<PropertyKey, never>; Returns: boolean
+                           },
+"link_application":
+{ Args: { "application_id": string,"target_id": string }; Returns: undefined
+                           },
+"linkable_accounts":
+{ Args: { "after_created"?: string,"after_id"?: string,"search"?: string }; Returns: {
+              "avatar_url": string,"created_at": string,"email": string,"full_name": string,"id": string
+            }[]
+                           },
+"my_application_status":
+{ Args: Record<PropertyKey, never>; Returns: Database["public"]['Enums']["application_status"]
+                           },
+"pending_application_flags":
+{ Args: { "profile_ids": (string)[] }; Returns: {
+              "has_application": boolean,"profile_id": string
+            }[]
+                           },
+"set_member_name":
+{ Args: { "new_name": string,"target_id": string }; Returns: undefined
                            },
 "set_member_role":
 { Args: { "new_role_id": string,"target_id": string }; Returns: undefined

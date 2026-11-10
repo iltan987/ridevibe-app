@@ -7,8 +7,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "@/i18n/navigation";
 import {
-  APPLICATION_STATUSES,
-  type ApplicationStatus,
+  APPLICATION_FILTERS,
+  type ApplicationFilter,
   countApplicationsByStatus,
   listApplications,
 } from "@/lib/applications/queries";
@@ -53,8 +53,8 @@ async function ApplicationsList({
   await requirePermission("applications.view", "/admin/applications");
 
   const params = await searchParams;
-  const status: ApplicationStatus = APPLICATION_STATUSES.includes(params.status as ApplicationStatus)
-    ? (params.status as ApplicationStatus)
+  const status: ApplicationFilter = APPLICATION_FILTERS.includes(params.status as ApplicationFilter)
+    ? (params.status as ApplicationFilter)
     : "new";
   const cursor = decodeCursor(params.cursor);
 
@@ -69,7 +69,7 @@ async function ApplicationsList({
   return (
     <>
       <nav className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
-        {APPLICATION_STATUSES.map((s) => (
+        {APPLICATION_FILTERS.map((s) => (
           <Link
             key={s}
             href={{ pathname: "/admin/applications", query: { status: s } }}

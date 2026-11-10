@@ -2,6 +2,7 @@ import { isPossiblePhoneNumber } from "libphonenumber-js";
 import { z } from "zod";
 import { ISTANBUL, isIstanbulDistrict, sideOfDistrict } from "@/lib/istanbul-districts";
 import type { TablesInsert } from "@/lib/supabase/database.types";
+import { isTurkishMobileOrForeign } from "./contact";
 import {
   EVENT_INTERESTS,
   GROUP_EXPERIENCE,
@@ -21,6 +22,7 @@ export type ApplyErrorKey =
   | "tooLong"
   | "invalidEmail"
   | "invalidPhone"
+  | "notTurkishMobile"
   | "invalidDate"
   | "tooYoung"
   | "invalidNumber"
@@ -80,27 +82,36 @@ export function isAtLeast18(birthDate: string, today = istanbulToday()) {
   return birthDate <= limit;
 }
 
+// Contact fields: shared by the public form and staff corrections (contactSchema).
+const fullNameField = text(2, 120);
+
+const phoneField = z
+  .string(err("required"))
+  .min(1, err("required"))
+  .transform(normalizePhone)
+  .pipe(
+    z
+      .string()
+      .regex(/^\+[1-9][0-9]{6,14}$/, err("invalidPhone"))
+      .refine((v) => isPossiblePhoneNumber(v), err("invalidPhone"))
+      // Same rule as the DB trigger: +90 numbers must be mobiles (WhatsApp).
+      .refine(isTurkishMobileOrForeign, err("notTurkishMobile")),
+  );
+
+const emailField = z
+  .string(err("required"))
+  .min(1, err("required"))
+  .max(254, err("tooLong"))
+  .pipe(z.email(err("invalidEmail")))
+  .transform((v) => v.toLowerCase());
+
 export const applicationSchema = z
   .object({
     locale: z.enum(["tr", "en"]),
 
-    full_name: text(2, 120),
-    phone: z
-      .string(err("required"))
-      .min(1, err("required"))
-      .transform(normalizePhone)
-      .pipe(
-        z
-          .string()
-          .regex(/^\+[1-9][0-9]{6,14}$/, err("invalidPhone"))
-          .refine((v) => isPossiblePhoneNumber(v), err("invalidPhone")),
-      ),
-    email: z
-      .string(err("required"))
-      .min(1, err("required"))
-      .max(254, err("tooLong"))
-      .pipe(z.email(err("invalidEmail")))
-      .transform((v) => v.toLowerCase()),
+    full_name: fullNameField,
+    phone: phoneField,
+    email: emailField,
     birth_date: z
       .string(err("required"))
       .min(1, err("required"))
@@ -216,6 +227,11 @@ export const applicationSchema = z
     }),
   );
 
+const emailAddress = z.email();
+
+/** Syntactically valid email (same check as the form's email field). */
+export const isEmailAddress = (value: string) => emailAddress.safeParse(value.trim()).success;
+
 export type ApplicationFieldErrors = Partial<Record<string, ApplyErrorKey>>;
 
 const ARRAY_FIELDS = new Set(["languages", "riding_styles", "event_interests"]);
@@ -236,15 +252,47 @@ export function formDataToObject(formData: FormData) {
   return out;
 }
 
+/** Zod issues → the first error key per top-level field. */
+function firstErrorPerField(issues: readonly { path: readonly PropertyKey[]; message: string }[]) {
+  const fieldErrors: Record<string, ApplyErrorKey> = {};
+  for (const issue of issues) {
+    const field = String(issue.path[0] ?? "_form");
+    fieldErrors[field] ??= (issue.message as ApplyErrorKey) || "invalidOption";
+  }
+  return fieldErrors;
+}
+
 /** Validate; returns the DB row or the first error key per field. */
 export function validateApplication(formData: FormData) {
   const result = applicationSchema.safeParse(formDataToObject(formData));
   if (result.success) return { ok: true as const, data: result.data };
 
-  const fieldErrors: ApplicationFieldErrors = {};
-  for (const issue of result.error.issues) {
-    const field = String(issue.path[0] ?? "_form");
-    fieldErrors[field] ??= (issue.message as ApplyErrorKey) || "invalidOption";
-  }
-  return { ok: false as const, fieldErrors };
+  return { ok: false as const, fieldErrors: firstErrorPerField(result.error.issues) };
+}
+
+/** Staff corrections of an application's contact fields — same rules as the public form. */
+export const contactSchema = z.object({ full_name: fullNameField, phone: phoneField, email: emailField });
+
+export type ContactValues = { full_name: string; phone: string; email: string };
+
+/**
+ * Validates only the fields that differ from `current` and returns them
+ * (normalised). An old row whose phone predates the mobile rule can still get
+ * a name/email correction — the DB trigger also checks the phone only when it
+ * changes. Unchanged fields are never sent, so e.g. review-only staff never
+ * "touch" the email of an approved application.
+ */
+export function validateContactChanges(current: ContactValues, input: ContactValues) {
+  const changed: Partial<ContactValues> = {};
+  const fullName = input.full_name.trim();
+  const phone = input.phone.trim();
+  const email = input.email.trim();
+  if (fullName !== current.full_name) changed.full_name = fullName;
+  if (normalizePhone(phone) !== current.phone) changed.phone = phone;
+  if (email.toLowerCase() !== current.email.toLowerCase()) changed.email = email;
+
+  const result = contactSchema.partial().safeParse(changed);
+  if (result.success) return { ok: true as const, data: result.data };
+
+  return { ok: false as const, fieldErrors: firstErrorPerField(result.error.issues) };
 }

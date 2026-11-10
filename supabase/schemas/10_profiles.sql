@@ -292,10 +292,50 @@ begin
 end;
 $$;
 
+-- members.manage: correct a member's name (e.g. the Google account name isn't
+-- the real one). Trimmed, 2–120 characters. Only admins may rename an admin.
+-- Members still edit their own name via the profiles update grant.
+create or replace function public.set_member_name(target_id uuid, new_name text)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  clean_name text := btrim(new_name);
+  target_is_admin boolean;
+begin
+  if not private.has_permission('members.manage') then
+    raise exception 'missing permission members.manage' using errcode = '42501';
+  end if;
+
+  if clean_name is null or char_length(clean_name) not between 2 and 120 then
+    raise exception 'a name must be 2 to 120 characters' using errcode = '23514';
+  end if;
+
+  select coalesce(r.is_admin, false) into target_is_admin
+  from public.profiles p
+  left join public.roles r on r.id = p.role_id
+  where p.id = target_id;
+
+  if not found then
+    raise exception 'profile % not found', target_id using errcode = 'P0002';
+  end if;
+
+  if target_is_admin and not private.is_admin() then
+    raise exception 'only admins can rename an admin' using errcode = '42501';
+  end if;
+
+  update public.profiles set full_name = clean_name where id = target_id;
+end;
+$$;
+
 revoke all on function public.set_member_role(uuid, uuid) from public, anon;
 revoke all on function public.set_member_status(uuid, public.member_status) from public, anon;
+revoke all on function public.set_member_name(uuid, text) from public, anon;
 grant execute on function public.set_member_role(uuid, uuid) to authenticated;
 grant execute on function public.set_member_status(uuid, public.member_status) to authenticated;
+grant execute on function public.set_member_name(uuid, text) to authenticated;
 
 -- ---------------------------------------------------------------------------
 -- Create a profile when a user signs up (Google provides name + picture), keep

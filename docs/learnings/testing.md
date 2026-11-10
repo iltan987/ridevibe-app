@@ -9,6 +9,12 @@
   banner and reported failure while the submit actually succeeded). Wait for the submit button to re-enable or for
   a state that only the new result produces.
 
+### Clearing an `<input type="email">` in puppeteer (2026-11-09)
+- **Symptom:** after `click({ clickCount: 3 })` + Backspace, typing appended to the old address (invalid email, the
+  submit failed for the wrong reason).
+- **Do:** `focus()`, then Ctrl+A, Backspace before typing.
+- **Source:** found by testing.
+
 ### After a client navigation the previous page is still in the DOM, hidden (2026-11-09)
 - **Symptom:** after switching TR → EN, a script saw "Türkçe" *and* "English" checked, and clicking "Türkçe" did
   nothing — it looked like the locale switch was broken (the design-system review reported it as a bug).
@@ -49,8 +55,31 @@
   `utm_campaign=smoke-test`, verify the row via `POSTGRES_URL_NON_POOLING` (`docker run --rm postgres:17-alpine
   psql "$URL" …`), then delete it.
 
+### pgTAP: planting rows that today's triggers would reject (2026-11-09)
+- **Need:** test that an old row (e.g. a `+90` landline from before the mobile rule) stays editable.
+- **Do:** as `postgres`, `set local session_replication_role = replica; update …; set local session_replication_role =
+  origin;` — skips (non-`always`) triggers for that statement; CHECK constraints still apply. Unlike
+  `alter table … disable trigger` it takes no table lock, so it is safe in `supabase test db --remote` runs. Works on
+  the local stack as `postgres`.
+- Column-level grant changes don't change `database.types.ts` (`pnpm db:types` yields no diff) — that's expected.
+
 ### Unit tests: `node --test` runs `*.test.ts` directly, no framework (2026-11-08)
 - Node 24 strips TypeScript types natively and its default test glob includes `**/*.test.ts` → `pnpm test`.
 - Limits: no path aliases (`@/…`) and imports need the `.ts` extension (`allowImportingTsExtensions` is on) →
   keep tested logic in dependency-free modules (e.g. `src/lib/auth/safe-next.ts`).
 - **Source:** found by testing.
+
+### Puppeteer clicks land on the fixed bottom tab bar (2026-11-09)
+- **Symptom:** clicking an "Edit" button on a long admin page at 390×844 navigated to `/apply` instead.
+- **Cause:** `ElementHandle.click()` only scrolls if the element is outside the viewport; a button just above the
+  bottom edge sits under the fixed tab bar, which receives the click.
+- **Do:** `el.evaluate((b) => b.scrollIntoView({ block: "center" }))` before `el.click()`. Also retry the first click
+  on a fresh page until the expected element appears (it can land before hydration).
+- **Source:** found by testing (Task 7 E2E).
+
+### Seeded `auth.users.created_at` doesn't reach `profiles.created_at` (2026-11-09)
+- **Symptom:** a pagination test over 30 seeded pending users was flaky: the order looked random.
+- **Cause:** `handle_new_user` inserts the profile with `created_at = now()`, the same for every row of one
+  `insert … generate_series`; keyset order (`created_at desc, id desc`) then falls back to random UUIDs.
+- **Do:** after seeding, `update public.profiles p set created_at = u.created_at from auth.users u where u.id = p.id …`.
+- **Source:** found by testing (Task 7 E2E).

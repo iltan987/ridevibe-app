@@ -37,3 +37,11 @@
 ### Native `<input type="date">` (2026-11-08)
 - Displays in the **device/browser** locale (e.g. mm/dd/yyyy on a US-region PC) but the value is always
   `YYYY-MM-DD`, so the server reads it correctly. No custom date picker needed.
+
+### No `refresh()` after submitting the application (2026-11-09)
+- **Cause:** `/apply` renders through `ApplyGate`, which shows "under review" to a signed-in applicant with an open
+  application. A `refresh()` after a successful insert would re-render the page server-side and swap the client
+  success card (which repeats the submitted email) for that notice.
+- **Do:** `submitApplication` deliberately skips `refresh()` (exception to the Server Action convention); the next
+  visit to `/apply` shows the notice anyway.
+- **Source:** design decision from how `ApplyGate` and `refresh()` work (not reproduced in a browser).

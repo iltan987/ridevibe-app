@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "@/i18n/navigation";
-import { countMembersByStatus, listMembers, listRoles, MEMBER_STATUSES, type MemberStatus } from "@/lib/access/queries";
+import { countMembersByStatus, getPendingApplicationFlags, listMembers, listRoles, MEMBER_STATUSES, type MemberStatus } from "@/lib/access/queries";
 import { requirePermission } from "@/lib/auth/require-access";
 import { decodeCursor } from "@/lib/pagination";
 
@@ -60,6 +60,8 @@ async function MembersList({ searchParams }: { searchParams: PageProps<"/[locale
     getTranslations("Account"),
     getFormatter(),
   ]);
+
+  const flags = status === "pending" ? await getPendingApplicationFlags(page.items.map((m) => m.id)) : null;
 
   const roleLabel = (roleId: string | null) => {
     const role = roles.find((r) => r.id === roleId);
@@ -112,12 +114,15 @@ async function MembersList({ searchParams }: { searchParams: PageProps<"/[locale
                 joinedLabel: t("joined", { date: format.dateTime(new Date(m.created_at), { dateStyle: "medium" }) }),
                 roleId: m.role_id,
                 roleLabel: roleLabel(m.role_id),
+                applied: flags ? (flags.get(m.id) ?? false) : null,
               }}
               roles={roleOptions}
               isSelf={m.id === me.id}
               canAssignRole={me.access.isAdmin}
               // Mirrors set_member_status(): only admins change an admin's status.
               canChangeStatus={me.access.isAdmin || !adminRoleIds.has(m.role_id ?? "")}
+              // Mirrors set_member_name(): only admins rename an admin.
+              canRename={me.access.isAdmin || !adminRoleIds.has(m.role_id ?? "")}
             />
           ))}
         </ul>
