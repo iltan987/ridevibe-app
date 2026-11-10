@@ -68,6 +68,7 @@ pnpm exec supabase migration up   # apply new migrations locally, keeping data (
                                   # an iteration that reset, restore iltan's local admin before browser review)
 kill $(ss -ltnp | grep ':3123 ' | grep -oP 'pid=\K[0-9]+')   # stop a local server; never `pkill -f` (kills own shell)
 PUPPETEER_DIR=~/e2e-tools node scripts/e2e/{nav,members}-e2e.mjs   # browser E2E vs `pnpm start -p 3123` (setup: scripts/e2e/README.md)
+# members E2E needs only its fixtures active: park other active profiles, restore by id (docs/learnings/testing.md)
 ```
 
 Signed-in local E2E needs email sign-in: `SUPABASE_AUTH_EMAIL_ENABLED=true pnpm exec supabase start` (temporary;
@@ -84,6 +85,9 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
 - Security-definer helpers live in the non-exposed `private` schema with `set search_path = ''` and fully qualified
   names. Use `(select auth.uid())` / `(select private.has_permission('…'))` in policies (evaluated once per query).
   Trigger functions in `private` fired by anon/authenticated writes must be `security definer` too.
+- Conditional self-service writes (only once, only while null, only when active) need a `public` security-definer
+  RPC with no target id: it writes `where profile_id = (select auth.uid())`, locks the row (`for update`), and is
+  granted to `authenticated` only (example: `set_my_birth_date`).
 - **Member data:** `profiles` is readable by every active member (no private columns there); `member_details`
   (birth date, Instagram, opt-in flags, photo consent) and `member_motorcycles` are own row + `members.manage` only;
   other members' data only via the `public.member_directory` RPC. Birth date is read-only; members without one enter it
@@ -132,6 +136,8 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
 - Rollout: merge → `db push` (dry-run first) → `test db --remote --yes` → push `main` (Vercel deploys). If the
   migration removes something old code uses, push `main` immediately after. Don't push branches with schema changes
   for a preview first: previews use the production DB.
+- After a `db push` that adds functions: run a read-only `has_function_privilege('anon' / 'authenticated', …)` check
+  on production.
 - Before `db push`, run read-only checks for anything a new constraint/unique index could reject:
   `docker run --rm postgres:17-alpine psql "$URL" -c "set default_transaction_read_only = on" -c "<query>"`.
 - A migration that rewrites production data gets a read-only preview in `scripts/sql/` (pg_temp copies of new
