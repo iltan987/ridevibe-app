@@ -178,7 +178,12 @@ export function ApplicationReviewPanel({
                 {mismatchedEmail && (
                   <p role="note" className="flex gap-2 rounded-lg border border-sun/40 bg-sun/10 p-3 text-sm wrap-anywhere">
                     <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
-                    <span>{t("review.emailMismatch", { appEmail: application.email, accountEmail: mismatchedEmail })}</span>
+                    <span>
+                      {t(decided ? "review.emailMismatchDecided" : "review.emailMismatch", {
+                        appEmail: application.email,
+                        accountEmail: mismatchedEmail,
+                      })}
+                    </span>
                   </p>
                 )}
               </>

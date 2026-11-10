@@ -368,6 +368,7 @@
       "noPermission": "You don't have permission to change this application's status.",
       "account": "Account: {account}",
       "emailMismatch": "Heads up: the application was made with {appEmail}, but the linked account's email is {accountEmail}. Before approving, confirm that the person uses this account.",
+      "emailMismatchDecided": "Heads up: the application was made with {appEmail}, but the linked account's email is {accountEmail}. Make sure this account belongs to the applicant.",
       "linkedUnknown": "Linked to an account",
       "notLinked": "Hasn't signed in yet. Send the invite; they become active automatically when they sign in with the email from the application. If they signed in with a different Google account, link it with “Link to account”.",
       "notLinkedNoLink": "Hasn't signed in yet. Send the invite; they become active automatically when they sign in with the email from the application.",

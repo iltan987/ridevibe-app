@@ -368,6 +368,7 @@
       "noPermission": "Bu başvurunun durumunu değiştirme yetkin yok.",
       "account": "Hesap: {account}",
       "emailMismatch": "Dikkat: Başvuru {appEmail} ile yapıldı ama bağlı hesabın e-postası {accountEmail}. Onaylamadan önce kişinin bu hesabı kullandığını doğrula.",
+      "emailMismatchDecided": "Dikkat: Başvuru {appEmail} ile yapıldı ama bağlı hesabın e-postası {accountEmail}. Bu hesabın başvuran kişiye ait olduğundan emin ol.",
       "linkedUnknown": "Bir hesaba bağlı",
       "notLinked": "Henüz giriş yapmadı. Davet mesajını gönder; başvurudaki e-postayla giriş yaptığında otomatik olarak aktif olur. Farklı bir Google hesabıyla girdiyse “Hesaba bağla” ile bağla.",
       "notLinkedNoLink": "Henüz giriş yapmadı. Davet mesajını gönder; başvurudaki e-postayla giriş yaptığında otomatik olarak aktif olur.",
