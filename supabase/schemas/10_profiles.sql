@@ -34,6 +34,27 @@ create trigger profiles_set_updated_at
 before update on public.profiles
 for each row execute function private.set_updated_at();
 
+-- security definer: the trigger fires with the writer's rights (anon for the public
+-- form), who may not call private.* helpers.
+create or replace function private.profiles_tidy_name()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  new.full_name = private.tidy_name(
+    new.full_name, private.uses_turkish_casing(new.full_name, new.preferred_locale));
+  return new;
+end;
+$$;
+
+revoke all on function private.profiles_tidy_name() from public, anon, authenticated;
+
+create trigger profiles_tidy_name
+before insert or update of full_name on public.profiles
+for each row execute function private.profiles_tidy_name();
+
 -- ---------------------------------------------------------------------------
 -- Access helpers (security definer so they can read profiles/roles without
 -- recursing into their RLS policies). Only *active* members have any rights.

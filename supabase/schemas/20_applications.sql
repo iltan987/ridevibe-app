@@ -158,6 +158,27 @@ create trigger applications_normalize_contact
 before insert or update of phone, email on public.applications
 for each row execute function private.applications_normalize_contact();
 
+-- security definer: the trigger fires with the writer's rights (anon for the public
+-- form), who may not call private.* helpers.
+create or replace function private.applications_tidy_name()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  new.full_name = private.tidy_name(
+    new.full_name, private.uses_turkish_casing(new.full_name, new.locale));
+  return new;
+end;
+$$;
+
+revoke all on function private.applications_tidy_name() from public, anon, authenticated;
+
+create trigger applications_tidy_name
+before insert or update of full_name on public.applications
+for each row execute function private.applications_tidy_name();
+
 -- Stamp who reviewed and when, whenever the status changes.
 create or replace function private.applications_track_review()
 returns trigger

@@ -106,3 +106,14 @@
 - **Do:** derive state from the FK column itself (`!!a.profile_id`); use the embed only for optional extras (name,
   status) and have a fallback label.
 - **Source:** code review of Task 7, verified in the browser with a view+review+decide role.
+
+### Turkish i-letters break `lower()`/`upper()`; trigger helpers need `security definer` (2026-11-10)
+- **Symptom:** `lower('İ')` returns `i̇` (i + combining dot), `upper('i')` returns `I` not `İ`, so "ILKER"/"ilker"
+  tidy to wrong names. Separately, a `before insert` trigger calling `private.*` helpers failed for anon with
+  "permission denied for schema private".
+- **Cause:** the DB case functions are not locale-aware by default; a trigger function runs with the writer's rights,
+  and the helper call inside it is permission-checked (only the trigger function's own EXECUTE is skipped).
+- **Do:** `translate()` the Turkish i-letters before case functions (`lower(translate(s, 'İI', 'iı'))`,
+  `upper(translate(s, 'iı', 'İI'))`; non-Turkish: `translate(s, 'İ', 'I')` first). Make trigger functions that call
+  `private.*` helpers `security definer` with `set search_path = ''`.
+- **Source:** `supabase/schemas/02_names.sql`, Members Task 1.
