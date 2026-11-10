@@ -13,8 +13,36 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 - **Safety data (2a′)** (2026-11-10, iltan) — next step after Members in `docs/PLAN.md`: emergency contact, blood type
   with explicit consent (special-category data), plate per bike, a new `members.safety`-style permission, separate
   consents and the privacy text. Through the usual design → plan → build flow.
+- **List UX iteration: instant filtering, clean URLs, page numbers, caching** (2026-11-10, iltan, after testing
+  `/members`) — applies to `/members` and the admin lists (`/admin/members`, `/admin/applications`). Design first;
+  points iltan raised:
+  - **Feels like a reload:** a side chip or a name search goes back to the server and waits. Wanted: instant results
+    from data already loaded. Options to weigh: load all active members once and filter on the client (≈150–300 rows
+    is small, but it conflicts with the "every list paginates" rule, so that rule needs a decision), or keep server
+    filtering with transitions, a debounced search-as-you-type and the old list kept visible while loading.
+  - **Empty `?q=`:** clearing the search leaves `?q=` in the URL; drop empty params.
+  - **Cursor in the URL** (`?cursor=…`) looks bad. Page numbers (`?page=14`) would fix this and the next point.
+  - **Pagination design and logic:** with 300+ members you have to press "next" 13 times to reach page 14. Wanted:
+    numbered pages / jump to page (or another pattern, e.g. "load more"); offset pagination is fine at this size but
+    replaces the keyset convention in CLAUDE.md, so decide it explicitly. Also restyle the pager.
+  - **Caching:** e.g. Next 16 `use cache` + `cacheTag` for directory data (the same for every active member;
+    invalidate on profile/bike changes with `updateTag`), keeping the auth check outside the cached part.
+- **Theme script error on language switch** (2026-11-10, iltan) — switching the language logs "Encountered a script
+  tag while rendering React component" from `ThemeScript` (`src/components/theme/theme-script.tsx`, rendered in the
+  `<head>` of `[locale]/layout.tsx`): changing the `[locale]` root param re-renders the root layout on the client.
+  Same root cause as the older 404-path item below (merge both). Research the Next 16 way to ship a pre-paint script,
+  and check whether the client re-render also resets a light-theme user to dark (`<html className="… dark">`).
+  Small `fix/` branch.
 
 ## Open decisions (need iltan)
+
+- **Vercel Web Analytics and Speed Insights?** (2026-11-10, iltan asked) — Claude's recommendation: **add Web
+  Analytics** (page views, referrers, the Instagram-ad funnel; cookieless, data anonymised with a daily-rotating request
+  hash; Hobby includes 50,000 events/month, collection pauses (no bill) when exceeded) and **skip Speed Insights for
+  now** (Hobby free tier: 10,000 events per 30 days and only the overall score with 24 h / 7 day ranges; Core Web
+  Vitals detail needs Pro). If added: mention Vercel analytics in the privacy notice (Vercel is already listed as a
+  processor). Sources: vercel.com/docs/analytics, /docs/analytics/limits-and-pricing,
+  /docs/speed-insights/limits-and-pricing (checked 2026-11-10).
 
 - **Ban evasion vs. linking** (2026-11-09, application gaps) — when the ban list is built (PLAN "Member conduct"),
   check new applications *and* staff links (`link_application`) against it.
@@ -39,6 +67,12 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   who can give first aid; belongs with the safety data (2a′), special-category data rules apply.
 - **Navigation review once events exist** (2026-11-10, members) — the bottom tab bar has 5 tabs at 390px after
   `/members`; re-check labels and spacing when Events lands.
+- **My garage** (2026-11-10, member request via iltan) — a personal garage per member: their bikes (today's
+  `member_motorcycles`) with important dates (insurance/sigorta, inspection/muayene, last and next service or
+  maintenance, …) and personal notes. Design questions: private to the owner (unlike the directory's brand/model/cc);
+  fixed date types vs. free-form entries; reminders before a date (Web Push / email, needs the notification work);
+  how it relates to the plate per bike planned in safety data (2a′) — consider designing the two together. KVKK:
+  plates, insurance details and notes are personal data; collect only what members choose to enter.
 
 ## Parked edge cases (known, judged harmless for now)
 
