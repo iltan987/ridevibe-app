@@ -204,6 +204,9 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   jump a little on load. Accepted: card content varies per member.
 
 ### Tooling
+- **Dead-code sweep** (2026-11-11, iltan) — iltan wants dead code removed when there is no reason to keep it, and a
+  sweep now and then. First sweep: unused exports/files/dependencies (a tool such as `knip`, not installed: ask before
+  adding it), unused message keys in `messages/*.json`, stale comments and follow-up items that point at removed code.
 - **Supabase CLI 3.1.0 is available** (2026-11-10; installed 3.0.0).
 - **Members E2E looseness** (2026-11-10, members review) — some assertions are loose or vacuous in
   `scripts/e2e/members-e2e.mjs`: pending "no member cards" (passes if the list simply didn't render), "remaining 4
