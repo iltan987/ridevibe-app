@@ -54,6 +54,7 @@ pnpm build        # production build (also validates Cache Components rules)
 pnpm lint         # ESLint
 pnpm exec tsc --noEmit
 pnpm test         # unit tests (node --test, *.test.ts)
+                  # tested modules import relatively with `.ts` extensions (`node --test` can't resolve `@/`)
 ```
 
 Run lint, typecheck, tests and build before every commit that touches code.
@@ -67,7 +68,8 @@ pnpm db:types                 # regenerate src/lib/supabase/database.types.ts
 pnpm exec supabase migration up   # apply new migrations locally, keeping data (db:reset wipes auth users; after
                                   # an iteration that reset, restore iltan's local admin before browser review)
 kill $(ss -ltnp | grep ':3123 ' | grep -oP 'pid=\K[0-9]+')   # stop a local server; never `pkill -f` (kills own shell)
-PUPPETEER_DIR=~/e2e-tools node scripts/e2e/{nav,members,header}-e2e.mjs   # browser E2E vs `pnpm start -p 3123` (setup: scripts/e2e/README.md)
+PUPPETEER_DIR=~/e2e-tools node scripts/e2e/{nav,members,header,apply}-e2e.mjs   # browser E2E vs `pnpm start -p 3123` (setup: scripts/e2e/README.md)
+# signed-in parts need fixture users (admin@/member@/pending-noapp@test.local) that `db:reset` wipes: recreate per README
 # headless hides scrollbars (launch({ scrollbars: true }) keeps them); Next keeps the previous route hidden in the DOM: select visible elements
 # members E2E needs only its fixtures active: park other active profiles, restore by id (docs/learnings/testing.md)
 ```
@@ -164,6 +166,8 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   restart the dev server before assuming a missing key.
   Never CSS-`uppercase` English/brand words on Turkish pages (`i → İ`, "RİDE & VİBE"): use `Wordmark` or write the
   capitals in the source (`docs/learnings/ui.md`).
+  Register: UI copy says "sen"; the privacy notice (`privacy/content-*.tsx`) says "siz". Any notice text change bumps
+  `PRIVACY_NOTICE_VERSION` (stored with each consent).
 - **UI:** Tailwind CSS 4 + shadcn/ui (`base-nova` style, built on Base UI). Base UI composes with the `render` prop,
   **not** `asChild`. For links that look like buttons use `buttonVariants()` on `Link`. `cn` comes from the `cn`
   package (re-exported in `@/lib/utils`). Add components with `pnpm dlx shadcn@latest add <name>`.
@@ -179,6 +183,11 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   A language switch remounts the `[locale]` layout and re-shows fallbacks: test skeletons on a switch *back* too.
   Session-dependent fallbacks take their shape from `hasSessionCookie()` (`src/lib/auth/session-hint.ts`), never a
   server read. Inline scripts only via `InlineScript` (`src/components/inline-script.tsx`).
+- Client-only reads (localStorage, user agent) via `useSyncExternalStore(noSubscribe, client, server)` or a `useState`
+  initializer after a hydration key; never `setState` in an effect (React Compiler lint).
+- Application form (`/apply`): a new question goes into the Zod schema **and** a step in
+  `src/lib/applications/steps.ts` (test: every field in exactly one step). Steps 1–3 are kept in the browser draft:
+  contact data and consents belong in step 4 only.
 - WhatsApp links: `whatsAppUrl()` (`src/lib/applications/contact.ts`, `api.whatsapp.com/send`), never `wa.me` —
   its desktop redirect turns emoji into "�".
 - Mobile-first: design for ~390px first; the bottom tab bar is the main navigation on phones.
