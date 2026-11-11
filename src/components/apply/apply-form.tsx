@@ -13,6 +13,8 @@ import { getPathname, Link } from "@/i18n/navigation";
 import { signInWithGoogle } from "@/lib/auth/actions";
 import { detectInAppBrowser } from "@/lib/auth/in-app-browser";
 import { submitApplication } from "@/lib/applications/actions";
+import { writeApplyHint } from "@/lib/applications/apply-hint";
+import { markApplySubmitted } from "@/lib/applications/apply-submitted";
 import {
   EVENT_INTERESTS,
   GROUP_EXPERIENCE,
@@ -278,6 +280,12 @@ function ApplyFormSteps({
           saver.stop();
           clearDraft(browserStorage());
           setSubmittedEmail(result.linked ? null : check.data.email);
+          if (result.linked) {
+            // The account now has an open application: hide "Başvur" in the navs at once (no refresh(), which
+            // would replace this success card) and on the next load's guess.
+            markApplySubmitted();
+            writeApplyHint(() => localStorage, true);
+          }
           window.scrollTo({ top: 0 });
         }
       }

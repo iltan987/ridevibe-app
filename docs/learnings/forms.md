@@ -44,7 +44,10 @@
   success card (which repeats the submitted email) for that notice.
 - **Do:** `submitApplication` deliberately skips `refresh()` (exception to the Server Action convention); the next
   visit to `/apply` shows the notice anyway.
-- **Source:** design decision from how `ApplyGate` and `refresh()` work (not reproduced in a browser).
+- **Consequence (2026-11-11):** other streamed parts of the page keep their old answer too: the nav's "Başvur" stayed
+  after a signed-in submit (browser check). Anything that must react to the submit goes through client state set where
+  the result is handled (`markApplySubmitted` in `apply-form.tsx`, read by the navs).
+- **Source:** design decision from how `ApplyGate` and `refresh()` work; the nav consequence found by testing.
 
 ### A form inside a form: link controls with the `form` attribute, render the `<form>` outside (2026-11-11)
 - **Symptom:** the one-time birth-date entry inside the visibility card did nothing on submit: no request, no error.

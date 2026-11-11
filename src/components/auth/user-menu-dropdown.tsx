@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Link } from "@/i18n/navigation";
+import { clearApplySubmitted } from "@/lib/applications/apply-submitted";
 import { signOut } from "@/lib/auth/actions";
 
 export function UserMenuDropdown({
@@ -78,6 +79,7 @@ export function UserMenuDropdown({
           disabled={isPending}
           onClick={() => {
             rememberShownUser(null);
+            clearApplySubmitted();
             startTransition(() => signOut());
           }}
         >

@@ -174,3 +174,19 @@
 - **Do:** anchor only the end for icon buttons with an aria-label (`Dil: TR$`); plain-text buttons ("Devam") can be anchored.
   Count default-checked radios (e.g. `city_choice`, step 4) out when asserting "nothing is selected" after a reset.
 - **Source:** found by testing (apply steps Task 8).
+
+### E2E: telling a guessing fallback from the streamed part; `scrollbar-gutter` in headless (2026-11-11)
+- **Symptom 1:** every phone frame of `apply-nav-e2e.mjs` was classed as the static-shell guess, also long after the
+  real tab bar had streamed in (desktop was fine).
+- **Cause:** the check was "the nav is followed by a `<script>`" (the guess nav's apply-hint script). The streamed tab
+  bar is the last element of `<body>`, so it is followed by Next's own streaming scripts too.
+- **Do:** identify the fallback by its own script's content (`textContent.includes("rv-apply-hidden")`), not by tag.
+  Prove a "nothing moves" check is meaningful: assert the guess was on screen first (throttle the load). The script
+  also prints the first-load wrong-guess case (`pending-noapp`: 4 tabs → 5) in its PASS output as evidence that the
+  logger sees changes; it is printed, not asserted.
+- **Symptom 2:** `nav-e2e.mjs` "reduced motion: full width" got a 375px bar at a 390px viewport.
+- **Cause:** `scrollbar-gutter: stable` on `<html>` reserves 15px on overflowing pages even in headless Chrome with
+  hidden scrollbars; `innerWidth` and `document.documentElement.clientWidth` still say 390, `<body>` and fixed
+  elements are 375.
+- **Do:** compare full-width elements with `document.body` width, not `innerWidth` (follow-up for `nav-e2e.mjs`).
+- **Source:** found by testing (hide-Başvur Task 5).

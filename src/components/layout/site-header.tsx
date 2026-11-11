@@ -6,6 +6,7 @@ import { ThemeSwitcher } from "@/components/theme/theme-switcher";
 import { Link } from "@/i18n/navigation";
 import { DesktopNav } from "./desktop-nav";
 import { LocaleSwitcher } from "./locale-switcher";
+import { DesktopNavForUser } from "./nav-for-user";
 
 export function SiteHeader() {
   return (
@@ -14,7 +15,10 @@ export function SiteHeader() {
         <Link href="/" className="text-foreground">
           <Wordmark className="h-7" />
         </Link>
-        <DesktopNav />
+        {/* "Başvur" depends on the session: the fallback guesses (see DesktopNav), the streamed nav knows. */}
+        <Suspense fallback={<DesktopNav />}>
+          <DesktopNavForUser />
+        </Suspense>
         <div className="ml-auto flex items-center gap-2">
           <LocaleSwitcher />
           <ThemeSwitcher />
