@@ -2,6 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import type { Tables } from "@/lib/supabase/database.types";
+import { accountDeleted } from "./account-deleted";
 import { type Access, NO_ACCESS, PERMISSIONS } from "./permissions";
 
 export type CurrentUser = {
@@ -26,11 +27,14 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   if (error || !data?.claims) return null;
 
   const id = data.claims.sub;
-  const { data: row } = await supabase
+  const lookup = await supabase
     .from("profiles")
     .select("full_name, avatar_url, status, preferred_locale, role:roles(id, name, is_admin, role_permissions(permission))")
     .eq("id", id)
     .maybeSingle();
+  // A deleted account's token stays valid until it expires: treat it as signed out.
+  if (accountDeleted(lookup)) return null;
+  const row = lookup.data;
 
   const { role: roleRow, ...profile } = row ?? { role: null };
   const role = roleRow ? { id: roleRow.id, name: roleRow.name, isAdmin: roleRow.is_admin } : null;

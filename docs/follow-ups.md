@@ -10,11 +10,6 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ## Next up (iltan asked for these; in priority order; start in a new session)
 
-- **Deleted account stays signed in until its token expires** (2026-11-11, iltan found it after deleting a test
-  account) — `getClaims()` verifies the ES256 JWT locally and never asks Auth whether the user still exists, so the
-  browser looks signed in for up to `jwt_expiry` (1 h); the refresh then fails (sessions are deleted). The DB grants
-  nothing (rights hang on the deleted profile row; an application insert fails on the `profile_id` FK). Find and
-  agree a fix with iltan.
 - **Hide "Başvur" for people who applied or are members** (2026-11-11, iltan's idea) — short design round first:
   who sees it (visitors and signed-in users without an application: yes; active members: no; pending with an open
   application: hide or turn into an application-status item; inactive?), what fills the 5th phone tab, and how a

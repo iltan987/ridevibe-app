@@ -175,5 +175,11 @@
   (JWKS); it calls the Auth server (`getUser`) only for HS* tokens. An access token can't be revoked, so it stays
   valid until `exp` (`jwt_expiry`, 1 h). The delete removes `auth.sessions` / refresh tokens, so the next refresh
   fails and the cookie is dropped then. The DB is safe meanwhile: rights hang on the (deleted) profile row.
-- **Do:** expect a window of up to 1 h after deleting an account (open item in `docs/follow-ups.md`).
-- **Source:** `@supabase/auth-js` `GoTrueClient.getClaims` (2.119.0); production check (no rows written afterwards).
+- **Do:** don't read "verified claims" as "user exists". `getCurrentUser` (`src/lib/auth/user.ts`) treats a verified
+  token whose own-profile lookup succeeds without a row as signed out (every account gets its profile in the sign-up
+  transaction); a *failed* lookup keeps the user, so a DB hiccup doesn't sign people out. Code that needs the user id
+  goes through `getCurrentUser()`, not bare `getClaims()` (`submitApplication` would link to the deleted id and fail
+  on the `profile_id` FK). Rejected: `getUser()` per request (Auth round trip), shorter `jwt_expiry` (more refreshes
+  for everyone), a profile lookup in the proxy (a DB query per request).
+- **Source:** `@supabase/auth-js` `GoTrueClient.getClaims` (2.119.0); production check (no rows written afterwards);
+  local repro: sign in, admin-delete, reload → still signed in before the fix, `/sign-in` after it.
