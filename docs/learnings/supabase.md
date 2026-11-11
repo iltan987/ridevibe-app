@@ -167,3 +167,14 @@
   `now()`/`updated_at` don't change within a transaction.
 - **Source:** github.com/supabase/auth `internal/api/external.go`; supabase.com/docs/guides/auth/sessions; found by
   design review.
+
+### Deleting a user doesn't sign out their open browser (2026-11-11)
+- **Symptom:** after `DELETE /auth/v1/admin/users/<id>` in production, the person's open tab still looked signed in
+  after a refresh.
+- **Cause:** with asymmetric signing keys (ES256), `supabase.auth.getClaims()` only verifies the JWT signature locally
+  (JWKS); it calls the Auth server (`getUser`) only for HS* tokens. An access token can't be revoked, so it stays
+  valid until `exp` (`jwt_expiry`, 1 h). The delete removes `auth.sessions` / refresh tokens, so the next refresh
+  fails and the cookie is dropped then. The DB is safe meanwhile: rights hang on the (deleted) profile row.
+- **Do:** expect a window of up to 1 h after deleting an account; don't treat "verified claims" as "user exists" in
+  app logic (follow-up: a token without a profile row counts as signed out).
+- **Source:** `@supabase/auth-js` `GoTrueClient.getClaims` (2.119.0); production check (no rows written afterwards).

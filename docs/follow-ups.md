@@ -10,6 +10,14 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ## Next up (iltan asked for these; in priority order; start in a new session)
 
+- **Deleted account stays signed in until its token expires** (2026-11-11, iltan found it after deleting a test
+  account) — `getClaims()` verifies the ES256 JWT locally and never asks Auth whether the user still exists, so the
+  browser looks signed in for up to `jwt_expiry` (1 h); the refresh then fails (sessions are deleted). The DB grants
+  nothing (rights hang on the deleted profile row; an application insert fails on the `profile_id` FK). Agreed fix
+  (option A, small fix → `fix/` branch, test first): in `getCurrentUser` (`src/lib/auth/user.ts`) a verified token
+  without a profile row counts as signed out (every account gets its profile in the sign-up transaction); add a
+  line to the CLAUDE.md account-deletion procedure. Rejected: shorter `jwt_expiry` (more refreshes for everyone), a
+  profile lookup in the proxy (a DB query per request).
 - **Hide "Başvur" for people who applied or are members** (2026-11-11, iltan's idea) — short design round first:
   who sees it (visitors and signed-in users without an application: yes; active members: no; pending with an open
   application: hide or turn into an application-status item; inactive?), what fills the 5th phone tab, and how a
