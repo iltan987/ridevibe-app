@@ -4,6 +4,7 @@ import { cn } from "cn";
 import { useTranslations } from "next-intl";
 import { Suspense } from "react";
 import { useApplyHiddenGuess } from "@/components/apply/use-apply-hidden-guess";
+import { useApplySubmitted } from "@/components/apply/use-apply-submitted";
 import { InlineScript } from "@/components/inline-script";
 import { Link, usePathname } from "@/i18n/navigation";
 import { applyHintScript } from "@/lib/applications/apply-hint";
@@ -33,7 +34,10 @@ function DesktopNavLinks({ pathname, showApply }: Props & { pathname?: string })
   const t = useTranslations("Nav");
   const guess = showApply === undefined;
   const guessHidden = useApplyHiddenGuess();
-  const items = showApply === false ? navItems.filter(({ href }) => href !== "/apply") : navItems;
+  // Also hidden, in both modes, right after this tab sent an application linked to the account.
+  const submitted = useApplySubmitted();
+  const hidden = showApply === false || submitted;
+  const items = hidden ? navItems.filter(({ href }) => href !== "/apply") : navItems;
 
   return (
     <>

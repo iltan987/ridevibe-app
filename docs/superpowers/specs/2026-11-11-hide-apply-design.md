@@ -66,8 +66,13 @@ that guesses** and a **streamed part that knows**, inside `<Suspense>`:
 - The existing pathname `<Suspense>` inside `DesktopNav` / `BottomNav` (active-tab highlight) stays as it is.
 - The hero's existing `<Suspense>` for the UTM-carrying `ApplyLink` is combined with this one (one fallback, one
   streamed part).
-- **After submitting an application**, the action's `refresh()` re-renders the streamed parts, so "Başvur" disappears
-  without a reload. After approval (staff session) the member's next page load corrects the stored answer.
+- **After submitting an application** while signed in (the action returns `linked: true`), the form marks a tiny
+  client store (`markApplySubmitted`, `src/lib/applications/apply-submitted.ts`) that both navs read in either mode
+  (`useApplySubmitted`), so "Başvur" disappears without a reload, and writes `rv-apply-hidden = "1"` for the next
+  load's guess. Not via `refresh()`: `submitApplication` deliberately skips it, because `ApplyGate` would then replace
+  the success card with "under review" (`docs/learnings/forms.md`). Signed-out visitors keep "Başvur". Sign-out clears
+  the store. After approval (staff session) the member's next page load corrects the stored answer.
+  *(Amended 2026-11-11 after the Task 5 browser check: the first version assumed a `refresh()`.)*
 - **Wrong guesses** (first visit after a status change, a new user on a shared browser, a pending user right after
   the Google fill on step 4): the phone tab bar keeps its height and only re-spaces its icons; on desktop "Başvur" is
   the last header link, so only that link appears/disappears. In the hero, phone buttons stack, so a wrong guess moves

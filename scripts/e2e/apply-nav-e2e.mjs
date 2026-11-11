@@ -4,9 +4,14 @@
 // Needs a production server on :3123 (pnpm build && pnpm start -p 3123), local email sign-in and the fixture users
 // member@test.local (active), pending-noapp@test.local (pending, no application) and pending-app@test.local (pending,
 // one linked application with status new/contacted); see scripts/e2e/README.md.
-// Env: PUPPETEER_DIR (required), BASE_URL (default http://localhost:3123).
+// The last scenario sends applications as pending-noapp@test.local and as a visitor (apply-nav-e2e@test.local) and
+// deletes them before and after through `docker exec … psql` (local DB only).
+// Env: PUPPETEER_DIR (required), BASE_URL (default http://localhost:3123), DB_CONTAINER (default supabase_db_ridevibe).
+import { execFileSync } from "node:child_process";
 import { launch, newPage, signIn, throttle } from "./e2e-lib.mjs";
 const BASE = process.env.BASE_URL ?? "http://localhost:3123";
+const DB = process.env.DB_CONTAINER ?? "supabase_db_ridevibe";
+const VISITOR_EMAIL = "apply-nav-e2e@test.local";
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let fails = 0;
 const check = (name, ok, extra = "") => { if (!ok) fails++; console.log(`${ok ? "PASS" : "FAIL"} ${name}${extra ? " — " + extra : ""}`); };
@@ -162,6 +167,99 @@ for (const viewport of Object.keys(VIEWPORTS)) {
   check(`member ${viewport}, localStorage blocked: no page error, settled state right`,
     blocked && pageErrors.length === 0 && settledOk(viewport, false, fr.at(-1)), `blocked=${blocked} errors=${JSON.stringify(pageErrors)} ${fmt(fr)}`);
   await ctx.close();
+}
+
+// 5. Sending an application: signed in, "Başvur" disappears at once while the success card stays (no reload; the
+//    action doesn't refresh()); a signed-out visitor keeps it (the spec's table: visitors always see it).
+const sql = (q) => execFileSync("docker", ["exec", DB, "psql", "-U", "postgres", "-tA", "-c", q], { encoding: "utf8" }).trim();
+const deleteApplications = () => sql(`delete from applications where email in ('pending-noapp@test.local', '${VISITOR_EMAIL}')`);
+async function find(page, selector, text = "") {
+  const h = await page.evaluateHandle((selector, text) => [...document.querySelectorAll(selector)]
+    .find((e) => e.getBoundingClientRect().width > 0 && (!text || e.textContent.trim() === text)) ?? null, selector, text);
+  const el = h.asElement();
+  if (!el) throw new Error(`no visible ${selector} ${text}`);
+  await el.evaluate((b) => b.scrollIntoView({ block: "center" })); // the fixed tab bar would eat the click
+  return el;
+}
+const tap = async (page, selector, text = "") => { await (await find(page, selector, text)).click(); await sleep(80); };
+async function type(page, selector, value) {
+  const el = await find(page, selector);
+  await el.focus();
+  await el.evaluate((i) => i.select());
+  await el.press("Backspace");
+  await el.type(value);
+}
+const choose = (page, field, text) => tap(page, `[data-field="${field}"] label`, text);
+async function next(page, to) {
+  await tap(page, "button[type=submit]", "Devam");
+  await page.waitForFunction((n) => [...document.querySelectorAll("[data-step]")].some((e) => !e.hidden && Number(e.dataset.step) === n), { timeout: 8000 }, to);
+}
+/** Fills the four steps (answers as in apply-e2e.mjs) and sends the form. */
+async function sendApplication(page, email) {
+  await choose(page, "license_class", "A2");
+  await type(page, "input[name=riding_years]", "5");
+  await choose(page, "owns_motorcycle", "Hayır");
+  await choose(page, "riding_styles", "Şehir içi");
+  await choose(page, "group_experience", "Biraz");
+  await next(page, 2);
+  await choose(page, "in_other_clubs", "Hayır");
+  await choose(page, "heard_from", "Instagram reklamı");
+  await choose(page, "event_interests", "Kamp");
+  await next(page, 3);
+  for (const name of ["expectations", "alienating_behaviors", "conflict_handling"]) await type(page, `textarea[name=${name}]`, "Birlikte güvenli sürüşler yapmak istiyorum.");
+  await next(page, 4);
+  await type(page, "input[name=full_name]", "Apply Nav Testkisi");
+  await type(page, "input#phone", "5321234567");
+  if (email) await type(page, "input[name=email]", email);
+  await page.evaluate(() => {
+    const input = document.querySelector("input[name=birth_date]");
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(input, "1990-05-17");
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  await page.select("select#district", "Kadıköy");
+  await choose(page, "languages", "Türkçe");
+  for (const name of ["consent_privacy", "consent_rules"]) await tap(page, `[data-field="${name}"] [role=checkbox]`);
+  await tap(page, "button[type=submit]", "Başvuruyu gönder");
+  await page.waitForFunction(() => document.body.innerText.includes("Başvurun alındı!"), { timeout: 15000 });
+}
+const navState = (page) => page.evaluate(() => {
+  const vis = (e) => !!e && e.getBoundingClientRect().width > 0;
+  const bottom = [...document.querySelectorAll("nav.fixed")].find(vis);
+  return {
+    tabs: bottom ? [...bottom.querySelectorAll("a")].filter(vis).length : null,
+    apply: [...document.querySelectorAll("nav [data-apply-link]")].some(vis),
+    success: document.body.innerText.includes("Başvurun alındı!"),
+    hint: localStorage.getItem("rv-apply-hidden"),
+    url: location.pathname,
+  };
+});
+const fmtNav = (s) => `${s.tabs === null ? "desktop" : s.tabs + " tabs"}${s.apply ? " +Başvur" : ""} success=${s.success} hint=${s.hint} ${s.url}`;
+deleteApplications();
+try {
+  for (const [who, viewport] of [["pending-noapp", "phone"], ["pending-noapp", "desktop"], ["visitor", "phone"]]) {
+    const signedIn = who !== "visitor";
+    const { ctx, page } = await fresh(who, viewport);
+    await page.goto(BASE + "/apply", { waitUntil: "networkidle0" });
+    await sleep(500);
+    const before = await navState(page);
+    await page.evaluate(() => { window.__sameDocument = true; }); // gone if the page reloads
+    await sendApplication(page, signedIn ? null : VISITOR_EMAIL);
+    // Signed in: hidden at once (allow a few frames); visitor: give a wrong hide the same time to show up.
+    const t0 = Date.now();
+    let after = await navState(page);
+    while (Date.now() - t0 < 2000 && (signedIn ? after.apply : true)) { await sleep(100); after = await navState(page); }
+    const reloaded = !(await page.evaluate(() => window.__sameDocument === true));
+    const rows = Number(sql(`select count(*) from applications where email = '${signedIn ? "pending-noapp@test.local" : VISITOR_EMAIL}'`));
+    const hiddenOk = viewport === "phone" ? after.tabs === 4 && !after.apply : !after.apply;
+    const shownOk = viewport === "phone" ? after.tabs === 5 && after.apply : after.apply;
+    check(`${who} ${viewport}: application sent — ${signedIn ? "Başvur gone without a reload, success card stays" : "Başvur stays (visitors always see it)"}`,
+      before.apply && rows === 1 && after.success && !reloaded && (signedIn ? hiddenOk && after.hint === "1" : shownOk && after.hint !== "1"),
+      `before: ${fmtNav(before)}; after: ${fmtNav(after)}; rows=${rows} reloaded=${reloaded}`);
+    deleteApplications();
+    await ctx.close();
+  }
+} finally {
+  deleteApplications();
 }
 
 await browser.close();

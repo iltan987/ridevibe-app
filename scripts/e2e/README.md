@@ -13,7 +13,9 @@ Run against a **local** stack only (local Supabase + a server on port 3123); nev
 - `apply-nav-e2e.mjs` — "Başvur" in the desktop nav, the phone tab bar and the home hero (PASS/FAIL lines, exit code
   != 0 on failure): settled state per fixture at 390px and 1280px, exactly one layout from first paint to settled on
   a second load (TR and EN) and across a language switch and back, a signed-out visitor with a stale stored `"1"`,
-  and `localStorage` blocked. It logs the visible tabs/links per animation frame (`evaluateOnNewDocument`) with
+  `localStorage` blocked, and sending an application (signed in: "Başvur" gone without a reload; visitor: it stays;
+  rows for `pending-noapp@test.local` / `apply-nav-e2e@test.local` deleted before and after via `docker exec … psql`,
+  `DB_CONTAINER`, local only). It logs the visible tabs/links per animation frame (`evaluateOnNewDocument`) with
   throttling, so the static-shell guess is on screen long enough to be checked. Needs `pnpm start -p 3123`, local
   email sign-in and `member@test.local` (active), `pending-noapp@test.local` (pending, no application) and
   `pending-app@test.local` (pending, one linked application with status `new` or `contacted`). `BASE_URL` overrides

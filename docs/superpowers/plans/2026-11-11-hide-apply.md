@@ -40,7 +40,8 @@ client renders), the streamed part renders the real answer and stores it.
 - **Fallback shown again after a language switch** (the `[locale]` layout remounts; the inline script doesn't run on
   client renders): the hook must give the same guess as the script. Pinned in Task 2 (parity test) and Task 5 (E2E).
 - **Submitting an application while signed in** (pending, no application → open application): the nav drops "Başvur"
-  after the action's `refresh()`, without a reload. Pinned in Task 5 (browser check).
+  without a reload, via the client store `markApplySubmitted` (the action has no `refresh()`; spec amended). Pinned in
+  Task 5 (`apply-nav-e2e.mjs`, last scenario).
 - **`my_application_status` fails**: nav, hero and `/apply` all fall back to "form" (Başvur shown), error code logged
   once per request. Pinned in Task 1 (`getApplyView` keeps the existing catch; one call per request via `cache`).
 

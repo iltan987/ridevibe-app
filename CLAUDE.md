@@ -194,7 +194,7 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
 - Mobile-first: design for ~390px first; the bottom tab bar is the main navigation on phones.
 - Primary nav items live in `src/components/layout/nav-items.ts`. "Başvur" is shown only when `/apply` would show the
   form (`applyView` / `getApplyView`); nav and hero guess from the session cookie + `rv-apply-hidden` until the
-  answer streams in.
+  answer streams in; a signed-in submit hides it at once (`markApplySubmitted`, no `refresh()`).
 - Server Actions: validate with Zod, let RLS decide, map error codes to results, call `refresh()` (`next/cache`)
   after a successful mutation. They and Route Handlers can't read the locale root param — derive it from data.
 - Lists use keyset pagination (`src/lib/pagination.ts` + `Pager`); access checks via `can()` / `requirePermission()`.
