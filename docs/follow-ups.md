@@ -197,6 +197,9 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   as a `<html id="__next_error__">` shell rendered entirely on the client, so the `<head>` theme script never runs
   there; the stored theme arrives with `ThemeSwitcher`'s `useLayoutEffect` after hydration (brief dark flash on 404s
   only). Find out why the catch-all `notFound()` yields the error shell instead of a server-rendered 404.
+- **Theme doesn't sync across tabs** (2026-11-11, next-themes comparison) — `ThemeSwitcher` only listens to OS
+  changes (`matchMedia`), not `storage` events, so other open tabs keep the old theme until reload. Fix: a `storage`
+  listener for `THEME_STORAGE_KEY` that calls `syncThemePreference`. Minor.
 - **Extra dark `theme-color` meta after navigation** (2026-11-11, theme-script fix) — Next appends its `viewport`
   meta (dark) after ours on every client navigation; the browser uses the first one (ours, correct), so harmless
   today but fragile if Next ever inserts it first (`docs/learnings/ui.md`).
