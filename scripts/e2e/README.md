@@ -20,6 +20,13 @@ Run against a **local** stack only (local Supabase + a server on port 3123); nev
   button doesn't jump), and no sideways header shift on `/apply` as a member (real scrollbars). Needs
   `member@test.local` (active, `avatar_url` = `<BASE_URL>/apple-icon.png`) for the signed-in part. Run against `pnpm dev -p 3123` (the warning is dev-only) and
   `pnpm start -p 3123`. `BASE_URL` overrides the server.
+- `apply-e2e.mjs` — the stepped `/apply` form: step-1 errors only, Enter acts as "Devam" (no POST), browser back, draft
+  restore (conditional answers, steps 1-3 only, no contact data in `localStorage`), language switch and "Baştan başla",
+  deep link `?step=4` jumping to step 1, writing minimum (15 characters), draft gone after a successful submit, and the
+  "Google ile doldur" button (redirect carries `next=/apply?step=4`; hidden in Instagram's in-app browser). Needs
+  `pnpm start -p 3123` and the local stack; writes one application for `apply-e2e@test.local` and deletes it before and
+  after through `docker exec … psql` (`DB_CONTAINER`, local only). The last check (signed in: no Google button) needs
+  email sign-in plus `pending-noapp@test.local` and prints `SKIP` otherwise. Screenshots (390px) go to `OUT_DIR`.
 - `skeletons.mjs <baseUrl> <out.md> [routes…]` — measures each `data-skeleton` fallback against its
   `data-skeleton-result` (JS off vs on); see `docs/learnings/testing.md`.
 
