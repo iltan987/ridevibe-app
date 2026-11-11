@@ -159,3 +159,10 @@
 - **Do:** `launch({ scrollbars: true })` in `scripts/e2e/e2e-lib.mjs` (drops that default flag; 15px classic
   scrollbars). Phone-width runs then also lose 15px, unlike real phones (overlay scrollbars).
 - **Source:** found by testing (scrollbar-gutter fix).
+
+### Importing app schemas into `node --test`: convert `@/` to relative `.ts` (2026-11-11)
+- **Symptom:** `Cannot find package '@/lib'` when a `*.test.ts` imports `src/lib/applications/schema.ts`.
+- **Cause:** Node has no path aliases; every module in the import chain must use relative paths with `.ts` extensions
+  (`import type` is erased, so aliases there are harmless).
+- **Do:** convert the chain (`schema.ts` → `../birth-date.ts`, `../istanbul-districts.ts`, `./contact.ts`, `./options.ts`).
+- **Source:** found by testing (application steps Task 1).
