@@ -250,15 +250,20 @@ try {
     // Step 4 contact details must never reach the draft.
     await page.goto(`${BASE}/apply?step=4`, { waitUntil: "networkidle0" });
     await sleep(500);
+    const before = JSON.parse((await draftRaw(page)) ?? "null");
     await fillStep4(page);
+    // Force a save after step 4 was filled (a step 1-3 answer changes; step 4 inputs would otherwise be unproven).
+    await setInputValue(page, "input[name=riding_years]", "9");
+    const saved = await until(page, (k) => JSON.parse(localStorage.getItem(k) ?? "null")?.fields?.riding_years === "9", DRAFT_KEY);
     await sleep(700);
     const raw = (await draftRaw(page)) ?? "";
+    const savedAfter = !!before && !!saved && JSON.parse(raw).savedAt !== before.savedAt;
     const forbiddenKeys = ["full_name", "phone", "email", "birth_date", "city_choice", "district", "instagram", "languages", "consent_privacy", "consent_rules", "consent_photos"];
     const forbiddenValues = ["Apply Testkisi", "5321234567", "532 123", TEST_EMAIL, "1990-05-17", "Kadıköy"];
     const keyLeaks = forbiddenKeys.filter((k) => raw.includes(`"${k}"`));
     const valueLeaks = forbiddenValues.filter((v) => raw.includes(v));
     await shot(page, "step4-filled");
-    check("draft-no-personal-data", raw.length > 0 && keyLeaks.length === 0 && valueLeaks.length === 0, `draft present=${raw.length > 0} key leaks=${keyLeaks} value leaks=${valueLeaks.length}`);
+    check("draft-no-personal-data", savedAfter && raw.length > 0 && keyLeaks.length === 0 && valueLeaks.length === 0, `save after step 4 filled=${savedAfter} key leaks=${keyLeaks} value leaks=${valueLeaks.length}`);
     await ctx.close();
   }
 
@@ -269,18 +274,24 @@ try {
     await fillStep1(page);
     await next(page, 1);
     await pick(page, "heard_from", "Instagram reklamı");
+    await pick(page, "in_other_clubs", "Evet");
+    // The last answer is typed text; switch at once (no sleep): only the focus-leave / unmount flush can save it.
+    await typeInto(page, "input[name=other_club_names]", "Gece Atlıları");
+    const tTyped = Date.now();
     await click(page, "button", "Dil: TR$");
-    await sleep(300);
-    const clickedEn = await click(page, "[role=menuitemradio]", "English");
+    let clickedEn = false;
+    for (let i = 0; i < 50 && !clickedEn; i++) clickedEn = await click(page, "[role=menuitemradio]", "English") || (await sleep(20), false);
+    const sinceTyped = Date.now() - tTyped;
     const onEn = await until(page, () => location.pathname.startsWith("/en/apply") && /Step 2 of 4/.test(document.body.innerText));
     await sleep(500);
+    const clubs = await value(page, "input[name=other_club_names]");
     const heard = await page.evaluate(() => document.querySelector('[data-field="heard_from"] [role=radio][aria-checked=true]')?.closest("label")?.textContent.trim());
     const years = await value(page, "input[name=riding_years]");
     await shot(page, "step2-en");
     check(
       "language-switch-keeps-draft",
-      clickedEn && !!onEn && (await visibleStep(page)) === 2 && heard === "Instagram ad" && years === "5",
-      `path=${new URL(page.url()).pathname}${new URL(page.url()).search} step=${await visibleStep(page)} heard_from=${heard} years=${years}`,
+      clickedEn && !!onEn && (await visibleStep(page)) === 2 && heard === "Instagram ad" && years === "5" && clubs === "Gece Atlıları",
+      `path=${new URL(page.url()).pathname}${new URL(page.url()).search} step=${await visibleStep(page)} heard_from=${heard} years=${years} other_club_names=${clubs} (switch ${sinceTyped} ms after typing)`,
     );
     await ctx.close();
   }
@@ -401,14 +412,28 @@ try {
 
     const ig = await fresh("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Instagram 300.0.0.0.0");
     await go(ig.page, "/apply?step=4");
-    await sleep(500);
-    const igBtn = await find(ig.page, "button", "Google ile doldur");
-    const igHint = /Ad ve e-postan otomatik gelir\./.test(await bodyText(ig.page));
+    // Positive control: step 4 is shown and hydrated (the form remounts on hydration; the honeypot-free email input
+    // is visible), so an absent button means "hidden for this UA", not "never rendered".
+    const igRendered = await until(ig.page, () => {
+      const email = document.querySelector("input[name=email]");
+      const step = document.querySelector('[data-step="4"]');
+      return !!email && !!step && !step.hidden && email.getBoundingClientRect().width > 0;
+    });
+    // Hydrated: the client-only user agent is read; a normal UA shows the button within this window, Instagram never.
+    await sleep(1500);
+    let igBtn = null;
+    let igHint = false;
+    for (let i = 0; i < 10 && !igBtn && !igHint; i++) {
+      igBtn = await find(ig.page, "button", "Google ile doldur");
+      igHint = /Ad ve e-postan otomatik gelir\./.test(await bodyText(ig.page));
+      await sleep(100);
+    }
+    const igUa = await ig.page.evaluate(() => navigator.userAgent.includes("Instagram"));
     await ig.ctx.close();
     check(
       "google-button",
-      !!btn && hint && authorize.length >= 1 && next === "/apply?step=4" && !igBtn && !igHint,
-      `button=${!!btn} hint=${hint} authorize requests=${authorize.length} next=${next} instagram UA: button=${!!igBtn} hint=${igHint} (draft step ${draftStep})`,
+      !!btn && hint && authorize.length >= 1 && next === "/apply?step=4" && !!igRendered && igUa && !igBtn && !igHint,
+      `button=${!!btn} hint=${hint} authorize requests=${authorize.length} next=${next} instagram UA (step 4 rendered=${!!igRendered}): button=${!!igBtn} hint=${igHint} (draft step ${draftStep})`,
     );
   }
 
