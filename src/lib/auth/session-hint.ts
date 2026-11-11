@@ -5,7 +5,7 @@
 // (`src/lib/supabase/proxy.ts` also matches `-code-verifier`, which must run the proxy but isn't a session); keep both.
 // Dependency-free so `node --test` can load it and the skeleton can embed `markSessionHint` as an inline script.
 
-export const SESSION_COOKIE =/(?:^|;\s*)sb-[^=;]+-auth-token(?:\.\d+)?=/;
+export const SESSION_COOKIE = /(?:^|;\s*)sb-[^=;]+-auth-token(?:\.\d+)?=/;
 
 export function hasSessionCookie(cookie: string): boolean {
   return SESSION_COOKIE.test(cookie);

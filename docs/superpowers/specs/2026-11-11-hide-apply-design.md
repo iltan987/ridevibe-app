@@ -56,6 +56,9 @@ that guesses** and a **streamed part that knows**, inside `<Suspense>`:
   - no session cookie (`hasSessionCookie()`) → show;
   - session cookie → the stored answer; nothing stored → hide (most signed-in users are members).
   The guess is a pure function of (cookie present, stored value), unit-tested.
+  Visitors' pages also store `"0"` (`RememberApplyHint` runs for every user), on purpose: the main funnel (visitor →
+  Google sign-in on /apply → pending without application) then guesses right; the cost is one wrong first load for a
+  member who signs in on a device where they browsed signed out.
 - **Server HTML (first paint):** the static HTML can't read cookies or storage, so the fallback contains the "Başvur"
   item and an inline script (via `InlineScript`, like `markSessionHint`) sets a `data-` attribute on the nav / CTA
   container before first paint when the guess is "hide"; CSS then hides the item and the tab bar switches from
@@ -84,7 +87,8 @@ that guesses** and a **streamed part that knows**, inside `<Suspense>`:
 
 - **Unit (`node --test`):** `applyView` for every row of the table (incl. `rejected` and the no-profile case); the
   guess for cookie × stored value (`"1"`, `"0"`, missing, garbage).
-- **Browser E2E** (extend `scripts/e2e/nav-e2e.mjs`, fixtures per `scripts/e2e/README.md`):
+- **Browser E2E** (extend `scripts/e2e/nav-e2e.mjs`, fixtures per `scripts/e2e/README.md`; it became a separate
+  `scripts/e2e/apply-nav-e2e.mjs`, as `nav-e2e.mjs` is about the progress bar):
   - visitor: 5 tabs and the hero button; `member@test.local`: 4 tabs, no hero button, no desktop link;
     `pending-noapp@test.local`: 5 tabs; a pending account with an open application: 4 tabs;
   - on a second load, tab positions and the desktop links don't move between first paint and the settled page

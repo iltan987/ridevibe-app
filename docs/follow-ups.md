@@ -11,16 +11,16 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 ## Next up (iltan asked for these; in priority order; start in a new session)
 
 - **Own "install the app" prompt** (2026-11-11, iltan: people close the browser's install pop-up) — design round
-  first. Android + Chrome/Edge desktop: catch `beforeinstallprompt`, suppress the browser's
-  pop-up, show our own card/button (one tap → system install dialog). iPhone/iPad: no programmatic install (Safari
-  has no `beforeinstallprompt`, WebKit WONTFIX) → own short "Paylaş → Ana Ekrana Ekle" guide; since iOS 26 every
-  Home Screen site opens as a web app. In-app browsers: existing "open in browser" notice first. Never ask when
-  already installed (`display-mode: standalone`); remember dismissals, re-ask later. Moments: after approval / first
-  sign-in, a member home card, the avatar menu. Strongest pitch is notifications (iOS Web Push only works for Home
-  Screen apps) → decide whether it ships with the service worker + Web Push. Watch Chrome's Web Install API /
-  `<install>` element (origin trial 2026, not stable). Native apps not needed (a TWA could put the PWA on Play Store
-  if ever wanted; Apple rejects thin wrappers). Sources: MDN BeforeInstallPromptEvent, caniuse, WebKit bug 193959,
-  heise (iOS 26), developer.chrome.com/blog/install-element-ot (checked 2026-11-11).
+  first. Android + Chrome/Edge desktop: catch `beforeinstallprompt`, suppress the browser's pop-up, show our own
+  card/button (one tap → system install dialog). iPhone/iPad: no programmatic install (Safari has no
+  `beforeinstallprompt`, WebKit WONTFIX) → own short "Paylaş → Ana Ekrana Ekle" guide; since iOS 26 every Home Screen
+  site opens as a web app. In-app browsers: existing "open in browser" notice first. Never ask when already installed
+  (`display-mode: standalone`); remember dismissals, re-ask later. Moments: after approval / first sign-in, a member
+  home card, the avatar menu. Strongest pitch is notifications (iOS Web Push only works for Home Screen apps) → decide
+  whether it ships with the service worker + Web Push. Watch Chrome's Web Install API / `<install>` element (origin
+  trial 2026, not stable). Native apps not needed (a TWA could put the PWA on Play Store if ever wanted; Apple rejects
+  thin wrappers). Sources: MDN BeforeInstallPromptEvent, caniuse, WebKit bug 193959, heise (iOS 26),
+  developer.chrome.com/blog/install-element-ot (checked 2026-11-11).
 - **Safety data (2a′)** (2026-11-10, iltan) — next step after Members in `docs/PLAN.md`: emergency contact, blood type
   with explicit consent (special-category data), plate per bike, a new `members.safety`-style permission, separate
   consents and the privacy text. Through the usual design → plan → build flow.
@@ -214,14 +214,20 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   search input and its submit button share one `aria-label`. Account page: focus isn't moved after deleting a bike or
   to the first invalid field; an invalid field may be announced twice; an empty `ActionStatus` leaves a gap; a
   redundant cursor class.
-- **Hide-Başvur review minors (2026-11-11)** — the guess plumbing is duplicated in `desktop-nav.tsx` /
-  `bottom-nav.tsx` (a `useApplyNavItems` helper); `group-data-apply-hidden` relies on an unnamed Tailwind `group` (a
-  named group is safer if groups ever nest); `useApplyHiddenGuess` also runs in the streamed nav (one no-op
-  re-render); `noSubscribe` is defined 3× (`use-apply-hidden-guess.ts`, `user-menu-skeleton.tsx`, `apply-form.tsx`);
-  `hero-apply-guess.tsx` builds its className with a template string instead of `cn`; the guess fallback hero link
-  carries no UTM params (the streamed one does); the inline script in `apply-hint.ts` reads `doc.cookie` outside its
-  `try` and uses an optional catch binding (same as `markSessionHint`); the parity test doesn't assert
-  `hasSessionCookie(c)` against the list label; missing space in `SESSION_COOKIE =/(` (`session-hint.ts`).
+- **Hide-Başvur review minors** (2026-11-11, hide-Başvur review) — nav/hero: the guess plumbing is duplicated in
+  `desktop-nav.tsx` / `bottom-nav.tsx` (a `useApplyNavItems` helper); `group-data-apply-hidden` relies on an unnamed
+  Tailwind `group`; `useApplyHiddenGuess` also runs in the streamed nav (one no-op re-render); `noSubscribe` is
+  defined 3×; `hero-apply-guess.tsx` builds its className with a template string instead of `cn`; the hero guess link
+  carries no UTM params; the inline script in `apply-hint.ts` reads `doc.cookie` outside its `try` and uses an
+  optional catch binding (same as `markSessionHint`); the parity test doesn't assert `hasSessionCookie(c)` against
+  the list label. E2E (`scripts/e2e/apply-nav-e2e.mjs`): the language-switch check prints INFO instead of failing
+  when the fallback isn't re-shown (~line 146); the stored-"1" visitor check doesn't assert the guess was on screen
+  first (`fr[0]?.guess`, ~line 156); the frame logger skips frames where the nav or hero is missing (~line 53), so a
+  briefly vanishing bar isn't caught; a thrown error skips `ctx.close()`/`browser.close()`; "success card stays" is
+  read only once. Behaviour: sign-out clears the "just submitted" store before `signOut()` resolves (same as
+  `rememberShownUser(null)`; a failed sign-out shows Başvur until reload); the hero doesn't read the submitted store
+  (Back to a preserved `/` after a signed-in submit can still show the hero's Başvur, a one-click dead end to "under
+  review"; harmless).
 
 ### Loading states
 - **`AccountSkeleton` only mirrors the active-member page** (2026-11-10, members) — pending and inactive accounts see a

@@ -5,7 +5,7 @@
 
 import { SESSION_COOKIE } from "../auth/session-hint.ts";
 
-export const APPLY_HINT_KEY = "rv-apply-hidden";
+const APPLY_HINT_KEY = "rv-apply-hidden";
 
 export function guessApplyHidden(hasSession: boolean, stored: string | null): boolean {
   return hasSession && stored !== "0";
