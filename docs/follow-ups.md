@@ -8,8 +8,33 @@ holds the rest and links there.
 
 Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred / risk if left.`
 
-## Next up (iltan asked for these; start in a new session)
+## Next up (iltan asked for these; in priority order; start in a new session)
 
+- **Application form UX: same questions, less effort** (2026-11-11, iltan: applicants say the form is long; Samet
+  keeps every question) — design round first. (1) Steps with a progress bar along the existing sections (Hakkında →
+  Sürüş → Sen ve kulüp → Onaylar), validation per step. (2) Autosave a draft in the applicant's own browser, "continue
+  where you left off", deleted after submit (personal data on their device: check the privacy-notice wording).
+  (3) Lighter free-text questions (expectations, alienating behaviours, disagreement): "1–2 sentences are enough",
+  example placeholders, review minimum lengths. (4) Tap instead of type where cheap: chips/segmented buttons for
+  licence, years, group experience, yes/no; searchable district; bike brand suggestions. (5) Suggest signing in with
+  Google first (name + email are already prefilled then). (6) Measure the funnel (opened → each step → sent) once the
+  Vercel Web Analytics decision is made. Spec: `docs/application-form.md` (update it with the design).
+- **Hide "Başvur" for people who applied or are members** (2026-11-11, iltan's idea) — short design round first:
+  who sees it (visitors and signed-in users without an application: yes; active members: no; pending with an open
+  application: hide or turn into an application-status item; inactive?), what fills the 5th phone tab, and how a
+  session-dependent item stays in the static nav without a layout shift (cookie hint like the user-menu skeleton).
+  Overlaps "Navigation review once events exist".
+- **Own "install the app" prompt** (2026-11-11, iltan: people close the browser's install pop-up) — design round
+  first, after the "Başvur" one. Android + Chrome/Edge desktop: catch `beforeinstallprompt`, suppress the browser's
+  pop-up, show our own card/button (one tap → system install dialog). iPhone/iPad: no programmatic install (Safari
+  has no `beforeinstallprompt`, WebKit WONTFIX) → own short "Paylaş → Ana Ekrana Ekle" guide; since iOS 26 every
+  Home Screen site opens as a web app. In-app browsers: existing "open in browser" notice first. Never ask when
+  already installed (`display-mode: standalone`); remember dismissals, re-ask later. Moments: after approval / first
+  sign-in, a member home card, the avatar menu. Strongest pitch is notifications (iOS Web Push only works for Home
+  Screen apps) → decide whether it ships with the service worker + Web Push. Watch Chrome's Web Install API /
+  `<install>` element (origin trial 2026, not stable). Native apps not needed (a TWA could put the PWA on Play Store
+  if ever wanted; Apple rejects thin wrappers). Sources: MDN BeforeInstallPromptEvent, caniuse, WebKit bug 193959,
+  heise (iOS 26), developer.chrome.com/blog/install-element-ot (checked 2026-11-11).
 - **Safety data (2a′)** (2026-11-10, iltan) — next step after Members in `docs/PLAN.md`: emergency contact, blood type
   with explicit consent (special-category data), plate per bike, a new `members.safety`-style permission, separate
   consents and the privacy text. Through the usual design → plan → build flow.
@@ -28,22 +53,6 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   - **Caching:** e.g. Next 16 `use cache` + `cacheTag` for directory data (the same for every active member;
     invalidate on profile/bike changes with `updateTag`), keeping the auth check outside the cached part.
 
-- **Hide "Başvur" for people who applied or are members** (2026-11-11, iltan's idea) — short design round first:
-  who sees it (visitors and signed-in users without an application: yes; active members: no; pending with an open
-  application: hide or turn into an application-status item; inactive?), what fills the 5th phone tab, and how a
-  session-dependent item stays in the static nav without a layout shift (cookie hint like the user-menu skeleton).
-  Overlaps "Navigation review once events exist".
-- **Own "install the app" prompt** (2026-11-11, iltan: people close the browser's install pop-up) — design round
-  first, after the "Başvur" one. Android + Chrome/Edge desktop: catch `beforeinstallprompt`, suppress the browser's
-  pop-up, show our own card/button (one tap → system install dialog). iPhone/iPad: no programmatic install (Safari
-  has no `beforeinstallprompt`, WebKit WONTFIX) → own short "Paylaş → Ana Ekrana Ekle" guide; since iOS 26 every
-  Home Screen site opens as a web app. In-app browsers: existing "open in browser" notice first. Never ask when
-  already installed (`display-mode: standalone`); remember dismissals, re-ask later. Moments: after approval / first
-  sign-in, a member home card, the avatar menu. Strongest pitch is notifications (iOS Web Push only works for Home
-  Screen apps) → decide whether it ships with the service worker + Web Push. Watch Chrome's Web Install API /
-  `<install>` element (origin trial 2026, not stable). Native apps not needed (a TWA could put the PWA on Play Store
-  if ever wanted; Apple rejects thin wrappers). Sources: MDN BeforeInstallPromptEvent, caniuse, WebKit bug 193959,
-  heise (iOS 26), developer.chrome.com/blog/install-element-ot (checked 2026-11-11).
 
 ## Open decisions (need iltan)
 
