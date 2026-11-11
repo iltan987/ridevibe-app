@@ -130,7 +130,8 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
 - **Deleting an account** (no in-app delete): only on iltan's explicit OK; first check status/role/linked application
   and `applications.reviewed_by`, then `DELETE {SUPABASE_URL}/auth/v1/admin/users/<id>` with `SUPABASE_SECRET_KEY`
   (cascades profile, member_contacts, member_details and member_motorcycles; applications become unlinked,
-  `reviewed_by` → null).
+  `reviewed_by` → null). Their access token stays valid up to 1 h; the app shows them signed out because the profile
+  row is gone (`getCurrentUser`). Use `getCurrentUser()`, not bare `getClaims()`, wherever "who is signed in" matters.
 - **Auth/config as code:** production overrides live in `[remotes.production]` in `supabase/config.toml`. Always run
   `pnpm exec supabase config diff --remote=igqqicbfejhnsggfuydh` and review before `config push --remote=… --yes`.
   Local defaults must not leak into production — pin hosted values in the remote block when the diff shows them.

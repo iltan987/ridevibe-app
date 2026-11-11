@@ -1,5 +1,6 @@
 "use server";
 
+import { getCurrentUser } from "@/lib/auth/user";
 import { createClient } from "@/lib/supabase/server";
 import { type ApplicationFieldErrors, validateApplication } from "./schema";
 
@@ -22,10 +23,9 @@ export async function submitApplication(formData: FormData): Promise<SubmitAppli
   const supabase = await createClient();
   // Signed in: link the application to the account. The id comes from the
   // verified session, never from form data; RLS allows only the own id.
-  const { data: auth, error: authError } = await supabase.auth.getClaims();
-  // Continue unlinked; log only the code (KVKK).
-  if (authError) console.error("submitApplication: getClaims failed", { code: authError.code });
-  const profileId = auth?.claims?.sub;
+  // getCurrentUser() (not bare getClaims()) so a deleted account, whose token is
+  // still valid, applies unlinked like the signed-out visitor it is shown as.
+  const profileId = (await getCurrentUser())?.id;
   const { error } = await supabase
     .from("applications")
     .insert(profileId ? { ...result.data, profile_id: profileId } : result.data);
