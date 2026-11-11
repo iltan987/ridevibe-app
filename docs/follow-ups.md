@@ -180,6 +180,15 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   `h-36.75 sm:h-26.75`, `h-21.5`, …) in `ApplySkeleton` and the admin skeletons (~160 lines of mirrored markup) drift
   when the real markup changes; add pointer comments in the real components. Line/hint counts hidden at `sm` are tuned
   to Turkish copy, English not measured. Re-run `scripts/e2e/skeletons.mjs` after UI changes.
+- **`ApplySkeleton` cleanups** (2026-11-10, loading-states review) — in `src/app/[locale]/apply/page.tsx`: the
+  `Line` helper builds its class with a template literal instead of `cn`; the `<InputRow input="h-10 md:h-8" />` row
+  is undocumented (the `InputRow` comment only mentions h-10/h-9). Also `src/components/auth/user-menu.tsx` has one
+  long unformatted line (the signed-out `Link`).
+- **Theme switcher selection after a revealed hidden route** (2026-11-11, header review, unverified) — if Next ever
+  reveals a hidden `Activity` copy of the `[locale]` layout after the theme changed, its `useLayoutEffect` re-applies
+  the stored theme but `pref` keeps the old value (wrong radio checked). Fix if seen: read `pref` via
+  `useSyncExternalStore` over `localStorage` + `storage` events. The cross-tab E2E also only checks the `<html>`
+  class, not the other tab's checked option.
 - **Web-font swap resizes header text** (2026-11-11, user-menu skeleton fix) — when Saira finishes loading, the
   English "Sign in" button grows 59 → 63px and the header controls move ~4px (seen with throttling in
   `scripts/e2e/header-e2e.mjs`). The `next/font` fallback metrics don't fully match Saira's width axis; check

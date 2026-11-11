@@ -159,7 +159,10 @@ for (const signedIn of [false, true]) {
     await sleep(2500);
     const sw = await page.evaluate(() => window.__frames);
     const xs = sw.map((f) => f.localeX).filter((x) => x !== null);
-    check("language switch back (signed in): skeleton is the avatar circle", sw.filter((f) => f.kind === "skeleton").every((f) => f.w === 32 && f.h === 32), fmt(sw));
+    const swSkel = sw.filter((f) => f.kind === "skeleton");
+    // The fallback only shows when the cached shell commits before the user menu (seen with `pnpm start`, not always in dev).
+    if (swSkel.length === 0) console.log(`SKIP language switch back (signed in): fallback not shown in this run — ${fmt(sw)}`);
+    else check("language switch back (signed in): skeleton is the avatar circle", swSkel.every((f) => f.w === 32 && f.h === 32), fmt(sw));
     // TR/EN labels differ by ~1px; a skeleton/result width mismatch moves the button by ~40px.
     check("language switch back (signed in): language button doesn't jump", Math.max(...xs) - Math.min(...xs) <= 2, fmt(sw));
   }

@@ -5,6 +5,7 @@ import { useSyncExternalStore } from "react";
 import { InlineScript } from "@/components/inline-script";
 import { Skeleton } from "@/components/ui/skeleton";
 import { hasSessionCookie, sessionHintScript } from "@/lib/auth/session-hint";
+import { cn } from "@/lib/utils";
 
 const noSubscribe = () => () => {};
 
@@ -23,7 +24,13 @@ export function UserMenuSkeleton() {
         data-session={signedIn ? "" : undefined}
         aria-hidden
         suppressHydrationWarning
-        className="inline-flex h-7 shrink-0 items-center overflow-hidden rounded-[min(var(--radius-md),12px)] border border-transparent px-2.5 text-[0.8rem] font-medium whitespace-nowrap text-transparent select-none data-session:size-8 data-session:rounded-full data-session:border-0 data-session:p-0"
+        className={cn(
+          // outline/sm button box: h-7, 1px border, px-2.5, text-[0.8rem] medium, radius
+          "inline-flex h-7 shrink-0 items-center overflow-hidden rounded-[min(var(--radius-md),12px)] border",
+          "border-transparent px-2.5 text-[0.8rem] font-medium whitespace-nowrap text-transparent select-none",
+          // signed in: the 32px avatar
+          "data-session:size-8 data-session:rounded-full data-session:border-0 data-session:p-0",
+        )}
       >
         {t("signIn")}
       </Skeleton>

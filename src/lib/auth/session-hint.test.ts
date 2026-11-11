@@ -4,37 +4,39 @@ import { test } from "node:test";
 import vm from "node:vm";
 import { hasSessionCookie, sessionHintScript } from "./session-hint.ts";
 
+const SIGNED_IN = [
+  "sb-127-auth-token=base64-abc",
+  "theme=x; sb-igqqicbfejhnsggfuydh-auth-token.0=base64-abc; NEXT_LOCALE=en",
+  "a=1;sb-127-auth-token.1=xyz",
+];
+const SIGNED_OUT = [
+  "",
+  "NEXT_LOCALE=tr",
+  "sb-127-auth-token-code-verifier=abc", // OAuth flow in progress, not signed in
+  "xsb-127-auth-token=abc",
+  "sb-127-auth-tokens=abc",
+  "foo=sb-127-auth-token=abc",
+];
+
 test("hasSessionCookie: Supabase auth cookie, plain or chunked", () => {
-  assert.equal(hasSessionCookie("sb-127-auth-token=base64-abc"), true);
-  assert.equal(hasSessionCookie("theme=x; sb-igqqicbfejhnsggfuydh-auth-token.0=base64-abc; NEXT_LOCALE=en"), true);
-  assert.equal(hasSessionCookie("a=1;sb-127-auth-token.1=xyz"), true);
+  for (const c of SIGNED_IN) assert.equal(hasSessionCookie(c), true, c);
 });
 
 test("hasSessionCookie: no session", () => {
-  for (const c of [
-    "",
-    "NEXT_LOCALE=tr",
-    "sb-127-auth-token-code-verifier=abc", // OAuth flow in progress, not signed in
-    "xsb-127-auth-token=abc",
-    "sb-127-auth-tokens=abc",
-    "foo=sb-127-auth-token=abc",
-  ]) {
-    assert.equal(hasSessionCookie(c), false, c);
-  }
+  for (const c of SIGNED_OUT) assert.equal(hasSessionCookie(c), false, c);
 });
 
-function runScript(cookie: string, previous: object | null) {
+/** Runs the inline script in node:vm (proves it is self-contained); returns the attributes set on the sibling. */
+function runScript(cookie: string, hasPrevious = true) {
   const attrs = new Map<string, string>();
   const el = { setAttribute: (k: string, v: string) => attrs.set(k, v) };
-  const context = {
-    document: { cookie, currentScript: { previousElementSibling: previous === null ? null : el } },
-  };
+  const context = { document: { cookie, currentScript: { previousElementSibling: hasPrevious ? el : null } } };
   vm.runInNewContext(sessionHintScript, context);
   return attrs;
 }
 
-test("sessionHintScript marks the previous sibling only when signed in (self-contained in node:vm)", () => {
-  assert.equal(runScript("sb-127-auth-token=abc", {}).get("data-session"), "");
-  assert.equal(runScript("NEXT_LOCALE=tr", {}).has("data-session"), false);
-  assert.doesNotThrow(() => runScript("sb-127-auth-token=abc", null));
+test("sessionHintScript marks the previous sibling exactly when hasSessionCookie is true", () => {
+  for (const c of SIGNED_IN) assert.equal(runScript(c).get("data-session"), "", c);
+  for (const c of SIGNED_OUT) assert.equal(runScript(c).has("data-session"), false, c);
+  assert.doesNotThrow(() => runScript(SIGNED_IN[0], false));
 });
