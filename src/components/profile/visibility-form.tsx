@@ -30,8 +30,10 @@ export function VisibilityForm({ instagram, showInstagram, showBirthday, birthDa
   const { isPending, result, run, fieldError } = useProfileAction();
   const [handle, setHandle] = useState(instagram ?? "");
   const [instagramOn, setInstagramOn] = useState(showInstagram);
-  const [birthdayOn, setBirthdayOn] = useState(birthDate ? showBirthday : false);
-  const birthDateEntry = useBirthDateEntry();
+  // The stored value, also without a birth date (opt-out: on by default, members may turn it off before entering
+  // the date). Don't derive it from birthDate: useState keeps its first value when refresh() brings the date.
+  const [birthdayOn, setBirthdayOn] = useState(showBirthday);
+  const birthDateEntry = useBirthDateEntry(birthdayOn);
 
   function onSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -77,11 +79,13 @@ export function VisibilityForm({ instagram, showInstagram, showBirthday, birthDa
           {!birthDate && <BirthDateFields entry={birthDateEntry} />}
 
           <div className="flex flex-col gap-1">
-            <label
-              className="flex min-h-10 items-center justify-between gap-4 text-sm has-enabled:cursor-pointer"
-            >
+            <label className="flex min-h-10 cursor-pointer items-center justify-between gap-4 text-sm">
               {t("showBirthday")}
-              <Switch checked={birthdayOn} onCheckedChange={setBirthdayOn} disabled={!birthDate} aria-describedby={birthDate ? undefined : "profile-birthday-missing"} />
+              <Switch
+                checked={birthdayOn}
+                onCheckedChange={setBirthdayOn}
+                aria-describedby={birthDate ? undefined : "profile-birthday-missing"}
+              />
             </label>
             {!birthDate && <FieldDescription id="profile-birthday-missing">{t("birthdayMissing")}</FieldDescription>}
           </div>
@@ -111,14 +115,17 @@ export function VisibilityForm({ instagram, showInstagram, showBirthday, birthDa
 
 const BIRTH_DATE_FORM_ID = "profile-birth-date-form";
 
-/** One-time birth-date entry (members without one). Enter in the date field saves only the date. */
-function useBirthDateEntry() {
+/**
+ * One-time birth-date entry (members without one). Enter in the date field saves the date (plus the birthday switch
+ * as currently shown), not the rest of the visibility form.
+ */
+function useBirthDateEntry(showBirthday: boolean) {
   const { isPending, result, run, fieldError } = useProfileAction();
   const [value, setValue] = useState("");
 
   function onSubmit(event: React.FormEvent) {
     event.preventDefault();
-    run(() => setBirthDate({ birth_date: value }));
+    run(() => setBirthDate({ birth_date: value, show_birthday: showBirthday }));
   }
 
   return { isPending, result, value, setValue, onSubmit, error: fieldError("birth_date") };

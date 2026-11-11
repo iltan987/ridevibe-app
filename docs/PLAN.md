@@ -90,7 +90,8 @@ Build in this order, one branch each:
    sign-in link; signing in with the same email (Gmail dots/+tags ignored) activates the member automatically.
    Different email → staff activate the pending sign-up on `/admin/members` (shows sign-in emails).
 2. **2a Members** ✅ (2026-11-10) — member directory at `/members` (active members see name, photo, district/side,
-   motorcycles; birth day/month and Instagram only when the member opts in) and "my profile" on `/account` (location,
+   motorcycles; birth day/month unless the member turns it off (opt-out since 2026-11-11, iltan asked the members),
+   Instagram only when the member opts in) and "my profile" on `/account` (location,
    motorcycles, visibility, photo consent). Tidy name capitalization (Turkish rules) and name lock for active members.
    Members without a birth date (activated by hand) can enter it once on `/account` (2026-11-11).
    Spec: `docs/superpowers/specs/2026-11-10-members-design.md`.

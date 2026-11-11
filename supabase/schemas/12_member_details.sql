@@ -9,7 +9,7 @@ create table public.member_details (
   profile_id uuid primary key references public.profiles (id) on delete cascade,
   birth_date date,
   instagram text check (instagram ~ '^[A-Za-z0-9._]{1,30}$'),
-  show_birthday boolean not null default false,
+  show_birthday boolean not null default true, -- opt-out since 2026-11-11 (iltan asked the members)
   show_instagram boolean not null default false,
   consent_photos boolean not null default false,
   consent_photos_at timestamptz,

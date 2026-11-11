@@ -89,10 +89,10 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   RPC with no target id: it writes `where profile_id = (select auth.uid())`, locks the row (`for update`), and is
   granted to `authenticated` only (example: `set_my_birth_date`).
 - **Member data:** `profiles` is readable by every active member (no private columns there); `member_details`
-  (birth date, Instagram, opt-in flags, photo consent) and `member_motorcycles` are own row + `members.manage` only;
+  (birth date, Instagram, visibility flags, photo consent) and `member_motorcycles` are own row + `members.manage` only;
   other members' data only via the `public.member_directory` RPC. Birth date is read-only; members without one enter it
-  once via `public.set_my_birth_date`. Members can't edit `full_name`/`avatar_url`
-  (staff: `set_member_name`). Names are tidied on insert only (`private.tidy_name`: Turkish rules, mixed case
+  once via `public.set_my_birth_date`. Directory visibility: birthday opt-out (iltan's decision), Instagram opt-in.
+  Members can't edit `full_name`/`avatar_url` (staff: `set_member_name`). Names are tidied on insert only (`private.tidy_name`: Turkish rules, mixed case
   untouched); staff corrections are stored as typed.
 - Turkish text in SQL: `lower/upper/ilike` mishandle `İ/ı` (`lower('İ')` = `i̇`) — search with `private.search_fold`,
   sort with `collate "tr-x-icu"`.

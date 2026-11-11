@@ -77,12 +77,22 @@ export async function updateVisibility(input: VisibilityInput): Promise<ProfileA
   return finish(error, data, "updateVisibility");
 }
 
-/** One-time entry for members without a birth date; the RPC refuses (42501) once one is stored. */
+/**
+ * One-time entry for members without a birth date; the RPC refuses (42501) once one is stored. The birthday switch
+ * (as shown on the form) is stored first, so a member who turned it off is never shown, even if a step fails.
+ */
 export async function setBirthDate(input: BirthDateInput): Promise<ProfileActionResult> {
   const parsed = birthDateSchema.safeParse(input);
   if (!parsed.success) return { status: "invalid", fieldErrors: firstErrorPerField(parsed.error.issues) };
   const { supabase, userId } = await currentUserId();
   if (!userId) return { status: "forbidden" };
+
+  const { data, error: flagError } = await supabase
+    .from("member_details")
+    .update({ show_birthday: parsed.data.show_birthday })
+    .eq("profile_id", userId)
+    .select("profile_id");
+  if (flagError || !data?.length) return finish(flagError, data, "setBirthDate");
 
   const { error } = await supabase.rpc("set_my_birth_date", { new_date: parsed.data.birth_date });
   if (error) return fail(error, "setBirthDate");

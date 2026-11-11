@@ -77,7 +77,10 @@ export const visibilitySchema = z.object({
 
 export type VisibilityInput = z.input<typeof visibilitySchema>;
 
-/** One-time entry for members without a birth date (set_my_birth_date); same rules as the application form. */
+/**
+ * One-time entry for members without a birth date (set_my_birth_date); same rules as the application form. Carries
+ * the birthday switch so turning it off before the first save is kept.
+ */
 export const birthDateSchema = z.object({
   birth_date: z
     .string(err("required"))
@@ -85,6 +88,7 @@ export const birthDateSchema = z.object({
     .pipe(z.iso.date(err("invalidDate")))
     .refine((v) => v > EARLIEST_BIRTH_DATE_EXCLUSIVE, err("invalidDate"))
     .refine((v) => isAtLeast18(v), err("tooYoung")),
+  show_birthday: z.boolean(err("required")),
 });
 
 export type BirthDateInput = z.input<typeof birthDateSchema>;

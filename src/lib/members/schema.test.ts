@@ -4,14 +4,22 @@ import { test } from "node:test";
 import { istanbulToday, latestAdultBirthDate } from "../birth-date.ts";
 import { birthDateSchema, locationSchema, motorcycleSchema, normalizeInstagram, visibilitySchema } from "./schema.ts";
 
-test("birthDateSchema accepts an adult ISO date", () => {
-  assert.deepEqual(birthDateSchema.safeParse({ birth_date: "1990-05-17" }).data, { birth_date: "1990-05-17" });
+test("birthDateSchema accepts an adult ISO date with the birthday switch", () => {
+  assert.deepEqual(birthDateSchema.safeParse({ birth_date: "1990-05-17", show_birthday: false }).data, {
+    birth_date: "1990-05-17",
+    show_birthday: false,
+  });
   const limit = latestAdultBirthDate(istanbulToday());
-  assert.equal(birthDateSchema.safeParse({ birth_date: limit }).success, true);
+  assert.equal(birthDateSchema.safeParse({ birth_date: limit, show_birthday: true }).success, true);
+});
+
+test("birthDateSchema requires the birthday switch value", () => {
+  assert.equal(birthDateSchema.safeParse({ birth_date: "1990-05-17" }).success, false);
+  assert.equal(birthDateSchema.safeParse({ birth_date: "1990-05-17", show_birthday: "yes" }).success, false);
 });
 
 test("birthDateSchema maps errors to profile keys", () => {
-  const key = (birth_date: unknown) => birthDateSchema.safeParse({ birth_date }).error?.issues[0]?.message;
+  const key = (birth_date: unknown) => birthDateSchema.safeParse({ birth_date, show_birthday: true }).error?.issues[0]?.message;
   assert.equal(key(""), "required");
   assert.equal(key(undefined), "required");
   assert.equal(key("17.05.1990"), "invalidDate");
