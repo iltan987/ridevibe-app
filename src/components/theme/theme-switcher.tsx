@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   applyThemePreference,
+  isThemeStorageEvent,
   syncThemePreference,
   parseThemePreference,
   readThemePreference,
@@ -46,6 +47,18 @@ export function ThemeSwitcher() {
     query.addEventListener("change", onSystemChange);
     return () => query.removeEventListener("change", onSystemChange);
   }, [pref]);
+
+  // Follow a choice made in another tab (`storage` only fires in the other tabs).
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (!isThemeStorageEvent(event.key)) return;
+      const next = readThemePreference();
+      syncThemePreference(next);
+      setPref(next);
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
 
   function onChange(value: string) {
     const next = parseThemePreference(value);

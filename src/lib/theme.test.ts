@@ -8,6 +8,7 @@ import {
   applyThemePreference,
   syncThemePreference,
   initTheme,
+  isThemeStorageEvent,
   parseThemePreference,
   readThemePreference,
   resolveTheme,
@@ -18,10 +19,14 @@ function fakeDoc(initialDark = true) {
   const classes = new Set<string>(initialDark ? ["dark"] : []);
   const meta = { content: "" };
   const second = { content: "" }; // Next adds its own theme-color meta after the server one
+  // Temporary <style> tags in <head>, and whether one was present at each class toggle.
+  const styles: { text: string }[] = [];
+  const toggledWithStyle: boolean[] = [];
   const doc = {
     documentElement: {
       classList: {
         toggle(name: string, force?: boolean) {
+          toggledWithStyle.push(styles.length > 0);
           if (force) classes.add(name);
           else classes.delete(name);
         },
@@ -29,8 +34,20 @@ function fakeDoc(initialDark = true) {
       },
     },
     querySelectorAll: (sel: string) => (sel === 'meta[name="theme-color"]' ? [meta, second] : []),
+    createElement: () => {
+      const el = {
+        text: "",
+        appendChild: (node: { text: string }) => void (el.text += node.text),
+        remove: () => void styles.splice(styles.indexOf(el), 1),
+      };
+      return el;
+    },
+    createTextNode: (text: string) => ({ text }),
+    head: { appendChild: (el: { text: string }) => void styles.push(el) },
+    body: {},
+    defaultView: { getComputedStyle: () => ({ opacity: "1" }) },
   };
-  return { doc: doc as unknown as Document, classes, meta, second };
+  return { doc: doc as unknown as Document, classes, meta, second, styles, toggledWithStyle };
 }
 
 const media = (matches: boolean) => () => ({ matches });
@@ -124,6 +141,28 @@ test("themeInitScript evaluates in node:vm with fakes and applies 'light'", () =
   vm.runInNewContext(themeInitScript, sandbox);
   assert.equal(classes.has("dark"), false);
   assert.equal(meta.content, "#FBF5E5");
+});
+
+test("applyResolvedTheme disables CSS transitions while the theme flips, then removes the style", async () => {
+  const { doc, styles, toggledWithStyle } = fakeDoc(true);
+  applyResolvedTheme(doc, "light");
+  assert.deepEqual(toggledWithStyle, [true]);
+  assert.match(styles[0]?.text ?? "", /transition:\s*none\s*!important/);
+  await new Promise((r) => setTimeout(r, 10));
+  assert.equal(styles.length, 0);
+});
+
+test("applyResolvedTheme adds no style when the theme doesn't change", () => {
+  const { doc, styles, toggledWithStyle } = fakeDoc(true);
+  applyResolvedTheme(doc, "dark");
+  assert.deepEqual(toggledWithStyle, [false]);
+  assert.equal(styles.length, 0);
+});
+
+test("isThemeStorageEvent: our key, or null (storage cleared)", () => {
+  assert.equal(isThemeStorageEvent("theme"), true);
+  assert.equal(isThemeStorageEvent(null), true);
+  assert.equal(isThemeStorageEvent("NEXT_LOCALE"), false);
 });
 
 test("readThemePreference is dark without window", () => {

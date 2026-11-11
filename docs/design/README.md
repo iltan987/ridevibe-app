@@ -13,7 +13,8 @@ actions, teal for positive/status states, cream text, Saira type.
   `src/components/theme/{theme-script,theme-switcher}.tsx`. Switcher is in the header only. Nothing is stored until
   the user picks. Why not `next-themes` (re-checked 2026-11-11): no release since 0.4.6 (March 2025), it has the open
   React 19 "Encountered a script tag" bug on a `[locale]` remount (issue #397, which we fixed in our own script), and
-  it doesn't manage `meta[name=theme-color]`, which we'd need anyway.
+  it doesn't manage `meta[name=theme-color]`, which we'd need anyway. Borrowed from it instead: theme sync across tabs
+  (`storage` event) and no colour transitions while the theme flips (`disableTransitionOnChange`).
 - **Brand:** `src/components/brand/{wordmark,club-badge}.tsx`, `src/assets/brand/badge.png` (production badge), `public/brand/` (wordmark SVG, icon PNGs),
   `src/app/{favicon.ico,icon.svg,apple-icon.png,manifest.ts}`, `src/app/[locale]/opengraph-image.png`.
 - **Mockups:** `docs/design/mockups/` (`chosen-gece-turkuaz.html`, `directions-a-b-c.html`, `shelved-logo-concepts.*`).

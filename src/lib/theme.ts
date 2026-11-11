@@ -19,11 +19,34 @@ export function resolveTheme(pref: ThemePreference, systemPrefersDark: boolean):
 }
 
 export function applyResolvedTheme(doc: Document, theme: ResolvedTheme): void {
+  // Elements with `transition-*` would fade into the new colours while the rest snaps; switch instantly instead.
+  const flips = doc.documentElement.classList.contains("dark") !== (theme === "dark");
+  const restoreTransitions = flips ? disableTransitions(doc) : null;
   doc.documentElement.classList.toggle("dark", theme === "dark");
+  restoreTransitions?.();
   // Every tag: after hydration Next adds its own theme-color meta next to the server-rendered one.
   doc.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]').forEach((meta) => {
     meta.content = THEME_COLORS[theme];
   });
+}
+
+/**
+ * Turns off CSS transitions until the returned function has run and the next task starts: forcing a style
+ * recalculation commits the new colours without animation. Idea from next-themes (`disableTransitionOnChange`, MIT).
+ */
+function disableTransitions(doc: Document): () => void {
+  const style = doc.createElement("style");
+  style.appendChild(doc.createTextNode("*,*::before,*::after{transition:none!important}"));
+  doc.head.appendChild(style);
+  return () => {
+    void doc.defaultView?.getComputedStyle(doc.body).opacity; // force style recalculation
+    setTimeout(() => style.remove(), 1);
+  };
+}
+
+/** True when a `storage` event (another tab) may have changed the theme; `null` key = storage cleared. */
+export function isThemeStorageEvent(key: string | null): boolean {
+  return key === null || key === THEME_STORAGE_KEY;
 }
 
 /**
