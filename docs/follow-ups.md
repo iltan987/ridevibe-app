@@ -28,6 +28,12 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   - **Caching:** e.g. Next 16 `use cache` + `cacheTag` for directory data (the same for every active member;
     invalidate on profile/bike changes with `updateTag`), keeping the auth check outside the cached part.
 
+- **Hide "Başvur" for people who applied or are members** (2026-11-11, iltan's idea) — short design round first:
+  who sees it (visitors and signed-in users without an application: yes; active members: no; pending with an open
+  application: hide or turn into an application-status item; inactive?), what fills the 5th phone tab, and how a
+  session-dependent item stays in the static nav without a layout shift (cookie hint like the user-menu skeleton).
+  Overlaps "Navigation review once events exist".
+
 ## Open decisions (need iltan)
 
 - **Dead-code tool?** (2026-11-11, iltan) — which tool, if any, for the dead-code sweep (Tooling). Candidates to

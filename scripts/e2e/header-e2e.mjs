@@ -9,7 +9,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let fails = 0;
 const check = (name, ok, extra = "") => { if (!ok) fails++; console.log(`${ok ? "PASS" : "FAIL"} ${name}${extra ? " — " + extra : ""}`); };
 
-const browser = await launch();
+// Real scrollbars (Windows-style, 15px): a page whose skeleton is taller than its content toggles the scrollbar.
+const browser = await launch({ scrollbars: true });
 
 async function fresh({ theme = "light", signedIn = false } = {}) {
   const ctx = await browser.createBrowserContext();
@@ -170,6 +171,38 @@ for (const signedIn of [false, true]) {
     // TR/EN labels differ by ~1px; a skeleton/result width mismatch moves the button by ~40px.
     check("language switch back (signed in): language button doesn't jump", Math.max(...xs) - Math.min(...xs) <= 2, fmt(sw));
   }
+}
+
+// 6. A member on /apply sees a short card, but the page skeleton is the long form: the scrollbar comes and goes
+//    during a language switch. The header must not move sideways (desktop, real scrollbars).
+{
+  const { ctx } = await fresh({ signedIn: true });
+  const page = await newPage(ctx, { width: 1280, height: 800 });
+  await page.goto(BASE + "/apply", { waitUntil: "networkidle0" });
+  await sleep(500);
+  await throttle(page, { latency: 300, kbps: 2000 });
+  await page.evaluate(() => {
+    window.__xs = [];
+    const t0 = performance.now();
+    const tick = () => {
+      const logo = [...document.querySelectorAll("header a")].find((a) => a.getBoundingClientRect().width > 0);
+      const x = Math.round(logo.getBoundingClientRect().x);
+      const sb = window.innerWidth - document.documentElement.clientWidth;
+      if (!window.__xs.length || window.__xs.at(-1).x !== x || window.__xs.at(-1).sb !== sb) window.__xs.push({ x, sb });
+      if (performance.now() - t0 < 15000) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+  await switchLanguage(page);
+  await page.waitForFunction(() => document.documentElement.lang === "en", { timeout: 15000 });
+  await sleep(2500);
+  await switchLanguage(page); // back: the cached shell shows the skeleton again
+  await page.waitForFunction(() => document.documentElement.lang === "tr", { timeout: 15000 });
+  await sleep(2500);
+  const xs = await page.evaluate(() => window.__xs);
+  const seq = xs.map((f) => `x${f.x}/sb${f.sb}`).join(" → ");
+  check("apply (member, desktop): scrollbar toggled during the switch (test is meaningful)", new Set(xs.map((f) => f.sb)).size > 1 || xs.some((f) => f.sb > 0), seq);
+  check("apply (member, desktop): header doesn't move sideways", new Set(xs.map((f) => f.x)).size === 1, seq);
 }
 
 await browser.close();

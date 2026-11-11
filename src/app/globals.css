@@ -140,6 +140,10 @@
   }
   html {
     @apply font-sans;
+    /* Always reserve the scrollbar's space (classic desktop scrollbars): a skeleton taller or shorter than the page
+       it stands for (e.g. /apply for members) would otherwise toggle the scrollbar and shift the centred layout
+       sideways. Overlay scrollbars (phones, macOS) are unaffected. */
+    scrollbar-gutter: stable;
   }
   /* Dim the tapped link. An animation (not a transition) so it also fades on links whose
      utility classes (`transition-colors`) override `transition-property`. */

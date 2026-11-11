@@ -2,7 +2,8 @@
 
 Run against a **local** stack only (local Supabase + a server on port 3123); never against production.
 
-- `e2e-lib.mjs` — helpers: `launch()` (system Chrome, `CHROME_PATH` to override), `newPage()` (390x844, Turkish),
+- `e2e-lib.mjs` — helpers: `launch({ scrollbars })` (system Chrome, `CHROME_PATH` to override; `scrollbars: true` keeps
+  classic scrollbars, hidden by default in headless), `newPage()` (390x844, Turkish),
   `signIn(page, email)` (sets Supabase session cookies via email/password), `throttle()` (CDP network throttling).
   The keys in it are the public local-Supabase demo keys, not secrets.
 - `nav-e2e.mjs` — navigation progress bar / pending dim checks (PASS/FAIL lines, exit code != 0 on failure).
@@ -15,8 +16,9 @@ Run against a **local** stack only (local Supabase + a server on port 3123); nev
   removes bikes through `docker exec … psql` (`DB_CONTAINER`, local only). Screenshots go to `OUT_DIR`.
 - `header-e2e.mjs` — `<head>` theme script across a language switch and an unknown path (theme kept, client-created
   script inert, no React "script tag" warning), theme sync to other tabs, no colour transitions on a theme switch,
-  and the user-menu skeleton shape (signed out: button; signed in: avatar circle; language button doesn't jump).
-  Needs `member@test.local` for the signed-in part. Run against `pnpm dev -p 3123` (the warning is dev-only) and
+  the user-menu skeleton (signed out: button; signed in: the avatar, photo kept on a language switch; language
+  button doesn't jump), and no sideways header shift on `/apply` as a member (real scrollbars). Needs
+  `member@test.local` (active, `avatar_url` = `<BASE_URL>/apple-icon.png`) for the signed-in part. Run against `pnpm dev -p 3123` (the warning is dev-only) and
   `pnpm start -p 3123`. `BASE_URL` overrides the server.
 - `skeletons.mjs <baseUrl> <out.md> [routes…]` — measures each `data-skeleton` fallback against its
   `data-skeleton-result` (JS off vs on); see `docs/learnings/testing.md`.
