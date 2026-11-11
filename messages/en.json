@@ -157,8 +157,24 @@
   },
   "Apply": {
     "title": "Apply to join",
-    "intro": "The form takes about 3 minutes. After reviewing your application, we'll reach out to you on WhatsApp.",
+    "intro": "4 short steps, about 3 minutes. We'll review your application and reach out on WhatsApp.",
     "optional": "optional",
+    "progress": "Step {step} of {total}",
+    "steps": {
+      "riding": "Riding",
+      "club": "Club",
+      "words": "In your own words",
+      "you": "About you"
+    },
+    "draft": {
+      "restored": "You're continuing where you left off.",
+      "startOver": "Start over"
+    },
+    "google": {
+      "button": "Fill in with Google",
+      "hint": "Your name and email are filled in automatically."
+    },
+    "wordsHint": "A short sentence is enough.",
     "sections": {
       "about": "About you",
       "riding": "Riding",
@@ -196,6 +212,7 @@
       "referrer_name": "Who referred you?",
       "event_interests": "Which events would you like to join?",
       "expectations": "What do you expect from the club?",
+      "expectationsPlaceholder": "e.g. Discovering new routes and riding safely together",
       "alienating_behaviors": "What behaviours in a community would push you away?",
       "conflict_handling": "How would you handle a disagreement with another group member during an event?",
       "consent_privacy": "I have read and understood the <link>privacy notice</link>.",
@@ -258,6 +275,8 @@
       }
     },
     "submit": "Submit application",
+    "next": "Next",
+    "back": "Back",
     "submitting": "Submitting…",
     "formHasErrors": "Please fix the highlighted fields.",
     "successTitle": "Application received!",

@@ -157,8 +157,24 @@
   },
   "Apply": {
     "title": "Kulübe başvur",
-    "intro": "Formu doldurmak yaklaşık 3 dakika sürer. Başvurunu inceledikten sonra WhatsApp üzerinden sana ulaşacağız.",
+    "intro": "4 kısa adımda, yaklaşık 3 dakikada biter. Başvurunu inceledikten sonra WhatsApp üzerinden sana ulaşacağız.",
     "optional": "isteğe bağlı",
+    "progress": "Adım {step}/{total}",
+    "steps": {
+      "riding": "Sürüş",
+      "club": "Kulüp",
+      "words": "Kendi sözlerinle",
+      "you": "Seni tanıyalım"
+    },
+    "draft": {
+      "restored": "Kaldığın yerden devam ediyorsun.",
+      "startOver": "Baştan başla"
+    },
+    "google": {
+      "button": "Google ile doldur",
+      "hint": "Ad ve e-postan otomatik gelir."
+    },
+    "wordsHint": "Kısa bir cümle yeter.",
     "sections": {
       "about": "Seni tanıyalım",
       "riding": "Sürüş",
@@ -196,6 +212,7 @@
       "referrer_name": "Seni kim yönlendirdi?",
       "event_interests": "Hangi etkinliklere katılmak istersin?",
       "expectations": "Kulüpten beklentilerin neler?",
+      "expectationsPlaceholder": "ör. Yeni rotalar keşfetmek ve birlikte güvenli sürüşler",
       "alienating_behaviors": "Bir toplulukta seni uzaklaştıran davranışlar nelerdir?",
       "conflict_handling": "Bir etkinlik sırasında başka bir grup üyesiyle anlaşmazlık yaşarsan nasıl davranırsın?",
       "consent_privacy": "<link>Aydınlatma metnini</link> okudum ve anladım.",
@@ -258,6 +275,8 @@
       }
     },
     "submit": "Başvuruyu gönder",
+    "next": "Devam",
+    "back": "Geri",
     "submitting": "Gönderiliyor…",
     "formHasErrors": "Lütfen işaretli alanları düzelt.",
     "successTitle": "Başvurun alındı!",

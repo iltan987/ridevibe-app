@@ -23,7 +23,35 @@ export const EVENT_INTERESTS = [
   "other",
 ] as const;
 
+// Suggestions for the free-text brand field (`<datalist>`): common brands in Turkey. Any other text is still allowed.
+export const MOTORCYCLE_BRAND_SUGGESTIONS: readonly string[] = [
+  "Honda",
+  "Yamaha",
+  "Kawasaki",
+  "Suzuki",
+  "BMW",
+  "KTM",
+  "Ducati",
+  "Triumph",
+  "Harley-Davidson",
+  "CFMoto",
+  "Benelli",
+  "Bajaj",
+  "Kuba",
+  "Mondial",
+  "RKS",
+  "Voge",
+  "Kymco",
+  "SYM",
+  "Vespa",
+  "Royal Enfield",
+  "Aprilia",
+  "Husqvarna",
+  "Piaggio",
+  "Zontes",
+];
+
 export const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"] as const;
 
 // Bump when the privacy notice text changes; stored with each consent.
-export const PRIVACY_NOTICE_VERSION = "2026-11-11-draft";
+export const PRIVACY_NOTICE_VERSION = "2026-11-11-draft-2";

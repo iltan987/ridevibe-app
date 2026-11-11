@@ -1,11 +1,54 @@
 # Application Form — Spec
 
 Source of truth for the public application form and its database table. Status: **draft v2**, agreed in principle,
-pending Samet's review. Labels will be translated (TR default, EN).
+pending Samet's review; shown to applicants in 4 steps since 2026-11-11 (see "Steps"). Labels will be translated (TR default, EN).
 
 Principles: keep it short (Instagram visitors drop off on long forms), collect only what is needed to evaluate an
 applicant (KVKK data minimisation). Safety data (emergency contact, blood type, plate) is collected **after approval**,
 in the member profile.
+
+## Steps (since 2026-11-11)
+
+The sections below keep the review order (admin view, approval). The public form shows the same fields in four steps,
+**easy first**: tap-only questions before typing, contact data last, after people have invested. The step map is
+`src/lib/applications/steps.ts` (every schema input field belongs to exactly one step; a unit test checks it).
+
+| Step | Title (TR) | Fields |
+|---|---|---|
+| 1 `riding` | Sürüş | license class, riding years, owns a motorcycle, brand/model/cc, riding styles, group experience |
+| 2 `club` | Kulüp | other clubs (+ names), how they heard (+ referrer), events (+ other) |
+| 3 `words` | Kendi sözlerinle | expectations, alienating behaviours, disagreement handling |
+| 4 `you` | Seni tanıyalım | Google fill, name, phone, email, birth date, city, district, Instagram, languages; sub-heading "Onaylar": the three consents; submit |
+
+- One `<form>` keeps every field mounted; inactive steps are `hidden`, so the server action, schema and honeypot are
+  unchanged. Header: "Adım N/4 · title" with a progress bar.
+- "Devam" validates the whole form but only shows the current step's errors (focus goes to the first invalid field).
+  The final submit jumps to the earliest step with an error; server-side field errors jump to their step too.
+- `?step=N` (1-4) in the URL via the History API; back/forward move between steps; invalid or missing means step 1.
+- The three writing questions ask for "one short sentence": min. 15 characters (enforced by the form and server Zod
+  schema only; the database checks stay at their old minimums: expectations 10, the other two 3, see
+  `supabase/schemas/20_applications.sql`), max 1000, compact textareas that grow with the text (`field-sizing-content`,
+  `min-h-16`).
+
+## Draft (browser only)
+
+- Answers of steps 1-3 are saved in the applicant's own `localStorage` (key `rv-apply-draft`, `{ v: 1, savedAt, step,
+  fields, utm }`) debounced (500 ms) after changes and step changes, once at least one answer exists, and flushed when
+  focus leaves the form, on page hide and on unmount (so a language switch keeps the answers). Contact details and
+  consents are never stored (whitelist derived from the step map, `src/lib/applications/draft.ts`). UTM values are
+  kept so ad attribution survives a Google round trip; UTM parameters in the URL win.
+- On the next visit the form restores the draft, opens at the saved step (unless the URL names one) and shows
+  "Kaldığın yerden devam ediyorsun · Baştan başla"; "Baştan başla" deletes the draft and empties the form.
+- The draft is deleted after a successful submit and ignored and deleted when it is older than 7 days, malformed or of
+  another version. Without usable `localStorage` the form works without a draft. Nothing reaches our servers.
+- The privacy notice says so in one sentence under technical data (`PRIVACY_NOTICE_VERSION` bumped).
+
+## Google fill (step 4)
+
+Signed-out visitors outside in-app browsers see "Google ile doldur" at the top of step 4 (hidden for signed-in users
+and in in-app browsers, where Google refuses sign-in). Tap: the draft is saved with step 4, then the existing
+`signInWithGoogle` action runs with `next` = `/apply?step=4` (locale-aware). Back on `/apply` the gate prefills name
+and email and the draft restores steps 1-3.
 
 ## 1. About you
 
@@ -28,7 +71,7 @@ in the member profile.
 | License class | select: A1 / A2 / A / not yet | yes | |
 | Years of riding | number / range select | yes | |
 | Owns a motorcycle | yes/no | yes | |
-| Motorcycle brand, model, engine (cc) | text + number | if owns | |
+| Motorcycle brand, model, engine (cc) | text + number | if owns | Brand is free text with a `<datalist>` of common brands in Turkey (`MOTORCYCLE_BRAND_SUGGESTIONS` in `options.ts`) |
 | Riding style | multi-select: city, touring, enduro/off-road, sport, cruiser, scooter | yes | |
 | Group riding experience | none / some / a lot | yes | |
 
@@ -41,9 +84,9 @@ in the member profile.
 | How did you hear about us? | Instagram ad / Instagram (other) / friend / other | yes | UTM params from the ad link are stored automatically too |
 | Referring member | text | if "friend" | |
 | Events you'd like to join | multi-select: weekend day rides, multi-day tours, camping, breakfast/coffee meetups, riding & safety training, off-road days, track days, maintenance workshops, social/charity rides | yes | Drives event planning |
-| What do you expect from the club? | short text | yes | Replaces a generic "why do you want to join" |
-| What behaviours in a community would alienate you? | short text | yes | Kept from the current Google Form |
-| How would you handle a disagreement with another group member during an event? | short text | yes | Added 2026-11-10 at Samet's request; DB column nullable (older applications have no answer) |
+| What do you expect from the club? | short text | yes | Replaces a generic "why do you want to join". Min. 15 characters; example placeholder |
+| What behaviours in a community would alienate you? | short text | yes | Kept from the current Google Form. Min. 15 characters, no placeholder (screening question) |
+| How would you handle a disagreement with another group member during an event? | short text | yes | Added 2026-11-10 at Samet's request; DB column nullable (older applications have no answer). Min. 15 characters, no placeholder |
 
 ## 4. Consents (separate checkboxes, never pre-ticked)
 

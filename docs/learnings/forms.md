@@ -64,3 +64,33 @@
   render (`checked={!!birthDate && birthdayOn}`). Never send a value the user couldn't see or change (a disabled
   switch) as anything but the stored one. Example: `src/components/profile/visibility-form.tsx`.
 - **Source:** found by the members E2E (birthday-shown-by-default).
+
+### Stepped form: one `<form>`, Enter = "Next", hidden steps (2026-11-11)
+- **Symptom (risk):** Enter in a text input of an early step would submit the whole application.
+- **Cause:** implicit submission fires the form's `submit` event from any single-line input (the default button is the
+  first `type="submit"` in tree order); textareas keep Enter as a newline.
+- **Do:** one submit button whose label is "Devam" on steps 1–3; `onSubmit` checks `isLastStep(step)` and only
+  validates/advances before the last step. Inactive steps are `hidden` (still in `FormData`); Tailwind 4 preflight's
+  `[hidden] { display: none !important }` beats a wrapper's own `flex` class. Focus the first invalid field from the
+  error object in page order (`[data-step=N] [data-field]`), not from `[data-invalid=true]`: that attribute renders
+  only after the state update and hidden steps can't take focus. Skip Base UI's own hidden inputs
+  (`tabIndex -1`) and prefer the typing input over the phone field's country `<select>`.
+- **Gotcha (E2E):** shadcn `FieldError` has `role="alert"`; detect the form's status line by its text.
+- **Source:** found by testing (application steps Task 4).
+
+### Restoring a browser draft: remount after hydration; a language switch reads it before the old form unmounts (2026-11-11)
+- **Symptom:** answers typed just before switching the language (within the 500 ms save debounce) were lost on
+  `/en/apply`, although the form flushes a pending save on unmount. Separately, "Baştan başla" (start over) emptied
+  the form but the old answers were back in `localStorage` right after.
+- **Cause:** `router.replace(pathname, { locale })` renders the new `[locale]` tree, including the new form's
+  `useState` initialiser that reads the draft, *before* the old tree commits away and runs its effect cleanups, so an
+  unmount flush writes too late. Start over: the button's click also bubbles to the form's `onClick` (which schedules
+  a save), and the unmount flush then wrote the old answers back.
+- **Do:** read client-only state in a `useState` initialiser of a component keyed by
+  `useSyncExternalStore(noSubscribe, () => true, () => false)` (server/hydration render: no draft; the client remount
+  restores it; client navigations read it at once). Flush the pending save when focus leaves the form
+  (`onBlur` with `relatedTarget` outside `currentTarget`): opening the language menu moves focus first. Keep the
+  `pagehide`/unmount flush for reloads. Before throwing a form away (success, start over), `stop()` the saver, not
+  just cancel it. A flushed save may read a detached `<form>`: its inputs keep their values. Example:
+  `src/components/apply/apply-form.tsx`, `createDraftSaver` in `src/lib/applications/draft.ts`.
+- **Source:** found by testing (application steps Task 5, puppeteer: switch 155 ms after typing).

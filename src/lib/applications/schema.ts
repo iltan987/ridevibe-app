@@ -1,9 +1,9 @@
 import { isPossiblePhoneNumber } from "libphonenumber-js";
 import { z } from "zod";
-import { EARLIEST_BIRTH_DATE_EXCLUSIVE, isAtLeast18 } from "@/lib/birth-date";
-import { ISTANBUL, isIstanbulDistrict, sideOfDistrict } from "@/lib/istanbul-districts";
-import type { TablesInsert } from "@/lib/supabase/database.types";
-import { isTurkishMobileOrForeign } from "./contact";
+import { EARLIEST_BIRTH_DATE_EXCLUSIVE, isAtLeast18 } from "../birth-date.ts";
+import { ISTANBUL, isIstanbulDistrict, sideOfDistrict } from "../istanbul-districts.ts";
+import type { TablesInsert } from "../supabase/database.types.ts";
+import { isTurkishMobileOrForeign } from "./contact.ts";
 import {
   EVENT_INTERESTS,
   GROUP_EXPERIENCE,
@@ -13,7 +13,7 @@ import {
   PRIVACY_NOTICE_VERSION,
   RIDING_STYLES,
   UTM_KEYS,
-} from "./options";
+} from "./options.ts";
 
 // Shared by the browser (instant feedback) and the server action (the real
 // check). Error messages are translation keys under Apply.errors.*.
@@ -95,59 +95,63 @@ const emailField = z
   .pipe(z.email(err("invalidEmail")))
   .transform((v) => v.toLowerCase());
 
-export const applicationSchema = z
-  .object({
-    locale: z.enum(["tr", "en"]),
+const applicationFields = z.object({
+  locale: z.enum(["tr", "en"]),
 
-    full_name: fullNameField,
-    phone: phoneField,
-    email: emailField,
-    birth_date: z
-      .string(err("required"))
-      .min(1, err("required"))
-      .pipe(z.iso.date(err("invalidDate")))
-      .refine((v) => v > EARLIEST_BIRTH_DATE_EXCLUSIVE, err("invalidDate"))
-      .refine((v) => isAtLeast18(v), err("tooYoung")),
-    city_choice: z.enum(["istanbul", "other"], err("required")),
-    city: optionalText(80),
-    district: text(1, 80),
-    instagram: z
-      .string()
-      .transform((v) => v.replace(/^@/, ""))
-      .pipe(z.string().regex(/^[A-Za-z0-9._]{1,30}$/, err("invalidInstagram")))
-      .optional(),
-    languages: choices(LANGUAGES),
-    other_languages: optionalText(120),
+  full_name: fullNameField,
+  phone: phoneField,
+  email: emailField,
+  birth_date: z
+    .string(err("required"))
+    .min(1, err("required"))
+    .pipe(z.iso.date(err("invalidDate")))
+    .refine((v) => v > EARLIEST_BIRTH_DATE_EXCLUSIVE, err("invalidDate"))
+    .refine((v) => isAtLeast18(v), err("tooYoung")),
+  city_choice: z.enum(["istanbul", "other"], err("required")),
+  city: optionalText(80),
+  district: text(1, 80),
+  instagram: z
+    .string()
+    .transform((v) => v.replace(/^@/, ""))
+    .pipe(z.string().regex(/^[A-Za-z0-9._]{1,30}$/, err("invalidInstagram")))
+    .optional(),
+  languages: choices(LANGUAGES),
+  other_languages: optionalText(120),
 
-    license_class: z.enum(LICENSE_CLASSES, err("required")),
-    riding_years: z.coerce.number(err("invalidNumber")).int(err("invalidNumber")).min(0, err("invalidNumber")).max(70, err("invalidNumber")),
-    owns_motorcycle: yesNo,
-    motorcycle_brand: optionalText(60),
-    motorcycle_model: optionalText(60),
-    motorcycle_cc: z.coerce.number(err("invalidNumber")).int(err("invalidNumber")).min(50, err("invalidNumber")).max(3000, err("invalidNumber")).optional(),
-    riding_styles: choices(RIDING_STYLES),
-    group_experience: z.enum(GROUP_EXPERIENCE, err("required")),
+  license_class: z.enum(LICENSE_CLASSES, err("required")),
+  riding_years: z.coerce.number(err("invalidNumber")).int(err("invalidNumber")).min(0, err("invalidNumber")).max(70, err("invalidNumber")),
+  owns_motorcycle: yesNo,
+  motorcycle_brand: optionalText(60),
+  motorcycle_model: optionalText(60),
+  motorcycle_cc: z.coerce.number(err("invalidNumber")).int(err("invalidNumber")).min(50, err("invalidNumber")).max(3000, err("invalidNumber")).optional(),
+  riding_styles: choices(RIDING_STYLES),
+  group_experience: z.enum(GROUP_EXPERIENCE, err("required")),
 
-    in_other_clubs: yesNo,
-    other_club_names: optionalText(300),
-    heard_from: z.enum(HEARD_FROM, err("required")),
-    referrer_name: optionalText(120),
-    event_interests: choices(EVENT_INTERESTS),
-    other_event_interests: optionalText(300),
-    expectations: text(10, 1000),
-    alienating_behaviors: text(3, 1000),
-    conflict_handling: text(3, 1000),
+  in_other_clubs: yesNo,
+  other_club_names: optionalText(300),
+  heard_from: z.enum(HEARD_FROM, err("required")),
+  referrer_name: optionalText(120),
+  event_interests: choices(EVENT_INTERESTS),
+  other_event_interests: optionalText(300),
+  expectations: text(15, 1000),
+  alienating_behaviors: text(15, 1000),
+  conflict_handling: text(15, 1000),
 
-    consent_privacy: z.literal("on", err("mustAccept")).transform(() => true),
-    consent_rules: z.literal("on", err("mustAccept")).transform(() => true),
-    consent_photos: checkbox,
+  consent_privacy: z.literal("on", err("mustAccept")).transform(() => true),
+  consent_rules: z.literal("on", err("mustAccept")).transform(() => true),
+  consent_photos: checkbox,
 
-    utm_source: optionalText(200),
-    utm_medium: optionalText(200),
-    utm_campaign: optionalText(200),
-    utm_content: optionalText(200),
-    utm_term: optionalText(200),
-  })
+  utm_source: optionalText(200),
+  utm_medium: optionalText(200),
+  utm_campaign: optionalText(200),
+  utm_content: optionalText(200),
+  utm_term: optionalText(200),
+});
+
+/** Keys of the form object, before the cross-field rules and the transform. */
+export const APPLICATION_FIELDS: readonly string[] = Object.keys(applicationFields.shape);
+
+export const applicationSchema = applicationFields
   // "Required only if" rules. `when` lets each rule run as soon as its own
   // fields are valid, even while other fields still have errors.
   .refine((v) => v.city_choice !== "istanbul" || isIstanbulDistrict(v.district), {
@@ -226,7 +230,7 @@ export const isEmailAddress = (value: string) => emailAddress.safeParse(value.tr
 
 export type ApplicationFieldErrors = Partial<Record<string, ApplyErrorKey>>;
 
-const ARRAY_FIELDS = new Set(["languages", "riding_styles", "event_interests"]);
+export const ARRAY_FIELDS: ReadonlySet<string> = new Set(["languages", "riding_styles", "event_interests"]);
 
 /** FormData → plain object: trims strings, drops empty ones, collects multi-selects. */
 export function formDataToObject(formData: FormData) {

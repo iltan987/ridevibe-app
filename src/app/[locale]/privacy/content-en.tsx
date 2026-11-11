@@ -23,7 +23,7 @@ export function PrivacyEn() {
         <li><strong>Account data:</strong> when you sign in with Google, the name, email address and profile photo of your Google account.</li>
         <li><strong>Ad source:</strong> if you reached the application page through an ad link, the campaign information in that link (e.g. which Instagram ad).</li>
         <li><strong>Images:</strong> only with your explicit consent, photos of you taken at events.</li>
-        <li><strong>Technical data:</strong> a session cookie that is strictly necessary for signing in.</li>
+        <li><strong>Technical data:</strong> a session cookie that is strictly necessary for signing in. While you fill in the application form, your answers (except contact details and consents) are kept only in your own browser until you submit and don&apos;t reach us; they are deleted when you submit and expire after 7 days.</li>
       </ul>
 
       <h2>3. Why we process it</h2>
