@@ -10,13 +10,8 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ## Next up (iltan asked for these; in priority order; start in a new session)
 
-- **Hide "Başvur" for people who applied or are members** (2026-11-11, iltan's idea) — short design round first:
-  who sees it (visitors and signed-in users without an application: yes; active members: no; pending with an open
-  application: hide or turn into an application-status item; inactive?), what fills the 5th phone tab, and how a
-  session-dependent item stays in the static nav without a layout shift (cookie hint like the user-menu skeleton).
-  Overlaps "Navigation review once events exist".
 - **Own "install the app" prompt** (2026-11-11, iltan: people close the browser's install pop-up) — design round
-  first, after the "Başvur" one. Android + Chrome/Edge desktop: catch `beforeinstallprompt`, suppress the browser's
+  first. Android + Chrome/Edge desktop: catch `beforeinstallprompt`, suppress the browser's
   pop-up, show our own card/button (one tap → system install dialog). iPhone/iPad: no programmatic install (Safari
   has no `beforeinstallprompt`, WebKit WONTFIX) → own short "Paylaş → Ana Ekrana Ekle" guide; since iOS 26 every
   Home Screen site opens as a web app. In-app browsers: existing "open in browser" notice first. Never ask when
@@ -91,7 +86,8 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 - **Medical notes and "first-aid trained" flag** (2026-11-10, idea) — free-text medical notes and a flag for members
   who can give first aid; belongs with the safety data (2a′), special-category data rules apply.
 - **Navigation review once events exist** (2026-11-10, members) — the bottom tab bar has 5 tabs at 390px after
-  `/members`; re-check labels and spacing when Events lands.
+  `/members` (4 for members and open applicants since 2026-11-11, "Başvur" hidden); re-check labels and spacing when
+  Events lands.
 - **My garage** (2026-11-10, member request via iltan) — a personal garage per member: their bikes (today's
   `member_motorcycles`) with important dates (insurance/sigorta, inspection/muayene, last and next service or
   maintenance, …) and personal notes. Design questions: private to the owner (unlike the directory's brand/model/cc);
@@ -218,6 +214,14 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   search input and its submit button share one `aria-label`. Account page: focus isn't moved after deleting a bike or
   to the first invalid field; an invalid field may be announced twice; an empty `ActionStatus` leaves a gap; a
   redundant cursor class.
+- **Hide-Başvur review minors (2026-11-11)** — the guess plumbing is duplicated in `desktop-nav.tsx` /
+  `bottom-nav.tsx` (a `useApplyNavItems` helper); `group-data-apply-hidden` relies on an unnamed Tailwind `group` (a
+  named group is safer if groups ever nest); `useApplyHiddenGuess` also runs in the streamed nav (one no-op
+  re-render); `noSubscribe` is defined 3× (`use-apply-hidden-guess.ts`, `user-menu-skeleton.tsx`, `apply-form.tsx`);
+  `hero-apply-guess.tsx` builds its className with a template string instead of `cn`; the guess fallback hero link
+  carries no UTM params (the streamed one does); the inline script in `apply-hint.ts` reads `doc.cookie` outside its
+  `try` and uses an optional catch binding (same as `markSessionHint`); the parity test doesn't assert
+  `hasSessionCookie(c)` against the list label; missing space in `SESSION_COOKIE =/(` (`session-hint.ts`).
 
 ### Loading states
 - **`AccountSkeleton` only mirrors the active-member page** (2026-11-10, members) — pending and inactive accounts see a
@@ -245,6 +249,10 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   English "Sign in" button grows 59 → 63px and the header controls move ~4px (seen with throttling in
   `scripts/e2e/header-e2e.mjs`). The `next/font` fallback metrics don't fully match Saira's width axis; check
   `adjustFontFallback` / a closer fallback font if it's noticeable.
+- **`nav-e2e.mjs` "reduced motion: full width" fails since the scrollbar gutter** (2026-11-11, hide-Başvur E2E) —
+  on the long `/admin/applications` page, `scrollbar-gutter: stable` (commit `ad42e9a`) reserves 15px even in
+  headless Chrome with hidden scrollbars: the fixed bar and `<body>` are 375px, `innerWidth` (and `clientWidth`) 390.
+  Not a product bug; compare the bar with `document.body` width instead of `innerWidth`.
 - **Pending dim polish** (2026-11-10, loading-states review) — no fade-out when pending ends (animation is removed),
   undocumented; the 150 ms opacity animation still runs under `prefers-reduced-motion` (low risk).
 - **`pending-store.ts` robustness and tests** (2026-11-10, loading-states review) — a throwing listener stops later

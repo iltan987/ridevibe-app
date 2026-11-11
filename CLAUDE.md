@@ -192,7 +192,9 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
 - WhatsApp links: `whatsAppUrl()` (`src/lib/applications/contact.ts`, `api.whatsapp.com/send`), never `wa.me` —
   its desktop redirect turns emoji into "�".
 - Mobile-first: design for ~390px first; the bottom tab bar is the main navigation on phones.
-- Primary nav items live in `src/components/layout/nav-items.ts`.
+- Primary nav items live in `src/components/layout/nav-items.ts`. "Başvur" is shown only when `/apply` would show the
+  form (`applyView` / `getApplyView`); nav and hero guess from the session cookie + `rv-apply-hidden` until the
+  answer streams in.
 - Server Actions: validate with Zod, let RLS decide, map error codes to results, call `refresh()` (`next/cache`)
   after a successful mutation. They and Route Handlers can't read the locale root param — derive it from data.
 - Lists use keyset pagination (`src/lib/pagination.ts` + `Pager`); access checks via `can()` / `requirePermission()`.

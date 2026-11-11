@@ -101,7 +101,8 @@
 - **Do:** render the `<nav>` + `InlineScript` pair inside the shared `*NavLinks` (every copy carries its own script),
   never once outside the inner boundary. Check by sampling the visible tab count every animation frame on a hard load
   (member: 4 in every frame, visitor: 5, stale `"0"` as member: 5 → 4).
-- **Source:** `curl` of the production HTML (`</nav><script>` pairs), puppeteer frame sampling.
+- **Source:** `curl` of the production build HTML (local `pnpm start`; `</nav><script>` pairs), puppeteer frame
+  sampling.
 
 ### Brand assets: tracing the wordmark and building the R&V icon (2026-11-09)
 - **Wordmark SVG:** potrace (pure-JS `potrace` npm) on the **half-resolution** alpha bitmap (1794×572, `turdSize` 10,

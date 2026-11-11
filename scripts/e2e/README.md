@@ -7,8 +7,17 @@ Run against a **local** stack only (local Supabase + a server on port 3123); nev
   `signIn(page, email)` (sets Supabase session cookies via email/password), `throttle()` (CDP network throttling).
   The keys in it are the public local-Supabase demo keys, not secrets.
 - `nav-e2e.mjs` — navigation progress bar / pending dim checks (PASS/FAIL lines, exit code != 0 on failure).
-  Needs a production build served on 3123: `pnpm build && pnpm start -p 3123`.
+  Needs a production build served on 3123: `pnpm build && pnpm start -p 3123`, `admin@test.local` and more than 25
+  applications with status `new` (the list's default tab; the pager check needs a second page).
   Screenshots go to `OUT_DIR` (default temp).
+- `apply-nav-e2e.mjs` — "Başvur" in the desktop nav, the phone tab bar and the home hero (PASS/FAIL lines, exit code
+  != 0 on failure): settled state per fixture at 390px and 1280px, exactly one layout from first paint to settled on
+  a second load (TR and EN) and across a language switch and back, a signed-out visitor with a stale stored `"1"`,
+  and `localStorage` blocked. It logs the visible tabs/links per animation frame (`evaluateOnNewDocument`) with
+  throttling, so the static-shell guess is on screen long enough to be checked. Needs `pnpm start -p 3123`, local
+  email sign-in and `member@test.local` (active), `pending-noapp@test.local` (pending, no application) and
+  `pending-app@test.local` (pending, one linked application with status `new` or `contacted`). `BASE_URL` overrides
+  the server.
 - `members-e2e.mjs` — `/members` directory and `/account` profile editing (PASS/FAIL lines, exit code != 0 on failure).
   Needs `member@test.local` (active, "Test Üye"), `second@test.local` ("Çelik Fixture", Beşiktaş + `side`, bike,
   birthday + Instagram shown), `nobirth@test.local` (active, no birth date), `pending-noapp@test.local`, and 26 more
