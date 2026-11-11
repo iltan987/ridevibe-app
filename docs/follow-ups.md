@@ -27,12 +27,6 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
     replaces the keyset convention in CLAUDE.md, so decide it explicitly. Also restyle the pager.
   - **Caching:** e.g. Next 16 `use cache` + `cacheTag` for directory data (the same for every active member;
     invalidate on profile/bike changes with `updateTag`), keeping the auth check outside the cached part.
-- **Theme script error on language switch** (2026-11-10, iltan) — switching the language logs "Encountered a script
-  tag while rendering React component" from `ThemeScript` (`src/components/theme/theme-script.tsx`, rendered in the
-  `<head>` of `[locale]/layout.tsx`): changing the `[locale]` root param re-renders the root layout on the client.
-  Same root cause as the older 404-path item below (merge both). Research the Next 16 way to ship a pre-paint script,
-  and check whether the client re-render also resets a light-theme user to dark (`<html className="… dark">`).
-  Small `fix/` branch.
 
 ## Open decisions (need iltan)
 
@@ -199,10 +193,16 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   still says "likely"/"observed, not verified" about prefetch covering only the static shell; confirm against the
   Next docs or leave as is.
 - **Import order nit** in `src/app/[locale]/admin/applications/page.tsx` (2026-11-10, loading-states review).
-- **Dev-only "script tag" console error on unknown paths** (2026-11-10, loading-states) — a direct load of a 404 path
-  in `pnpm dev` logs "Encountered a script tag while rendering React component" from `ThemeScript`
-  (`src/components/theme/theme-script.tsx`, rendered by `[locale]/layout.tsx`); the 404 is client-rendered there.
-  Harmless in production; find out whether a `<template>`-free workaround is needed.
+- **Unknown paths flash dark for light-theme users** (2026-11-11, theme-script fix) — production serves unknown paths
+  as a `<html id="__next_error__">` shell rendered entirely on the client, so the `<head>` theme script never runs
+  there; the stored theme arrives with `ThemeSwitcher`'s `useLayoutEffect` after hydration (brief dark flash on 404s
+  only). Find out why the catch-all `notFound()` yields the error shell instead of a server-rendered 404.
+- **Theme doesn't sync across tabs** (2026-11-11, next-themes comparison) — `ThemeSwitcher` only listens to OS
+  changes (`matchMedia`), not `storage` events, so other open tabs keep the old theme until reload. Fix: a `storage`
+  listener for `THEME_STORAGE_KEY` that calls `syncThemePreference`. Minor.
+- **Extra dark `theme-color` meta after navigation** (2026-11-11, theme-script fix) — Next appends its `viewport`
+  meta (dark) after ours on every client navigation; the browser uses the first one (ours, correct), so harmless
+  today but fragile if Next ever inserts it first (`docs/learnings/ui.md`).
 - **Re-run the instant-navigation dev check when adding pages** (2026-11-10, loading-states) — see
   `docs/learnings/nextjs.md`; the `/[locale]/[...rest]` catch-all always logs "Could not validate `instant`"
   (it calls `notFound()` by design).

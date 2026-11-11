@@ -50,10 +50,27 @@
   (`src/lib/theme.ts`, stringified `initTheme`) runs in `<head>` and fixes the class and `meta[name=theme-color]`
   from `localStorage` before first paint (verified: class correct when `<body>` is parsed). `ThemeSwitcher` re-applies
   the stored preference in `useLayoutEffect` (dev Strict Mode remount resets `<html>` attributes). Routes stay
-  prerendered. A plain `<script>` in the root `<head>` gave no React dev warning.
+  prerendered.
 - **Gotcha:** `initTheme` is embedded via `toString()`, so it must not reference module-level identifiers (inline
   constants); `src/lib/theme.test.ts` runs the generated string in `node:vm` to prove it.
 - **Source:** `node_modules/next/dist/docs/01-app/02-guides/preventing-flash-before-hydration.md`, found by testing.
+
+### Inline `<script>` in the root layout: "Encountered a script tag" when React creates it on the client (2026-11-11)
+- **Symptom:** dev console `Encountered a script tag while rendering React component…` after a language switch and
+  on a direct load of an unknown path; afterwards `<head>` holds two theme scripts.
+- **Cause:** changing the `[locale]` root param is a **client-side** navigation (same root layout file, Next docs
+  `script.md`), but the `[locale]` subtree remounts, so React creates a new `<script>` on the client; unknown paths
+  are served as a `<html id="__next_error__">` shell and rendered entirely on the client (prod too). React (dev) warns
+  whenever it creates an executable script (client-created scripts never run); `isScriptDataBlock` (a non-JS `type`)
+  silences it. A plain server-only `<script>` was fine on normal loads, which hid this.
+- **Do:** `ThemeScript` is a `"use client"` component rendering `type="text/javascript"` on the server and
+  `type="text/plain"` on the client with `suppressHydrationWarning` (the docs' `InlineScript` pattern; a server
+  component can't do it, `window` is always undefined there). The theme after a remount/client render comes from
+  `ThemeSwitcher`'s `useLayoutEffect`, not the script. Check: `scripts/e2e/theme-e2e.mjs` against dev and prod.
+- **Also:** on every client navigation Next appends a fresh `meta[name=theme-color]` with the `viewport` value (dark)
+  after ours; browsers use the first matching one in tree order (still ours), so the bar colour stays right.
+- **Source:** `preventing-flash-before-hydration.md` ("Extracting a reusable component"),
+  `react-dom-client.development.js` (`isScriptDataBlock`), found by testing.
 
 ### Brand assets: tracing the wordmark and building the R&V icon (2026-11-09)
 - **Wordmark SVG:** potrace (pure-JS `potrace` npm) on the **half-resolution** alpha bitmap (1794×572, `turdSize` 10,
