@@ -180,10 +180,10 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   `h-36.75 sm:h-26.75`, `h-21.5`, …) in `ApplySkeleton` and the admin skeletons (~160 lines of mirrored markup) drift
   when the real markup changes; add pointer comments in the real components. Line/hint counts hidden at `sm` are tuned
   to Turkish copy, English not measured. Re-run `scripts/e2e/skeletons.mjs` after UI changes.
-- **User-menu skeleton fidelity** (2026-11-10, loading-states review) — exact in Turkish only (the English button is
-  narrower); signed-in avatar 32px vs skeleton 28px (-4px). Cleanups in `user-menu.tsx`: comment says "Giriş yap"
-  (string is "Giriş Yap"), one long unformatted line, `Line` helper uses a template literal instead of `cn`, the
-  `md:h-8` row is undocumented.
+- **Web-font swap resizes header text** (2026-11-11, user-menu skeleton fix) — when Saira finishes loading, the
+  English "Sign in" button grows 59 → 63px and the header controls move ~4px (seen with throttling in
+  `scripts/e2e/header-e2e.mjs`). The `next/font` fallback metrics don't fully match Saira's width axis; check
+  `adjustFontFallback` / a closer fallback font if it's noticeable.
 - **Pending dim polish** (2026-11-10, loading-states review) — no fade-out when pending ends (animation is removed),
   undocumented; the 150 ms opacity animation still runs under `prefers-reduced-motion` (low risk).
 - **`pending-store.ts` robustness and tests** (2026-11-10, loading-states review) — a throwing listener stops later
@@ -197,9 +197,6 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   as a `<html id="__next_error__">` shell rendered entirely on the client, so the `<head>` theme script never runs
   there; the stored theme arrives with `ThemeSwitcher`'s `useLayoutEffect` after hydration (brief dark flash on 404s
   only). Find out why the catch-all `notFound()` yields the error shell instead of a server-rendered 404.
-- **Theme doesn't sync across tabs** (2026-11-11, next-themes comparison) — `ThemeSwitcher` only listens to OS
-  changes (`matchMedia`), not `storage` events, so other open tabs keep the old theme until reload. Fix: a `storage`
-  listener for `THEME_STORAGE_KEY` that calls `syncThemePreference`. Minor.
 - **Extra dark `theme-color` meta after navigation** (2026-11-11, theme-script fix) — Next appends its `viewport`
   meta (dark) after ours on every client navigation; the browser uses the first one (ours, correct), so harmless
   today but fragile if Next ever inserts it first (`docs/learnings/ui.md`).

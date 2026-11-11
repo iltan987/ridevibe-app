@@ -140,3 +140,15 @@
   step submits a form; seen twice in a row on 2026-11-11). `until()` in `members-e2e.mjs` treats that error as "not
   yet" and polls again.
 - **Source:** found by testing (birth-date-once).
+
+### E2E: hidden copies of the previous route, background tabs, catching short-lived states (2026-11-11)
+- **Symptom:** after a language switch, `waitForSelector('[role=menuitemradio]…')` timed out or clicked "not
+  clickable" nodes; in a two-tab test, clicks in the first tab hung (`Runtime.callFunctionOn timed out`); a skeleton
+  that users clearly see never showed up in 10ms polling.
+- **Cause:** Next 16 keeps the previous route's tree in the DOM, hidden (React `Activity`), so selectors match
+  invisible duplicates. Background tabs don't take clicks. Polling via CDP is too slow for a fallback that lives one
+  or two frames on a fast local server.
+- **Do:** pick the visible element (`getBoundingClientRect().width > 0`, `visible()` in `header-e2e.mjs`);
+  `page.bringToFront()` before clicking in another tab; log state per `requestAnimationFrame` inside the page
+  (`evaluateOnNewDocument` for hard loads) and add latency with `throttle()` so fallbacks last long enough.
+- **Source:** found by testing (user-menu skeleton fix).
