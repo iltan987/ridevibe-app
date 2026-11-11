@@ -10,15 +10,6 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ## Next up (iltan asked for these; in priority order; start in a new session)
 
-- **Application form UX: same questions, less effort** (2026-11-11, iltan: applicants say the form is long; Samet
-  keeps every question) — design round first. (1) Steps with a progress bar along the existing sections (Hakkında →
-  Sürüş → Sen ve kulüp → Onaylar), validation per step. (2) Autosave a draft in the applicant's own browser, "continue
-  where you left off", deleted after submit (personal data on their device: check the privacy-notice wording).
-  (3) Lighter free-text questions (expectations, alienating behaviours, disagreement): "1–2 sentences are enough",
-  example placeholders, review minimum lengths. (4) Tap instead of type where cheap: chips/segmented buttons for
-  licence, years, group experience, yes/no; searchable district; bike brand suggestions. (5) Suggest signing in with
-  Google first (name + email are already prefilled then). (6) Measure the funnel (opened → each step → sent) once the
-  Vercel Web Analytics decision is made. Spec: `docs/application-form.md` (update it with the design).
 - **Hide "Başvur" for people who applied or are members** (2026-11-11, iltan's idea) — short design round first:
   who sees it (visitors and signed-in users without an application: yes; active members: no; pending with an open
   application: hide or turn into an application-status item; inactive?), what fills the 5th phone tab, and how a
@@ -67,7 +58,8 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   now** (Hobby free tier: 10,000 events per 30 days and only the overall score with 24 h / 7 day ranges; Core Web
   Vitals detail needs Pro). If added: mention Vercel analytics in the privacy notice (Vercel is already listed as a
   processor). Sources: vercel.com/docs/analytics, /docs/analytics/limits-and-pricing,
-  /docs/speed-insights/limits-and-pricing (checked 2026-11-10).
+  /docs/speed-insights/limits-and-pricing (checked 2026-11-10). If added, also measure the application funnel on
+  `/apply` (opened → each step → sent; 2026-11-11, apply-steps).
 
 - **Ban evasion vs. linking** (2026-11-09, application gaps) — when the ban list is built (PLAN "Member conduct"),
   check new applications *and* staff links (`link_application`) against it.
@@ -173,6 +165,28 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   `fail()` / `finish()` in the profile actions are untested.
 
 ### UI / accessibility
+- **Application form steps review minors (2026-11-11)** — all optional; the final review removes what it fixes.
+  - Unit tests/draft: no direct tests for `stepOfField` / `isLastStep` (`steps.ts`); `parseDraft` keeps empty strings
+    and restored strings have no length cap (Zod catches them on submit); `browserStorage` throw path untested.
+  - `apply-form.tsx` (518 lines after the split) / `apply-fields.tsx`: two separate `react` import lines; double
+    "Devam" before the URL commits pushes `?step=2` twice (compare with `window.location`); "Geri" pushes history so
+    back/forward can loop; the duplicate/generic error alert follows the user to steps 1-3 after "Geri"; progressbar
+    aria is redundant (labelledby heading + valuetext, `valuemin` 1 vs 25 %); back/forward always scroll to top and
+    focus the heading (overrides scroll restoration); an error on a field outside every step (locale) focuses the
+    heading but shows no message (unreachable today); every click schedules a draft save (`onClick`); `UTM_KEYS =[`
+    spacing in `options.ts:54`.
+  - Draft: UTM keys mix URL and draft values per key (take the whole set from the URL when any key is present); the
+    language-switch flush relies on focus inside the form (Safari taps on radio/chips may not focus: write
+    immediately on discrete changes and add an E2E case); the `saveDraftNow` eslint-disable should go.
+  - Google fill: hint not linked via `aria-describedby`, no `aria-busy`; `signInWithGoogle` in `startTransition` has
+    no error handling (network failure re-enables silently); the shared `isPending` also shows StepNav pending during
+    the redirect; import order.
+  - Skeleton: magic heights in `apply-fields.tsx` lack pointer comments; `Pills` use `key={i}`; the follow-up could
+    list measured themes/widths; the TR→EN switch report doesn't quote the "none" frame count.
+  - `scripts/e2e/apply-e2e.mjs`: no-op `until()` (~line 464); `next` shadowing; "start over" emptiness checks only
+    radios; `value()` helper has no visibility filter; deep-link-step4 has no row assertion; draft-restore doesn't
+    check `other_event_interests` visibility; `finally` skips `browser.close()` if the delete throws; sign-in errors
+    become SKIP; the IG check infers hydration from a 1.5 s wait; `sinceTyped` (~125 ms) isn't asserted (< 400 ms).
 - **`/apply` notice cards** (2026-11-10, loading-states) — the form intro still shows above "already a member" /
   "under review". (The skeleton's jump to a small card is part of the admin/state-dependent skeleton item below.)
 - **Admin skeletons mirror only the default state** (2026-11-10, loading-states) — members list: the `pending` tab
