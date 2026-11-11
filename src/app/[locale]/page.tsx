@@ -1,6 +1,7 @@
 import { useTranslations } from "next-intl";
 import { Suspense } from "react";
-import { ApplyLink } from "@/components/apply/apply-link";
+import { HeroApplyForUser } from "@/components/apply/hero-apply";
+import { HeroApplyGuess } from "@/components/apply/hero-apply-guess";
 import { ClubBadge } from "@/components/brand/club-badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
@@ -25,15 +26,11 @@ export default function HomePage() {
         {t("subtitle")}
       </p>
       <div className="flex flex-col gap-3 sm:flex-row">
-        {/* Keeps the ad's UTM params; the fallback is the same link without them. */}
+        {/* One boundary: the fallback guesses from the session cookie; the result keeps the ad's UTM params. */}
         <Suspense
-          fallback={
-            <Link href="/apply" className={buttonVariants({ size: "lg" })}>
-              {t("apply")}
-            </Link>
-          }
+          fallback={<HeroApplyGuess className={buttonVariants({ size: "lg" })}>{t("apply")}</HeroApplyGuess>}
         >
-          <ApplyLink className={buttonVariants({ size: "lg" })}>{t("apply")}</ApplyLink>
+          <HeroApplyForUser className={buttonVariants({ size: "lg" })}>{t("apply")}</HeroApplyForUser>
         </Suspense>
         <Link
           href="/events"
