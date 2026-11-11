@@ -3,25 +3,18 @@
 import { CircleCheck } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Field,
-  FieldContent,
-  FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
   FieldLegend,
   FieldSet,
-  FieldTitle,
 } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Textarea } from "@/components/ui/textarea";
 import { Link } from "@/i18n/navigation";
 import { submitApplication } from "@/lib/applications/actions";
 import {
@@ -41,6 +34,7 @@ import {
   validateApplication,
 } from "@/lib/applications/schema";
 import { istanbulDistrictNames } from "@/lib/istanbul-districts";
+import { ChoiceChips, ChoiceRadios, ConsentCheckbox, TextAreaField, TextField } from "./apply-fields";
 import { PhoneField } from "./phone-field";
 
 type Status = "idle" | "invalid" | "duplicate" | "error" | "success";
@@ -429,172 +423,4 @@ function showNotGmailNote(value: string, signInEmail?: string) {
   const normalized = value.trim().toLowerCase();
   if (signInEmail && normalized === signInEmail.trim().toLowerCase()) return false;
   return isEmailAddress(value) && !isGoogleMailAddress(value);
-}
-
-// ---------------------------------------------------------------------------
-// Field building blocks
-// ---------------------------------------------------------------------------
-
-function OptionalTag({ text }: { text?: string }) {
-  return text ? <span className="font-normal text-muted-foreground">({text})</span> : null;
-}
-
-function TextField({
-  name,
-  label,
-  hint,
-  note,
-  optional,
-  error,
-  className,
-  ...inputProps
-}: {
-  name: string;
-  label: string;
-  hint?: string;
-  /** Soft, non-blocking advice shown under the hint (not an error). */
-  note?: string;
-  optional?: string;
-  error?: string;
-} & Omit<React.ComponentProps<typeof Input>, "name">) {
-  return (
-    <Field data-field={name} data-invalid={!!error}>
-      <FieldLabel htmlFor={name}>
-        {label} <OptionalTag text={optional} />
-      </FieldLabel>
-      <Input id={name} name={name} aria-invalid={!!error} className={`h-10 md:h-9 ${className ?? ""}`} {...inputProps} />
-      {hint && <FieldDescription>{hint}</FieldDescription>}
-      {note && <FieldDescription className="text-accent-text">{note}</FieldDescription>}
-      <FieldError>{error}</FieldError>
-    </Field>
-  );
-}
-
-function TextAreaField({ name, label, error }: { name: string; label: string; error?: string }) {
-  return (
-    <Field data-field={name} data-invalid={!!error}>
-      <FieldLabel htmlFor={name}>{label}</FieldLabel>
-      <Textarea id={name} name={name} rows={3} maxLength={1000} aria-invalid={!!error} />
-      <FieldError>{error}</FieldError>
-    </Field>
-  );
-}
-
-function ChoiceRadios<T extends string>({
-  name,
-  label,
-  options,
-  optionLabel,
-  defaultValue,
-  onChange,
-  error,
-  horizontal,
-}: {
-  name: string;
-  label: string;
-  options: readonly T[];
-  optionLabel: (value: T) => string;
-  defaultValue?: T;
-  onChange?: (value: string) => void;
-  error?: string;
-  horizontal?: boolean;
-}) {
-  return (
-    <Field data-field={name} data-invalid={!!error}>
-      <FieldTitle id={`${name}-label`}>{label}</FieldTitle>
-      <RadioGroup
-        name={name}
-        aria-labelledby={`${name}-label`}
-        defaultValue={defaultValue}
-        onValueChange={(v) => onChange?.(String(v))}
-        className={horizontal ? "flex flex-wrap gap-2" : "grid gap-2"}
-      >
-        {options.map((value) => (
-          <label
-            key={value}
-            className="flex min-h-10 cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2 text-sm has-data-checked:border-primary has-data-checked:bg-primary/5"
-          >
-            <RadioGroupItem value={value} aria-invalid={!!error} />
-            {optionLabel(value)}
-          </label>
-        ))}
-      </RadioGroup>
-      <FieldError>{error}</FieldError>
-    </Field>
-  );
-}
-
-function ChoiceChips<T extends string>({
-  name,
-  label,
-  hint,
-  options,
-  optionLabel,
-  onValuesChange,
-  error,
-}: {
-  name: string;
-  label: string;
-  hint?: string;
-  options: readonly T[];
-  optionLabel: (value: T) => string;
-  onValuesChange?: (values: readonly T[]) => void;
-  error?: string;
-}) {
-  const [selected, setSelected] = useState<readonly T[]>([]);
-  function toggle(value: T, checked: boolean) {
-    const next = checked ? [...selected, value] : selected.filter((v) => v !== value);
-    setSelected(next);
-    onValuesChange?.(next);
-  }
-
-  return (
-    <Field data-field={name} data-invalid={!!error}>
-      <FieldTitle id={`${name}-label`}>{label}</FieldTitle>
-      {hint && <FieldDescription>{hint}</FieldDescription>}
-      <div role="group" aria-labelledby={`${name}-label`} className="flex flex-wrap gap-2">
-        {options.map((value) => (
-          <label
-            key={value}
-            className="flex min-h-10 cursor-pointer items-center gap-2 rounded-full border px-3.5 py-2 text-sm has-data-checked:border-primary has-data-checked:bg-primary/5"
-          >
-            <Checkbox
-              name={name}
-              value={value}
-              checked={selected.includes(value)}
-              onCheckedChange={(checked) => toggle(value, checked)}
-              aria-invalid={!!error}
-            />
-            {optionLabel(value)}
-          </label>
-        ))}
-      </div>
-      <FieldError>{error}</FieldError>
-    </Field>
-  );
-}
-
-function ConsentCheckbox({
-  name,
-  label,
-  hint,
-  error,
-}: {
-  name: string;
-  label: ReactNode;
-  hint?: string;
-  error?: string;
-}) {
-  return (
-    <Field orientation="horizontal" data-field={name} data-invalid={!!error}>
-      <Checkbox id={name} name={name} aria-invalid={!!error} className="mt-0.5 self-start" />
-      <FieldContent>
-        <FieldLabel htmlFor={name} className="font-normal leading-snug">
-          {label}
-        </FieldLabel>
-        {hint && <FieldDescription>{hint}</FieldDescription>}
-        <FieldError>{error}</FieldError>
-      </FieldContent>
-    </Field>
-  );
 }
