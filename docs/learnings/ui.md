@@ -91,6 +91,18 @@
   page snaps; `applyResolvedTheme` disables transitions during a flip (next-themes' `disableTransitionOnChange`).
 - **Source:** found by testing (`scripts/e2e/header-e2e.mjs` logs the skeleton box per animation frame).
 
+### A guessing fallback inside a pathname `<Suspense>` appears several times in the HTML (2026-11-11)
+- **Symptom (risk):** the "Başvur" nav guess (`applyHintScript`, marks its previous sibling) could miss copies of the
+  nav: the server HTML of `/` holds the guessing `DesktopNav`/`BottomNav` twice each (the pathname boundary's fallback
+  and its content), plus the streamed final nav.
+- **Cause:** the outer session boundary (`DesktopNavForUser`/`BottomNavForUser`) falls back to the nav, which has its
+  own pathname `<Suspense>`; both of its sides render the same `*NavLinks`. Content streamed later sits in a hidden
+  `<div>` and is moved in by `$RC`; its inline script still runs while parsing, so the attribute is set before the move.
+- **Do:** render the `<nav>` + `InlineScript` pair inside the shared `*NavLinks` (every copy carries its own script),
+  never once outside the inner boundary. Check by sampling the visible tab count every animation frame on a hard load
+  (member: 4 in every frame, visitor: 5, stale `"0"` as member: 5 → 4).
+- **Source:** `curl` of the production HTML (`</nav><script>` pairs), puppeteer frame sampling.
+
 ### Brand assets: tracing the wordmark and building the R&V icon (2026-11-09)
 - **Wordmark SVG:** potrace (pure-JS `potrace` npm) on the **half-resolution** alpha bitmap (1794×572, `turdSize` 10,
   `optTolerance` 0.4, threshold 128), then round coordinates to 1 decimal and drop the whitespace → 39.7 KB, single

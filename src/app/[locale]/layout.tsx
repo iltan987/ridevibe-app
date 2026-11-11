@@ -3,8 +3,10 @@ import { Saira } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getTranslations } from "next-intl/server";
 import { locale } from "next/root-params";
+import { Suspense } from "react";
 import { NavigationProgress } from "@/components/layout/navigation-progress";
 import { BottomNav } from "@/components/layout/bottom-nav";
+import { BottomNavForUser } from "@/components/layout/nav-for-user";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import { ThemeScript } from "@/components/theme/theme-script";
@@ -54,7 +56,10 @@ export default async function LocaleLayout({
           {/* Bottom padding keeps content clear of the mobile tab bar. */}
           <main className="flex flex-1 flex-col pb-20 md:pb-0">{children}</main>
           <SiteFooter />
-          <BottomNav />
+          {/* "Başvur" depends on the session: the fallback guesses (see BottomNav), the streamed tab bar knows. */}
+          <Suspense fallback={<BottomNav />}>
+            <BottomNavForUser />
+          </Suspense>
         </NextIntlClientProvider>
       </body>
     </html>
