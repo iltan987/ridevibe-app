@@ -19,7 +19,7 @@ export function PrivacyTr() {
         <li><strong>Hesap bilgileri:</strong> Google ile giriş yaptığınızda Google hesabınızdaki ad, e-posta adresi ve profil fotoğrafı.</li>
         <li><strong>Reklam kaynağı:</strong> başvuru sayfasına bir reklam bağlantısıyla geldiyseniz bağlantıdaki kampanya bilgisi (ör. hangi Instagram reklamı).</li>
         <li><strong>Görsel veriler:</strong> yalnızca açık rıza vermeniz halinde, etkinliklerde çekilen ve sizi gösteren fotoğraflar.</li>
-        <li><strong>Teknik veriler:</strong> giriş yapabilmeniz için zorunlu oturum çerezi. Başvuru formunu doldururken cevapların (iletişim bilgileri ve onaylar hariç) gönderene kadar yalnızca kendi tarayıcında saklanır ve bize ulaşmaz; başvuruyu gönderdiğinde ya da 7 gün sonra silinir.</li>
+        <li><strong>Teknik veriler:</strong> giriş yapabilmeniz için zorunlu oturum çerezi. Başvuru formunu doldururken cevaplarınız (iletişim bilgileri ve onaylar hariç) gönderene kadar yalnızca kendi tarayıcınızda saklanır ve bize ulaşmaz; başvuruyu gönderdiğinizde silinir, 7 gün sonra da geçersiz olur.</li>
       </ul>
 
       <h2>3. Hangi amaçlarla işliyoruz?</h2>
