@@ -152,3 +152,10 @@
   `page.bringToFront()` before clicking in another tab; log state per `requestAnimationFrame` inside the page
   (`evaluateOnNewDocument` for hard loads) and add latency with `throttle()` so fallbacks last long enough.
 - **Source:** found by testing (user-menu skeleton fix).
+
+### Headless Chrome hides scrollbars: layout shifts from scrollbars are invisible by default (2026-11-11)
+- **Symptom:** a sideways header jump iltan saw on Windows didn't show up in any frame log.
+- **Cause:** puppeteer launches headless Chrome with `--hide-scrollbars`.
+- **Do:** `launch({ scrollbars: true })` in `scripts/e2e/e2e-lib.mjs` (drops that default flag; 15px classic
+  scrollbars). Phone-width runs then also lose 15px, unlike real phones (overlay scrollbars).
+- **Source:** found by testing (scrollbar-gutter fix).

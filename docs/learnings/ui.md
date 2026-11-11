@@ -151,3 +151,12 @@
 - **Do:** mirror the child structure, not just the card: put the parts in one `<div>` like the form. Copy-dependent
   heights (permission descriptions wrap to two lines on a phone, one on desktop; one of five stays one line) need
   responsive classes (`h-10.5 sm:h-5.25`); tailwind 4 accepts `h-5.25`/`h-8.5` etc., no pixel literals needed.
+
+### A skeleton of a different height toggles the scrollbar and shifts the centred layout (2026-11-11)
+- **Symptom:** on desktop (Windows, classic scrollbars) the whole header moved ~8px sideways and back while switching
+  the language on `/apply` as a member.
+- **Cause:** the `/apply` skeleton is the long form (default state), the member's real page is a short card: the
+  scrollbar (15–17px) appears for the skeleton and disappears again, and `mx-auto` content re-centres.
+- **Do:** `scrollbar-gutter: stable` on `<html>` (`globals.css`) keeps the space reserved; Base UI's scroll lock
+  already works with it (menus don't shift). Short pages show an empty gutter on classic-scrollbar desktops.
+- **Source:** iltan's screenshots, `scripts/e2e/header-e2e.mjs` section 6.
