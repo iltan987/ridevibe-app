@@ -63,14 +63,30 @@
   are served as a `<html id="__next_error__">` shell and rendered entirely on the client (prod too). React (dev) warns
   whenever it creates an executable script (client-created scripts never run); `isScriptDataBlock` (a non-JS `type`)
   silences it. A plain server-only `<script>` was fine on normal loads, which hid this.
-- **Do:** `ThemeScript` is a `"use client"` component rendering `type="text/javascript"` on the server and
-  `type="text/plain"` on the client with `suppressHydrationWarning` (the docs' `InlineScript` pattern; a server
-  component can't do it, `window` is always undefined there). The theme after a remount/client render comes from
-  `ThemeSwitcher`'s `useLayoutEffect`, not the script. Check: `scripts/e2e/theme-e2e.mjs` against dev and prod.
+- **Do:** every inline script goes through `InlineScript` (`src/components/inline-script.tsx`), a `"use client"`
+  component rendering `type="text/javascript"` on the server and `type="text/plain"` on the client with
+  `suppressHydrationWarning` (the docs' pattern; a server component can't do it, `window` is always undefined
+  there). After a remount/client render the work must happen in client code (theme: `ThemeSwitcher`'s
+  `useLayoutEffect`). Check: `scripts/e2e/header-e2e.mjs` against dev and prod.
 - **Also:** on every client navigation Next appends a fresh `meta[name=theme-color]` with the `viewport` value (dark)
   after ours; browsers use the first matching one in tree order (still ours), so the bar colour stays right.
 - **Source:** `preventing-flash-before-hydration.md` ("Extracting a reusable component"),
   `react-dom-client.development.js` (`isScriptDataBlock`), found by testing.
+
+### Session-dependent skeleton in the static shell: shape from the auth cookie (2026-11-11)
+- **Symptom:** signed in, the header showed a 74px "Giriş Yap"-shaped skeleton before the 32px avatar, pushing the
+  language and theme buttons ~42px left: on every hard load, and when switching **back** to a language.
+- **Cause:** the fallback is in the prerendered shell, which can't know the session. Switching back to a locale whose
+  shell is already in the client cache shows that shell (fallback included) at once and streams the user menu again;
+  the first switch to a new locale waits for the whole payload, so it didn't show.
+- **Do:** `UserMenuSkeleton` takes its shape from whether a Supabase auth cookie exists (`hasSessionCookie`,
+  `src/lib/auth/session-hint.ts`; `@supabase/ssr` cookies are `httpOnly: false`; only the name is checked): an inline
+  script right after the skeleton sets `data-session` before first paint (server HTML), and client renders read the
+  cookie with `useSyncExternalStore` (server snapshot `false`, `suppressHydrationWarning` for the attribute). The
+  signed-out shape is the button box with the real, invisible label, so it matches in every locale and font state.
+- **Also:** colour transitions (`transition-all` on buttons etc.) fade for ~150ms when the theme class flips while the
+  page snaps; `applyResolvedTheme` disables transitions during a flip (next-themes' `disableTransitionOnChange`).
+- **Source:** found by testing (`scripts/e2e/header-e2e.mjs` logs the skeleton box per animation frame).
 
 ### Brand assets: tracing the wordmark and building the R&V icon (2026-11-09)
 - **Wordmark SVG:** potrace (pure-JS `potrace` npm) on the **half-resolution** alpha bitmap (1794×572, `turdSize` 10,

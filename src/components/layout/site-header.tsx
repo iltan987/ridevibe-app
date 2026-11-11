@@ -1,5 +1,6 @@
 import { Suspense } from "react";
-import { UserMenu, UserMenuSkeleton } from "@/components/auth/user-menu";
+import { UserMenu } from "@/components/auth/user-menu";
+import { UserMenuSkeleton } from "@/components/auth/user-menu-skeleton";
 import { Wordmark } from "@/components/brand/wordmark";
 import { ThemeSwitcher } from "@/components/theme/theme-switcher";
 import { Link } from "@/i18n/navigation";
