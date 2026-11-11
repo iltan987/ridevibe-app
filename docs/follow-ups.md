@@ -216,8 +216,9 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 - **Locale switcher shows no pending feedback** (2026-11-10, loading-states) — it uses `router.replace` in a
   transition, not a `Link`, so neither the progress bar nor the dim appears (it still switches and re-enables its
   button). Could drive the pending store from `useTransition`.
-- **Skeleton magic numbers** (2026-11-10, loading-states review) — measured heights (`h-[19.25px]`, `h-26`,
-  `h-36.75 sm:h-26.75`, `h-21.5`, …) in `ApplySkeleton` and the admin skeletons (~160 lines of mirrored markup) drift
+- **Skeleton magic numbers** (2026-11-10, loading-states review; updated 2026-11-11) — measured heights in
+  `ApplySkeleton` (`src/app/[locale]/apply/page.tsx`: `h-29 md:h-17`, `h-[67.25px] md:h-[63.25px]`, `h-[19.25px]`,
+  `h-17`, `h-47.25 md:h-35.25`, `h-[21px]`, `h-11`, …) and in the admin skeletons (~160 lines of mirrored markup) drift
   when the real markup changes; add pointer comments in the real components. Line/hint counts hidden at `sm` are tuned
   to Turkish copy, English not measured. Re-run `scripts/e2e/skeletons.mjs` after UI changes.
 - **ApplySkeleton mirrors step 1 only** (2026-11-11, apply-steps Task 7) — a restored draft or `?step=N` opens another
