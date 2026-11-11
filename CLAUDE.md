@@ -67,7 +67,8 @@ pnpm db:types                 # regenerate src/lib/supabase/database.types.ts
 pnpm exec supabase migration up   # apply new migrations locally, keeping data (db:reset wipes auth users; after
                                   # an iteration that reset, restore iltan's local admin before browser review)
 kill $(ss -ltnp | grep ':3123 ' | grep -oP 'pid=\K[0-9]+')   # stop a local server; never `pkill -f` (kills own shell)
-PUPPETEER_DIR=~/e2e-tools node scripts/e2e/{nav,members}-e2e.mjs   # browser E2E vs `pnpm start -p 3123` (setup: scripts/e2e/README.md)
+PUPPETEER_DIR=~/e2e-tools node scripts/e2e/{nav,members,header}-e2e.mjs   # browser E2E vs `pnpm start -p 3123` (setup: scripts/e2e/README.md)
+# headless hides scrollbars (launch({ scrollbars: true }) keeps them); Next keeps the previous route hidden in the DOM: select visible elements
 # members E2E needs only its fixtures active: park other active profiles, restore by id (docs/learnings/testing.md)
 ```
 
@@ -175,6 +176,9 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   `data-skeleton-result` attributes, measured with JS off: `docs/learnings/testing.md`, `scripts/e2e/`); links from
   `@/i18n/navigation` already show pending feedback (progress bar + dim, or the page's skeleton when its shell is
   prefetched); no `loading.tsx` unless the dev instant-navigation check flags the segment (`docs/learnings/nextjs.md`).
+  A language switch remounts the `[locale]` layout and re-shows fallbacks: test skeletons on a switch *back* too.
+  Session-dependent fallbacks take their shape from `hasSessionCookie()` (`src/lib/auth/session-hint.ts`), never a
+  server read. Inline scripts only via `InlineScript` (`src/components/inline-script.tsx`).
 - WhatsApp links: `whatsAppUrl()` (`src/lib/applications/contact.ts`, `api.whatsapp.com/send`), never `wa.me` —
   its desktop redirect turns emoji into "�".
 - Mobile-first: design for ~390px first; the bottom tab bar is the main navigation on phones.
