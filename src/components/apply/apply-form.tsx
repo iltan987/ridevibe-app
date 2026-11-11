@@ -332,6 +332,7 @@ function ApplyFormSteps({
       onChange={onFieldInput}
       onClick={onFieldInput}
       noValidate
+      data-skeleton-result="apply"
       className="flex flex-col gap-8"
     >
       <input type="hidden" name="locale" value={locale} />
@@ -363,7 +364,7 @@ function ApplyFormSteps({
       </div>
 
       {/* Every step stays mounted (FormData holds the whole application); inactive ones are hidden. */}
-      <Step n={1} current={step} data-skeleton-result="apply">
+      <Step n={1} current={step}>
         <FieldGroup>
           <ChoiceRadios
             name="license_class"
