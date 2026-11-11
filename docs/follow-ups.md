@@ -168,19 +168,30 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 - **Application form steps review minors (2026-11-11)** — all optional; the final review removes what it fixes.
   - Unit tests/draft: no direct tests for `stepOfField` / `isLastStep` (`steps.ts`); `parseDraft` keeps empty strings
     and restored strings have no length cap (Zod catches them on submit); `browserStorage` throw path untested.
-  - `apply-form.tsx` (518 lines after the split) / `apply-fields.tsx`: two separate `react` import lines; double
-    "Devam" before the URL commits pushes `?step=2` twice (compare with `window.location`); "Geri" pushes history so
-    back/forward can loop; the duplicate/generic error alert follows the user to steps 1-3 after "Geri"; progressbar
-    aria is redundant (labelledby heading + valuetext, `valuemin` 1 vs 25 %); back/forward always scroll to top and
-    focus the heading (overrides scroll restoration); an error on a field outside every step (locale) focuses the
-    heading but shows no message (unreachable today); every click schedules a draft save (`onClick`); `UTM_KEYS =[`
-    spacing in `options.ts:54`.
-  - Draft: UTM keys mix URL and draft values per key (take the whole set from the URL when any key is present); the
-    language-switch flush relies on focus inside the form (Safari taps on radio/chips may not focus: write
-    immediately on discrete changes and add an E2E case); the `saveDraftNow` eslint-disable should go.
-  - Google fill: hint not linked via `aria-describedby`, no `aria-busy`; `signInWithGoogle` in `startTransition` has
-    no error handling (network failure re-enables silently); the shared `isPending` also shows StepNav pending during
-    the redirect; import order.
+  - `apply-form.tsx` (~711 lines; splitting it is the follow-up) / `apply-fields.tsx`: two separate `react` import
+    lines; double "Devam" before the URL commits pushes `?step=2` twice (compare with `window.location`); the
+    duplicate/generic error alert follows the user to steps 1-3 after "Geri"; progressbar aria is redundant
+    (labelledby heading + valuetext, `valuemin` 1 vs 25 %); back/forward always scroll to top and focus the heading
+    (overrides scroll restoration); an error on a field outside every step (locale) focuses the heading but shows no
+    message (unreachable today); every click schedules a draft save (`onClick`).
+  - "Geri" pushes a history entry (`apply-form.tsx`, `goToStep(step - 1, "push")`): after 1→2→3 + Geri, the phone
+    back gesture goes to step 3. Fix idea: keep `{ applyStep }` in `history.state` and let Geri call `history.back()`
+    when the previous entry is the form's own step N−1.
+  - The form remounts after hydration for every visitor (the `hydrated` key in `ApplyForm`), with or without a draft:
+    a value typed before hydration (slow in-app browsers) is wiped. Fix idea: include "a stored draft exists" in the
+    client snapshot so only visitors with a draft remount.
+  - After a language switch the "Kaldığın yerden devam ediyorsun · Baştan başla" line appears although the person
+    never left; look at it with the next copy review.
+  - Shared device: a later visitor on the same browser sees the first person's steps 1-3 answers (restored line +
+    "Baştan başla" mitigate); consider showing the line more prominently if it comes up.
+  - Draft: UTM keys mix URL and draft values per key (take the whole set from the URL when any key is present);
+    "Baştan başla" also drops the UTM values kept in the draft, and after a Google round trip the URL no longer has
+    them (ad attribution lost); the language-switch flush relies on focus inside the form (Safari taps on
+    radio/chips may not focus: write immediately on discrete changes and add an E2E case).
+  - Google fill: hint not linked via `aria-describedby`, no `aria-busy`; if `signInWithGoogle` rejects (network
+    failure), the rejection inside `startTransition` reaches the nearest error boundary
+    (`src/app/[locale]/error.tsx`): steps 1-3 survive in the draft, step-4 input is lost; catch it and show
+    `Apply.genericError` instead; the shared `isPending` also shows StepNav pending during the redirect; import order.
   - Skeleton: magic heights in `apply-fields.tsx` lack pointer comments; `Pills` use `key={i}`; the follow-up could
     list measured themes/widths; the TR→EN switch report doesn't quote the "none" frame count.
   - `scripts/e2e/apply-e2e.mjs`: no-op `until()` (~line 464); `next` shadowing; "start over" emptiness checks only

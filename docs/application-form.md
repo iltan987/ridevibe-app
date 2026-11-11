@@ -25,14 +25,18 @@ The sections below keep the review order (admin view, approval). The public form
 - "Devam" validates the whole form but only shows the current step's errors (focus goes to the first invalid field).
   The final submit jumps to the earliest step with an error; server-side field errors jump to their step too.
 - `?step=N` (1-4) in the URL via the History API; back/forward move between steps; invalid or missing means step 1.
-- The three writing questions ask for "one short sentence": min. 15 characters, max 1000, compact textareas that grow with the text (`field-sizing-content`, `min-h-16`).
+- The three writing questions ask for "one short sentence": min. 15 characters (enforced by the form and server Zod
+  schema only; the database checks stay at their old minimums: expectations 10, the other two 3, see
+  `supabase/schemas/20_applications.sql`), max 1000, compact textareas that grow with the text (`field-sizing-content`,
+  `min-h-16`).
 
 ## Draft (browser only)
 
 - Answers of steps 1-3 are saved in the applicant's own `localStorage` (key `rv-apply-draft`, `{ v: 1, savedAt, step,
-  fields, utm }`) debounced (500 ms) after changes and step changes, once at least one answer exists, and flushed when focus leaves the form, on page hide and on unmount (so a language switch keeps the answers). Contact details and consents are
-  never stored (whitelist derived from the step map, `src/lib/applications/draft.ts`). UTM values are kept so ad
-  attribution survives a Google round trip; UTM parameters in the URL win.
+  fields, utm }`) debounced (500 ms) after changes and step changes, once at least one answer exists, and flushed when
+  focus leaves the form, on page hide and on unmount (so a language switch keeps the answers). Contact details and
+  consents are never stored (whitelist derived from the step map, `src/lib/applications/draft.ts`). UTM values are
+  kept so ad attribution survives a Google round trip; UTM parameters in the URL win.
 - On the next visit the form restores the draft, opens at the saved step (unless the URL names one) and shows
   "Kaldığın yerden devam ediyorsun · Baştan başla"; "Baştan başla" deletes the draft and empties the form.
 - The draft is deleted after a successful submit and ignored and deleted when it is older than 7 days, malformed or of
