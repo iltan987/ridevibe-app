@@ -84,6 +84,9 @@
   script right after the skeleton sets `data-session` before first paint (server HTML), and client renders read the
   cookie with `useSyncExternalStore` (server snapshot `false`, `suppressHydrationWarning` for the attribute). The
   signed-out shape is the button box with the real, invisible label, so it matches in every locale and font state.
+- **Then:** the right-sized grey circle still replaced the photo for ~1s on every language switch (production). The
+  fallback now shows the avatar this tab last displayed (`rememberShownUser` in `src/components/auth/user-avatar.tsx`,
+  module memory only, cleared on sign-out; nothing stored). Only a hard load still shows the grey circle.
 - **Also:** colour transitions (`transition-all` on buttons etc.) fade for ~150ms when the theme class flips while the
   page snaps; `applyResolvedTheme` disables transitions during a flip (next-themes' `disableTransitionOnChange`).
 - **Source:** found by testing (`scripts/e2e/header-e2e.mjs` logs the skeleton box per animation frame).

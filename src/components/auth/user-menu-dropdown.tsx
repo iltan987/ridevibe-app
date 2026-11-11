@@ -2,8 +2,8 @@
 
 import { ClipboardList, LogOut, ShieldCheck, UserRound, UsersRound } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useTransition } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useEffect, useTransition } from "react";
+import { rememberShownUser, UserAvatar } from "@/components/auth/user-avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Link } from "@/i18n/navigation";
 import { signOut } from "@/lib/auth/actions";
-import { initials } from "@/lib/initials";
 
 export function UserMenuDropdown({
   name,
@@ -35,6 +34,10 @@ export function UserMenuDropdown({
   const tAdmin = useTranslations("Admin");
   const [isPending, startTransition] = useTransition();
 
+  useEffect(() => {
+    rememberShownUser({ name, avatarUrl });
+  }, [name, avatarUrl]);
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -42,10 +45,7 @@ export function UserMenuDropdown({
         data-skeleton-result="user-menu"
         className="rounded-full outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
       >
-        <Avatar>
-          {avatarUrl && <AvatarImage src={avatarUrl} alt="" referrerPolicy="no-referrer" />}
-          <AvatarFallback>{initials(name)}</AvatarFallback>
-        </Avatar>
+        <UserAvatar name={name} avatarUrl={avatarUrl} />
       </DropdownMenuTrigger>
       <DropdownMenuContent keepMounted align="end" className="min-w-48">
         <DropdownMenuGroup>
@@ -76,7 +76,10 @@ export function UserMenuDropdown({
         )}
         <DropdownMenuItem
           disabled={isPending}
-          onClick={() => startTransition(() => signOut())}
+          onClick={() => {
+            rememberShownUser(null);
+            startTransition(() => signOut());
+          }}
         >
           <LogOut aria-hidden />
           {t("signOut")}

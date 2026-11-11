@@ -1,6 +1,7 @@
 // Header E2E: the <head> theme script, the theme switcher and the user-menu skeleton.
 // Run against `pnpm dev -p 3123` (the React "script tag" warning is dev-only) and against `pnpm start -p 3123`
-// (skeleton timings). The signed-in part needs `member@test.local` and local email sign-in (docs/learnings/testing.md).
+// (skeleton timings). The signed-in part needs `member@test.local` with a photo (`avatar_url` = `<BASE_URL>/apple-icon.png`)
+// and local email sign-in (docs/learnings/testing.md).
 // Env: PUPPETEER_DIR (required), BASE_URL (default http://localhost:3123).
 import { launch, newPage, signIn, throttle } from "./e2e-lib.mjs";
 const BASE = process.env.BASE_URL ?? "http://localhost:3123";
@@ -61,6 +62,7 @@ function frameLogger() {
       w: Math.round(um.getBoundingClientRect().width),
       h: Math.round(um.getBoundingClientRect().height),
       localeX: loc ? Math.round(loc.getBoundingClientRect().x) : null,
+      photo: [...um.querySelectorAll("img")].some((i) => i.complete && i.naturalWidth > 0 && i.getBoundingClientRect().width > 0),
     };
     const k = JSON.stringify(f);
     if (f && k !== last) { window.__frames.push(f); last = k; }
@@ -68,7 +70,7 @@ function frameLogger() {
   };
   requestAnimationFrame(tick);
 }
-const fmt = (frames) => frames.map((f) => `${f.kind} ${f.w}x${f.h}@${f.localeX}`).join(" → ");
+const fmt = (frames) => frames.map((f) => `${f.kind} ${f.w}x${f.h}@${f.localeX}${f.photo ? "+photo" : ""}`).join(" → ");
 
 // 1. Language switch (client-side navigation that remounts the [locale] layout).
 {
@@ -163,6 +165,8 @@ for (const signedIn of [false, true]) {
     // The fallback only shows when the cached shell commits before the user menu (seen with `pnpm start`, not always in dev).
     if (swSkel.length === 0) console.log(`SKIP language switch back (signed in): fallback not shown in this run — ${fmt(sw)}`);
     else check("language switch back (signed in): skeleton is the avatar circle", swSkel.every((f) => f.w === 32 && f.h === 32), fmt(sw));
+    // The photo this tab already showed stays visible while the menu streams in again (no grey placeholder).
+    check("language switch back (signed in): photo stays visible", sw.length > 0 && sw.every((f) => f.photo), fmt(sw));
     // TR/EN labels differ by ~1px; a skeleton/result width mismatch moves the button by ~40px.
     check("language switch back (signed in): language button doesn't jump", Math.max(...xs) - Math.min(...xs) <= 2, fmt(sw));
   }
