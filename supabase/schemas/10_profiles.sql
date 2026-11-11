@@ -412,6 +412,38 @@ after update of email on auth.users
 for each row when (old.email is distinct from new.email)
 execute function private.handle_user_email_change();
 
+-- Supabase Auth rewrites the Google identity's identity_data with Google's current data on every sign-in, so a
+-- changed Google photo reaches the profile at the next sign-in. Source is auth.identities, never
+-- raw_user_meta_data: users can rewrite their own user metadata through the Auth API (updateUser), which would let
+-- anyone show any URL (e.g. a tracking pixel) as their photo in the directory. Only the photo: names are never
+-- refreshed (staff corrections stay). A missing or over-long URL keeps the old photo (a failing CHECK would abort
+-- the sign-in).
+create or replace function private.handle_google_avatar_change()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  url text := new.identity_data ->> 'avatar_url';
+begin
+  if url is not null and char_length(url) <= 2048 then
+    update public.profiles set avatar_url = url where id = new.user_id and avatar_url is distinct from url;
+  end if;
+  return new;
+end;
+$$;
+
+revoke all on function private.handle_google_avatar_change() from public, anon, authenticated;
+
+create trigger on_google_identity_avatar_changed
+after update of identity_data on auth.identities
+for each row when (
+  new.provider = 'google'
+  and old.identity_data ->> 'avatar_url' is distinct from new.identity_data ->> 'avatar_url'
+)
+execute function private.handle_google_avatar_change();
+
 create trigger on_auth_user_created
 after insert on auth.users
 for each row execute function private.handle_new_user();

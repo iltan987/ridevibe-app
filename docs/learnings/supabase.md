@@ -150,3 +150,20 @@
   DDL in the same transaction is allowed (only read-only → read-write is refused). Test it locally after dropping the
   real helpers inside the same rolled-back transaction. The preview's casing/ordering rules must match the migration's.
 - **Source:** `scripts/sql/name-tidy-preview.sql`, members final review.
+
+### Provider data after sign-up: trust `auth.identities`, never `raw_user_meta_data` (2026-11-11)
+- **Symptom:** a trigger on `auth.users.raw_user_meta_data` would refresh the profile photo from Google, but any
+  signed-in user can rewrite their own user metadata (`supabase.auth.updateUser({ data })`), so it would let a member
+  show any URL (tracking pixel, offensive image) as their photo in the directory.
+- **Cause:** on every OAuth sign-in of an existing account Supabase Auth updates **both** the identity
+  (`identity.identity_data`, `last_sign_in_at`) and the user metadata (`external.go`, `AccountExists` branch →
+  `UpdateUserMetaData`); only the identity row is out of the user's reach.
+- **Do:** read provider data from `auth.identities` (`provider = 'google'`); `on_google_identity_avatar_changed`
+  copies a changed `avatar_url` to `profiles` (`supabase/schemas/10_profiles.sql`). Sign-up still reads user metadata
+  (`handle_new_user`) — safe only because email sign-up is disabled (`[auth.email] enabled = false`).
+  The refresh needs a real Google sign-in; sessions last indefinitely (refresh tokens never expire, no time-box on
+  Free), so most members only get it after signing out and in again.
+- **Testing:** "profile not written" inside one pgTAP transaction: compare `ctid` (new on every row update);
+  `now()`/`updated_at` don't change within a transaction.
+- **Source:** github.com/supabase/auth `internal/api/external.go`; supabase.com/docs/guides/auth/sessions; found by
+  design review.
