@@ -170,6 +170,10 @@
       "restored": "Kaldığın yerden devam ediyorsun.",
       "startOver": "Baştan başla"
     },
+    "google": {
+      "button": "Google ile doldur",
+      "hint": "Ad ve e-postan otomatik gelir."
+    },
     "wordsHint": "Kısa bir cümle yeter.",
     "sections": {
       "about": "Seni tanıyalım",

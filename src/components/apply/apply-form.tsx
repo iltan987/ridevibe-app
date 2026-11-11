@@ -4,11 +4,14 @@ import { CircleCheck } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore, useTransition } from "react";
-import { buttonVariants } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel, FieldLegend, FieldSet } from "@/components/ui/field";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
-import { Link } from "@/i18n/navigation";
+import { GoogleIcon } from "@/components/auth/google-icon";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { getPathname, Link } from "@/i18n/navigation";
+import { signInWithGoogle } from "@/lib/auth/actions";
+import { detectInAppBrowser } from "@/lib/auth/in-app-browser";
 import { submitApplication } from "@/lib/applications/actions";
 import {
   EVENT_INTERESTS,
@@ -45,6 +48,8 @@ type Defaults = { fullName: string; email: string };
 const YES_NO = ["yes", "no"] as const;
 
 const noSubscribe = () => () => {};
+const getUserAgent = () => navigator.userAgent;
+const getServerUserAgent = () => null;
 
 /**
  * `defaults`: name and sign-in email of a signed-in account (still editable).
@@ -100,6 +105,11 @@ function ApplyFormSteps({
   // Read once per mount (see ApplyForm); only a draft with answers comes back.
   const [draft] = useState(() => (hydrated ? readDraft(browserStorage(), new Date()) : null));
   const [saver] = useState(() => createDraftSaver(browserStorage));
+
+  // Google sign-in to fill name and email: signed-out visitors only, and not inside social apps' embedded browsers
+  // (Google blocks OAuth there). The server snapshot is null: hidden until the client knows the user agent.
+  const userAgent = useSyncExternalStore(noSubscribe, getUserAgent, getServerUserAgent);
+  const canFillWithGoogle = !defaults && userAgent !== null && !detectInAppBrowser(userAgent);
 
   // Conditional sections.
   const [cityChoice, setCityChoice] = useState<"istanbul" | "other">("istanbul");
@@ -161,10 +171,17 @@ function ApplyFormSteps({
   }
 
   /** Writes the draft immediately at `target` (before leaving the page on purpose, e.g. the Google sign-in). */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- called by the Google fill (next task of this plan)
   function saveDraftNow(target: number) {
     const form = formRef.current;
     if (form) saver.saveNow(() => new FormData(form), target);
+  }
+
+  /** Saves the draft at step 4, then leaves for Google; the callback brings the person back to `?step=4`. */
+  function fillWithGoogle() {
+    saveDraftNow(4);
+    const fd = new FormData();
+    fd.set("next", `${getPathname({ href: "/apply", locale })}?step=4`);
+    startTransition(() => signInWithGoogle(fd));
   }
 
   // `stop`, not `cancel`: this click also bubbles to the form's onClick (scheduleSave), and the unmount flush would
@@ -519,6 +536,15 @@ function ApplyFormSteps({
       </Step>
 
       <Step n={4} current={step} className="flex flex-col gap-10">
+        {canFillWithGoogle && (
+          <div className="flex flex-col gap-2">
+            <Button type="button" variant="outline" onClick={fillWithGoogle} disabled={isPending} className="self-start">
+              <GoogleIcon />
+              {t("google.button")}
+            </Button>
+            <p className="text-sm text-muted-foreground">{t("google.hint")}</p>
+          </div>
+        )}
         <FieldGroup>
           <TextField
             name="full_name"

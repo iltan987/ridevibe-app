@@ -170,6 +170,10 @@
       "restored": "You're continuing where you left off.",
       "startOver": "Start over"
     },
+    "google": {
+      "button": "Fill in with Google",
+      "hint": "Your name and email are filled in automatically."
+    },
     "wordsHint": "A short sentence is enough.",
     "sections": {
       "about": "About you",
