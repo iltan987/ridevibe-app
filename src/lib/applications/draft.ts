@@ -76,6 +76,8 @@ export function parseDraft(raw: string | null, now: Date): ApplyDraft | null {
       fields[key] = value;
     }
   }
+  // Nothing left to restore (e.g. only fields that are never stored): treat it as no draft.
+  if (Object.keys(fields).length === 0) return null;
 
   const utm: ApplyDraft["utm"] = {};
   if (isRecord(data.utm)) {
@@ -121,4 +123,61 @@ export function writeDraft(storage: DraftStorage | null, draft: ApplyDraft | nul
 
 export function clearDraft(storage: DraftStorage | null): void {
   writeDraft(storage, null);
+}
+
+export const DRAFT_SAVE_DELAY_MS = 500;
+
+/**
+ * Debounced draft writes for the application form. `read` snapshots the form when the save runs (a detached form
+ * element still has its values, so a save flushed on unmount works). After `stop()` (successful submit) nothing
+ * writes again, so a late save can't re-create the draft that was just deleted.
+ */
+export type DraftSaver = {
+  /** Saves `read()` at `step` after the delay; a newer call replaces a pending one. */
+  schedule(read: () => FormData, step: number): void;
+  /** Writes a pending save now (unmount, `pagehide`); nothing pending → nothing written. */
+  flush(): void;
+  /** Cancels a pending save and writes immediately (before leaving the page on purpose). */
+  saveNow(read: () => FormData, step: number): void;
+  /** Cancels and ignores every later call. */
+  stop(): void;
+};
+
+export function createDraftSaver(
+  storage: () => DraftStorage | null,
+  now: () => Date = () => new Date(),
+  delayMs = DRAFT_SAVE_DELAY_MS,
+): DraftSaver {
+  let pending: { timer: ReturnType<typeof setTimeout>; read: () => FormData; step: number } | null = null;
+  let stopped = false;
+
+  function write(read: () => FormData, step: number) {
+    if (!stopped) writeDraft(storage(), buildDraft(read(), step, now()));
+  }
+  function cancel() {
+    if (pending) clearTimeout(pending.timer);
+    pending = null;
+  }
+  function flush() {
+    const job = pending;
+    cancel();
+    if (job) write(job.read, job.step);
+  }
+
+  return {
+    schedule(read, step) {
+      cancel();
+      if (stopped) return;
+      pending = { timer: setTimeout(flush, delayMs), read, step };
+    },
+    flush,
+    saveNow(read, step) {
+      cancel();
+      write(read, step);
+    },
+    stop() {
+      cancel();
+      stopped = true;
+    },
+  };
 }

@@ -3,7 +3,7 @@
 import { CircleCheck } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, useTransition } from "react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel, FieldLegend, FieldSet } from "@/components/ui/field";
@@ -21,6 +21,7 @@ import {
   UTM_KEYS,
 } from "@/lib/applications/options";
 import { isGoogleMailAddress } from "@/lib/applications/contact";
+import { type ApplyDraft, browserStorage, clearDraft, createDraftSaver, readDraft } from "@/lib/applications/draft";
 import {
   type ApplicationFieldErrors,
   type ApplyErrorKey,
@@ -39,8 +40,45 @@ type Status = "idle" | "invalid" | "duplicate" | "error" | "success";
 /** What to focus once a step is shown: its heading, or (with `errors`) its first field with an error. */
 type FocusRequest = { step: number; errors?: ApplicationFieldErrors };
 
-/** `defaults`: name and sign-in email of a signed-in account (still editable). */
-export function ApplyForm({ defaults }: { defaults?: { fullName: string; email: string } }) {
+type Defaults = { fullName: string; email: string };
+
+const YES_NO = ["yes", "no"] as const;
+
+const noSubscribe = () => () => {};
+
+/**
+ * `defaults`: name and sign-in email of a signed-in account (still editable).
+ *
+ * Answers of steps 1–3 are kept as a browser draft (`src/lib/applications/draft.ts`). The server render and the
+ * hydration pass have no draft; the form then remounts once (`hydrated` in the key) and restores it. On client-side
+ * navigation (e.g. a language switch) `hydrated` is already true and the draft is read on the first render. "Start
+ * over" remounts it empty (`resetCount`).
+ */
+export function ApplyForm({ defaults }: { defaults?: Defaults }) {
+  const hydrated = useSyncExternalStore(noSubscribe, () => true, () => false);
+  const [resetCount, setResetCount] = useState(0);
+  return (
+    <ApplyFormSteps
+      key={`${hydrated}-${resetCount}`}
+      defaults={defaults}
+      hydrated={hydrated}
+      startedOver={resetCount > 0}
+      onStartOver={() => setResetCount((n) => n + 1)}
+    />
+  );
+}
+
+function ApplyFormSteps({
+  defaults,
+  hydrated,
+  startedOver,
+  onStartOver,
+}: {
+  defaults?: Defaults;
+  hydrated: boolean;
+  startedOver: boolean;
+  onStartOver: () => void;
+}) {
   const t = useTranslations("Apply");
   const locale = useLocale();
   const searchParams = useSearchParams();
@@ -59,16 +97,21 @@ export function ApplyForm({ defaults }: { defaults?: { fullName: string; email: 
   const [email, setEmail] = useState(defaults?.email ?? "");
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
 
+  // Read once per mount (see ApplyForm); only a draft with answers comes back.
+  const [draft] = useState(() => (hydrated ? readDraft(browserStorage(), new Date()) : null));
+  const [saver] = useState(() => createDraftSaver(browserStorage));
+
   // Conditional sections.
   const [cityChoice, setCityChoice] = useState<"istanbul" | "other">("istanbul");
-  const [ownsBike, setOwnsBike] = useState<string | null>(null);
-  const [otherClubs, setOtherClubs] = useState<string | null>(null);
-  const [heardFrom, setHeardFrom] = useState<string | null>(null);
+  const [ownsBike, setOwnsBike] = useState<string | null>(draftChoice(draft, YES_NO, "owns_motorcycle") ?? null);
+  const [otherClubs, setOtherClubs] = useState<string | null>(draftChoice(draft, YES_NO, "in_other_clubs") ?? null);
+  const [heardFrom, setHeardFrom] = useState<string | null>(draftChoice(draft, HEARD_FROM, "heard_from") ?? null);
   const [languages, setLanguages] = useState<readonly string[]>([]);
-  const [events, setEvents] = useState<readonly string[]>([]);
+  const [events, setEvents] = useState<readonly string[]>(draftChoices(draft, EVENT_INTERESTS, "event_interests") ?? []);
 
-  // The current step lives in the URL (`?step=N`), so back/forward move between steps.
-  const step = parseStep(searchParams.get("step")) ?? 1;
+  // The current step lives in the URL (`?step=N`), so back/forward move between steps. Without one (reload of
+  // `/apply`, language switch) a restored draft opens where the person left off.
+  const step = parseStep(searchParams.get("step")) ?? draft?.step ?? 1;
 
   // Focus moves after the target step is rendered: the URL update from `history.pushState`
   // reaches `useSearchParams` in a later render than this component's own state.
@@ -88,6 +131,50 @@ export function ApplyForm({ defaults }: { defaults?: { fullName: string; email: 
     window.scrollTo({ top: 0 });
     headingRef.current?.focus({ preventScroll: true });
   }, [step, focusRequest]);
+
+  // After "start over" the button is gone: put the focus on the step heading.
+  useEffect(() => {
+    if (startedOver) headingRef.current?.focus({ preventScroll: true });
+  }, [startedOver]);
+
+  // Draft: saved (debounced) on every step change and on input; a pending save is written before the page goes away
+  // (reload, closed tab) or the form unmounts (a language switch remounts it and reads the draft again).
+  const savedStep = useRef(step);
+  useEffect(() => {
+    if (savedStep.current === step) return;
+    savedStep.current = step;
+    const form = formRef.current;
+    if (form) saver.schedule(() => new FormData(form), step);
+  }, [step, saver]);
+  useEffect(() => {
+    const flush = () => saver.flush();
+    window.addEventListener("pagehide", flush);
+    return () => {
+      window.removeEventListener("pagehide", flush);
+      saver.flush();
+    };
+  }, [saver]);
+
+  function scheduleSave() {
+    const form = formRef.current;
+    if (form) saver.schedule(() => new FormData(form), step);
+  }
+
+  /** Writes the draft immediately at `target` (before leaving the page on purpose, e.g. the Google sign-in). */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- called by the Google fill (next task of this plan)
+  function saveDraftNow(target: number) {
+    const form = formRef.current;
+    if (form) saver.saveNow(() => new FormData(form), target);
+  }
+
+  // `stop`, not `cancel`: this click also bubbles to the form's onClick (scheduleSave), and the unmount flush would
+  // then write the old answers back. The remounted form gets its own saver.
+  function startOver() {
+    saver.stop();
+    clearDraft(browserStorage());
+    goToStep(1, "replace");
+    onStartOver();
+  }
 
   /**
    * Shows `target` (`?step=N`, other params such as UTM kept) and focuses its heading, or its first field with an
@@ -122,6 +209,16 @@ export function ApplyForm({ defaults }: { defaults?: { fullName: string; email: 
     const field = (event.target as HTMLElement).closest("[data-field]")?.getAttribute("data-field");
     if (field && !touched.has(field)) setTouched(new Set(touched).add(field));
     revalidate();
+    scheduleSave();
+    // Focus left the form (e.g. to the language switcher): write now. A language switch renders the new form, which
+    // reads the draft, before this one unmounts, so the flush on unmount would come too late.
+    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) saver.flush();
+  }
+
+  // Base UI checkboxes/radios update their hidden inputs after the click handler; the save reads the form later.
+  function onFieldInput() {
+    revalidateSoon();
+    scheduleSave();
   }
 
   // Also fired by Enter in a text input: on steps 1–3 that means "Next", never an early submit.
@@ -160,6 +257,9 @@ export function ApplyForm({ defaults }: { defaults?: { fullName: string; email: 
         setErrors({});
         setStatus(result.status);
         if (result.status === "success") {
+          // Stop first: a pending or later save would re-create the draft.
+          saver.stop();
+          clearDraft(browserStorage());
           setSubmittedEmail(result.linked ? null : check.data.email);
           window.scrollTo({ top: 0 });
         }
@@ -212,14 +312,14 @@ export function ApplyForm({ defaults }: { defaults?: { fullName: string; email: 
       ref={formRef}
       onSubmit={onSubmit}
       onBlur={onFieldBlur}
-      onChange={revalidateSoon}
-      onClick={revalidateSoon}
+      onChange={onFieldInput}
+      onClick={onFieldInput}
       noValidate
       className="flex flex-col gap-8"
     >
       <input type="hidden" name="locale" value={locale} />
       {UTM_KEYS.map((key) => {
-        const value = searchParams.get(key);
+        const value = searchParams.get(key) || draft?.utm[key];
         return value ? <input key={key} type="hidden" name={key} value={value.slice(0, 200)} /> : null;
       })}
       {/* Honeypot: hidden from people and assistive tech; bots tend to fill it. */}
@@ -229,7 +329,21 @@ export function ApplyForm({ defaults }: { defaults?: { fullName: string; email: 
         </label>
       </div>
 
-      <StepHeader step={step} headingRef={headingRef} />
+      <div className="flex flex-col gap-3">
+        {draft && (
+          <p className="text-sm text-muted-foreground">
+            {t("draft.restored")}{" "}
+            <button
+              type="button"
+              onClick={startOver}
+              className="cursor-pointer font-medium text-foreground underline underline-offset-4"
+            >
+              {t("draft.startOver")}
+            </button>
+          </p>
+        )}
+        <StepHeader step={step} headingRef={headingRef} />
+      </div>
 
       {/* Every step stays mounted (FormData holds the whole application); inactive ones are hidden. */}
       <Step n={1} current={step} data-skeleton-result="apply">
@@ -238,6 +352,7 @@ export function ApplyForm({ defaults }: { defaults?: { fullName: string; email: 
             name="license_class"
             label={t("fields.license_class")}
             options={LICENSE_CLASSES}
+            defaultValue={draftChoice(draft, LICENSE_CLASSES, "license_class")}
             optionLabel={(v) => t(`options.license_class.${v}`)}
             error={error("license_class")}
             horizontal
@@ -247,6 +362,7 @@ export function ApplyForm({ defaults }: { defaults?: { fullName: string; email: 
             type="number"
             label={t("fields.riding_years")}
             error={error("riding_years")}
+            defaultValue={draftText(draft, "riding_years")}
             inputMode="numeric"
             min={0}
             max={70}
@@ -255,7 +371,8 @@ export function ApplyForm({ defaults }: { defaults?: { fullName: string; email: 
           <ChoiceRadios
             name="owns_motorcycle"
             label={t("fields.owns_motorcycle")}
-            options={["yes", "no"] as const}
+            options={YES_NO}
+            defaultValue={draftChoice(draft, YES_NO, "owns_motorcycle")}
             optionLabel={(v) => t(`options.${v}`)}
             onChange={setOwnsBike}
             error={error("owns_motorcycle")}
@@ -267,6 +384,7 @@ export function ApplyForm({ defaults }: { defaults?: { fullName: string; email: 
                 name="motorcycle_brand"
                 label={t("fields.motorcycle_brand")}
                 error={error("motorcycle_brand")}
+                defaultValue={draftText(draft, "motorcycle_brand")}
                 placeholder="Honda"
                 list="motorcycle-brands"
               />
@@ -275,13 +393,20 @@ export function ApplyForm({ defaults }: { defaults?: { fullName: string; email: 
                   <option key={brand} value={brand} />
                 ))}
               </datalist>
-              <TextField name="motorcycle_model" label={t("fields.motorcycle_model")} error={error("motorcycle_model")} placeholder="CB650R" />
+              <TextField
+                name="motorcycle_model"
+                label={t("fields.motorcycle_model")}
+                error={error("motorcycle_model")}
+                defaultValue={draftText(draft, "motorcycle_model")}
+                placeholder="CB650R"
+              />
               <TextField
                 name="motorcycle_cc"
                 type="number"
                 label={t("fields.motorcycle_cc")}
                 optional={t("optional")}
                 error={error("motorcycle_cc")}
+                defaultValue={draftText(draft, "motorcycle_cc")}
                 inputMode="numeric"
                 placeholder="650"
               />
@@ -293,6 +418,7 @@ export function ApplyForm({ defaults }: { defaults?: { fullName: string; email: 
             hint={t("fields.multiHint")}
             options={RIDING_STYLES}
             optionLabel={(v) => t(`options.riding_styles.${v}`)}
+            defaultValues={draftChoices(draft, RIDING_STYLES, "riding_styles")}
             error={error("riding_styles")}
           />
           <ChoiceRadios
@@ -300,6 +426,7 @@ export function ApplyForm({ defaults }: { defaults?: { fullName: string; email: 
             label={t("fields.group_experience")}
             options={GROUP_EXPERIENCE}
             optionLabel={(v) => t(`options.group_experience.${v}`)}
+            defaultValue={draftChoice(draft, GROUP_EXPERIENCE, "group_experience")}
             error={error("group_experience")}
             horizontal
           />
@@ -311,20 +438,27 @@ export function ApplyForm({ defaults }: { defaults?: { fullName: string; email: 
           <ChoiceRadios
             name="in_other_clubs"
             label={t("fields.in_other_clubs")}
-            options={["yes", "no"] as const}
+            options={YES_NO}
+            defaultValue={draftChoice(draft, YES_NO, "in_other_clubs")}
             optionLabel={(v) => t(`options.${v}`)}
             onChange={setOtherClubs}
             error={error("in_other_clubs")}
             horizontal
           />
           {otherClubs === "yes" && (
-            <TextField name="other_club_names" label={t("fields.other_club_names")} error={error("other_club_names")} />
+            <TextField
+              name="other_club_names"
+              label={t("fields.other_club_names")}
+              error={error("other_club_names")}
+              defaultValue={draftText(draft, "other_club_names")}
+            />
           )}
           <ChoiceRadios
             name="heard_from"
             label={t("fields.heard_from")}
             options={HEARD_FROM}
             optionLabel={(v) => t(`options.heard_from.${v}`)}
+            defaultValue={draftChoice(draft, HEARD_FROM, "heard_from")}
             onChange={setHeardFrom}
             error={error("heard_from")}
           />
@@ -335,6 +469,7 @@ export function ApplyForm({ defaults }: { defaults?: { fullName: string; email: 
               optional={t("optional")}
               hint={t("fields.referrerHint")}
               error={error("referrer_name")}
+              defaultValue={draftText(draft, "referrer_name")}
             />
           )}
           <ChoiceChips
@@ -343,6 +478,7 @@ export function ApplyForm({ defaults }: { defaults?: { fullName: string; email: 
             hint={t("fields.multiHint")}
             options={EVENT_INTERESTS}
             optionLabel={(v) => t(`options.event_interests.${v}`)}
+            defaultValues={draftChoices(draft, EVENT_INTERESTS, "event_interests")}
             onValuesChange={setEvents}
             error={error("event_interests")}
           />
@@ -351,6 +487,7 @@ export function ApplyForm({ defaults }: { defaults?: { fullName: string; email: 
               name="other_event_interests"
               label={t("fields.other_event_interests")}
               error={error("other_event_interests")}
+              defaultValue={draftText(draft, "other_event_interests")}
             />
           )}
         </FieldGroup>
@@ -364,9 +501,20 @@ export function ApplyForm({ defaults }: { defaults?: { fullName: string; email: 
             label={t("fields.expectations")}
             placeholder={t("fields.expectationsPlaceholder")}
             error={error("expectations")}
+            defaultValue={draftText(draft, "expectations")}
           />
-          <TextAreaField name="alienating_behaviors" label={t("fields.alienating_behaviors")} error={error("alienating_behaviors")} />
-          <TextAreaField name="conflict_handling" label={t("fields.conflict_handling")} error={error("conflict_handling")} />
+          <TextAreaField
+            name="alienating_behaviors"
+            label={t("fields.alienating_behaviors")}
+            error={error("alienating_behaviors")}
+            defaultValue={draftText(draft, "alienating_behaviors")}
+          />
+          <TextAreaField
+            name="conflict_handling"
+            label={t("fields.conflict_handling")}
+            error={error("conflict_handling")}
+            defaultValue={draftText(draft, "conflict_handling")}
+          />
         </FieldGroup>
       </Step>
 
@@ -485,6 +633,24 @@ export function ApplyForm({ defaults }: { defaults?: { fullName: string; email: 
       <StepNav step={step} isPending={isPending} message={statusMessage} onBack={() => goToStep(step - 1, "push")} />
     </form>
   );
+}
+
+/** A restored text answer (`defaultValue`). */
+function draftText(draft: ApplyDraft | null, name: string): string | undefined {
+  const value = draft?.fields[name];
+  return typeof value === "string" ? value : undefined;
+}
+
+/** A restored single choice, only if it is still one of `options`. */
+function draftChoice<T extends string>(draft: ApplyDraft | null, options: readonly T[], name: string): T | undefined {
+  const value = draft?.fields[name];
+  return options.find((option) => option === value);
+}
+
+/** Restored multiple choices that are still among `options`. */
+function draftChoices<T extends string>(draft: ApplyDraft | null, options: readonly T[], name: string): T[] | undefined {
+  const value = draft?.fields[name];
+  return Array.isArray(value) ? options.filter((option) => value.includes(option)) : undefined;
 }
 
 function Step({ n, current, ...props }: { n: number; current: number } & React.ComponentProps<"div">) {

@@ -166,6 +166,10 @@
       "words": "Kendi sözlerinle",
       "you": "Seni tanıyalım"
     },
+    "draft": {
+      "restored": "Kaldığın yerden devam ediyorsun.",
+      "startOver": "Baştan başla"
+    },
     "wordsHint": "Kısa bir cümle yeter.",
     "sections": {
       "about": "Seni tanıyalım",

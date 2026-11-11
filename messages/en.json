@@ -166,6 +166,10 @@
       "words": "In your own words",
       "you": "About you"
     },
+    "draft": {
+      "restored": "You're continuing where you left off.",
+      "startOver": "Start over"
+    },
     "wordsHint": "A short sentence is enough.",
     "sections": {
       "about": "About you",

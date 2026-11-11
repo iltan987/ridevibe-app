@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { test } from "node:test";
+import { mock, test } from "node:test";
 import {
   DRAFT_FIELDS,
   DRAFT_KEY,
@@ -7,6 +7,8 @@ import {
   browserStorage,
   buildDraft,
   clearDraft,
+  createDraftSaver,
+  DRAFT_SAVE_DELAY_MS,
   parseDraft,
   readDraft,
   writeDraft,
@@ -97,6 +99,9 @@ test("parseDraft rejects expired, future, other-version and malformed drafts", (
   assert.equal(parse({ ...base, savedAt: "nope" }), null);
   assert.equal(parse({ ...base, v: 2 }), null);
   assert.equal(parse({ ...base, fields: [] }), null);
+  // Nothing left after sanitising (e.g. only contact fields): no draft.
+  assert.equal(parse({ ...base, fields: {} }), null);
+  assert.equal(parse({ ...base, fields: { email: "a@b.c", consent_rules: "on" } }), null);
   assert.equal(parseDraft("{", NOW), null);
   assert.equal(parseDraft(null, NOW), null);
   assert.equal(parseDraft("null", NOW), null);
@@ -127,6 +132,9 @@ test("readDraft removes an invalid stored draft", () => {
   assert.equal(readDraft(s, NOW), null);
   assert.equal(s.value, null);
   assert.equal(readDraft(null, NOW), null);
+  const empty = fakeStorage(JSON.stringify({ v: 1, savedAt: NOW.toISOString(), step: 2, fields: { email: "a@b.c" }, utm: {} }));
+  assert.equal(readDraft(empty, NOW), null);
+  assert.equal(empty.value, null);
 });
 
 test("writeDraft(null) removes the key, clearDraft too", () => {
@@ -154,4 +162,80 @@ test("storage that throws doesn't break read/write", () => {
 
 test("browserStorage is null without a window", () => {
   assert.equal(browserStorage(), null);
+});
+
+function saverSetup() {
+  mock.timers.enable({ apis: ["setTimeout"] });
+  const storage = fakeStorage();
+  const saver = createDraftSaver(() => storage, () => NOW);
+  const form = (expectations: string) => () => {
+    const fd = new FormData();
+    fd.set("expectations", expectations);
+    return fd;
+  };
+  const stored = () => (storage.value === null ? null : (JSON.parse(storage.value) as { step: number; fields: object }));
+  return { storage, saver, form, stored };
+}
+
+test("draft saver: debounces, the latest change and step win", (t) => {
+  t.after(() => mock.timers.reset());
+  const { saver, form, stored } = saverSetup();
+  saver.schedule(form("a"), 1);
+  mock.timers.tick(DRAFT_SAVE_DELAY_MS - 1);
+  assert.equal(stored(), null);
+  saver.schedule(form("ab"), 2);
+  mock.timers.tick(DRAFT_SAVE_DELAY_MS - 1);
+  assert.equal(stored(), null);
+  mock.timers.tick(1);
+  assert.deepEqual(stored(), { v: 1, savedAt: NOW.toISOString(), step: 2, fields: { expectations: "ab" }, utm: {} });
+});
+
+test("draft saver: flush writes a pending save at once, and only a pending one", (t) => {
+  t.after(() => mock.timers.reset());
+  const { storage, saver, form, stored } = saverSetup();
+  writeDraft(storage, buildDraft(fullForm(), 3, NOW));
+  saver.flush(); // nothing pending (e.g. the remount after hydration): the stored draft stays
+  assert.equal(stored()?.step, 3);
+  saver.schedule(form("typed"), 2);
+  saver.flush();
+  assert.deepEqual(stored()?.fields, { expectations: "typed" });
+  storage.value = null;
+  mock.timers.tick(DRAFT_SAVE_DELAY_MS);
+  assert.equal(stored(), null, "the flushed save doesn't fire again");
+});
+
+test("draft saver: an empty form removes the draft", (t) => {
+  t.after(() => mock.timers.reset());
+  const { storage, saver, form, stored } = saverSetup();
+  writeDraft(storage, buildDraft(fullForm(), 3, NOW));
+  saver.schedule(form(""), 1);
+  mock.timers.tick(DRAFT_SAVE_DELAY_MS);
+  assert.equal(stored(), null);
+});
+
+test("draft saver: saveNow cancels the pending save and writes immediately", (t) => {
+  t.after(() => mock.timers.reset());
+  const { storage, saver, form, stored } = saverSetup();
+  saver.schedule(form("old"), 1);
+  saver.saveNow(form("now"), 3);
+  assert.deepEqual(stored()?.fields, { expectations: "now" });
+  assert.equal(stored()?.step, 3);
+  storage.value = null;
+  mock.timers.tick(DRAFT_SAVE_DELAY_MS);
+  assert.equal(stored(), null);
+});
+
+test("draft saver: after stop (successful submit) nothing re-creates the draft", (t) => {
+  t.after(() => mock.timers.reset());
+  const { storage, saver, form, stored } = saverSetup();
+  saver.schedule(form("pending"), 4);
+  saver.stop();
+  clearDraft(storage);
+  mock.timers.tick(DRAFT_SAVE_DELAY_MS * 3);
+  assert.equal(stored(), null);
+  saver.schedule(form("late blur"), 4);
+  saver.flush();
+  saver.saveNow(form("late"), 4);
+  mock.timers.tick(DRAFT_SAVE_DELAY_MS * 3);
+  assert.equal(stored(), null);
 });
