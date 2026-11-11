@@ -175,6 +175,5 @@
   (JWKS); it calls the Auth server (`getUser`) only for HS* tokens. An access token can't be revoked, so it stays
   valid until `exp` (`jwt_expiry`, 1 h). The delete removes `auth.sessions` / refresh tokens, so the next refresh
   fails and the cookie is dropped then. The DB is safe meanwhile: rights hang on the (deleted) profile row.
-- **Do:** expect a window of up to 1 h after deleting an account; don't treat "verified claims" as "user exists" in
-  app logic (follow-up: a token without a profile row counts as signed out).
+- **Do:** expect a window of up to 1 h after deleting an account (open item in `docs/follow-ups.md`).
 - **Source:** `@supabase/auth-js` `GoTrueClient.getClaims` (2.119.0); production check (no rows written afterwards).
