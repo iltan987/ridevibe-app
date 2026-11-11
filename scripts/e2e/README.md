@@ -13,6 +13,9 @@ Run against a **local** stack only (local Supabase + a server on port 3123); nev
   birthday + Instagram shown), `nobirth@test.local` (active, no birth date), `pending-noapp@test.local`, and 26 more
   active profiles (29 active in total, so the pager appears); fixture recipe in the header of the script. It plants and
   removes bikes through `docker exec … psql` (`DB_CONTAINER`, local only). Screenshots go to `OUT_DIR`.
+- `theme-e2e.mjs` — `<head>` theme script with a stored light theme across a language switch and an unknown path
+  (theme kept, client-created script inert, no React "script tag" warning). No sign-in or fixtures; run against
+  `pnpm dev -p 3123` (the warning is dev-only) and `pnpm start -p 3123`. `BASE_URL` overrides the server.
 - `skeletons.mjs <baseUrl> <out.md> [routes…]` — measures each `data-skeleton` fallback against its
   `data-skeleton-result` (JS off vs on); see `docs/learnings/testing.md`.
 

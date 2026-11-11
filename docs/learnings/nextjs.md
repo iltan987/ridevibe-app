@@ -158,9 +158,8 @@ Bundled docs are the source of truth: `node_modules/next/dist/docs/` (grep them 
   `window.next.router.push` from `/events`. *Result:* no instant-navigation message for any real route, no overlay
   issue, no console error. Only output (dev server terminal and overlay, unknown path only):
   `Error: Route "/[locale]/[...rest]": Could not validate `instant` because an error prevented the target segment from
-  rendering.` (cause `NEXT_HTTP_ERROR_FALLBACK;404`: the catch-all page calls `notFound()` by design), and on a direct
-  load of an unknown path `Encountered a script tag while rendering React component` from `ThemeScript` (dev-only,
-  pre-existing, unrelated; tracked in `docs/follow-ups.md`).
+  rendering.` (cause `NEXT_HTTP_ERROR_FALLBACK;404`: the catch-all page calls `notFound()` by design). (A
+  `ThemeScript` "Encountered a script tag" error on unknown paths was fixed 2026-11-11, see `docs/learnings/ui.md`.)
 - **Do:** pages own their `<Suspense>` boundaries (skeleton = the page's fallback); add a `loading.tsx` only for a
   segment the dev check flags. Re-run the check (visit each route, direct and client-side, watch overlay + terminal)
   when adding a page.
