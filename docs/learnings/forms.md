@@ -64,3 +64,16 @@
   render (`checked={!!birthDate && birthdayOn}`). Never send a value the user couldn't see or change (a disabled
   switch) as anything but the stored one. Example: `src/components/profile/visibility-form.tsx`.
 - **Source:** found by the members E2E (birthday-shown-by-default).
+
+### Stepped form: one `<form>`, Enter = "Next", hidden steps (2026-11-11)
+- **Symptom (risk):** Enter in a text input of an early step would submit the whole application.
+- **Cause:** implicit submission fires the form's `submit` event from any single-line input (the default button is the
+  first `type="submit"` in tree order); textareas keep Enter as a newline.
+- **Do:** one submit button whose label is "Devam" on steps 1–3; `onSubmit` checks `isLastStep(step)` and only
+  validates/advances before the last step. Inactive steps are `hidden` (still in `FormData`); Tailwind 4 preflight's
+  `[hidden] { display: none !important }` beats a wrapper's own `flex` class. Focus the first invalid field from the
+  error object in page order (`[data-step=N] [data-field]`), not from `[data-invalid=true]`: that attribute renders
+  only after the state update and hidden steps can't take focus. Skip Base UI's own hidden inputs
+  (`tabIndex -1`) and prefer the typing input over the phone field's country `<select>`.
+- **Gotcha (E2E):** shadcn `FieldError` has `role="alert"`; detect the form's status line by its text.
+- **Source:** found by testing (application steps Task 4).

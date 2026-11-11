@@ -164,3 +164,14 @@ Bundled docs are the source of truth: `node_modules/next/dist/docs/` (grep them 
   segment the dev check flags. Re-run the check (visit each route, direct and client-side, watch overlay + terminal)
   when adding a page.
 - **Source:** found by running the dev check on `feat/loading-states`.
+
+### `history.pushState` updates `useSearchParams` one render later: focus the new view in an effect (2026-11-11)
+- **Symptom (risk):** focusing the next step's heading/field right after `window.history.pushState(…?step=N)` would hit
+  an element that is still `hidden` (the old step is on screen).
+- **Cause:** Next patches `pushState`/`replaceState` and syncs the router via `navigator.restore`, whose state update
+  runs in `startTransition` (`next/dist/client/components/app-router.js`, `app-router-instance.js`), so it commits
+  after the component's own (sync) state updates from the same event. No server request is made.
+- **Do:** store a focus request in state and act in a `useEffect` keyed on the URL-derived value once it matches
+  (`goToStep` in `src/components/apply/apply-form.tsx`; back/forward hit the same effect with no request). Read the
+  current params from `window.location.search` when building the next URL (fresh even before the re-render).
+- **Source:** Next source above; behaviour verified in the browser (heading focused after "Devam", no POST).
