@@ -26,7 +26,11 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
     numbered pages / jump to page (or another pattern, e.g. "load more"); offset pagination is fine at this size but
     replaces the keyset convention in CLAUDE.md, so decide it explicitly. Also restyle the pager.
   - **Caching:** e.g. Next 16 `use cache` + `cacheTag` for directory data (the same for every active member;
-    invalidate on profile/bike changes with `updateTag`), keeping the auth check outside the cached part.
+    invalidate on profile/bike changes with `updateTag`), keeping the auth check outside the cached part. Check in the
+    current docs where `use cache` stores entries on Vercel. Never cache safety/health data.
+  - **Redis: not now** (2026-11-12, iltan asked) — functions in `fra1` sit next to the Frankfurt DB (a query is a few
+    ms), ~150 members fit in Postgres memory; Redis would add a service, a KVKK processor and RLS-bypass risk in a
+    shared cache. Measure first; prefer Next's built-in cache. Revisit Redis for rate limiting (e.g. form spam).
 - **SEO** (2026-11-12, iltan: "we should work on SEO") — iltan added ridevibe.com.tr to Google Search Console
   (2026-11-12). Design round first; start from what Search Console reports (indexing, coverage, queries). Today
   there is no `robots.ts` / `sitemap.ts` in `src/app` and no `hreflang` alternates for `tr` (`/`) ↔ `en` (`/en`);
@@ -34,6 +38,10 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   (public pages per locale) + robots, `alternates.languages` / canonical per page, per-page titles/descriptions and
   Open Graph for the public pages (home, apply, events, privacy), structured data (e.g. `SportsClub` /
   `Organization`), Core Web Vitals check; research Next 16 metadata docs first. Submit the sitemap in Search Console.
+- **Self-service account deletion** (2026-11-12, iltan) — own design round. Decided so far: a confirm step says what
+  gets deleted and what may be kept; on confirmation the account is marked for deletion at once (no admin approval, it
+  should feel instant); signing in again within a grace period offers recovery; final deletion after the period. Today
+  deletion is by hand (CLAUDE.md "Deleting an account"); KVKK art. 11/13 (answer within 30 days).
 
 
 ## Open decisions (need iltan)
@@ -69,7 +77,8 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   (purposes, legal basis) don't mention the in-club member directory (name, district, bikes, birthday, opt-in
   Instagram shown to active members). Question for the lawyer review of the notice. Since 2026-11-11 the birthday is
   **opt-out** (iltan asked the members; existing members were switched on by migration, notice section 5 updated):
-  ask which legal basis covers it (likely meşru menfaat rather than açık rıza, which can't be pre-ticked).
+  ask which legal basis covers it (likely meşru menfaat rather than açık rıza, which can't be pre-ticked). Same question
+  for motorcycle plates in the directory (opt-out, decided 2026-11-12 for safety data 2a′).
 
 ## Features
 
@@ -90,8 +99,9 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   ("Kaydedildi.") and drops the date. Softened by the disabled switch + "save it first" hint. Fix: show a hint or run
   `setBirthDate` first when the field is filled. Also no confirm step before the irreversible save (a wrong year from
   a mobile picker sticks until staff fix it by SQL); consider showing the formatted date to confirm.
-- **Medical notes and "first-aid trained" flag** (2026-11-10, idea) — free-text medical notes and a flag for members
-  who can give first aid; belongs with the safety data (2a′), special-category data rules apply.
+- **Medical notes** (2026-11-10, idea) — free-text medical notes (allergies, conditions); special-category data rules
+  apply (consent, `members.safety`, access log; see the safety-data spec). The first-aid flag was dropped (2026-11-12,
+  iltan): first aid is mandatory training for the motorcycle license.
 - **Navigation review once events exist** (2026-11-10, members) — the bottom tab bar has 5 tabs at 390px after
   `/members` (4 for members and open applicants since 2026-11-11, "Başvur" hidden); re-check labels and spacing when
   Events lands.
