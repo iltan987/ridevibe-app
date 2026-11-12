@@ -110,7 +110,8 @@ sign-in email and warns when it differs from the application email.
 ## After approval
 
 On approval, birth date, Instagram, photo consent and the motorcycle are copied to the member profile; photo consent
-is then changed on `/account`.
+is then changed on `/account`. Safety data (up to 2 emergency contacts, blood type with its own consent, plates) is
+entered on `/account` after approval, never in the application (spec: `docs/superpowers/specs/2026-11-12-safety-data-design.md`).
 
 ## Stored automatically
 
