@@ -97,6 +97,7 @@ async function AccountDetails() {
                 instagram={myProfile.instagram}
                 showInstagram={myProfile.showInstagram}
                 showBirthday={myProfile.showBirthday}
+                showPlates={myProfile.showPlates}
                 birthDate={myProfile.birthDate}
               />
             </>

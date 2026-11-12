@@ -152,7 +152,11 @@
       "invalidInstagram": "Geçerli bir Instagram kullanıcı adı ya da bağlantısı gir.",
       "invalidDistrict": "Listeden bir ilçe seç.",
       "invalidDate": "Geçerli bir tarih gir.",
-      "tooYoung": "18 yaşından büyük olmalısın."
+      "tooYoung": "18 yaşından büyük olmalısın.",
+      "invalidPhone": "Geçerli bir telefon numarası gir (ör. 0532 123 45 67).",
+      "notTurkishMobile": "Türkiye numarası 5 ile başlayan bir cep telefonu olmalı (WhatsApp).",
+      "invalidPlate": "Geçerli bir plaka gir (ör. 34 ABC 123) ya da “Yabancı plaka”yı işaretle.",
+      "consentRequired": "Kaydetmek için açık rıza kutusunu işaretlemelisin."
     }
   },
   "Apply": {

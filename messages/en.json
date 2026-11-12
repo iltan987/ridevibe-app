@@ -152,7 +152,11 @@
       "invalidInstagram": "Enter a valid Instagram username or link.",
       "invalidDistrict": "Pick a district from the list.",
       "invalidDate": "Enter a valid date.",
-      "tooYoung": "You must be over 18."
+      "tooYoung": "You must be over 18.",
+      "invalidPhone": "Enter a valid phone number (e.g. 0532 123 45 67).",
+      "notTurkishMobile": "A Turkish number must be a mobile number starting with 5 (WhatsApp).",
+      "invalidPlate": "Enter a valid plate (e.g. 34 ABC 123) or tick “Foreign plate”.",
+      "consentRequired": "Tick the consent box to save."
     }
   },
   "Apply": {

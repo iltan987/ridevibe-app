@@ -16,6 +16,8 @@ type Props = {
   instagram: string | null;
   showInstagram: boolean;
   showBirthday: boolean;
+  /** Not editable here yet; sent unchanged with the save so it is never reset. */
+  showPlates: boolean;
   /** `YYYY-MM-DD` or null (manually activated members have none). */
   birthDate: string | null;
 };
@@ -24,7 +26,7 @@ type Props = {
  * Instagram handle plus what the member list may show. The birth date is read-only once stored; members without one
  * (activated by hand, no application) can enter it once here.
  */
-export function VisibilityForm({ instagram, showInstagram, showBirthday, birthDate }: Props) {
+export function VisibilityForm({ instagram, showInstagram, showBirthday, showPlates, birthDate }: Props) {
   const t = useTranslations("Profile");
   const format = useFormatter();
   const { isPending, result, run, fieldError } = useProfileAction();
@@ -39,7 +41,12 @@ export function VisibilityForm({ instagram, showInstagram, showBirthday, birthDa
     event.preventDefault();
     const submitted = handle;
     run(
-      () => updateVisibility({ instagram: submitted, show_instagram: instagramOn, show_birthday: birthdayOn }),
+      () => updateVisibility({
+          instagram: submitted,
+          show_instagram: instagramOn,
+          show_birthday: birthdayOn,
+          show_plates: showPlates,
+        }),
       // Show the handle as saved ("@x" or a profile URL is stored as "x").
       () => setHandle(normalizeInstagram(submitted) ?? ""),
     );

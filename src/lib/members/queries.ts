@@ -26,6 +26,7 @@ export type MyProfile = {
   birthDate: string | null;
   instagram: string | null;
   showBirthday: boolean;
+  showPlates: boolean;
   showInstagram: boolean;
   consentPhotos: boolean;
   consentPhotosAt: string | null;
@@ -89,7 +90,7 @@ export async function getMyProfile(): Promise<MyProfile | null> {
     supabase.from("profiles").select("city, district, side").eq("id", user.id).maybeSingle(),
     supabase
       .from("member_details")
-      .select("birth_date, instagram, show_birthday, show_instagram, consent_photos, consent_photos_at")
+      .select("birth_date, instagram, show_birthday, show_instagram, show_plates, consent_photos, consent_photos_at")
       .eq("profile_id", user.id)
       .maybeSingle(),
     supabase
@@ -112,6 +113,7 @@ export async function getMyProfile(): Promise<MyProfile | null> {
     instagram: details.data?.instagram ?? null,
     showBirthday: details.data?.show_birthday ?? true, // schema default (opt-out)
     showInstagram: details.data?.show_instagram ?? false,
+    showPlates: details.data?.show_plates ?? true, // schema default
     consentPhotos: details.data?.consent_photos ?? false,
     consentPhotosAt: details.data?.consent_photos_at ?? null,
     motorcycles: bikes.data,
