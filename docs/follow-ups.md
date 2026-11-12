@@ -75,7 +75,8 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   Instagram shown to active members). Question for the lawyer review of the notice. Since 2026-11-11 the birthday is
   **opt-out** (iltan asked the members; existing members were switched on by migration, notice section 5 updated):
   ask which legal basis covers it (likely meşru menfaat rather than açık rıza, which can't be pre-ticked). Same question
-  for motorcycle plates in the directory (opt-out, decided 2026-11-12 for safety data 2a′).
+  for motorcycle plates in the directory (opt-out, decided 2026-11-12 for safety data 2a′). The notice now covers
+  plates in the directory (§4/§5, 2026-11-13); only the legal-basis confirmation remains for the lawyer.
 - **Safety data: lawyer questions** (2026-11-13, safety data) — (a) legal basis for emergency contacts (third persons'
   data) and plates: proposed meşru menfaat (KVKK m.5/2-f) plus, in an emergency, m.5/2-b; blood type rests on açık rıza
   (m.6). (b) Encryption: we rely on the hosted database's disk encryption instead of app-level encryption (decision
@@ -122,7 +123,7 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   `member_motorcycles`) with important dates (insurance/sigorta, inspection/muayene, last and next service or
   maintenance, …) and personal notes. Design questions: private to the owner (unlike the directory's brand/model/cc);
   fixed date types vs. free-form entries; reminders before a date (Web Push / email, needs the notification work);
-  how it relates to the plate per bike planned in safety data (2a′) — consider designing the two together. KVKK:
+  plates already exist per bike (`member_motorcycles.plate`, safety data) — build on that column. KVKK:
   plates, insurance details and notes are personal data; collect only what members choose to enter.
 - **Web Install API / `<install>` element: switch when stable** (2026-11-12, install prompt) — Chrome's declarative
   install element is in an origin trial (2026), not stable. When it ships broadly, replace our `beforeinstallprompt`

@@ -59,8 +59,8 @@ export function PrivacyTr() {
       </p>
       <p>
         Acil durum kişileriniz ve kan grubunuz üye rehberinde herkese gösterilmez. Bunları yalnızca kulübün
-        güvenlik ekibi, yani bu görev verilmiş aktif üyeler görebilir; üyeliği pasif olan kişilerin bilgileri bu
-        ekibe gösterilmez. Kan grubu işlemleri ve acil durum bilgisi görüntülemeleri kaydedilir; kayıtları yalnızca
+        güvenlik ekibi (bu görev verilmiş aktif üyeler) ve kulübün yöneticileri görebilir; üyeliği pasif olan kişilerin bilgileri bu
+        kişilere gösterilmez. Kan grubu işlemleri ve acil durum bilgisi görüntülemeleri kaydedilir; kayıtları yalnızca
         yöneticiler görebilir. Bu bilgiler yalnızca acil durumda sağlık ekipleriyle paylaşılır.
       </p>
       <p>
@@ -81,6 +81,7 @@ export function PrivacyTr() {
         <li>Reddedilen başvurular: karardan itibaren <Placeholder>6 AY</Placeholder> sonra silinir.</li>
         <li>Üye bilgileri: üyelik süresince ve üyelik sona erdikten sonra <Placeholder>1 YIL</Placeholder> boyunca saklanır, ardından silinir veya anonim hale getirilir.</li>
         <li>Fotoğraflar: açık rızanızı geri aldığınızda galeriden kaldırılır.</li>
+        <li>Güvenlik kayıtları (kan grubu verisini kimin ne zaman görüntülediği veya değiştirdiği): diğer üye bilgileriyle aynı süre saklanır.</li>
         <li>Acil durum kişileri, kan grubu ve plakalar: diğer üye bilgileriyle aynı süre saklanır. Acil durum kişilerinizi ve plakalarınızı hesap sayfanızdan istediğiniz zaman silebilirsiniz; kan grubunuz rızanızı geri aldığınızda silinir.</li>
       </ul>
 
