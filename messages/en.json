@@ -428,6 +428,10 @@
         "manage": {
           "label": "Manage members",
           "description": "Can see pending sign-ups and activate/deactivate members (except admins)."
+        },
+        "safety": {
+          "label": "See safety information",
+          "description": "Can see members' emergency contacts, blood type and plates, and search by blood type."
         }
       }
     },

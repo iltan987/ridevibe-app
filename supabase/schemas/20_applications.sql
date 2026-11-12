@@ -135,17 +135,19 @@ for each row execute function private.applications_before_insert();
 -- Contact fields, on submit and on staff corrections: trimmed lowercase email;
 -- a Turkish (+90) number must be a mobile (+905 + 9 digits). The phone rule
 -- only runs when the phone is set/changed, so old rows stay editable (e.g. an
--- email correction) until someone touches their phone.
+-- email correction) until someone touches their phone. security definer: the trigger
+-- fires with the writer's rights (anon for the public form), who may not call private.*.
 create or replace function private.applications_normalize_contact()
 returns trigger
 language plpgsql
+security definer
 set search_path = ''
 as $$
 begin
   new.email = lower(trim(new.email));
   if (TG_OP = 'INSERT' or new.phone is distinct from old.phone)
     and new.phone like '+90%'
-    and new.phone !~ '^\+905[0-9]{9}$'
+    and not private.is_valid_phone(new.phone)
   then
     raise exception 'a Turkish phone number must be a mobile number (+905…)'
       using errcode = '23514', constraint = 'applications_tr_mobile';

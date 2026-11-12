@@ -17,7 +17,8 @@ create type public.permission as enum (
   'applications.review',  -- mark new/contacted, edit notes
   'applications.decide',  -- approve/reject (approval grants membership)
   'applications.delete',  -- erase an application (KVKK request)
-  'members.manage'        -- see pending sign-ups, activate/deactivate members
+  'members.manage',       -- see pending sign-ups, activate/deactivate members
+  'members.safety'        -- see members' emergency contacts, blood type and plates
 );
 
 create table public.roles (

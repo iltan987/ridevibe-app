@@ -428,6 +428,10 @@
         "manage": {
           "label": "Üyeleri yönetme",
           "description": "Onay bekleyenleri görebilir, üyeleri aktif/pasif yapabilir (yöneticiler hariç)."
+        },
+        "safety": {
+          "label": "Güvenlik bilgilerini görme",
+          "description": "Üyelerin acil durum kişilerini, kan grubunu ve plakalarını görebilir; kan grubuna göre arayabilir."
         }
       }
     },

@@ -71,6 +71,26 @@ isOneToOne: true
       referencedColumns: ["id"]
     }
                   ]
+                },"member_emergency_contacts": {
+                  Row: {
+                    "created_at": string,"id": string,"name": string,"phone": string,"position": number,"profile_id": string,"relationship": Database["public"]['Enums']["emergency_relationship"],"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"id"?: string,"name": string,"phone": string,"position": number,"profile_id": string,"relationship": Database["public"]['Enums']["emergency_relationship"],"updated_at"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: string,"name"?: string,"phone"?: string,"position"?: number,"profile_id"?: string,"relationship"?: Database["public"]['Enums']["emergency_relationship"],"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "member_emergency_contacts_profile_id_fkey"
+      columns: ["profile_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"member_motorcycles": {
                   Row: {
                     "brand": string,"cc": number | null,"created_at": string,"id": string,"model": string,"profile_id": string,"updated_at": string
@@ -199,7 +219,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "application_status": "new"|"contacted"|"approved"|"rejected","group_ride_experience": "none"|"some"|"a_lot","heard_from": "instagram_ad"|"instagram_other"|"friend"|"other","istanbul_side": "asian"|"european","license_class": "a1"|"a2"|"a"|"b"|"none","member_status": "pending"|"active"|"inactive","permission": "applications.view"|"applications.review"|"applications.decide"|"applications.delete"|"members.manage"
+            "application_status": "new"|"contacted"|"approved"|"rejected","emergency_relationship": "spouse_partner"|"parent"|"sibling"|"child"|"friend"|"other","group_ride_experience": "none"|"some"|"a_lot","heard_from": "instagram_ad"|"instagram_other"|"friend"|"other","istanbul_side": "asian"|"european","license_class": "a1"|"a2"|"a"|"b"|"none","member_status": "pending"|"active"|"inactive","permission": "applications.view"|"applications.review"|"applications.decide"|"applications.delete"|"members.manage"|"members.safety"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -315,7 +335,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "application_status": ["new", "contacted", "approved", "rejected"],"group_ride_experience": ["none", "some", "a_lot"],"heard_from": ["instagram_ad", "instagram_other", "friend", "other"],"istanbul_side": ["asian", "european"],"license_class": ["a1", "a2", "a", "b", "none"],"member_status": ["pending", "active", "inactive"],"permission": ["applications.view", "applications.review", "applications.decide", "applications.delete", "members.manage"]
+            "application_status": ["new", "contacted", "approved", "rejected"],"emergency_relationship": ["spouse_partner", "parent", "sibling", "child", "friend", "other"],"group_ride_experience": ["none", "some", "a_lot"],"heard_from": ["instagram_ad", "instagram_other", "friend", "other"],"istanbul_side": ["asian", "european"],"license_class": ["a1", "a2", "a", "b", "none"],"member_status": ["pending", "active", "inactive"],"permission": ["applications.view", "applications.review", "applications.decide", "applications.delete", "members.manage", "members.safety"]
           }
         }
 } as const
