@@ -1,11 +1,13 @@
 import { useFormatter, useTranslations } from "next-intl";
+import { SafetyCardDialog } from "@/components/members/safety-card-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { initials } from "@/lib/initials";
 import { formatMotorcycle, instagramUrl, locationLabel } from "@/lib/members/format";
 import type { DirectoryMember } from "@/lib/members/queries";
 
 /** One member of the directory. Optional parts (location, bikes, birthday, Instagram) leave no gap when absent. */
-export function MemberCard({ member }: { member: DirectoryMember }) {
+export function MemberCard({ member, safety = false }: { member: DirectoryMember; safety?: boolean }) {
   const t = useTranslations("Members");
   const format = useFormatter();
 
@@ -50,6 +52,12 @@ export function MemberCard({ member }: { member: DirectoryMember }) {
                 @{member.instagram}
               </a>
             )}
+          </div>
+        )}
+        {safety && (
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            <SafetyCardDialog memberId={member.id} memberName={member.fullName} />
+            {member.hasEmergencyContact === false && <Badge variant="destructive">{t("safety.noContactBadge")}</Badge>}
           </div>
         )}
       </div>

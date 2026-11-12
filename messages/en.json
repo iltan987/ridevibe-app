@@ -98,7 +98,32 @@
     "activeOnlyTitle": "The member list is for active members",
     "activeOnlyBody": "Your membership needs to be active to see other members.",
     "birthday": "🎂 {date}",
-    "instagram": "Instagram: @{handle}"
+    "instagram": "Instagram: @{handle}",
+    "safety": {
+      "noContactBadge": "No emergency contact",
+      "open": "Emergency",
+      "openLabel": "Emergency information for {name}",
+      "title": "Emergency information",
+      "contacts": "Emergency contacts",
+      "bloodType": "Blood type",
+      "bloodTypeUnknown": "Not specified",
+      "motorcycles": "Motorcycles",
+      "noMotorcycles": "No motorcycles added.",
+      "noContacts": "No emergency contacts added.",
+      "call": "Call",
+      "whatsapp": "WhatsApp",
+      "loading": "Loading…",
+      "error": "Couldn't load the information.",
+      "retry": "Try again",
+      "forbidden": "You're not allowed to see this information.",
+      "notActive": "This member is no longer active, so their information can't be shown.",
+      "close": "Close",
+      "filtersLabel": "Safety filters",
+      "bloodFilter": "Blood type",
+      "bloodFilterAll": "All blood types",
+      "bloodFilterApply": "Apply",
+      "noContactFilter": "No emergency contact"
+    }
   },
   "Profile": {
     "nameHint": "To change your name, ask the club team.",

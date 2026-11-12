@@ -98,7 +98,32 @@
     "activeOnlyTitle": "Üye listesi aktif üyelere açık",
     "activeOnlyBody": "Üyeleri görmek için üyeliğinin aktif olması gerekiyor.",
     "birthday": "🎂 {date}",
-    "instagram": "Instagram: @{handle}"
+    "instagram": "Instagram: @{handle}",
+    "safety": {
+      "noContactBadge": "Acil kişi yok",
+      "open": "Acil durum",
+      "openLabel": "{name} için acil durum bilgileri",
+      "title": "Acil durum bilgileri",
+      "contacts": "Acil durum kişileri",
+      "bloodType": "Kan grubu",
+      "bloodTypeUnknown": "Belirtilmemiş",
+      "motorcycles": "Motosikletler",
+      "noMotorcycles": "Motosiklet eklenmemiş.",
+      "noContacts": "Acil durum kişisi eklenmemiş.",
+      "call": "Ara",
+      "whatsapp": "WhatsApp",
+      "loading": "Yükleniyor…",
+      "error": "Bilgiler yüklenemedi.",
+      "retry": "Tekrar dene",
+      "forbidden": "Bu bilgileri görme yetkin yok.",
+      "notActive": "Bu üye artık aktif değil, bilgileri gösterilemiyor.",
+      "close": "Kapat",
+      "filtersLabel": "Güvenlik filtreleri",
+      "bloodFilter": "Kan grubu",
+      "bloodFilterAll": "Tüm kan grupları",
+      "bloodFilterApply": "Uygula",
+      "noContactFilter": "Acil kişisi yok"
+    }
   },
   "Profile": {
     "nameHint": "İsim değişikliği için kulüp ekibine yaz.",
