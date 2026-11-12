@@ -1,8 +1,10 @@
-// Cross-tab sync: one `localStorage` key per topic (who is signed in, the chosen language). A tab publishes what it
-// knows; the other tabs hear it through the `storage` event (fires only in the *other* tabs, also hidden ones). A tab
-// the browser froze in the background gets no events, so the value is compared again when the tab becomes visible or
-// comes back from the back/forward cache. A missing key counts as "". Writing the value that is already stored fires
-// no event, so tabs that publish what they were told can't bounce changes back and forth.
+// Cross-tab sync: one `localStorage` key per topic (who is signed in, the chosen language). A tab publishes a value;
+// the other tabs hear it through the `storage` event (fires only in the *other* tabs, also hidden ones). A tab the
+// browser froze in the background gets no events, so the value is compared again when the tab becomes visible or comes
+// back from the back/forward cache. A missing key counts as "".
+// The stored value can be older than what a tab shows (it outlives the session; a tab opened in the background mounts
+// only when first shown), so no topic compares "same as stored": a language switch stores a unique value (an event),
+// and the auth mark carries the server render time, so an older render never overwrites a newer one.
 // Dependency-free (no `@/` imports, no "use client") so `node --test` can load it; nothing touches `window` at module
 // load.
 
@@ -18,8 +20,69 @@ export function followsLocaleChange(pathname: string): boolean {
   return !KEEPS_LOCALE.has(pathname);
 }
 
+/** The stored value for a language switch: unique per switch, so switching to the stored language still notifies. */
+export function localeEvent(locale: string, now: number): string {
+  return `${locale}@${now}`;
+}
+
+export function localeOfEvent(value: string): string {
+  const at = value.lastIndexOf("@");
+  return at === -1 ? value : value.slice(0, at);
+}
+
+/**
+ * The locale of a switch stored after `since` (this page's load time, `performance.timeOrigin`), else null. A tab
+ * opened in the background hydrates its header only when first shown, so it can miss the event; it catches up on
+ * mount. Both times come from this device's clock.
+ */
+export function localeSwitchedSince(value: string, since: number): string | null {
+  const at = value.lastIndexOf("@");
+  const time = Number(value.slice(at + 1));
+  return at !== -1 && value.slice(at + 1) !== "" && time > since ? value.slice(0, at) : null;
+}
+
+// Auth mark: "<user>@<server render time in ms>"; user = a short hash of the account id, "" = signed out.
+
+export function authMark(user: string, renderedAt: number): string {
+  return `${user}@${renderedAt}`;
+}
+
+function parseAuthMark(value: string): { user: string; at: number } | null {
+  const at = value.lastIndexOf("@");
+  const time = Number(value.slice(at + 1));
+  return at === -1 || !Number.isFinite(time) ? null : { user: value.slice(0, at), at: time };
+}
+
+/**
+ * What a tab does with its own render (user, server render time), given the stored mark:
+ * - "publish": it is the newest news (or nothing valid is stored and someone is signed in);
+ * - "refresh": it is older than a stored mark of another user (e.g. shown late): ask the server again;
+ * - "none": it agrees with the store, or a signed-out visitor with nothing stored (leave no key).
+ * `refreshedFor` = the stored mark this tab already refreshed for: then the fresh render wins, so a server clock
+ * that runs behind can't cause a refresh loop.
+ */
+export function authRenderAction(
+  stored: string,
+  user: string,
+  renderedAt: number,
+  refreshedFor: string | null,
+): "publish" | "refresh" | "none" {
+  const mark = parseAuthMark(stored);
+  if (!mark) return user ? "publish" : "none";
+  if (mark.user === user) return "none";
+  if (renderedAt >= mark.at || refreshedFor === stored) return "publish";
+  return "refresh";
+}
+
+/** Whether a mark stored by another tab means this tab (showing `user`) is out of date. */
+export function authChanged(stored: string, user: string): boolean {
+  return (parseAuthMark(stored)?.user ?? "") !== user;
+}
+
 export type TabChannel = {
-  /** Store this tab's value; other tabs whose last known value differs are notified. */
+  /** The stored value ("" if missing), or null when storage is blocked. */
+  current(): string | null;
+  /** Store a value; other tabs whose last known value differs are notified. */
   publish(value: string): void;
   /** Called with the new value when another tab changed it. Returns the unsubscribe function. */
   subscribe(onChange: (value: string) => void): () => void;
@@ -60,6 +123,7 @@ export function createTabChannel(key: string, win: Window): TabChannel {
   };
 
   return {
+    current: read,
     publish(value) {
       if (knownValue() === null) return;
       known = value;

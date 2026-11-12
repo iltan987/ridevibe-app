@@ -1,5 +1,6 @@
 // Cross-tab sync E2E: signing in/out, switching account and switching language in one tab updates the other open
-// tabs (src/lib/cross-tab.ts, AuthSync, LocaleSwitcher). Two tabs share one browser context (cookies + localStorage).
+// tabs (src/lib/cross-tab.ts, AuthSync, LocaleSwitcher), including tabs loaded in the background (they hydrate only
+// when shown) and a store that already holds the target language. All tabs share one browser context.
 // Needs `pnpm start -p 3123`, local email sign-in and two active users: `member@test.local` and `second@test.local`
 // (names with different initials; docs/learnings/testing.md "Testing as a signed-in user locally").
 // Env: PUPPETEER_DIR (required), BASE_URL (default http://localhost:3123).
@@ -94,6 +95,9 @@ try {
   // --- Signed-out visitors leave no key behind.
   await A.goto(BASE + "/", { waitUntil: "networkidle0" });
   check("signed-out visit stores no rv-auth key", (await A.evaluate(() => localStorage.getItem("rv-auth"))) === null);
+  // An old switch to English, as if from an earlier browser session (the store outlives the NEXT_LOCALE session
+  // cookie). Written now, while no other tab listens, so nothing follows it.
+  await A.evaluate(() => localStorage.setItem("rv-locale", "en@1"));
 
   // --- Sign out in A (real menu) while B, in the background, shows a private page.
   await signIn(A, "member@test.local", BASE);
@@ -141,8 +145,38 @@ try {
   await A.goto(BASE + "/sign-in?next=%2Fsign-in", { waitUntil: "networkidle0" });
   check("signed in, next=/sign-in lands on /account", where(A) === "/account", where(A));
 
-  // --- Language: switch in A; B on /members?q=… follows (query kept), /apply and /account keep Turkish.
+  // --- A tab opened in the background mounts its header only when first shown, with an older render. Shown after a
+  // sign-out elsewhere, it must refresh (not store its outdated user), and the next real sign-in must still reach it.
+  const E = await newPage(ctx);
+  await A.bringToFront();
+  await E.goto(BASE + "/members", { waitUntil: "networkidle0" });
+  check("E loaded in the background", (await E.evaluate(() => document.visibilityState)) === "hidden");
+  await signOutVia(A);
+  await until(async () => where(A) === "/");
+  await sleep(500);
+  await E.bringToFront();
+  const eShown = await until(async () => where(E).startsWith("/sign-in") && where(E));
+  check("a tab shown late after a sign-out goes to sign-in", eShown === "/sign-in?next=%2Fmembers", where(E));
+  await sleep(1000);
+  check("the late tab didn't store its outdated user", (await A.evaluate(() => localStorage.getItem("rv-auth")))?.startsWith("@"), await A.evaluate(() => localStorage.getItem("rv-auth")));
+  await A.bringToFront();
+  await signIn(A, "member@test.local", BASE);
+  await A.goto(BASE + "/account", { waitUntil: "networkidle0" });
+  const eAfterIn = await until(async () => where(E) === "/members" && where(E));
+  check("the next sign-in still reaches the late tab", eAfterIn === "/members", where(E));
+  await E.close();
+
+  // --- Language: switch in A; B on /members?q=… follows (query kept), /apply and /account keep Turkish. The store
+  // starts with an old switch to English (it outlives the NEXT_LOCALE session cookie): switching to English again must
+  // still reach the other tabs (seeded at the start, while no other tab listened). B is hydrated, then hidden (follows
+  // live); F loads in the background and is shown only after the switch (catches up when its header mounts).
+  await B.bringToFront();
   await B.goto(BASE + "/members?q=Test", { waitUntil: "networkidle0" });
+  await A.bringToFront();
+  const F = await newPage(ctx);
+  await A.bringToFront();
+  await F.goto(BASE + "/members", { waitUntil: "networkidle0" });
+  check("F loaded in the background", (await F.evaluate(() => document.visibilityState)) === "hidden");
   const C = await newPage(ctx);
   await C.goto(BASE + "/apply", { waitUntil: "networkidle0" });
   const D = await newPage(ctx);
@@ -153,6 +187,10 @@ try {
   const bEn = await until(async () => where(B) === "/en/members?q=Test" && where(B));
   check("language switch in A moves B to English, query kept", bEn === "/en/members?q=Test", where(B));
   check("B renders English", (await until(() => B.evaluate(() => document.documentElement.lang === "en"))) === true);
+  await F.bringToFront();
+  const fEn = await until(async () => where(F) === "/en/members" && where(F));
+  check("a tab loaded in the background catches up when shown", fEn === "/en/members", where(F));
+  await F.close();
   await sleep(1000);
   check("/apply keeps its language", where(C) === "/apply" && (await C.evaluate(() => document.documentElement.lang)) === "tr", where(C));
   check("/account keeps its language", where(D) === "/account" && (await D.evaluate(() => document.documentElement.lang)) === "tr", where(D));

@@ -1,7 +1,16 @@
 // Run with: pnpm test
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { createTabChannel, followsLocaleChange } from "./cross-tab.ts";
+import {
+  authChanged,
+  authMark,
+  authRenderAction,
+  createTabChannel,
+  followsLocaleChange,
+  localeEvent,
+  localeOfEvent,
+  localeSwitchedSince,
+} from "./cross-tab.ts";
 
 // A fake tab: Map-backed localStorage that counts writes, `storage`/`pageshow` on the window, `visibilitychange` on
 // the document (where browsers fire it).
@@ -183,4 +192,71 @@ test("pages with unsaved form input keep their language when another tab switche
   for (const path of ["/", "/members", "/admin/applications/123", "/applyx", "/sign-in"]) {
     assert.equal(followsLocaleChange(path), true, path);
   }
+});
+
+test("current() returns the stored value, \"\" for a missing key and null when storage is blocked", () => {
+  assert.equal(createTabChannel("k", fakeTab({ k: "a" }).win).current(), "a");
+  assert.equal(createTabChannel("k", fakeTab().win).current(), "");
+  assert.equal(createTabChannel("k", fakeTab({}, { throwing: true }).win).current(), null);
+});
+
+// --- Language: every switch is an event, even to the language already stored.
+
+test("switching to the language already stored still reaches the other tabs", () => {
+  const tab = fakeTab({ k: localeEvent("en", 1) });
+  const heard: string[] = [];
+  createTabChannel("k", tab.win).subscribe((v) => heard.push(localeOfEvent(v)));
+  // Another tab publishes a switch to "en" again (e.g. its own tab was Turkish while the store said "en").
+  tab.otherTabWrites("k", localeEvent("en", 2));
+  assert.deepEqual(heard, ["en"]);
+});
+
+test("localeOfEvent reads the locale back; values without a time are taken whole", () => {
+  assert.equal(localeOfEvent(localeEvent("tr", 1794497069715)), "tr");
+  assert.equal(localeOfEvent("en"), "en");
+  assert.equal(localeOfEvent(""), "");
+});
+
+// --- Auth: the stored mark is "<user>@<server render time>"; user "" = signed out.
+
+test("a render publishes when nothing is stored, except for signed-out visitors", () => {
+  assert.equal(authRenderAction("", "u1", 100, null), "publish");
+  assert.equal(authRenderAction("", "", 100, null), "none");
+  assert.equal(authRenderAction("garbage", "u1", 100, null), "publish");
+});
+
+test("a render of the stored user changes nothing, older or newer", () => {
+  assert.equal(authRenderAction(authMark("u1", 100), "u1", 50, null), "none");
+  assert.equal(authRenderAction(authMark("u1", 100), "u1", 150, null), "none");
+});
+
+test("a newer render of another user publishes", () => {
+  assert.equal(authRenderAction(authMark("u1", 100), "", 150, null), "publish");
+  assert.equal(authRenderAction(authMark("", 100), "u2", 150, null), "publish");
+});
+
+test("an older render of another user refreshes instead of overwriting (tab shown late)", () => {
+  // Rendered as u1 in the background at 50; meanwhile another tab signed out (stored at 100).
+  assert.equal(authRenderAction(authMark("", 100), "u1", 50, null), "refresh");
+});
+
+test("after one refresh for the same stored mark, the fresh render wins (server clocks may differ)", () => {
+  const stored = authMark("", 100);
+  assert.equal(authRenderAction(stored, "u1", 90, stored), "publish");
+  assert.equal(authRenderAction(stored, "u1", 90, authMark("", 80)), "refresh");
+});
+
+test("a change matters only when the stored user differs from the one this tab shows", () => {
+  assert.equal(authChanged(authMark("u1", 200), "u1"), false);
+  assert.equal(authChanged(authMark("u2", 200), "u1"), true);
+  assert.equal(authChanged(authMark("", 200), "u1"), true);
+  assert.equal(authChanged("", "u1"), true, "storage cleared while signed in");
+  assert.equal(authChanged("", ""), false);
+});
+
+test("a tab shown late catches up only with a switch made after its page loaded", () => {
+  assert.equal(localeSwitchedSince(localeEvent("en", 200), 100), "en");
+  assert.equal(localeSwitchedSince(localeEvent("en", 50), 100), null, "older switch: the page already loaded with it");
+  assert.equal(localeSwitchedSince("en", 100), null, "no time");
+  assert.equal(localeSwitchedSince("", 100), null);
 });

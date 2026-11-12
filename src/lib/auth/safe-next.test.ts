@@ -42,7 +42,7 @@ test("signed-in destination: follows next, falls back for unsafe values", () => 
   assert.equal(signedInDestination(undefined, "/en/account"), "/en/account");
 });
 
-test("signed-in destination: never the sign-in page itself (it would redirect forever)", () => {
+test("signed-in destination: never the sign-in page itself (an extra hop through /sign-in)", () => {
   for (const next of ["/sign-in", "/sign-in/", "/sign-in?next=%2Fmembers", "/en/sign-in", "/en/sign-in#x", "/./sign-in"]) {
     assert.equal(signedInDestination(next, "/account"), "/account", next);
   }
