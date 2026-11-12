@@ -1,8 +1,8 @@
 import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Link } from "@/i18n/navigation";
-import { BLOOD_TYPES, type BloodType, bloodTypeLabel } from "@/lib/members/blood-type";
+import type { BloodType } from "@/lib/members/blood-type";
+import { BloodSelect } from "./blood-select";
 
 /**
  * Safety filters of the directory (members.safety holders only): blood type (GET form that keeps the other
@@ -27,14 +27,7 @@ export async function SafetyFilters({
         {side && <input type="hidden" name="side" value={side} />}
         {query && <input type="hidden" name="q" value={query} />}
         {noContact && <input type="hidden" name="noContact" value="1" />}
-        <NativeSelect name="blood" defaultValue={bloodType ?? ""} aria-label={t("bloodFilter")}>
-          <NativeSelectOption value="">{t("bloodFilterAll")}</NativeSelectOption>
-          {BLOOD_TYPES.map((type) => (
-            <NativeSelectOption key={type} value={type}>
-              {bloodTypeLabel(type)}
-            </NativeSelectOption>
-          ))}
-        </NativeSelect>
+        <BloodSelect initial={bloodType ?? ""} />
         <Button type="submit" variant="outline" size="sm">
           {t("bloodFilterApply")}
         </Button>
@@ -49,8 +42,8 @@ export async function SafetyFilters({
             ...(noContact ? {} : { noContact: "1" }),
           },
         }}
-        aria-pressed={noContact}
-        className="flex shrink-0 items-center rounded-full border border-input px-3.5 py-1.5 text-sm font-medium text-muted-foreground aria-[pressed=true]:border-primary aria-[pressed=true]:bg-primary aria-[pressed=true]:text-primary-foreground"
+        aria-current={noContact ? "page" : undefined}
+        className="flex shrink-0 items-center rounded-full border border-input px-3.5 py-1.5 text-sm font-medium text-muted-foreground aria-[current=page]:border-primary aria-[current=page]:bg-primary aria-[current=page]:text-primary-foreground"
       >
         {t("noContactFilter")}
       </Link>
