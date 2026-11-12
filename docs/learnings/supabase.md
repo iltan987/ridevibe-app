@@ -183,3 +183,14 @@
   for everyone), a profile lookup in the proxy (a DB query per request).
 - **Source:** `@supabase/auth-js` `GoTrueClient.getClaims` (2.119.0); production check (no rows written afterwards);
   local repro: sign in, admin-delete, reload → still signed in before the fix, `/sign-in` after it.
+
+### Cross-tab sign-in/out without a browser Supabase client (2026-11-12)
+- **Need:** other open tabs should follow a sign-in, sign-out or account switch.
+- **Cause:** `onAuthStateChange` needs supabase-js in the browser (~56 KB gzipped UMD, 2.119.0) for every visitor, and
+  a browser client refreshes tokens itself, next to the proxy's refresh. Our sign-in/out run on the server only.
+- **Do:** store `<short hash of the user id>@<server render time>` in `localStorage` (`rv-auth`,
+  `src/lib/cross-tab.ts`, `AuthSync`) and `router.refresh()` in the other tabs when the stored user differs from the
+  one they show (`storage` event, plus a re-check when a tab becomes visible or leaves the bfcache). The render time
+  matters: a tab shown late mounts with an old render and must refresh instead of overwriting newer news (code
+  review found this). No new dependency, ~1 KB.
+- **Source:** spike 2026-11-12 (two Puppeteer tabs, production build).

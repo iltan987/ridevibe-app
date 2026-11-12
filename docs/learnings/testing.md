@@ -213,3 +213,20 @@
 - **Do:** use `browser.newPage()` (default context) and wipe cookies and site data between scenarios
   (`freshContext()` in `scripts/e2e/install-e2e.mjs`); to show the banner *after* load, release a synthetic event.
 - **Source:** found by testing (install prompt).
+
+### E2E in a background tab: streamed content stays unrevealed; freezing a tab (2026-11-12)
+- **Symptom:** in the hidden tab of a two-tab test, the header still showed the user-menu skeleton and the streamed
+  trigger had zero size seconds after `networkidle0`; the dropdown's portal (name label, `keepMounted`) didn't exist
+  until `bringToFront()`.
+- **Cause:** React's streaming runtime reveals a completed Suspense boundary with `requestAnimationFrame($RV…)`
+  (`next/dist/compiled/react-dom-experimental/cjs/react-dom-server*.production.js`), and hidden tabs run no animation
+  frames; the boundary's client components hydrate (and their effects run) only after that, so Base UI's portal and
+  any `useEffect` inside streamed parts wait until the tab is first shown. Product consequence: see
+  `docs/learnings/ui.md` (cross-tab state in late-mounting tabs).
+- **Do:** read state in background tabs without visibility filters (e.g. the trigger's own text, not
+  `getBoundingClientRect` or the menu label; `shownUser` in `scripts/e2e/cross-tab-e2e.mjs`), or `bringToFront()`
+  first. To simulate a frozen background tab use CDP `Page.setWebLifecycleState` (`frozen` → `active`). To load a tab
+  in the background, `bringToFront()` another tab before its `goto`. Seeding a cross-tab `localStorage` key with
+  `page.evaluate` is itself a `storage` event for every other open tab (they may follow it and change cookies): seed
+  before other tabs exist.
+- **Source:** found by testing (cross-tab sync); React source above.

@@ -68,7 +68,7 @@ pnpm db:types                 # regenerate src/lib/supabase/database.types.ts
 pnpm exec supabase migration up   # apply new migrations locally, keeping data (db:reset wipes auth users; after
                                   # an iteration that reset, restore iltan's local admin before browser review)
 kill $(ss -ltnp | grep ':3123 ' | grep -oP 'pid=\K[0-9]+')   # stop a local server; never `pkill -f` (kills own shell)
-PUPPETEER_DIR=~/e2e-tools node scripts/e2e/{nav,members,header,apply,apply-nav,install}-e2e.mjs   # browser E2E vs `pnpm start -p 3123` (setup: scripts/e2e/README.md)
+PUPPETEER_DIR=~/e2e-tools node scripts/e2e/{nav,members,header,apply,apply-nav,install,cross-tab}-e2e.mjs   # browser E2E vs `pnpm start -p 3123` (setup: scripts/e2e/README.md)
 # signed-in parts need fixture users (admin@/member@/pending-noapp@test.local) that `db:reset` wipes: recreate per README
 # headless hides scrollbars (launch({ scrollbars: true }) keeps them); Next keeps the previous route hidden in the DOM: select visible elements
 # members E2E needs only its fixtures active: park other active profiles, restore by id (docs/learnings/testing.md)
@@ -163,7 +163,8 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
 - `proxy.ts` (not `middleware.ts`) runs next-intl locale routing.
 - **i18n (next-intl):** locales `tr` (default, served at `/`) and `en` (at `/en`). Turkish (`messages/tr.json`) is the
   source of truth for message keys and types; every key must exist in `messages/en.json` too. No hard-coded UI strings.
-  Use `Link`, `redirect`, `useRouter`, `usePathname` from `@/i18n/navigation`, not from `next/*`.
+  Use `Link`, `redirect`, `useRouter`, `usePathname` from `@/i18n/navigation`, not from `next/*` (exception: a stored
+  full path such as `?next=` already has its prefix → `redirect` from `next/navigation`, `docs/learnings/next-intl.md`).
   Locale on the server comes from `next/root-params` (see `src/i18n/request.ts`). Time zone: `Europe/Istanbul`.
   Dev quirk: `pnpm dev` (Turbopack) may keep serving stale `messages/*.json` after edits (`MISSING_MESSAGE`) —
   restart the dev server before assuming a missing key.
@@ -197,6 +198,12 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
 - WhatsApp links: `whatsAppUrl()` (`src/lib/applications/contact.ts`, `api.whatsapp.com/send`), never `wa.me` —
   its desktop redirect turns emoji into "�".
 - Mobile-first: design for ~390px first; the bottom tab bar is the main navigation on phones.
+- Cross-tab sync (`src/lib/cross-tab.ts`, one `localStorage` key per topic): `AuthSync` in `UserMenu` stores a hash of
+  the user + server render time (`rv-auth`; newer render wins), other tabs `router.refresh()` and the server decides
+  where they land; the language switcher stores a unique event per switch (`rv-locale`), other tabs follow (and catch
+  up when shown late) except `/apply` and `/account` (unsaved form input). Stored values outlive sessions and
+  background tabs hydrate late: never compare with "the stored value" alone (`docs/learnings/ui.md`). Theme syncs via
+  its own `theme` key.
 - PWA: manifest only, no service worker yet (Web Push comes with Events). Own install prompt: `src/lib/pwa/` +
   `src/components/pwa/`; `<InstallBanner />` floats (its spacer is portaled after the footer) on `/account`
   (active/pending) and `/members` (active): add it to a member home page when one exists.

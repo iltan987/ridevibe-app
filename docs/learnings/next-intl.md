@@ -35,3 +35,13 @@
 - **Do:** `getTranslations({ locale, namespace })` renders text in a given locale — used for the WhatsApp invite,
   which must be in the *applicant's* language (`applications.locale`) while the admin browses in theirs. Build the
   link with `getPathname({ href: "/sign-in", locale })` so English applicants get `/en/sign-in`.
+
+### `redirect` / `getPathname` from `@/i18n/navigation` prefix again: a stored `next` path takes Next's `redirect` (2026-11-12)
+- **Symptom (risk):** `redirect({ href: "/en/members", locale: "en" })` would go to `/en/en/members`.
+- **Cause:** with `localePrefix: "as-needed"`, `getPathname` adds the prefix to every non-default-locale href without
+  looking at it (`applyPathnamePrefix` in `next-intl/dist/esm/development/navigation/shared/utils.js`). A `next`
+  value is built with `getPathname` already, so it carries its prefix.
+- **Do:** redirect to a full stored path with `redirect` from `next/navigation` (after `safeNextPath`), like
+  `/sign-in` does for signed-in visitors (`signedInDestination`) and the OAuth callback; keep `@/i18n/navigation` for
+  hrefs without a prefix.
+- **Source:** next-intl source (installed version).

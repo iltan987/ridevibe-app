@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Suspense } from "react";
@@ -8,9 +9,9 @@ import { ClubBadge } from "@/components/brand/club-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getPathname, Link, redirect } from "@/i18n/navigation";
+import { getPathname, Link } from "@/i18n/navigation";
 import { signInWithGoogle } from "@/lib/auth/actions";
-import { safeNextPath } from "@/lib/auth/safe-next";
+import { safeNextPath, signedInDestination } from "@/lib/auth/safe-next";
 import { getCurrentUser } from "@/lib/auth/user";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -65,9 +66,12 @@ async function SignInForm({
     getTranslations("Auth"),
   ]);
 
-  if (user) return redirect({ href: "/account", locale });
+  const account = getPathname({ href: "/account", locale });
+  // Already signed in (e.g. in another tab: cross-tab sync refreshes this page): go where sign-in would have led.
+  // `next` is a full path that already carries its locale prefix, so it bypasses next-intl's `redirect`.
+  if (user) redirect(signedInDestination(params.next, account));
 
-  const next = safeNextPath(params.next, getPathname({ href: "/account", locale }));
+  const next = safeNextPath(params.next, account);
 
   return (
     <form action={signInWithGoogle} data-skeleton-result="sign-in" className="flex flex-col gap-3">
