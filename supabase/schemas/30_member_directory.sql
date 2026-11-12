@@ -130,7 +130,7 @@ create or replace function public.member_directory_counts(
 )
 returns table (total bigint, asian bigint, european bigint)
 language plpgsql
-stable
+volatile
 security definer
 set search_path = ''
 as $$
@@ -144,6 +144,10 @@ begin
 
   if (blood_filter is not null or no_contact_only) and not private.has_permission('members.safety') then
     raise exception 'members.safety required' using errcode = '42501';
+  end if;
+
+  if blood_filter is not null then
+    perform private.log_safety_access('filter_blood_type', null, blood_filter::text);
   end if;
 
   if nullif(btrim(left(search, 60)), '') is not null then

@@ -200,8 +200,11 @@ begin
   on conflict (profile_id) do update
     set blood_type = excluded.blood_type,
         consent_blood_type = true,
-        consent_blood_type_at = excluded.consent_blood_type_at,
-        consent_blood_type_version = excluded.consent_blood_type_version;
+        -- Keep the stamp of the first consent when the member only changes the type (they did not see the text again).
+        consent_blood_type_at = case when public.member_health.consent_blood_type
+          then public.member_health.consent_blood_type_at else excluded.consent_blood_type_at end,
+        consent_blood_type_version = case when public.member_health.consent_blood_type
+          then public.member_health.consent_blood_type_version else excluded.consent_blood_type_version end;
 
   perform private.log_safety_access('set_blood_type', uid);
 end;

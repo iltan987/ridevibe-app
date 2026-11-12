@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(53);
+select plan(57);
 
 -- Fixtures (postgres bypasses RLS). Ids 0000…0611–0616, role 0653; every query is scoped to them.
 -- 611 owner (active), 612 other active, 613 members.safety, 614 admin, 615 pending, 616 inactive.
@@ -91,6 +91,19 @@ select is(
   (select blood_type::text from public.member_health where profile_id = '00000000-0000-0000-0000-000000000611'),
   '0-', 'the type changed to 0-'
 );
+
+-- A type change keeps the stamp of the first consent (the member did not see the consent text again)
+reset role;
+update public.member_health set consent_blood_type_at = '2020-01-01 00:00:00+00'
+  where profile_id = '00000000-0000-0000-0000-000000000611';
+select pg_temp.login('00000000-0000-0000-0000-000000000611');
+select lives_ok($$ select public.set_my_blood_type('A-', 'v-later') $$, 'owner changes the type with a newer notice version');
+select results_eq(
+  $$ select blood_type::text, consent_blood_type_at = '2020-01-01 00:00:00+00', consent_blood_type_version
+       from public.member_health where profile_id = '00000000-0000-0000-0000-000000000611' $$,
+  $$ values ('A-', true, '2026-11-12-v1') $$,
+  'a type change keeps the first consent time and version'
+);
 select is(
   pg_temp.error_of($$ select public.set_my_blood_type(null, 'v') $$),
   '23514|', 'a null type is rejected with 23514'
@@ -168,6 +181,19 @@ select is(
   (select blood_type::text from public.member_health where profile_id = '00000000-0000-0000-0000-000000000611'),
   null, 'the type is still null'
 );
+
+-- Consenting again after a withdrawal stamps a new time and version
+reset role;
+update public.member_health set consent_blood_type_at = '2020-01-01 00:00:00+00'
+  where profile_id = '00000000-0000-0000-0000-000000000611';
+select pg_temp.login('00000000-0000-0000-0000-000000000611');
+select lives_ok($$ select public.set_my_blood_type('A+', 'v-reconsent') $$, 'owner consents again after withdrawing');
+select results_eq(
+  $$ select blood_type::text, consent_blood_type, consent_blood_type_at > '2020-01-01 00:00:00+00', consent_blood_type_version
+       from public.member_health where profile_id = '00000000-0000-0000-0000-000000000611' $$,
+  $$ values ('A+', true, true, 'v-reconsent') $$,
+  'a re-consent stamps a new time and version'
+);
 select pg_temp.login('00000000-0000-0000-0000-000000000615');
 select lives_ok($$ select public.withdraw_my_blood_type_consent() $$, 'a member without a row withdraws without error');
 select pg_temp.login('00000000-0000-0000-0000-000000000616');
@@ -187,7 +213,7 @@ select is(
 select is(
   (select count(*)::int from public.safety_access_log
     where action = 'set_blood_type' and actor_id = target_id and actor_id = '00000000-0000-0000-0000-000000000611'),
-  4, 'four set_blood_type rows for the owner (actor = target)'
+  6, 'six set_blood_type rows for the owner (actor = target)'
 );
 select is(
   (select count(*)::int from public.safety_access_log

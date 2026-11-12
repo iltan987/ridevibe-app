@@ -166,8 +166,9 @@ select results_eq(
   $$ select actor_id::text, target_id::text, detail from public.safety_access_log
       where action = 'filter_blood_type' and actor_id = '00000000-0000-0000-0000-000000000632' $$,
   $$ values ('00000000-0000-0000-0000-000000000632', null, '0-'), ('00000000-0000-0000-0000-000000000632', null, '0-'),
+            ('00000000-0000-0000-0000-000000000632', null, '0-'), ('00000000-0000-0000-0000-000000000632', null, '0-'),
             ('00000000-0000-0000-0000-000000000632', null, '0-') $$,
-  'three filter_blood_type rows (one per blood-filter call); no_contact and counts logged none');
+  'five filter_blood_type rows (three directory + two counts calls with a blood filter); no_contact calls logged none');
 select results_eq(
   $$ select actor_id::text, target_id::text from public.safety_access_log
       where action = 'view_card' and actor_id = '00000000-0000-0000-0000-000000000632'
