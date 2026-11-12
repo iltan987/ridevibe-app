@@ -90,3 +90,147 @@ on public.member_emergency_contacts
 for delete
 to authenticated
 using (profile_id = (select auth.uid()));
+
+-- ---------------------------------------------------------------------------
+-- Blood type (special-category data, KVKK art. 6): one row per member, created on the
+-- first explicit consent. Written only through the two RPCs below; every operation is
+-- logged in safety_access_log.
+-- ---------------------------------------------------------------------------
+
+create type public.blood_type as enum ('A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', '0+', '0-');
+
+create type public.safety_action as enum ('view_card', 'filter_blood_type', 'set_blood_type', 'withdraw_blood_type');
+
+create table public.member_health (
+  profile_id uuid primary key references public.profiles (id) on delete cascade,
+  blood_type public.blood_type,
+  consent_blood_type boolean not null,
+  consent_blood_type_at timestamptz not null,
+  consent_blood_type_version text check (char_length(consent_blood_type_version) <= 40),
+  updated_at timestamptz not null default now(),
+  constraint member_health_consent check (blood_type is null or consent_blood_type)
+);
+
+comment on table public.member_health is 'Blood type of a member, only with explicit consent; written via set_my_blood_type / withdraw_my_blood_type_consent.';
+comment on column public.member_health.consent_blood_type_at is 'Time of the last give/withdraw of consent.';
+comment on column public.member_health.consent_blood_type_version is 'Privacy-notice version the member saw when giving consent.';
+
+create trigger member_health_set_updated_at
+before update on public.member_health
+for each row execute function private.set_updated_at();
+
+revoke all on table public.member_health from anon, authenticated;
+grant select on table public.member_health to authenticated;
+
+alter table public.member_health enable row level security;
+
+create policy "member_health: read own"
+on public.member_health
+for select
+to authenticated
+using (profile_id = (select auth.uid()));
+
+-- Access log (KVKK Board decision 2018/10, item 3(c)): written only by security-definer
+-- functions, readable by admins.
+create table public.safety_access_log (
+  id bigint generated always as identity primary key,
+  actor_id uuid references public.profiles (id) on delete set null,
+  target_id uuid references public.profiles (id) on delete set null,
+  action public.safety_action not null,
+  detail text check (char_length(detail) <= 20),
+  created_at timestamptz not null default now()
+);
+
+comment on table public.safety_access_log is 'Who read or wrote blood types or opened someone else''s safety card. detail never holds personal data beyond the filtered blood type.';
+
+revoke all on table public.safety_access_log from anon, authenticated;
+grant select on table public.safety_access_log to authenticated;
+-- Supabase default privileges hand out the identity sequence too; nobody but the definer functions needs it.
+revoke all on sequence public.safety_access_log_id_seq from anon, authenticated;
+
+alter table public.safety_access_log enable row level security;
+
+create policy "safety_access_log: admins read"
+on public.safety_access_log
+for select
+to authenticated
+using ((select private.is_admin()));
+
+create or replace function private.log_safety_access(
+  action public.safety_action,
+  target uuid,
+  detail text default null
+)
+returns void
+language sql
+security definer
+set search_path = ''
+as $$
+  insert into public.safety_access_log (actor_id, target_id, action, detail)
+  values ((select auth.uid()), target, action, detail);
+$$;
+
+revoke all on function private.log_safety_access(public.safety_action, uuid, text) from public, anon, authenticated;
+
+create or replace function public.set_my_blood_type(new_type public.blood_type, notice_version text)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  uid uuid := (select auth.uid());
+begin
+  if not private.is_active_member() then
+    raise exception 'only active members can set a blood type' using errcode = '42501';
+  end if;
+  if new_type is null then
+    raise exception 'blood type is required' using errcode = '23514';
+  end if;
+  if char_length(notice_version) > 40 then
+    raise exception 'notice version is too long' using errcode = '23514';
+  end if;
+
+  perform 1 from public.member_health h where h.profile_id = uid for update;
+
+  insert into public.member_health (profile_id, blood_type, consent_blood_type, consent_blood_type_at, consent_blood_type_version)
+  values (uid, new_type, true, now(), notice_version)
+  on conflict (profile_id) do update
+    set blood_type = excluded.blood_type,
+        consent_blood_type = true,
+        consent_blood_type_at = excluded.consent_blood_type_at,
+        consent_blood_type_version = excluded.consent_blood_type_version;
+
+  perform private.log_safety_access('set_blood_type', uid);
+end;
+$$;
+
+revoke all on function public.set_my_blood_type(public.blood_type, text) from public, anon;
+grant execute on function public.set_my_blood_type(public.blood_type, text) to authenticated;
+
+-- Any status: withdrawing consent must stay possible after membership ends (KVKK).
+-- No-op (and no log row) when there is nothing to withdraw.
+create or replace function public.withdraw_my_blood_type_consent()
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  uid uuid := (select auth.uid());
+begin
+  perform 1 from public.member_health h where h.profile_id = uid and h.consent_blood_type for update;
+  if not found then
+    return;
+  end if;
+
+  update public.member_health
+  set blood_type = null, consent_blood_type = false, consent_blood_type_at = now()
+  where profile_id = uid;
+
+  perform private.log_safety_access('withdraw_blood_type', uid);
+end;
+$$;
+
+revoke all on function public.withdraw_my_blood_type_consent() from public, anon;
+grant execute on function public.withdraw_my_blood_type_consent() to authenticated;
