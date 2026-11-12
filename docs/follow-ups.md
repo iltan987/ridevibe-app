@@ -39,6 +39,13 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   gets deleted and what may be kept; on confirmation the account is marked for deletion at once (no admin approval, it
   should feel instant); signing in again within a grace period offers recovery; final deletion after the period. Today
   deletion is by hand (CLAUDE.md "Deleting an account"); KVKK art. 11/13 (answer within 30 days).
+- **Stricter ESLint rules** (2026-11-13, iltan) — own session. Goals: (1) stop `any`, `unknown`, casts (`as`),
+  non-null `!` and `eslint-disable` / `@ts-expect-error` being used to bypass problems instead of fixing them;
+  (2) let ESLint catch real bugs earlier (e.g. type-aware rules: floating/misused promises, unsafe `any` flows,
+  exhaustive switches, unnecessary conditions). Claude picks the rule set (research current `typescript-eslint`
+  presets and Next 16 / React Compiler lint first), measures the violations on the current code, and fixes them or
+  justifies each remaining disable with a reason (like the `react-hooks/purity` rule in CLAUDE.md). Fits with the
+  dead-code tool decision (Open decisions).
 
 
 ## Open decisions (need iltan)
