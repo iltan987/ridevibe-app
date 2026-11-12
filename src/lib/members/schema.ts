@@ -1,6 +1,10 @@
 import { z } from "zod";
 import { EARLIEST_BIRTH_DATE_EXCLUSIVE, isAtLeast18 } from "../birth-date.ts";
+import { phoneField } from "../applications/schema.ts";
+import { Constants } from "../supabase/database.types.ts";
 import { ISTANBUL, isIstanbulDistrict, sideOfDistrict } from "../istanbul-districts.ts";
+import { BLOOD_TYPES } from "./blood-type.ts";
+import { normalizePlate } from "./plate.ts";
 
 // Shared by the profile forms (instant feedback) and the server actions (the
 // real check). Error messages are translation keys under Profile.errors.*.
@@ -11,7 +15,11 @@ export type ProfileErrorKey =
   | "invalidInstagram"
   | "invalidDistrict"
   | "invalidDate"
-  | "tooYoung";
+  | "tooYoung"
+  | "invalidPhone"
+  | "notTurkishMobile"
+  | "invalidPlate"
+  | "consentRequired";
 
 const err = (key: ProfileErrorKey) => ({ error: key });
 
@@ -73,6 +81,7 @@ export const visibilitySchema = z.object({
     }),
   show_instagram: z.boolean(err("required")),
   show_birthday: z.boolean(err("required")),
+  show_plates: z.boolean(err("required")),
 });
 
 export type VisibilityInput = z.input<typeof visibilitySchema>;
@@ -95,7 +104,8 @@ export type BirthDateInput = z.input<typeof birthDateSchema>;
 
 const motorcycleText = z.string(err("required")).trim().min(1, err("required")).max(60, err("tooLong"));
 
-export const motorcycleSchema = z.object({
+export const motorcycleSchema = z
+  .object({
   brand: motorcycleText,
   model: motorcycleText,
   // Empty string = "don't know" → undefined.
@@ -108,9 +118,35 @@ export const motorcycleSchema = z.object({
       .max(3000, err("invalidNumber"))
       .optional(),
   ),
-});
+  // Empty = no plate shown. `plate_foreign` picks the format rules.
+  plate: z.string(err("invalidPlate")).max(20, err("invalidPlate")).optional(),
+  plate_foreign: z.boolean(err("required")).default(false),
+})
+  .transform((v, ctx) => {
+    const plate = normalizePlate(v.plate ?? "", v.plate_foreign);
+    if (plate === "invalid") {
+      ctx.issues.push({ code: "custom", message: "invalidPlate", input: v.plate, path: ["plate"] });
+      return z.NEVER;
+    }
+    return { ...v, plate };
+  });
 
 export type MotorcycleInput = z.input<typeof motorcycleSchema>;
+
+export const emergencyContactSchema = z.object({
+  name: z.string(err("required")).trim().min(1, err("required")).max(80, err("tooLong")),
+  relationship: z.enum(Constants.public.Enums.emergency_relationship, err("required")),
+  phone: phoneField,
+});
+
+export type EmergencyContactInput = z.input<typeof emergencyContactSchema>;
+
+export const bloodTypeSchema = z.object({
+  blood_type: z.enum(BLOOD_TYPES, err("required")),
+  consent: z.literal(true, err("consentRequired")),
+});
+
+export type BloodTypeInput = z.input<typeof bloodTypeSchema>;
 
 /** Zod issues → the first error key per top-level field. */
 export function firstErrorPerField(issues: readonly { path: readonly PropertyKey[]; message: string }[]) {

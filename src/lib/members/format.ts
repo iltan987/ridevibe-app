@@ -1,11 +1,10 @@
 // Pure display helpers for the member directory. Dependency-free so `node --test` can run them.
 
-export type Motorcycle = { brand: string; model: string; cc: number | null };
+export type Motorcycle = { brand: string; model: string; cc: number | null; plate?: string | null };
 
-/** "Yamaha MT-07 · 689 cc"; the engine size is left out when unknown. */
-export function formatMotorcycle({ brand, model, cc }: Motorcycle) {
-  const name = `${brand} ${model}`;
-  return cc ? `${name} · ${cc} cc` : name;
+/** "Yamaha MT-07 · 689 cc · 34 ABC 123"; engine size and plate are left out when unknown. */
+export function formatMotorcycle({ brand, model, cc, plate }: Motorcycle) {
+  return [`${brand} ${model}`, cc ? `${cc} cc` : null, plate || null].filter(Boolean).join(" · ");
 }
 
 export function instagramUrl(handle: string) {
