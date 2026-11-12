@@ -187,10 +187,12 @@ begin
   if new_type is null then
     raise exception 'blood type is required' using errcode = '23514';
   end if;
-  if char_length(notice_version) > 40 then
-    raise exception 'notice version is too long' using errcode = '23514';
+  if notice_version is null or btrim(notice_version) = '' or char_length(notice_version) > 40 then
+    raise exception 'notice version is required (1-40 characters)' using errcode = '23514';
   end if;
 
+  -- Locks an existing row; on a first call there is nothing to lock, and the `on conflict do update`
+  -- below is what keeps concurrent first calls safe.
   perform 1 from public.member_health h where h.profile_id = uid for update;
 
   insert into public.member_health (profile_id, blood_type, consent_blood_type, consent_blood_type_at, consent_blood_type_version)

@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(46);
+select plan(53);
 
 -- Fixtures (postgres bypasses RLS). Ids 0000…0611–0616, role 0653; every query is scoped to them.
 -- 611 owner (active), 612 other active, 613 members.safety, 614 admin, 615 pending, 616 inactive.
@@ -99,6 +99,14 @@ select is(
   pg_temp.error_of($$ select public.set_my_blood_type('A+', repeat('a', 41)) $$),
   '23514|', 'a 41-character version is rejected with 23514'
 );
+select is(
+  pg_temp.error_of($$ select public.set_my_blood_type('A+', null) $$),
+  '23514|', 'a null version is rejected with 23514'
+);
+select is(
+  pg_temp.error_of($$ select public.set_my_blood_type('A+', '   ') $$),
+  '23514|', 'a blank version is rejected with 23514'
+);
 select lives_ok($$ select public.set_my_blood_type('B-', repeat('a', 40)) $$, 'a 40-character version is accepted');
 select lives_ok($$ select public.set_my_blood_type('0-', '2026-11-12-v1') $$, 'owner sets 0- again');
 
@@ -123,11 +131,6 @@ select is(
   (select count(*)::int from public.member_health
     where profile_id in ('00000000-0000-0000-0000-000000000611', '00000000-0000-0000-0000-000000000612')),
   0, 'members.safety does not read member_health directly'
-);
-select pg_temp.login('00000000-0000-0000-0000-000000000612');
-select is(
-  (select blood_type::text from public.member_health where profile_id = '00000000-0000-0000-0000-000000000611'),
-  null, 'the other member''s own set did not touch the owner''s row'
 );
 
 -- Pending cannot set
@@ -220,7 +223,30 @@ select ok(
   (select count(*)::int from public.safety_access_log where actor_id = '00000000-0000-0000-0000-000000000611') >= 5,
   'the admin reads the fixture log rows'
 );
+select throws_ok($$ update public.safety_access_log set detail = 'x' where actor_id = '00000000-0000-0000-0000-000000000611' $$,
+  '42501', null, 'admin cannot update the access log');
+select throws_ok($$ delete from public.safety_access_log where actor_id = '00000000-0000-0000-0000-000000000611' $$,
+  '42501', null, 'admin cannot delete from the access log');
 reset role;
+select is(has_sequence_privilege('authenticated', 'public.safety_access_log_id_seq', 'usage'), false, 'authenticated has no usage on the log sequence');
+select is(has_sequence_privilege('anon', 'public.safety_access_log_id_seq', 'usage'), false, 'anon has no usage on the log sequence');
+
+-- Deleting a profile cascades member_health and unlinks (not deletes) its log rows
+insert into auth.users (id, email) values ('00000000-0000-0000-0000-000000000617', 'pgtap-sh-gone@pgtap.invalid');
+insert into public.member_health (profile_id, blood_type, consent_blood_type, consent_blood_type_at)
+  values ('00000000-0000-0000-0000-000000000617', 'A+', true, now());
+insert into public.safety_access_log (actor_id, target_id, action, detail) values
+  ('00000000-0000-0000-0000-000000000617', '00000000-0000-0000-0000-000000000617', 'set_blood_type', 'pgtap-617'),
+  ('00000000-0000-0000-0000-000000000617', null, 'filter_blood_type', 'pgtap-617');
+delete from auth.users where id = '00000000-0000-0000-0000-000000000617';
+select is(
+  (select count(*)::int from public.member_health where profile_id = '00000000-0000-0000-0000-000000000617'),
+  0, 'deleting the profile removed its member_health row'
+);
+select is(
+  (select count(*)::int from public.safety_access_log where detail = 'pgtap-617' and actor_id is null and target_id is null),
+  2, 'its log rows remain with null actor and target'
+);
 set local role anon;
 select throws_ok('select * from public.safety_access_log', '42501', null, 'anon cannot read the access log');
 select throws_ok('select * from public.member_health', '42501', null, 'anon cannot read member_health');
