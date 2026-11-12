@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(21);
+select plan(37);
 
 -- Fixtures (postgres bypasses RLS). Ids 0000…0621–0625, role 0654; every query is scoped to them.
 -- 621 owner (active), 622 members.manage, 623 other active, 624 pending, 625 inactive.
@@ -53,6 +53,10 @@ select is(
 -- Anonymous
 set local role anon;
 select throws_ok('select plate from public.member_motorcycles', '42501', null, 'anon cannot read plates');
+select throws_ok(
+  $$ update public.member_motorcycles set plate = '34 HAK 999' where profile_id = '00000000-0000-0000-0000-000000000621' $$,
+  '42501', null, 'anon cannot update plates'
+);
 reset role;
 
 -- Owner
@@ -108,9 +112,49 @@ select is(
   '23514|member_motorcycles_plate', 'a one-character foreign plate is rejected'
 );
 select lives_ok(
+  $$ insert into public.member_motorcycles (profile_id, brand, model, plate, plate_foreign)
+     values ('00000000-0000-0000-0000-000000000621', 'X', 'Y', '01 A 12', false) $$,
+  'boundary: TR minimum 01 A 12 is accepted'
+);
+select lives_ok(
+  $$ insert into public.member_motorcycles (profile_id, brand, model, plate, plate_foreign)
+     values ('00000000-0000-0000-0000-000000000621', 'X', 'Y', '81 ABC 1234', false) $$,
+  'boundary: TR maximum 81 ABC 1234 is accepted'
+);
+select lives_ok(
+  $$ insert into public.member_motorcycles (profile_id, brand, model, plate, plate_foreign)
+     values ('00000000-0000-0000-0000-000000000621', 'X', 'Y', 'AB', true) $$,
+  'boundary: foreign 2 characters is accepted'
+);
+select lives_ok(
+  $$ insert into public.member_motorcycles (profile_id, brand, model, plate, plate_foreign)
+     values ('00000000-0000-0000-0000-000000000621', 'X', 'Y', 'ABBBBBBBBBBBBBB', true) $$,
+  'boundary: foreign 15 characters is accepted'
+);
+select is(
+  pg_temp.error_of($$ insert into public.member_motorcycles (profile_id, brand, model, plate, plate_foreign)
+     values ('00000000-0000-0000-0000-000000000621', 'X', 'Y', '34 ABC 1', false) $$),
+  '23514|member_motorcycles_plate', 'boundary: 1 digit is rejected'
+);
+select is(
+  pg_temp.error_of($$ insert into public.member_motorcycles (profile_id, brand, model, plate, plate_foreign)
+     values ('00000000-0000-0000-0000-000000000621', 'X', 'Y', '34 ABC 12345', false) $$),
+  '23514|member_motorcycles_plate', 'boundary: 5 digits is rejected'
+);
+select is(
+  pg_temp.error_of($$ insert into public.member_motorcycles (profile_id, brand, model, plate, plate_foreign)
+     values ('00000000-0000-0000-0000-000000000621', 'X', 'Y', 'ABBBBBBBBBBBBBBB', true) $$),
+  '23514|member_motorcycles_plate', 'boundary: foreign 16 characters is rejected'
+);
+select lives_ok(
   $$ update public.member_motorcycles set plate = null
       where profile_id = '00000000-0000-0000-0000-000000000621' and brand = 'Honda' $$,
   'owner clears a plate'
+);
+select is(
+  (select plate from public.member_motorcycles
+    where profile_id = '00000000-0000-0000-0000-000000000621' and brand = 'Honda'),
+  null, 'the cleared plate is null'
 );
 select lives_ok(
   $$ update public.member_details set show_plates = false
@@ -125,6 +169,12 @@ select is(
     where profile_id = '00000000-0000-0000-0000-000000000621' and brand = 'Yamaha'),
   '34 ABC 123', 'members.manage reads the plate'
 );
+with u as (update public.member_motorcycles set plate = '34 HAK 999'
+            where profile_id = '00000000-0000-0000-0000-000000000621' returning 1)
+select is((select count(*)::int from u), 0, 'members.manage updates 0 plates of another member');
+with u as (update public.member_details set show_plates = true
+            where profile_id = '00000000-0000-0000-0000-000000000621' returning 1)
+select is((select count(*)::int from u), 0, 'members.manage updates 0 show_plates of another member');
 select pg_temp.login('00000000-0000-0000-0000-000000000623');
 select is(
   (select count(*)::int from public.member_motorcycles where profile_id = '00000000-0000-0000-0000-000000000621'),
@@ -133,16 +183,25 @@ select is(
 with u as (update public.member_motorcycles set plate = '34 HAK 999'
             where profile_id = '00000000-0000-0000-0000-000000000621' returning 1)
 select is((select count(*)::int from u), 0, 'another active member updates 0 plates of the owner');
+with u as (update public.member_details set show_plates = true
+            where profile_id = '00000000-0000-0000-0000-000000000621' returning 1)
+select is((select count(*)::int from u), 0, 'another active member updates 0 show_plates of the owner');
 
 -- Pending and inactive cannot change a plate
 select pg_temp.login('00000000-0000-0000-0000-000000000624');
 with u as (update public.member_motorcycles set plate = '34 HAK 999'
             where profile_id = '00000000-0000-0000-0000-000000000624' returning 1)
 select is((select count(*)::int from u), 0, 'pending member updates 0 of their own plates');
+with u as (update public.member_details set show_plates = false
+            where profile_id = '00000000-0000-0000-0000-000000000624' returning 1)
+select is((select count(*)::int from u), 1, 'pending member can update own show_plates (update-own policy has no status check, by design)');
 select pg_temp.login('00000000-0000-0000-0000-000000000625');
 with u as (update public.member_motorcycles set plate = '34 HAK 999'
             where profile_id = '00000000-0000-0000-0000-000000000625' returning 1)
 select is((select count(*)::int from u), 0, 'inactive member updates 0 of their own plates');
+with u as (update public.member_details set show_plates = false
+            where profile_id = '00000000-0000-0000-0000-000000000625' returning 1)
+select is((select count(*)::int from u), 1, 'inactive member can update own show_plates (update-own policy has no status check, by design)');
 
 reset role;
 select is(
@@ -150,6 +209,15 @@ select is(
     where profile_id in ('00000000-0000-0000-0000-000000000624', '00000000-0000-0000-0000-000000000625')
       and plate = '34 HAK 999'),
   0, 'pending/inactive plates were not changed'
+);
+select is(
+  (select array_agg(plate order by plate) from public.member_motorcycles
+    where profile_id in ('00000000-0000-0000-0000-000000000624', '00000000-0000-0000-0000-000000000625')),
+  array['34 INA 222', '34 PEN 111'], 'pending/inactive original plates are still there'
+);
+select is(
+  (select show_plates from public.member_details where profile_id = '00000000-0000-0000-0000-000000000621'),
+  false, 'the owner''s show_plates stayed off after others tried to change it'
 );
 select is(
   (select plate from public.member_motorcycles
