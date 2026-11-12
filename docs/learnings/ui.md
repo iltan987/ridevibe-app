@@ -184,3 +184,24 @@
   `Page.getAppManifest` against `pnpm start -p 3123` (local only). Firefox (Android/desktop) and WebKit never fire the
   event: guide those users manually (spec `docs/superpowers/specs/2026-11-12-install-prompt-design.md`).
 - **Source:** found by testing (headless Chrome 157 via puppeteer-core, 2026-11-12).
+
+### iOS Home Screen web apps don't share storage with Safari (2026-11-12)
+- **Symptom:** after adding the app to the Home Screen, opening a club link in Safari (e.g. from WhatsApp) shows the
+  "install the app" banner again (and again 30 days after each "Şimdi değil").
+- **Cause:** an iOS Home Screen web app has its own storage (and cookies), separate from Safari, and Safari exposes no
+  "installed" signal (`getInstalledRelatedApps` is Chromium-only, `appinstalled` never fires): the `rv-install-*` flags
+  set inside the app are invisible to Safari.
+- **Do:** accept it (the banner is dismissible for 30 days); don't try to sync the flags. Members also sign in again
+  inside the installed app.
+- **Source:** install-prompt final review (WebKit storage partitioning for Home Screen web apps).
+
+### A portal into `<body>` from a page is hidden with the page's hidden route copy (2026-11-12)
+- **Symptom:** worry: the install banner's in-flow spacer is portalled to the end of `<body>` (so it follows the
+  footer); Next keeps the previous route mounted but hidden after a client navigation, so would the spacer's height
+  stay on the next page?
+- **Cause:** no: React hides the host nodes of a hidden `Activity` subtree including its portals (inline
+  `display: none !important`), and shows them again when the route is revealed (Back). Checked in a production build
+  (`/account` → `/` → `/members` → Back ×2: exactly one visible spacer whenever `/account` is shown, none elsewhere).
+- **Do:** portalling page-owned layout helpers into `<body>` is safe with Next's hidden routes; the E2E keeps a check
+  (`scripts/e2e/install-e2e.mjs`, section 8c).
+- **Source:** found by testing (install prompt final fixes).

@@ -1,6 +1,6 @@
 # Own "install the app" prompt — design
 
-Status: **agreed in chat with iltan (2026-11-12)**, awaiting spec review. Backlog entry "Own "install the app" prompt"
+Status: **approved by iltan (2026-11-12), implemented on feat/install-prompt**. Backlog entry "Own "install the app" prompt"
 in `docs/follow-ups.md` (Next up).
 
 ## Why
@@ -130,6 +130,9 @@ Turkish step names follow the iOS/Android Turkish UI ("Paylaş", "Ana Ekrana Ekl
 - **Desktop Chrome before engagement:** variant `none` until the event fires, then the menu entry appears (no banner
   pop-in problem: the banner is floating).
 - **`prompt()` throws** (event already used): drop the event, fall back to the platform's guide variant.
+- **iOS: installed app vs. Safari:** a Home Screen web app has storage separate from Safari, so after installing,
+  Safari visits (e.g. from WhatsApp links) still show the banner (again every 30 days after a dismissal); the store
+  can't know (`docs/learnings/ui.md`).
 
 ## 4. Testing
 

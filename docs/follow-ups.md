@@ -100,6 +100,18 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ## Parked edge cases (known, judged harmless for now)
 
+- **Install prompt: iOS in-app webviews look like Safari** (2026-11-12, install-prompt final review) — Instagram /
+  Facebook in-app browsers on iOS classify as `ios-safari` (`src/lib/pwa/platform.ts`), so they'd get Safari steps
+  that don't work there. Signed-in users can't be in those webviews today (Google blocks OAuth there; `/sign-in` shows
+  the in-app notice), and the banner shows only to signed-in members; revisit if that changes.
+- **"Şimdi değil" does nothing visible with blocked storage** (2026-11-12, install-prompt final review) — with a
+  throwing `localStorage`, `dismiss()` can't store the timestamp and the banner stays (`install-store.ts`). Rare
+  (privacy modes); fix if it ever matters: an in-memory "dismissed for this page" flag.
+- **Install prompt: real-device checks not done** (2026-11-12, install-prompt final review) — (1) Google sign-in
+  inside the installed iOS Home Screen app (it has its own cookie jar, so members sign in again there; check the OAuth
+  round trip stays inside the app); (2) whether `getInstalledRelatedApps()` recognises Android installs made before
+  `related_applications` was added to the manifest, and whether Samsung Internet supports it. Deferred: needs real
+  phones; risk: a sign-in dead end in the iOS app, or the banner showing to already-installed Android members.
 - **Email-based activation skips the "already linked" guard** (2026-11-09, final review) — correcting an approved
   application's email (or signing in with it) can activate an account that still has its own open linked application;
   that application lingers until staff reject it. `link_application` refuses this case; the trigger path doesn't.
@@ -163,15 +175,33 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   city choice "other" accepts "İstanbul" (check form parity); `z.uuid` is strict about fixture-style ids;
   `fail()` / `finish()` in the profile actions are untested.
 - **Install prompt review minors** (2026-11-12, install-prompt reviews) — (a) `platform.ts`: the `OPT` token in the
-  iOS "other browser" regex is a bare substring (could match inside another UA word) and the UA branches (iPadOS Mac
-  UA, other iOS browsers) are untested. (b) `install-script` / store vm tests run node-stripped source and
-  `win.Event` is used unguarded in `captureInstall`. (c) `install-store` tests: "event before 30 s" doesn't prove the
-  timer is cancelled, no test for concurrent `install()` calls; the Android watch also runs when the app is already
-  installed (harmless: variant stays `none`). (d) `account/page.tsx` import order. (e) `useInstall()` is called twice
-  (banner + avatar menu; harmless, one shared store) and `guideOpen` may stay `true` if the variant flips to `none`
-  while the dialog is open (reopens on the next flip back).
+  iOS "other browser" regex is a bare substring (could match inside another UA word). The iPadOS case (Mac UA with
+  touch) is tested; untested are a Mac UA with 1–2 touch points, iOS `OPT`/`Ddg`/`YaBrowser`, macOS Edge and Android
+  `OPR`. Deferred: the rules come from `pwa-install` and these browsers are rare in the club; risk: a wrong guide
+  (e.g. Safari steps in another browser), never a crash. (b) `install-script` / store vm tests run node-stripped
+  source, not the build's output, and `win.Event` is used unguarded in `captureInstall`. Deferred: the browser E2E runs
+  the real built script, and every browser that fires the install events has `Event`; risk: a build-only
+  transpilation difference would show up only in the E2E. (c) `install-store` tests: "event before 30 s" doesn't prove
+  the timer is cancelled, no test for concurrent `install()` calls; the Android watch also runs when the app is
+  already installed (harmless: variant stays `none`). (d) `account/page.tsx` import order. Deferred: cosmetic, lint
+  doesn't enforce it. (e) `useInstall()` is called twice (banner + avatar menu; harmless, one shared store) and
+  `guideOpen` may stay `true` if the variant flips to `none` while the dialog is open (reopens on the next flip back).
+- **Install E2E minors** (2026-11-12, install-prompt Task 6 review) — `scripts/e2e/install-e2e.mjs`: no
+  `try/finally` around scenarios (a thrown error skips `ctx.close()`, later scenarios inherit cookies/storage); the
+  fallback `page.mouse.click(195, 400)` in `open()` (user activation when the event is late) can hit real UI; the
+  `apply-nav-e2e.mjs` "showed the guess first" check flaked once (passed on rerun). Deferred: test-only, all green
+  today; risk: a confusing cascade of FAILs or a rare flake.
+- **Verify or drop the "re-dispatched `beforeinstallprompt` is ignored" learning** (2026-11-12, install-prompt final
+  review) — `docs/learnings/testing.md` says a held real event re-dispatched with `window.dispatchEvent` reached no
+  listener; that was observed once, not verified (the DOM spec says re-dispatching a dispatched event should work).
+  Try it again in isolation; if it works, simplify `__release()` in `install-e2e.mjs` to re-dispatch the real event.
+  Risk if left: a wrong learning steers later tests to synthetic events.
 
 ### UI / accessibility
+- **Focus drops to `<body>` when the install banner unmounts** (2026-11-12, install-prompt final review) — pressing
+  "Şimdi değil", or a dismissed system dialog, removes the banner with focus on its button, so keyboard and
+  screen-reader users land on `<body>` (`src/components/pwa/install-banner.tsx`). Deferred: the banner is a phone
+  feature for touch users; fix: move focus to the main heading (or announce) before unmounting.
 - **Application form steps review minors (2026-11-11)** — all optional; the final review removes what it fixes.
   - Unit tests/draft: no direct tests for `stepOfField` / `isLastStep` (`steps.ts`); `parseDraft` keeps empty strings
     and restored strings have no length cap (Zod catches them on submit); `browserStorage` throw path untested.

@@ -203,11 +203,13 @@
   capture-phase `beforeinstallprompt` listener in `evaluateOnNewDocument` (it runs before the page's own listener).
 - **Source:** found by testing (install prompt).
 
-### `beforeinstallprompt` fires only in the default browser context; a real event can't be re-dispatched (2026-11-12)
+### `beforeinstallprompt` fires only in the default browser context; re-dispatching a real one didn't work (2026-11-12)
 - **Symptom:** in a `browser.createBrowserContext()` page the install event never fired (banner tests failed); a
   real event held back with `stopImmediatePropagation()` and re-dispatched with `window.dispatchEvent(held)` reached no
   listener.
-- **Cause:** Chrome treats incognito-style contexts as non-installable; a re-dispatched real event is ignored.
+- **Cause:** Chrome treats incognito-style contexts as non-installable. The re-dispatch is only *observed* (once), not
+  a verified cause: the DOM spec says re-dispatching an event after its dispatch finished should work (follow-up:
+  verify or drop).
 - **Do:** use `browser.newPage()` (default context) and wipe cookies and site data between scenarios
   (`freshContext()` in `scripts/e2e/install-e2e.mjs`); to show the banner *after* load, release a synthetic event.
 - **Source:** found by testing (install prompt).
