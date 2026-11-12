@@ -10,8 +10,9 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ## Next up (iltan asked for these; in priority order; start in a new session)
 
-- **Own "install the app" prompt** (2026-11-11, iltan: people close the browser's install pop-up) — design round
-  first. Android + Chrome/Edge desktop: catch `beforeinstallprompt`, suppress the browser's pop-up, show our own
+- **Own "install the app" prompt** (2026-11-11, iltan: people close the browser's install pop-up) — in progress on
+  `feat/install-prompt`, spec `docs/superpowers/specs/2026-11-12-install-prompt-design.md` (decisions there supersede
+  the notes below). Android + Chrome/Edge desktop: catch `beforeinstallprompt`, suppress the browser's pop-up, show our own
   card/button (one tap → system install dialog). iPhone/iPad: no programmatic install (Safari has no
   `beforeinstallprompt`, WebKit WONTFIX) → own short "Paylaş → Ana Ekrana Ekle" guide; since iOS 26 every Home Screen
   site opens as a web app. In-app browsers: existing "open in browser" notice first. Never ask when already installed
@@ -21,6 +22,11 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   trial 2026, not stable). Native apps not needed (a TWA could put the PWA on Play Store if ever wanted; Apple rejects
   thin wrappers). Sources: MDN BeforeInstallPromptEvent, caniuse, WebKit bug 193959, heise (iOS 26),
   developer.chrome.com/blog/install-element-ot (checked 2026-11-11).
+- **Cross-tab sign-in and language sync** (2026-11-12, iltan, install-prompt design) — signing in (or out) in one tab
+  should sign the other open tabs in/out too, following their `next` URL if any; switching the language in one tab
+  should switch the others. Like the theme's cross-tab sync. Research first how `@supabase/ssr` cookie sessions behave
+  across tabs (`onAuthStateChange`, BroadcastChannel / `storage` events) and what it costs; only if the overhead is
+  small. Kept out of the install-prompt iteration (auth/i18n, not install).
 - **Safety data (2a′)** (2026-11-10, iltan) — next step after Members in `docs/PLAN.md`: emergency contact, blood type
   with explicit consent (special-category data), plate per bike, a new `members.safety`-style permission, separate
   consents and the privacy text. Through the usual design → plan → build flow.
@@ -41,6 +47,12 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 
 ## Open decisions (need iltan)
+
+- **"Ön alım" (probation) stage** (2026-11-12, iltan) — after approval the club moves a new member into a separate
+  "ön alım" WhatsApp group to see how they behave; they can still join some events. If it doesn't work out they leave
+  on their own or are removed. The app has no such stage today (approved = `active`). To discuss before Events: a new
+  status or a membership stage on active profiles, who sets/ends it (permission), what ön alım members can see, and
+  event requirements (e.g. minimum bike cc, membership stage) that organizers set per event. See `docs/PLAN.md` step 3.
 
 - **Dead-code tool?** (2026-11-11, iltan) — which tool, if any, for the dead-code sweep (Tooling). Candidates to
   compare when we talk: `knip` (unused files, exports, dependencies; Next.js plugin), `ts-prune`/`ts-unused-exports`
