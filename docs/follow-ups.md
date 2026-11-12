@@ -114,11 +114,6 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 - **"Şimdi değil" does nothing visible with blocked storage** (2026-11-12, install-prompt final review) — with a
   throwing `localStorage`, `dismiss()` can't store the timestamp and the banner stays (`install-store.ts`). Rare
   (privacy modes); fix if it ever matters: an in-memory "dismissed for this page" flag.
-- **Install prompt: real-device checks not done** (2026-11-12, install-prompt final review) — (1) Google sign-in
-  inside the installed iOS Home Screen app (it has its own cookie jar, so members sign in again there; check the OAuth
-  round trip stays inside the app); (2) whether `getInstalledRelatedApps()` recognises Android installs made before
-  `related_applications` was added to the manifest, and whether Samsung Internet supports it. Deferred: needs real
-  phones; risk: a sign-in dead end in the iOS app, or the banner showing to already-installed Android members.
 - **Email-based activation skips the "already linked" guard** (2026-11-09, final review) — correcting an approved
   application's email (or signing in with it) can activate an account that still has its own open linked application;
   that application lingers until staff reject it. `link_application` refuses this case; the trigger path doesn't.
