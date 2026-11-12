@@ -234,13 +234,18 @@ isOneToOne: false
             }[]
                            },
 "member_directory":
-{ Args: { "after_id"?: string,"after_name"?: string,"page_size"?: number,"search"?: string,"side_filter"?: Database["public"]['Enums']["istanbul_side"] }; Returns: {
-              "avatar_url": string,"birth_day": number,"birth_month": number,"district": string,"full_name": string,"id": string,"instagram": string,"motorcycles": Json,"side": Database["public"]['Enums']["istanbul_side"]
+{ Args: { "after_id"?: string,"after_name"?: string,"blood_filter"?: Database["public"]['Enums']["blood_type"],"no_contact"?: boolean,"page_size"?: number,"search"?: string,"side_filter"?: Database["public"]['Enums']["istanbul_side"] }; Returns: {
+              "avatar_url": string,"birth_day": number,"birth_month": number,"district": string,"full_name": string,"has_emergency_contact": boolean,"id": string,"instagram": string,"motorcycles": Json,"side": Database["public"]['Enums']["istanbul_side"]
             }[]
                            },
 "member_directory_counts":
-{ Args: { "search"?: string }; Returns: {
+{ Args: { "blood_filter"?: Database["public"]['Enums']["blood_type"],"no_contact"?: boolean,"search"?: string }; Returns: {
               "asian": number,"european": number,"total": number
+            }[]
+                           },
+"member_safety_card":
+{ Args: { "target": string }; Returns: {
+              "blood_type": Database["public"]['Enums']["blood_type"],"contacts": Json,"full_name": string,"motorcycles": Json
             }[]
                            },
 "my_application_status":

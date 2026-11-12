@@ -236,3 +236,49 @@ $$;
 
 revoke all on function public.withdraw_my_blood_type_consent() from public, anon;
 grant execute on function public.withdraw_my_blood_type_consent() to authenticated;
+
+-- Safety card: what staff with members.safety see of an active member in an emergency (contacts,
+-- blood type, bikes with plates whatever the directory switch says). Every call is logged.
+create or replace function public.member_safety_card(target uuid)
+returns table (full_name text, contacts jsonb, blood_type public.blood_type, motorcycles jsonb)
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+begin
+  if not private.has_permission('members.safety') then
+    raise exception 'members.safety required' using errcode = '42501';
+  end if;
+
+  if not exists (select 1 from public.profiles p where p.id = target and p.status = 'active') then
+    raise exception 'member not found' using errcode = 'P0002';
+  end if;
+
+  perform private.log_safety_access('view_card', target);
+
+  return query
+  select
+    p.full_name,
+    coalesce((
+      select jsonb_agg(jsonb_build_object(
+        'position', c.position, 'name', c.name, 'relationship', c.relationship, 'phone', c.phone
+      ) order by c.position)
+      from public.member_emergency_contacts c
+      where c.profile_id = p.id
+    ), '[]'::jsonb),
+    (select h.blood_type from public.member_health h where h.profile_id = p.id),
+    coalesce((
+      select jsonb_agg(jsonb_build_object(
+        'brand', m.brand, 'model', m.model, 'cc', m.cc, 'plate', m.plate
+      ) order by m.created_at, m.id)
+      from public.member_motorcycles m
+      where m.profile_id = p.id
+    ), '[]'::jsonb)
+  from public.profiles p
+  where p.id = target;
+end;
+$$;
+
+revoke all on function public.member_safety_card(uuid) from public, anon;
+grant execute on function public.member_safety_card(uuid) to authenticated;
