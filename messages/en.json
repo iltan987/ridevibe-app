@@ -513,5 +513,38 @@
     "retry": "Try again",
     "back": "Back to home",
     "code": "Error code: {digest}"
+  },
+  "Install": {
+    "bannerLabel": "Install the app",
+    "bannerTitle": "Add Ride & Vibe to your home screen",
+    "bannerBody": "Opens with one tap, full screen.",
+    "install": "Install",
+    "howTo": "How?",
+    "notNow": "Not now",
+    "menuItem": "Install the app",
+    "guideTitle": "Add to home screen",
+    "close": "Close",
+    "steps": {
+      "ios-safari": {
+        "1": "Tap Share in Safari (iOS 26: tap ••• first).",
+        "2": "Tap Add to Home Screen.",
+        "3": "Keep \"Open as Web App\" on and tap Add."
+      },
+      "ios-other": {
+        "1": "Tap Share in the address bar.",
+        "2": "Tap Add to Home Screen.",
+        "3": "Tap Add."
+      },
+      "android-manual": {
+        "1": "Open the browser menu (⋮).",
+        "2": "Tap \"Install app\" or \"Add to Home screen\".",
+        "3": "Tap Install."
+      },
+      "desktop-safari": {
+        "1": "Open File in the menu bar.",
+        "2": "Choose Add to Dock.",
+        "3": "Click Add."
+      }
+    }
   }
 }

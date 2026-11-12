@@ -513,5 +513,38 @@
     "retry": "Tekrar dene",
     "back": "Ana sayfaya dön",
     "code": "Hata kodu: {digest}"
+  },
+  "Install": {
+    "bannerLabel": "Uygulamayı yükle",
+    "bannerTitle": "Ride & Vibe'ı ana ekranına ekle",
+    "bannerBody": "Tek dokunuşla açılır, tam ekran.",
+    "install": "Yükle",
+    "howTo": "Nasıl?",
+    "notNow": "Şimdi değil",
+    "menuItem": "Uygulamayı yükle",
+    "guideTitle": "Ana ekrana ekle",
+    "close": "Kapat",
+    "steps": {
+      "ios-safari": {
+        "1": "Safari'de Paylaş düğmesine dokun (iOS 26: önce •••).",
+        "2": "Ana Ekrana Ekle'ye dokun.",
+        "3": "\"Web Uygulaması olarak aç\" açık kalsın, Ekle'ye dokun."
+      },
+      "ios-other": {
+        "1": "Adres çubuğundaki Paylaş düğmesine dokun.",
+        "2": "Ana Ekrana Ekle'ye dokun.",
+        "3": "Ekle'ye dokun."
+      },
+      "android-manual": {
+        "1": "Tarayıcı menüsünü aç (⋮).",
+        "2": "\"Uygulamayı yükle\" ya da \"Ana ekrana ekle\"ye dokun.",
+        "3": "Yükle'ye dokun."
+      },
+      "desktop-safari": {
+        "1": "Menü çubuğunda Dosya'yı aç.",
+        "2": "Dock'a Ekle'yi seç.",
+        "3": "Ekle'ye tıkla."
+      }
+    }
   }
 }

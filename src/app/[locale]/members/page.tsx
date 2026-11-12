@@ -6,6 +6,7 @@ import { Suspense } from "react";
 import { PendingCard } from "@/components/account/pending-card";
 import { DirectorySkeleton } from "@/components/members/directory-skeleton";
 import { MemberCard } from "@/components/members/member-card";
+import { InstallBanner } from "@/components/pwa/install-banner";
 import { Pager } from "@/components/pager";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -118,6 +119,7 @@ async function Directory({ searchParams }: { searchParams: PageProps<"/[locale]/
       )}
 
       <Pager pathname="/members" query={{ side: side ?? undefined, q: query || undefined }} nextCursor={page.nextCursor} onFirstPage={!cursor} />
+      <InstallBanner />
     </>
   );
 }

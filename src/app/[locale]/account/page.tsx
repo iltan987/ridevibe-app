@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { useTranslations } from "next-intl";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Suspense } from "react";
+import { InstallBanner } from "@/components/pwa/install-banner";
 import { PendingCard } from "@/components/account/pending-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -103,6 +104,7 @@ async function AccountDetails() {
           <PhotoConsentForm consent={myProfile.consentPhotos} consentAt={myProfile.consentPhotosAt} />
         </>
       )}
+      {(profile?.status === "active" || profile?.status === "pending") && <InstallBanner />}
     </>
   );
 }
