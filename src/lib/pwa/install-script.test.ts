@@ -10,14 +10,17 @@ import {
   installCaptureScript,
 } from "./install-script.ts";
 
-function fakeWindow(setItem?: (k: string, v: string) => void) {
+function fakeWindow(setItem?: (k: string, v: string) => void, removeItem?: (k: string) => void) {
   const store = new Map<string, string>();
   const target = new EventTarget();
   const changes: string[] = [];
   target.addEventListener(INSTALL_CHANGE_EVENT, () => changes.push(INSTALL_CHANGE_EVENT));
   const win = Object.assign(target, {
     Event,
-    localStorage: { setItem: setItem ?? ((k: string, v: string) => void store.set(k, v)) },
+    localStorage: {
+      setItem: setItem ?? ((k: string, v: string) => void store.set(k, v)),
+      removeItem: removeItem ?? ((k: string) => void store.delete(k)),
+    },
   }) as unknown as Record<string, unknown> & EventTarget;
   return { win, store, changes };
 }
@@ -47,6 +50,26 @@ test("beforeinstallprompt: prevented, stored on window, change dispatched once",
   const { e, calls } = fakePromptEvent("beforeinstallprompt");
   win.dispatchEvent(e);
   assert.equal(calls.prevented, 1);
+  assert.equal(win[INSTALL_PROMPT_PROP], e);
+  assert.equal(changes.length, 1);
+});
+
+test("beforeinstallprompt clears the installed flag (Chrome offers install again: the app was uninstalled)", () => {
+  const { win, store, changes } = fakeWindow();
+  store.set(INSTALL_INSTALLED_KEY, "1");
+  run(win);
+  win.dispatchEvent(fakePromptEvent("beforeinstallprompt").e);
+  assert.equal(store.has(INSTALL_INSTALLED_KEY), false);
+  assert.equal(changes.length, 1);
+});
+
+test("beforeinstallprompt: removeItem throwing does not throw, event still held", () => {
+  const { win, changes } = fakeWindow(undefined, () => {
+    throw new Error("denied");
+  });
+  run(win);
+  const { e } = fakePromptEvent("beforeinstallprompt");
+  assert.doesNotThrow(() => win.dispatchEvent(e));
   assert.equal(win[INSTALL_PROMPT_PROP], e);
   assert.equal(changes.length, 1);
 });

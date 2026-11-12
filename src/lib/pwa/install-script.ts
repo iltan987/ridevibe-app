@@ -13,7 +13,7 @@ export const INSTALL_PROMPT_PROP = "__rvInstallPrompt";
  * Stringified with `toString()`, so it must be fully self-contained (arguments only; the vm test enforces this).
  * The `win` parameter is loosely typed on purpose: it carries a dynamic property and a guard flag.
  */
-export function captureInstall(
+function captureInstall(
   win: Record<string, any>, // eslint-disable-line @typescript-eslint/no-explicit-any
   promptProp: string,
   installedKey: string,
@@ -24,6 +24,12 @@ export function captureInstall(
   win.addEventListener("beforeinstallprompt", (e: Event) => {
     e.preventDefault();
     win[promptProp] = e;
+    // Chrome offers install only when the app isn't installed in this browser: it was uninstalled, forget the flag.
+    try {
+      win.localStorage.removeItem(installedKey);
+    } catch {
+      // storage unavailable
+    }
     win.dispatchEvent(new win.Event(changeEvent));
   });
   win.addEventListener("appinstalled", () => {
