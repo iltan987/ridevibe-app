@@ -32,6 +32,13 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
     replaces the keyset convention in CLAUDE.md, so decide it explicitly. Also restyle the pager.
   - **Caching:** e.g. Next 16 `use cache` + `cacheTag` for directory data (the same for every active member;
     invalidate on profile/bike changes with `updateTag`), keeping the auth check outside the cached part.
+- **SEO** (2026-11-12, iltan: "we should work on SEO") — iltan added ridevibe.com.tr to Google Search Console
+  (2026-11-12). Design round first; start from what Search Console reports (indexing, coverage, queries). Today
+  there is no `robots.ts` / `sitemap.ts` in `src/app` and no `hreflang` alternates for `tr` (`/`) ↔ `en` (`/en`);
+  private pages already set `robots: { index: false }` (account, members, admin, sign-in). Likely scope: sitemap
+  (public pages per locale) + robots, `alternates.languages` / canonical per page, per-page titles/descriptions and
+  Open Graph for the public pages (home, apply, events, privacy), structured data (e.g. `SportsClub` /
+  `Organization`), Core Web Vitals check; research Next 16 metadata docs first. Submit the sitemap in Search Console.
 
 
 ## Open decisions (need iltan)
