@@ -2,8 +2,11 @@
 
 import { ClipboardList, LogOut, ShieldCheck, UserRound, UsersRound } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { rememberShownUser, UserAvatar } from "@/components/auth/user-avatar";
+import { InstallGuideDialog } from "@/components/pwa/install-guide-dialog";
+import { InstallMenuItem } from "@/components/pwa/install-menu-item";
+import { useInstall } from "@/components/pwa/use-install";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,69 +27,79 @@ export function UserMenuDropdown({
   showApplications,
   showMembers,
   showRoles,
+  showInstall,
 }: {
   name: string;
   avatarUrl: string | null;
   showApplications: boolean;
   showMembers: boolean;
   showRoles: boolean;
+  showInstall: boolean;
 }) {
   const t = useTranslations("Auth");
   const tAdmin = useTranslations("Admin");
   const [isPending, startTransition] = useTransition();
+  const [guideOpen, setGuideOpen] = useState(false);
+  const { variant } = useInstall();
 
   useEffect(() => {
     rememberShownUser({ name, avatarUrl });
   }, [name, avatarUrl]);
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        aria-label={t("userMenu")}
-        data-skeleton-result="user-menu"
-        className="rounded-full outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-      >
-        <UserAvatar name={name} avatarUrl={avatarUrl} />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent keepMounted align="end" className="min-w-48">
-        <DropdownMenuGroup>
-          <DropdownMenuLabel className="truncate">{name}</DropdownMenuLabel>
-        </DropdownMenuGroup>
-        <DropdownMenuSeparator />
-        <DropdownMenuLinkItem render={<Link href="/account" />}>
-          <UserRound aria-hidden />
-          {t("account")}
-        </DropdownMenuLinkItem>
-        {showApplications && (
-          <DropdownMenuLinkItem render={<Link href="/admin/applications" />}>
-            <ClipboardList aria-hidden />
-            {tAdmin("applications")}
-          </DropdownMenuLinkItem>
-        )}
-        {showMembers && (
-          <DropdownMenuLinkItem render={<Link href="/admin/members" />}>
-            <UsersRound aria-hidden />
-            {tAdmin("members.title")}
-          </DropdownMenuLinkItem>
-        )}
-        {showRoles && (
-          <DropdownMenuLinkItem render={<Link href="/admin/roles" />}>
-            <ShieldCheck aria-hidden />
-            {tAdmin("roles.title")}
-          </DropdownMenuLinkItem>
-        )}
-        <DropdownMenuItem
-          disabled={isPending}
-          onClick={() => {
-            rememberShownUser(null);
-            clearApplySubmitted();
-            startTransition(() => signOut());
-          }}
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          aria-label={t("userMenu")}
+          data-skeleton-result="user-menu"
+          className="rounded-full outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
         >
-          <LogOut aria-hidden />
-          {t("signOut")}
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+          <UserAvatar name={name} avatarUrl={avatarUrl} />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent keepMounted align="end" className="min-w-48">
+          <DropdownMenuGroup>
+            <DropdownMenuLabel className="truncate">{name}</DropdownMenuLabel>
+          </DropdownMenuGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuLinkItem render={<Link href="/account" />}>
+            <UserRound aria-hidden />
+            {t("account")}
+          </DropdownMenuLinkItem>
+          {showInstall && <InstallMenuItem onGuide={() => setGuideOpen(true)} />}
+          {showApplications && (
+            <DropdownMenuLinkItem render={<Link href="/admin/applications" />}>
+              <ClipboardList aria-hidden />
+              {tAdmin("applications")}
+            </DropdownMenuLinkItem>
+          )}
+          {showMembers && (
+            <DropdownMenuLinkItem render={<Link href="/admin/members" />}>
+              <UsersRound aria-hidden />
+              {tAdmin("members.title")}
+            </DropdownMenuLinkItem>
+          )}
+          {showRoles && (
+            <DropdownMenuLinkItem render={<Link href="/admin/roles" />}>
+              <ShieldCheck aria-hidden />
+              {tAdmin("roles.title")}
+            </DropdownMenuLinkItem>
+          )}
+          <DropdownMenuItem
+            disabled={isPending}
+            onClick={() => {
+              rememberShownUser(null);
+              clearApplySubmitted();
+              startTransition(() => signOut());
+            }}
+          >
+            <LogOut aria-hidden />
+            {t("signOut")}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      {showInstall && variant !== "prompt" && variant !== "none" && (
+        <InstallGuideDialog variant={variant} open={guideOpen} onOpenChange={setGuideOpen} />
+      )}
+    </>
   );
 }
