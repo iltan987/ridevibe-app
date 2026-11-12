@@ -17,11 +17,12 @@ const { stringToBase64URL } = repoRequire("@supabase/ssr/dist/main/utils/base64u
 const API = "http://127.0.0.1:54321";
 const PUBLISHABLE = "sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH";
 
-/** `scrollbars: true` keeps classic (space-taking) scrollbars; puppeteer hides them by default in headless mode. */
-export async function launch({ scrollbars = false } = {}) {
+/** `scrollbars: true` keeps classic (space-taking) scrollbars; puppeteer hides them by default in headless mode.
+ *  `args` are extra Chrome command-line flags (e.g. `--bypass-app-banner-engagement-checks`). */
+export async function launch({ scrollbars = false, args = [] } = {}) {
   return puppeteer.launch({
     executablePath: process.env.CHROME_PATH ?? "/usr/bin/google-chrome",
-    args: ["--no-sandbox", "--accept-lang=tr"],
+    args: ["--no-sandbox", "--accept-lang=tr", ...args],
     ...(scrollbars ? { ignoreDefaultArgs: ["--hide-scrollbars"] } : {}),
   });
 }

@@ -82,6 +82,8 @@ open to anonymous visitors; instead:
 Live at https://ridevibe.com.tr: TR/EN site, Google sign-in (roles/statuses), public application form, draft privacy
 notice, staff-only applications list/detail. Google OAuth app is **published** (any Google account can sign in;
 new accounts start as `pending`).
+Own "install the app" prompt done (2026-11-12): banner on `/account` and `/members`, avatar-menu entry, guide for
+iPhone/Android-manual; no service worker (spec `docs/superpowers/specs/2026-11-12-install-prompt-design.md`).
 
 ## MVP for Samet (agreed 2026-11-08)
 

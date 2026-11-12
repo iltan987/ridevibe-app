@@ -10,18 +10,6 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ## Next up (iltan asked for these; in priority order; start in a new session)
 
-- **Own "install the app" prompt** (2026-11-11, iltan: people close the browser's install pop-up) — in progress on
-  `feat/install-prompt`, spec `docs/superpowers/specs/2026-11-12-install-prompt-design.md` (decisions there supersede
-  the notes below). Android + Chrome/Edge desktop: catch `beforeinstallprompt`, suppress the browser's pop-up, show our own
-  card/button (one tap → system install dialog). iPhone/iPad: no programmatic install (Safari has no
-  `beforeinstallprompt`, WebKit WONTFIX) → own short "Paylaş → Ana Ekrana Ekle" guide; since iOS 26 every Home Screen
-  site opens as a web app. In-app browsers: existing "open in browser" notice first. Never ask when already installed
-  (`display-mode: standalone`); remember dismissals, re-ask later. Moments: after approval / first sign-in, a member
-  home card, the avatar menu. Strongest pitch is notifications (iOS Web Push only works for Home Screen apps) → decide
-  whether it ships with the service worker + Web Push. Watch Chrome's Web Install API / `<install>` element (origin
-  trial 2026, not stable). Native apps not needed (a TWA could put the PWA on Play Store if ever wanted; Apple rejects
-  thin wrappers). Sources: MDN BeforeInstallPromptEvent, caniuse, WebKit bug 193959, heise (iOS 26),
-  developer.chrome.com/blog/install-element-ot (checked 2026-11-11).
 - **Cross-tab sign-in and language sync** (2026-11-12, iltan, install-prompt design) — signing in (or out) in one tab
   should sign the other open tabs in/out too, following their `next` URL if any; switching the language in one tab
   should switch the others. Like the theme's cross-tab sync. Research first how `@supabase/ssr` cookie sessions behave
@@ -106,6 +94,9 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   fixed date types vs. free-form entries; reminders before a date (Web Push / email, needs the notification work);
   how it relates to the plate per bike planned in safety data (2a′) — consider designing the two together. KVKK:
   plates, insurance details and notes are personal data; collect only what members choose to enter.
+- **Web Install API / `<install>` element: switch when stable** (2026-11-12, install prompt) — Chrome's declarative
+  install element is in an origin trial (2026), not stable. When it ships broadly, replace our `beforeinstallprompt`
+  capture/banner plumbing (`src/lib/pwa/`) with it. Source: developer.chrome.com/blog/install-element-ot.
 
 ## Parked edge cases (known, judged harmless for now)
 
@@ -171,6 +162,14 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   query has no element validation; `instagramUrl` doesn't encode the handle (safe: handles are `[A-Za-z0-9._]`);
   city choice "other" accepts "İstanbul" (check form parity); `z.uuid` is strict about fixture-style ids;
   `fail()` / `finish()` in the profile actions are untested.
+- **Install prompt review minors** (2026-11-12, install-prompt reviews) — (a) `platform.ts`: the `OPT` token in the
+  iOS "other browser" regex is a bare substring (could match inside another UA word) and the UA branches (iPadOS Mac
+  UA, other iOS browsers) are untested. (b) `install-script` / store vm tests run node-stripped source and
+  `win.Event` is used unguarded in `captureInstall`. (c) `install-store` tests: "event before 30 s" doesn't prove the
+  timer is cancelled, no test for concurrent `install()` calls; the Android watch also runs when the app is already
+  installed (harmless: variant stays `none`). (d) `account/page.tsx` import order. (e) `useInstall()` is called twice
+  (banner + avatar menu; harmless, one shared store) and `guideOpen` may stay `true` if the variant flips to `none`
+  while the dialog is open (reopens on the next flip back).
 
 ### UI / accessibility
 - **Application form steps review minors (2026-11-11)** — all optional; the final review removes what it fixes.
