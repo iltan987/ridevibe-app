@@ -22,6 +22,10 @@ export function PrivacyEn() {
         <li><strong>Application answers:</strong> events you&apos;re interested in, your expectations and answers to open questions.</li>
         <li><strong>Account data:</strong> when you sign in with Google, the name, email address and profile photo of your Google account.</li>
         <li><strong>Ad source:</strong> if you reached the application page through an ad link, the campaign information in that link (e.g. which Instagram ad).</li>
+        <li><strong>Emergency contacts:</strong> if you enter them on your account page, the name, relationship and phone number of up to two people. This is third-party data that you give us; please tell the person before you add them.</li>
+        <li><strong>Blood type:</strong> special-category personal data, processed only if you give a separate explicit consent and enter it on your account page.</li>
+        <li><strong>Motorcycle plates:</strong> optionally, the plate you enter for each motorcycle.</li>
+        <li><strong>Safety logs:</strong> a record of operations on blood types and of views of emergency information (who, when, which member).</li>
         <li><strong>Images:</strong> only with your explicit consent, photos of you taken at events.</li>
         <li><strong>Technical data:</strong> a session cookie that is strictly necessary for signing in. While you fill in the application form, your answers (except contact details and consents) are kept only in your own browser until you submit and don&apos;t reach us; they are deleted when you submit and expire after 7 days.</li>
       </ul>
@@ -32,7 +36,9 @@ export function PrivacyEn() {
         <li>To manage your membership, plan events and rides, and ensure participation and group riding safety,</li>
         <li>To check the 18+ requirement and to celebrate your birthday,</li>
         <li>To measure which promotion channels and ads work,</li>
-        <li>With your explicit consent, to share event photos in the club gallery.</li>
+        <li>With your explicit consent, to share event photos in the club gallery,</li>
+        <li>To ensure ride and event safety, reach your relatives in an emergency and inform health teams,</li>
+        <li>With your explicit consent, to find blood donors within the club.</li>
       </ul>
 
       <h2>4. Legal bases</h2>
@@ -40,6 +46,8 @@ export function PrivacyEn() {
         <li>Necessity for establishing and performing the membership relationship (KVKK art. 5/2-c),</li>
         <li>The club&apos;s legitimate interest, provided it does not harm your fundamental rights (KVKK art. 5/2-f): running the club, event safety, measuring promotion channels,</li>
         <li>Your explicit consent for sharing photos in the gallery (KVKK art. 5/1). You can give or withdraw it at any time on your account page, without affecting your membership.</li>
+        <li>Your explicit consent for your blood type (KVKK art. 6). This consent is separate from the photo consent; you can withdraw it at any time on your account page. When you withdraw it, your blood type is deleted; your membership is not affected.</li>
+        <li>For your emergency contacts and plates, the club&apos;s legitimate interest (KVKK art. 5/2-f) and, in an emergency, protecting the life or bodily integrity of you or another person (KVKK art. 5/2-b).</li>
       </ul>
 
       <h2>5. Who we share it with; transfers abroad</h2>
@@ -49,7 +57,15 @@ export function PrivacyEn() {
       <p>
         Within the club: active members can see your name, profile photo, district/side and motorcycles in the member
         directory. Your birthday (day and month only) is shown too; you can turn it off in your profile at any time. Your
-        Instagram username is shown only if you turn it on in your profile.
+        Instagram username is shown only if you turn it on in your profile. Your motorcycle plates are shown in the
+        directory too; you can hide them with the &quot;Show my plates&quot; switch on your account page.
+      </p>
+      <p>
+        Your emergency contacts and blood type are not shown to everyone in the directory. Only the club&apos;s safety
+        team (active members who have been given that task) and the club&apos;s administrators can see them; the information of members whose
+        membership is inactive is not shown to these people. Operations on blood types and views of emergency
+        information are logged; only admins can see the log. This information is shared with health teams only in an
+        emergency.
       </p>
       <p>
         To provide the service we use these service providers (data processors):
@@ -69,6 +85,8 @@ export function PrivacyEn() {
         <li>Rejected applications: deleted <Placeholder>6 MONTHS</Placeholder> after the decision.</li>
         <li>Member data: kept during membership and for <Placeholder>1 YEAR</Placeholder> after it ends, then deleted or anonymised.</li>
         <li>Photos: removed from the gallery when you withdraw your consent.</li>
+        <li>Safety logs (who viewed or changed blood-type data, and when): kept for the same period as other member data.</li>
+        <li>Emergency contacts, blood type and plates: kept for the same period as other member data. You can delete your emergency contacts on your account page at any time, and your plates while your membership is active; your blood type is deleted when you withdraw your consent.</li>
       </ul>
 
       <h2>7. How we collect it</h2>
@@ -89,6 +107,7 @@ export function PrivacyEn() {
         <li>object to a result against you arising solely from automated analysis,</li>
         <li>claim compensation for damages arising from unlawful processing.</li>
       </ul>
+      <p>You can also withdraw your blood type consent and your photo consent yourself on your account page at any time.</p>
 
       <h2>9. How to exercise your rights</h2>
       <p>

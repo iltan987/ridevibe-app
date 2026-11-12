@@ -53,14 +53,14 @@ isOneToOne: true
                   ]
                 },"member_details": {
                   Row: {
-                    "birth_date": string | null,"consent_photos": boolean,"consent_photos_at": string | null,"consent_photos_version": string | null,"instagram": string | null,"profile_id": string,"show_birthday": boolean,"show_instagram": boolean,"updated_at": string
+                    "birth_date": string | null,"consent_photos": boolean,"consent_photos_at": string | null,"consent_photos_version": string | null,"instagram": string | null,"profile_id": string,"show_birthday": boolean,"show_instagram": boolean,"show_plates": boolean,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "birth_date"?: string | null,"consent_photos"?: boolean,"consent_photos_at"?: string | null,"consent_photos_version"?: string | null,"instagram"?: string | null,"profile_id": string,"show_birthday"?: boolean,"show_instagram"?: boolean,"updated_at"?: string
+                    "birth_date"?: string | null,"consent_photos"?: boolean,"consent_photos_at"?: string | null,"consent_photos_version"?: string | null,"instagram"?: string | null,"profile_id": string,"show_birthday"?: boolean,"show_instagram"?: boolean,"show_plates"?: boolean,"updated_at"?: string
                   }
                   Update: {
-                    "birth_date"?: string | null,"consent_photos"?: boolean,"consent_photos_at"?: string | null,"consent_photos_version"?: string | null,"instagram"?: string | null,"profile_id"?: string,"show_birthday"?: boolean,"show_instagram"?: boolean,"updated_at"?: string
+                    "birth_date"?: string | null,"consent_photos"?: boolean,"consent_photos_at"?: string | null,"consent_photos_version"?: string | null,"instagram"?: string | null,"profile_id"?: string,"show_birthday"?: boolean,"show_instagram"?: boolean,"show_plates"?: boolean,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -71,16 +71,56 @@ isOneToOne: true
       referencedColumns: ["id"]
     }
                   ]
-                },"member_motorcycles": {
+                },"member_emergency_contacts": {
                   Row: {
-                    "brand": string,"cc": number | null,"created_at": string,"id": string,"model": string,"profile_id": string,"updated_at": string
+                    "created_at": string,"id": string,"name": string,"phone": string,"position": number,"profile_id": string,"relationship": Database["public"]['Enums']["emergency_relationship"],"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "brand": string,"cc"?: number | null,"created_at"?: string,"id"?: string,"model": string,"profile_id": string,"updated_at"?: string
+                    "created_at"?: string,"id"?: string,"name": string,"phone": string,"position": number,"profile_id": string,"relationship": Database["public"]['Enums']["emergency_relationship"],"updated_at"?: string
                   }
                   Update: {
-                    "brand"?: string,"cc"?: number | null,"created_at"?: string,"id"?: string,"model"?: string,"profile_id"?: string,"updated_at"?: string
+                    "created_at"?: string,"id"?: string,"name"?: string,"phone"?: string,"position"?: number,"profile_id"?: string,"relationship"?: Database["public"]['Enums']["emergency_relationship"],"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "member_emergency_contacts_profile_id_fkey"
+      columns: ["profile_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"member_health": {
+                  Row: {
+                    "blood_type": Database["public"]['Enums']["blood_type"] | null,"consent_blood_type": boolean,"consent_blood_type_at": string,"consent_blood_type_version": string | null,"profile_id": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "blood_type"?: Database["public"]['Enums']["blood_type"] | null,"consent_blood_type": boolean,"consent_blood_type_at": string,"consent_blood_type_version"?: string | null,"profile_id": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "blood_type"?: Database["public"]['Enums']["blood_type"] | null,"consent_blood_type"?: boolean,"consent_blood_type_at"?: string,"consent_blood_type_version"?: string | null,"profile_id"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "member_health_profile_id_fkey"
+      columns: ["profile_id"]
+isOneToOne: true
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"member_motorcycles": {
+                  Row: {
+                    "brand": string,"cc": number | null,"created_at": string,"id": string,"model": string,"plate": string | null,"plate_foreign": boolean,"profile_id": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "brand": string,"cc"?: number | null,"created_at"?: string,"id"?: string,"model": string,"plate"?: string | null,"plate_foreign"?: boolean,"profile_id": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "brand"?: string,"cc"?: number | null,"created_at"?: string,"id"?: string,"model"?: string,"plate"?: string | null,"plate_foreign"?: boolean,"profile_id"?: string,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -145,6 +185,32 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"safety_access_log": {
+                  Row: {
+                    "action": Database["public"]['Enums']["safety_action"],"actor_id": string | null,"created_at": string,"detail": string | null,"id": number,"target_id": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "action": Database["public"]['Enums']["safety_action"],"actor_id"?: string | null,"created_at"?: string,"detail"?: string | null,"id"?: never,"target_id"?: string | null
+                  }
+                  Update: {
+                    "action"?: Database["public"]['Enums']["safety_action"],"actor_id"?: string | null,"created_at"?: string,"detail"?: string | null,"id"?: never,"target_id"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "safety_access_log_actor_id_fkey"
+      columns: ["actor_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "safety_access_log_target_id_fkey"
+      columns: ["target_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 }
           }
           Views: {
@@ -168,13 +234,18 @@ isOneToOne: false
             }[]
                            },
 "member_directory":
-{ Args: { "after_id"?: string,"after_name"?: string,"page_size"?: number,"search"?: string,"side_filter"?: Database["public"]['Enums']["istanbul_side"] }; Returns: {
-              "avatar_url": string,"birth_day": number,"birth_month": number,"district": string,"full_name": string,"id": string,"instagram": string,"motorcycles": Json,"side": Database["public"]['Enums']["istanbul_side"]
+{ Args: { "after_id"?: string,"after_name"?: string,"blood_filter"?: Database["public"]['Enums']["blood_type"],"no_contact"?: boolean,"page_size"?: number,"search"?: string,"side_filter"?: Database["public"]['Enums']["istanbul_side"] }; Returns: {
+              "avatar_url": string,"birth_day": number,"birth_month": number,"district": string,"full_name": string,"has_emergency_contact": boolean,"id": string,"instagram": string,"motorcycles": Json,"side": Database["public"]['Enums']["istanbul_side"]
             }[]
                            },
 "member_directory_counts":
-{ Args: { "search"?: string }; Returns: {
+{ Args: { "blood_filter"?: Database["public"]['Enums']["blood_type"],"no_contact"?: boolean,"search"?: string }; Returns: {
               "asian": number,"european": number,"total": number
+            }[]
+                           },
+"member_safety_card":
+{ Args: { "target": string }; Returns: {
+              "blood_type": Database["public"]['Enums']["blood_type"],"contacts": Json,"full_name": string,"motorcycles": Json
             }[]
                            },
 "my_application_status":
@@ -196,10 +267,16 @@ isOneToOne: false
                            },
 "set_my_birth_date":
 { Args: { "new_date": string }; Returns: undefined
+                           },
+"set_my_blood_type":
+{ Args: { "new_type": Database["public"]['Enums']["blood_type"],"notice_version": string }; Returns: undefined
+                           },
+"withdraw_my_blood_type_consent":
+{ Args: Record<PropertyKey, never>; Returns: undefined
                            }
           }
           Enums: {
-            "application_status": "new"|"contacted"|"approved"|"rejected","group_ride_experience": "none"|"some"|"a_lot","heard_from": "instagram_ad"|"instagram_other"|"friend"|"other","istanbul_side": "asian"|"european","license_class": "a1"|"a2"|"a"|"b"|"none","member_status": "pending"|"active"|"inactive","permission": "applications.view"|"applications.review"|"applications.decide"|"applications.delete"|"members.manage"
+            "application_status": "new"|"contacted"|"approved"|"rejected","blood_type": "A+"|"A-"|"B+"|"B-"|"AB+"|"AB-"|"0+"|"0-","emergency_relationship": "spouse_partner"|"parent"|"sibling"|"child"|"friend"|"other","group_ride_experience": "none"|"some"|"a_lot","heard_from": "instagram_ad"|"instagram_other"|"friend"|"other","istanbul_side": "asian"|"european","license_class": "a1"|"a2"|"a"|"b"|"none","member_status": "pending"|"active"|"inactive","permission": "applications.view"|"applications.review"|"applications.decide"|"applications.delete"|"members.manage"|"members.safety","safety_action": "view_card"|"filter_blood_type"|"set_blood_type"|"withdraw_blood_type"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -315,7 +392,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "application_status": ["new", "contacted", "approved", "rejected"],"group_ride_experience": ["none", "some", "a_lot"],"heard_from": ["instagram_ad", "instagram_other", "friend", "other"],"istanbul_side": ["asian", "european"],"license_class": ["a1", "a2", "a", "b", "none"],"member_status": ["pending", "active", "inactive"],"permission": ["applications.view", "applications.review", "applications.decide", "applications.delete", "members.manage"]
+            "application_status": ["new", "contacted", "approved", "rejected"],"blood_type": ["A+", "A-", "B+", "B-", "AB+", "AB-", "0+", "0-"],"emergency_relationship": ["spouse_partner", "parent", "sibling", "child", "friend", "other"],"group_ride_experience": ["none", "some", "a_lot"],"heard_from": ["instagram_ad", "instagram_other", "friend", "other"],"istanbul_side": ["asian", "european"],"license_class": ["a1", "a2", "a", "b", "none"],"member_status": ["pending", "active", "inactive"],"permission": ["applications.view", "applications.review", "applications.decide", "applications.delete", "members.manage", "members.safety"],"safety_action": ["view_card", "filter_blood_type", "set_blood_type", "withdraw_blood_type"]
           }
         }
 } as const

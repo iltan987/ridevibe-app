@@ -218,3 +218,11 @@
   state win (`authMark` with the server render time, `authRenderAction`; refresh at most once per stored mark so a
   server clock behind can't loop). Code: `src/lib/cross-tab.ts`.
 - **Source:** code review of `feat/cross-tab-sync`; `scripts/e2e/cross-tab-e2e.mjs`.
+
+### An empty `ActionStatus` is still a flex item: it adds a gap (2026-11-13)
+- **Symptom:** the Acil durum card skeleton was 16px short per status line.
+- **Cause:** `ActionStatus` renders an empty `<p aria-live>` (height 0) even without a result; inside a `flex gap-4`
+  `CardContent` it still takes a gap. Measure the real children (puppeteer `getBoundingClientRect` per child) before
+  sizing a skeleton.
+- **Do:** put it inside the small group it belongs to (gap-2) and mirror it in the skeleton with an empty `<div />`.
+- **Source:** found by measuring (`scripts/e2e/skeletons.mjs`).

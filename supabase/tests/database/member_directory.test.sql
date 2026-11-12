@@ -74,7 +74,7 @@ select results_eq(
 );
 select is(
   (select motorcycles -> 1 from public.member_directory(search => 'celik cem pgtapuye')),
-  '{"brand": "Vespa", "model": "Primavera", "cc": null}'::jsonb,
+  '{"brand": "Vespa", "model": "Primavera", "cc": null, "plate": null}'::jsonb,
   'a bike without cc keeps a null cc'
 );
 

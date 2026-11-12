@@ -16,6 +16,7 @@ type Props = {
   instagram: string | null;
   showInstagram: boolean;
   showBirthday: boolean;
+  showPlates: boolean;
   /** `YYYY-MM-DD` or null (manually activated members have none). */
   birthDate: string | null;
 };
@@ -24,7 +25,7 @@ type Props = {
  * Instagram handle plus what the member list may show. The birth date is read-only once stored; members without one
  * (activated by hand, no application) can enter it once here.
  */
-export function VisibilityForm({ instagram, showInstagram, showBirthday, birthDate }: Props) {
+export function VisibilityForm({ instagram, showInstagram, showBirthday, showPlates, birthDate }: Props) {
   const t = useTranslations("Profile");
   const format = useFormatter();
   const { isPending, result, run, fieldError } = useProfileAction();
@@ -33,13 +34,19 @@ export function VisibilityForm({ instagram, showInstagram, showBirthday, birthDa
   // The stored value, also without a birth date (opt-out: on by default, members may turn it off before entering
   // the date). Don't derive it from birthDate: useState keeps its first value when refresh() brings the date.
   const [birthdayOn, setBirthdayOn] = useState(showBirthday);
+  const [platesOn, setPlatesOn] = useState(showPlates);
   const birthDateEntry = useBirthDateEntry(birthdayOn);
 
   function onSubmit(event: React.FormEvent) {
     event.preventDefault();
     const submitted = handle;
     run(
-      () => updateVisibility({ instagram: submitted, show_instagram: instagramOn, show_birthday: birthdayOn }),
+      () => updateVisibility({
+          instagram: submitted,
+          show_instagram: instagramOn,
+          show_birthday: birthdayOn,
+          show_plates: platesOn,
+        }),
       // Show the handle as saved ("@x" or a profile URL is stored as "x").
       () => setHandle(normalizeInstagram(submitted) ?? ""),
     );
@@ -74,6 +81,11 @@ export function VisibilityForm({ instagram, showInstagram, showBirthday, birthDa
           <label className="flex min-h-10 cursor-pointer items-center justify-between gap-4 text-sm">
             {t("showInstagram")}
             <Switch checked={instagramOn} onCheckedChange={setInstagramOn} />
+          </label>
+
+          <label className="flex min-h-10 cursor-pointer items-center justify-between gap-4 text-sm">
+            {t("showPlates")}
+            <Switch checked={platesOn} onCheckedChange={setPlatesOn} />
           </label>
 
           {!birthDate && <BirthDateFields entry={birthDateEntry} />}

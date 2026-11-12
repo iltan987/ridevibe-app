@@ -10,11 +10,21 @@ create table public.member_motorcycles (
   brand text not null check (char_length(btrim(brand)) between 1 and 60),
   model text not null check (char_length(btrim(model)) between 1 and 60),
   cc smallint check (cc between 50 and 3000),
+  plate text,
+  plate_foreign boolean not null default false,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  -- Turkish plate: province 01-81, 1-3 letters, 2-4 digits, single spaces, upper case.
+  -- Foreign plate: free-ish format, 2-15 characters of A-Z, 0-9, space and hyphen.
+  constraint member_motorcycles_plate check (
+    plate is null
+    or (not plate_foreign and plate ~ '^(0[1-9]|[1-7][0-9]|8[01]) [A-Z]{1,3} [0-9]{2,4}$')
+    or (plate_foreign and plate ~ '^[A-Z0-9][A-Z0-9 -]{0,13}[A-Z0-9]$')
+  )
 );
 
 comment on table public.member_motorcycles is 'Motorcycles a member lists on their profile (at most 10 per member).';
+comment on column public.member_motorcycles.plate is 'Licence plate, optional; shown in the directory only when member_details.show_plates is on.';
 
 create index member_motorcycles_profile_idx
   on public.member_motorcycles (profile_id, created_at, id);
@@ -50,8 +60,8 @@ for each row execute function private.member_motorcycles_limit();
 
 revoke all on table public.member_motorcycles from anon, authenticated;
 grant select, delete on table public.member_motorcycles to authenticated;
-grant insert (profile_id, brand, model, cc) on table public.member_motorcycles to authenticated;
-grant update (brand, model, cc) on table public.member_motorcycles to authenticated;
+grant insert (profile_id, brand, model, cc, plate, plate_foreign) on table public.member_motorcycles to authenticated;
+grant update (brand, model, cc, plate, plate_foreign) on table public.member_motorcycles to authenticated;
 
 alter table public.member_motorcycles enable row level security;
 

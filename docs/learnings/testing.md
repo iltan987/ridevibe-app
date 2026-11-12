@@ -124,7 +124,7 @@
   the one fixture with bike + birthday + Instagram (114px; name+location only is 74px, plus one bike 94px). **Do:** make
   the first row (sort order) a typical card before judging; the skeleton mirrors name + location + one bike (94px).
 - Puppeteer: `page.evaluate` can't take a `RegExp` (it arrives as `{}`): pass `source` and `flags`. Saving a section on
-  `/account`: dialogs are closed, so the visible "Kaydet" submit buttons are location, visibility, photo consent in order.
+  `/account`: dialogs are closed, so the visible "Kaydet" submit buttons are location, blood type (while no consent is stored), visibility, photo consent in order (`saveNth` in `members-e2e.mjs`; `safety-e2e.mjs` picks the form via an element inside it instead).
 - **Source:** found by testing (members Task 12).
 
 ### Members E2E on a DB with other active members; setting `type=date` values (2026-11-11)
@@ -230,3 +230,13 @@
   `page.evaluate` is itself a `storage` event for every other open tab (they may follow it and change cookies): seed
   before other tabs exist.
 - **Source:** found by testing (cross-tab sync); React source above.
+
+### Safety E2E: forms hold several submit buttons, fixtures need not be on page one (2026-11-13)
+- **Symptom:** clicking "the" submit of the visibility form saved nothing (invalid-form message); a staff check found no
+  card for a fixture once other active members existed.
+- **Cause:** the visibility form also contains the one-time birth-date button (members without a date) as its first
+  `button[type=submit]`; the directory sorts by name and pages at 25, so fixtures can be on page two.
+- **Do:** pick the submit by its text (`Kaydet`) inside `closest("form")`; look fixtures up through `?q=` (plus
+  `noContact`/`blood`) instead of the unfiltered first page. The blood-type consent checkbox is a `[role=checkbox]`
+  (not a `button`), and its save button stays disabled until ticked, so `consentRequired` is unreachable from the UI.
+- **Source:** found while writing `scripts/e2e/safety-e2e.mjs`.

@@ -12,15 +12,24 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { addMotorcycle, updateMotorcycle } from "@/lib/members/actions";
+import { normalizePlate } from "@/lib/members/plate";
 import { ActionStatus, useProfileAction } from "./use-profile-action";
 
 type Props = {
   /** The button that opens the dialog. */
   trigger: ReactElement;
   /** Set to edit an existing motorcycle; omitted = add a new one. */
-  motorcycle?: { id: string; brand: string; model: string; cc: number | null };
+  motorcycle?: {
+    id: string;
+    brand: string;
+    model: string;
+    cc: number | null;
+    plate?: string | null;
+    plateForeign: boolean;
+  };
 };
 
 /** Add or edit one motorcycle. Closes on success (the page refreshes with the new list). */
@@ -29,10 +38,25 @@ export function MotorcycleDialog({ trigger, motorcycle }: Props) {
   const [open, setOpen] = useState(false);
   const { isPending, result, setResult, run, fieldError } = useProfileAction();
   const formId = motorcycle ? `motorcycle-${motorcycle.id}` : "motorcycle-new";
+  const [plate, setPlate] = useState(motorcycle?.plate ?? "");
+  const [foreign, setForeign] = useState(motorcycle?.plateForeign ?? false);
+  const plateError = fieldError("plate");
 
   function onOpenChange(next: boolean) {
     setOpen(next);
     setResult(null);
+    if (next) {
+      // Start from the stored values again (an abandoned edit must not linger).
+      setPlate(motorcycle?.plate ?? "");
+      setForeign(motorcycle?.plateForeign ?? false);
+    }
+  }
+
+  /** Tidy a valid plate ("34abc123" → "34 ABC 123"); leave an invalid one as typed so it can be fixed. */
+  function tidyPlate(value: string, isForeign: boolean) {
+    const tidy = normalizePlate(value, isForeign);
+    if (tidy === "invalid") return value;
+    return tidy ?? "";
   }
 
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -42,6 +66,8 @@ export function MotorcycleDialog({ trigger, motorcycle }: Props) {
       brand: String(data.get("brand") ?? ""),
       model: String(data.get("model") ?? ""),
       cc: String(data.get("cc") ?? ""),
+      plate,
+      plate_foreign: foreign,
     };
     run(
       () => (motorcycle ? updateMotorcycle(motorcycle.id, input) : addMotorcycle(input)),
@@ -85,6 +111,32 @@ export function MotorcycleDialog({ trigger, motorcycle }: Props) {
               </Field>
             );
           })}
+          <Field data-invalid={!!plateError}>
+            <FieldLabel htmlFor={`${formId}-plate`}>{`${t("plate")} (${t("optional")})`}</FieldLabel>
+            <Input
+              id={`${formId}-plate`}
+              value={plate}
+              onChange={(event) => setPlate(event.target.value)}
+              onBlur={() => setPlate(tidyPlate(plate, foreign))}
+              placeholder={t("platePlaceholder")}
+              maxLength={20}
+              autoComplete="off"
+              autoCapitalize="characters"
+              aria-invalid={!!plateError}
+              className="h-10 md:h-9"
+            />
+            <FieldError>{plateError}</FieldError>
+          </Field>
+          <label className="flex min-h-10 cursor-pointer items-center gap-3 text-sm">
+            <Checkbox
+              checked={foreign}
+              onCheckedChange={(checked) => {
+                setForeign(checked);
+                setPlate(tidyPlate(plate, checked));
+              }}
+            />
+            {t("plateForeign")}
+          </label>
           <ActionStatus result={result} showSaved={false} />
           <DialogFooter>
             <Button type="button" variant="outline" disabled={isPending} onClick={() => onOpenChange(false)}>

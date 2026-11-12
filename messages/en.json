@@ -98,7 +98,32 @@
     "activeOnlyTitle": "The member list is for active members",
     "activeOnlyBody": "Your membership needs to be active to see other members.",
     "birthday": "🎂 {date}",
-    "instagram": "Instagram: @{handle}"
+    "instagram": "Instagram: @{handle}",
+    "safety": {
+      "noContactBadge": "No emergency contact",
+      "open": "Emergency",
+      "openLabel": "Emergency information for {name}",
+      "title": "Emergency information",
+      "contacts": "Emergency contacts",
+      "bloodType": "Blood type",
+      "bloodTypeUnknown": "Not specified",
+      "motorcycles": "Motorcycles",
+      "noMotorcycles": "No motorcycles added.",
+      "noContacts": "No emergency contacts added.",
+      "call": "Call",
+      "whatsapp": "WhatsApp",
+      "loading": "Loading…",
+      "error": "Couldn't load the information.",
+      "retry": "Try again",
+      "forbidden": "You're not allowed to see this information.",
+      "notActive": "This member is no longer active, so their information can't be shown.",
+      "close": "Close",
+      "filtersLabel": "Safety filters",
+      "bloodFilter": "Blood type",
+      "bloodFilterAll": "All blood types",
+      "bloodFilterApply": "Apply",
+      "noContactFilter": "No emergency contact"
+    }
   },
   "Profile": {
     "nameHint": "To change your name, ask the club team.",
@@ -145,6 +170,7 @@
       "invalid": "Something is wrong with the details, check and try again.",
       "forbidden": "You don't have permission to do this.",
       "limit": "You can add up to 10 motorcycles.",
+      "contactLimit": "You can add at most 2 emergency contacts.",
       "error": "Something went wrong. Please try again.",
       "required": "This field is required.",
       "tooLong": "Too long.",
@@ -152,7 +178,58 @@
       "invalidInstagram": "Enter a valid Instagram username or link.",
       "invalidDistrict": "Pick a district from the list.",
       "invalidDate": "Enter a valid date.",
-      "tooYoung": "You must be over 18."
+      "tooYoung": "You must be over 18.",
+      "invalidPhone": "Enter a valid phone number (e.g. 0532 123 45 67).",
+      "notTurkishMobile": "A Turkish number must be a mobile number starting with 5 (WhatsApp).",
+      "invalidPlate": "Enter a valid plate (e.g. 34 ABC 123) or tick “Foreign plate”.",
+      "consentRequired": "Tick the consent box to save."
+    },
+    "plate": "Plate",
+    "platePlaceholder": "34 ABC 123",
+    "plateForeign": "Foreign plate",
+    "showPlates": "Show my plates",
+    "emergency": {
+      "title": "Emergency",
+      "promptTitle": "Add an emergency contact for rides",
+      "promptText": "So the club's safety team can reach someone close to you if something happens.",
+      "promptAction": "Add contact",
+      "contacts": "Emergency contacts",
+      "noContacts": "You haven't added an emergency contact yet.",
+      "mainContact": "main contact",
+      "add": "Add contact",
+      "addTitle": "Add an emergency contact",
+      "editTitle": "Edit emergency contact",
+      "editLabel": "Edit {name}",
+      "deleteLabel": "Delete {name}",
+      "deleteTitle": "Delete contact",
+      "deleteConfirm": "Are you sure you want to delete {name}?",
+      "name": "Full name",
+      "relationship": "Relationship",
+      "relationshipPlaceholder": "Select",
+      "phone": "Phone",
+      "limitReached": "You can add at most 2 emergency contacts.",
+      "hintVisibility": "Only the club's safety team can see them.",
+      "hintNotify": "Let the person you add know.",
+      "relationships": {
+        "spouse_partner": "Spouse / partner",
+        "parent": "Parent",
+        "sibling": "Sibling",
+        "child": "Child",
+        "friend": "Friend",
+        "other": "Other"
+      }
+    },
+    "bloodType": {
+      "title": "Blood type",
+      "intro": "You can add your blood type if you like. It is stored only with your explicit consent and is visible only to the club's safety team.",
+      "consentLabel": "I give my explicit consent for the club's safety team to see my blood type, so that it can be passed to medical teams in an accident or emergency and suitable donors can be found within the club when blood is needed. I can withdraw this consent at any time from my profile.",
+      "select": "Blood type",
+      "placeholder": "Select",
+      "current": "Your blood type: {type}",
+      "change": "Change",
+      "withdraw": "Withdraw my consent",
+      "withdrawTitle": "Withdraw your consent",
+      "withdrawConfirm": "Your blood type will be deleted and the safety team will no longer see it. Are you sure?"
     }
   },
   "Apply": {
@@ -428,6 +505,10 @@
         "manage": {
           "label": "Manage members",
           "description": "Can see pending sign-ups and activate/deactivate members (except admins)."
+        },
+        "safety": {
+          "label": "See safety information",
+          "description": "Can see members' emergency contacts, blood type and plates, and search by blood type."
         }
       }
     },

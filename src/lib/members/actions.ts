@@ -8,6 +8,11 @@ import {
   type BirthDateInput,
   birthDateSchema,
   firstErrorPerField,
+  MAX_EMERGENCY_CONTACTS,
+  type EmergencyContactInput,
+  emergencyContactSchema,
+  type BloodTypeInput,
+  bloodTypeSchema,
   type LocationInput,
   locationSchema,
   type MotorcycleInput,
@@ -22,7 +27,7 @@ import {
 // write to the signed-in user and translate errors for the UI.
 
 export type ProfileActionResult = {
-  status: "ok" | "invalid" | "forbidden" | "limit" | "error";
+  status: "ok" | "invalid" | "forbidden" | "limit" | "contactLimit" | "error";
   /** Translation keys under Profile.errors.*, only with status "invalid". */
   fieldErrors?: Record<string, ProfileErrorKey>;
 };
@@ -37,6 +42,8 @@ function fail(error: DbError, where: string): ProfileActionResult {
     const text = `${error.message ?? ""} ${error.details ?? ""} ${error.hint ?? ""}`;
     return { status: text.includes("member_motorcycles_limit") ? "limit" : "invalid" };
   }
+  // unique (profile_id, position): two contacts saved at once raced for the same slot
+  if (error.code === "23505") return { status: "contactLimit" };
   if (error.code === "22P02") return { status: "invalid" };
   console.error(`${where} failed`, { code: error.code });
   return { status: "error" };
@@ -131,10 +138,10 @@ export async function addMotorcycle(input: MotorcycleInput): Promise<ProfileActi
   const { supabase, userId } = await currentUserId();
   if (!userId) return { status: "forbidden" };
 
-  const { brand, model, cc } = parsed.data;
+  const { brand, model, cc, plate, plate_foreign } = parsed.data;
   const { data, error } = await supabase
     .from("member_motorcycles")
-    .insert({ profile_id: userId, brand, model, cc: cc ?? null })
+    .insert({ profile_id: userId, brand, model, cc: cc ?? null, plate, plate_foreign })
     .select("id");
   return finish(error, data, "addMotorcycle");
 }
@@ -147,10 +154,10 @@ export async function updateMotorcycle(id: string, input: MotorcycleInput): Prom
   const { supabase, userId } = await currentUserId();
   if (!userId) return { status: "forbidden" };
 
-  const { brand, model, cc } = parsed.data;
+  const { brand, model, cc, plate, plate_foreign } = parsed.data;
   const { data, error } = await supabase
     .from("member_motorcycles")
-    .update({ brand, model, cc: cc ?? null })
+    .update({ brand, model, cc: cc ?? null, plate, plate_foreign })
     .eq("id", parsedId.data)
     .eq("profile_id", userId)
     .select("id");
@@ -170,4 +177,86 @@ export async function deleteMotorcycle(id: string): Promise<ProfileActionResult>
     .eq("profile_id", userId)
     .select("id");
   return finish(error, data, "deleteMotorcycle");
+}
+
+/** Inserts at the lowest free position (1 or 2); a lost race on the same slot surfaces as 23505 → contactLimit. */
+export async function addEmergencyContact(input: EmergencyContactInput): Promise<ProfileActionResult> {
+  const parsed = emergencyContactSchema.safeParse(input);
+  if (!parsed.success) return { status: "invalid", fieldErrors: firstErrorPerField(parsed.error.issues) };
+  const { supabase, userId } = await currentUserId();
+  if (!userId) return { status: "forbidden" };
+
+  const { data: existing, error: readError } = await supabase
+    .from("member_emergency_contacts")
+    .select("position")
+    .eq("profile_id", userId);
+  if (readError) return fail(readError, "addEmergencyContact");
+  const taken = new Set(existing.map((c) => c.position));
+  let position = 1;
+  while (taken.has(position)) position++;
+  if (position > MAX_EMERGENCY_CONTACTS) return { status: "contactLimit" };
+
+  const { data, error } = await supabase
+    .from("member_emergency_contacts")
+    .insert({ profile_id: userId, position, ...parsed.data })
+    .select("id");
+  return finish(error, data, "addEmergencyContact");
+}
+
+export async function updateEmergencyContact(id: string, input: EmergencyContactInput): Promise<ProfileActionResult> {
+  const parsedId = uuid.safeParse(id);
+  if (!parsedId.success) return { status: "invalid" };
+  const parsed = emergencyContactSchema.safeParse(input);
+  if (!parsed.success) return { status: "invalid", fieldErrors: firstErrorPerField(parsed.error.issues) };
+  const { supabase, userId } = await currentUserId();
+  if (!userId) return { status: "forbidden" };
+
+  const { data, error } = await supabase
+    .from("member_emergency_contacts")
+    .update(parsed.data)
+    .eq("id", parsedId.data)
+    .eq("profile_id", userId)
+    .select("id");
+  return finish(error, data, "updateEmergencyContact");
+}
+
+export async function deleteEmergencyContact(id: string): Promise<ProfileActionResult> {
+  const parsedId = uuid.safeParse(id);
+  if (!parsedId.success) return { status: "invalid" };
+  const { supabase, userId } = await currentUserId();
+  if (!userId) return { status: "forbidden" };
+
+  const { data, error } = await supabase
+    .from("member_emergency_contacts")
+    .delete()
+    .eq("id", parsedId.data)
+    .eq("profile_id", userId)
+    .select("id");
+  return finish(error, data, "deleteEmergencyContact");
+}
+
+/** The RPC stores the type with its consent (and an access-log row); it has no result rows to check. */
+export async function setBloodType(input: BloodTypeInput): Promise<ProfileActionResult> {
+  const parsed = bloodTypeSchema.safeParse(input);
+  if (!parsed.success) return { status: "invalid", fieldErrors: firstErrorPerField(parsed.error.issues) };
+  const { supabase, userId } = await currentUserId();
+  if (!userId) return { status: "forbidden" };
+
+  const { error } = await supabase.rpc("set_my_blood_type", {
+    new_type: parsed.data.blood_type,
+    notice_version: PRIVACY_NOTICE_VERSION,
+  });
+  if (error) return fail(error, "setBloodType");
+  refresh();
+  return { status: "ok" };
+}
+
+export async function withdrawBloodTypeConsent(): Promise<ProfileActionResult> {
+  const { supabase, userId } = await currentUserId();
+  if (!userId) return { status: "forbidden" };
+
+  const { error } = await supabase.rpc("withdraw_my_blood_type_consent");
+  if (error) return fail(error, "withdrawBloodTypeConsent");
+  refresh();
+  return { status: "ok" };
 }

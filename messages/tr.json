@@ -98,7 +98,32 @@
     "activeOnlyTitle": "Üye listesi aktif üyelere açık",
     "activeOnlyBody": "Üyeleri görmek için üyeliğinin aktif olması gerekiyor.",
     "birthday": "🎂 {date}",
-    "instagram": "Instagram: @{handle}"
+    "instagram": "Instagram: @{handle}",
+    "safety": {
+      "noContactBadge": "Acil kişi yok",
+      "open": "Acil durum",
+      "openLabel": "{name} için acil durum bilgileri",
+      "title": "Acil durum bilgileri",
+      "contacts": "Acil durum kişileri",
+      "bloodType": "Kan grubu",
+      "bloodTypeUnknown": "Belirtilmemiş",
+      "motorcycles": "Motosikletler",
+      "noMotorcycles": "Motosiklet eklenmemiş.",
+      "noContacts": "Acil durum kişisi eklenmemiş.",
+      "call": "Ara",
+      "whatsapp": "WhatsApp",
+      "loading": "Yükleniyor…",
+      "error": "Bilgiler yüklenemedi.",
+      "retry": "Tekrar dene",
+      "forbidden": "Bu bilgileri görme yetkin yok.",
+      "notActive": "Bu üye artık aktif değil, bilgileri gösterilemiyor.",
+      "close": "Kapat",
+      "filtersLabel": "Güvenlik filtreleri",
+      "bloodFilter": "Kan grubu",
+      "bloodFilterAll": "Tüm kan grupları",
+      "bloodFilterApply": "Uygula",
+      "noContactFilter": "Acil kişisi yok"
+    }
   },
   "Profile": {
     "nameHint": "İsim değişikliği için kulüp ekibine yaz.",
@@ -145,6 +170,7 @@
       "invalid": "Bilgilerde bir sorun var, kontrol edip tekrar dene.",
       "forbidden": "Bu işlem için yetkin yok.",
       "limit": "En fazla 10 motosiklet ekleyebilirsin.",
+      "contactLimit": "En fazla 2 acil durum kişisi ekleyebilirsin.",
       "error": "Bir şeyler ters gitti. Lütfen tekrar dene.",
       "required": "Bu alan zorunlu.",
       "tooLong": "Çok uzun.",
@@ -152,7 +178,58 @@
       "invalidInstagram": "Geçerli bir Instagram kullanıcı adı ya da bağlantısı gir.",
       "invalidDistrict": "Listeden bir ilçe seç.",
       "invalidDate": "Geçerli bir tarih gir.",
-      "tooYoung": "18 yaşından büyük olmalısın."
+      "tooYoung": "18 yaşından büyük olmalısın.",
+      "invalidPhone": "Geçerli bir telefon numarası gir (ör. 0532 123 45 67).",
+      "notTurkishMobile": "Türkiye numarası 5 ile başlayan bir cep telefonu olmalı (WhatsApp).",
+      "invalidPlate": "Geçerli bir plaka gir (ör. 34 ABC 123) ya da “Yabancı plaka”yı işaretle.",
+      "consentRequired": "Kaydetmek için açık rıza kutusunu işaretlemelisin."
+    },
+    "plate": "Plaka",
+    "platePlaceholder": "34 ABC 123",
+    "plateForeign": "Yabancı plaka",
+    "showPlates": "Plakalarımı göster",
+    "emergency": {
+      "title": "Acil durum",
+      "promptTitle": "Sürüşler için acil durum kişisi ekle",
+      "promptText": "Bir şey olursa kulübün güvenlik sorumluları yakınına ulaşabilsin.",
+      "promptAction": "Kişi ekle",
+      "contacts": "Acil durum kişileri",
+      "noContacts": "Henüz acil durum kişisi eklemedin.",
+      "mainContact": "ana kişi",
+      "add": "Kişi ekle",
+      "addTitle": "Acil durum kişisi ekle",
+      "editTitle": "Acil durum kişisini düzenle",
+      "editLabel": "{name} kişisini düzenle",
+      "deleteLabel": "{name} kişisini sil",
+      "deleteTitle": "Kişiyi sil",
+      "deleteConfirm": "{name} kişisini silmek istediğine emin misin?",
+      "name": "Ad soyad",
+      "relationship": "Yakınlık",
+      "relationshipPlaceholder": "Seç",
+      "phone": "Telefon",
+      "limitReached": "En fazla 2 acil durum kişisi ekleyebilirsin.",
+      "hintVisibility": "Yalnızca kulübün güvenlik sorumluları görür.",
+      "hintNotify": "Eklediğin kişiye haber ver.",
+      "relationships": {
+        "spouse_partner": "Eş / partner",
+        "parent": "Anne / baba",
+        "sibling": "Kardeş",
+        "child": "Çocuk",
+        "friend": "Arkadaş",
+        "other": "Diğer"
+      }
+    },
+    "bloodType": {
+      "title": "Kan grubu",
+      "intro": "İstersen kan grubunu ekleyebilirsin. Yalnızca açık rızanla saklanır ve yalnızca kulübün güvenlik sorumlularına görünür.",
+      "consentLabel": "Kan grubumun; kaza veya acil durumda sağlık ekiplerine iletilmesi ve kulüp içinde kan ihtiyacı olduğunda uygun bağışçıların bulunması amacıyla kulübün güvenlik sorumlularınca görülmesine açık rıza veriyorum. Bu rızayı istediğim zaman profilimden geri alabilirim.",
+      "select": "Kan grubu",
+      "placeholder": "Seç",
+      "current": "Kan grubun: {type}",
+      "change": "Değiştir",
+      "withdraw": "Rızamı geri al",
+      "withdrawTitle": "Rızanı geri al",
+      "withdrawConfirm": "Kan grubun silinecek ve güvenlik sorumluları artık göremeyecek. Emin misin?"
     }
   },
   "Apply": {
@@ -428,6 +505,10 @@
         "manage": {
           "label": "Üyeleri yönetme",
           "description": "Onay bekleyenleri görebilir, üyeleri aktif/pasif yapabilir (yöneticiler hariç)."
+        },
+        "safety": {
+          "label": "Güvenlik bilgilerini görme",
+          "description": "Üyelerin acil durum kişilerini, kan grubunu ve plakalarını görebilir; kan grubuna göre arayabilir."
         }
       }
     },

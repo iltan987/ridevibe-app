@@ -19,3 +19,12 @@ test("locationLabel joins the parts that exist", () => {
   assert.equal(locationLabel(null, null), null);
   assert.equal(locationLabel("", ""), null);
 });
+
+test("formatMotorcycle appends the plate when present", () => {
+  assert.equal(
+    formatMotorcycle({ brand: "Yamaha", model: "MT-07", cc: 689, plate: "34 ABC 123" }),
+    "Yamaha MT-07 · 689 cc · 34 ABC 123",
+  );
+  assert.equal(formatMotorcycle({ brand: "Yamaha", model: "MT-07", cc: null, plate: "34 ABC 123" }), "Yamaha MT-07 · 34 ABC 123");
+  assert.equal(formatMotorcycle({ brand: "Yamaha", model: "MT-07", cc: 689, plate: null }), "Yamaha MT-07 · 689 cc");
+});

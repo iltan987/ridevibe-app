@@ -10,9 +10,6 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ## Next up (iltan asked for these; in priority order; start in a new session)
 
-- **Safety data (2a′)** (2026-11-10, iltan) — next step after Members in `docs/PLAN.md`: emergency contact, blood type
-  with explicit consent (special-category data), plate per bike, a new `members.safety`-style permission, separate
-  consents and the privacy text. Through the usual design → plan → build flow.
 - **List UX iteration: instant filtering, clean URLs, page numbers, caching** (2026-11-10, iltan, after testing
   `/members`) — applies to `/members` and the admin lists (`/admin/members`, `/admin/applications`). Design first;
   points iltan raised:
@@ -42,6 +39,13 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   gets deleted and what may be kept; on confirmation the account is marked for deletion at once (no admin approval, it
   should feel instant); signing in again within a grace period offers recovery; final deletion after the period. Today
   deletion is by hand (CLAUDE.md "Deleting an account"); KVKK art. 11/13 (answer within 30 days).
+- **Stricter ESLint rules** (2026-11-13, iltan) — own session. Goals: (1) stop `any`, `unknown`, casts (`as`),
+  non-null `!` and `eslint-disable` / `@ts-expect-error` being used to bypass problems instead of fixing them;
+  (2) let ESLint catch real bugs earlier (e.g. type-aware rules: floating/misused promises, unsafe `any` flows,
+  exhaustive switches, unnecessary conditions). Claude picks the rule set (research current `typescript-eslint`
+  presets and Next 16 / React Compiler lint first), measures the violations on the current code, and fixes them or
+  justifies each remaining disable with a reason (like the `react-hooks/purity` rule in CLAUDE.md). Fits with the
+  dead-code tool decision (Open decisions).
 
 
 ## Open decisions (need iltan)
@@ -78,7 +82,32 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   Instagram shown to active members). Question for the lawyer review of the notice. Since 2026-11-11 the birthday is
   **opt-out** (iltan asked the members; existing members were switched on by migration, notice section 5 updated):
   ask which legal basis covers it (likely meşru menfaat rather than açık rıza, which can't be pre-ticked). Same question
-  for motorcycle plates in the directory (opt-out, decided 2026-11-12 for safety data 2a′).
+  for motorcycle plates in the directory (opt-out, decided 2026-11-12 for safety data 2a′). The notice now covers
+  plates in the directory (§4/§5, 2026-11-13); only the legal-basis confirmation remains for the lawyer.
+- **Safety data: lawyer questions** (2026-11-13, safety data) — (a) legal basis for emergency contacts (third persons'
+  data) and plates: proposed meşru menfaat (KVKK m.5/2-f) plus, in an emergency, m.5/2-b; blood type rests on açık rıza
+  (m.6). (b) Encryption: we rely on the hosted database's disk encryption instead of app-level encryption (decision
+  2018/10, 3(a)/(b)). Checked 2026-11-13: https://supabase.com/security says "All customer data is encrypted at rest
+  with AES-256 and in transit via TLS."; the shared-responsibility page
+  (https://supabase.com/docs/guides/deployment/shared-responsibility-model) says "Data is encrypted at rest and in
+  transit by Supabase." and suggests encrypting at the application layer if needed; `/docs/guides/platform/security`
+  only covers TLS. Ask whether disk encryption is enough for blood type. (c) The safety team and `members.manage` see
+  plates even with "Plakalarımı göster" off (the safety card ignores the switch). (d) Admins also see blood types
+  (access log, `members.safety` via admin role) while the consent text names only the safety team. (e) The
+  blood-filter log row has no target: a name-narrowed filter does not record whose type was revealed (logging the
+  search text would put names into the log). Risk if left: the notice states a basis nobody has confirmed.
+- **Safety data: small test and polish leftovers** (2026-11-13, safety data) — no `motorcycleSchema` test for an invalid
+  foreign plate (covered in `plate.test.ts`); Acil durum and account skeleton heights not measured in English;
+  `/members` blood select: a choice made before hydration has no `name`, so it does not filter;
+  `scripts/e2e/safety-e2e.mjs` blood-filter check assumes exactly one consented A+ member locally; stray double blank
+  lines in `safety-e2e.mjs` and `members-e2e.mjs`. Low risk: test-only or cosmetic.
+- **Safety data: retention** (2026-11-13, safety data) — how long safety data (contacts, blood type, plates) of
+  inactive or departed members is kept, and how long `safety_access_log` rows live; no deletion job exists, the notice
+  says "same period as other member data". Decide with the member-data retention rule.
+- **Safety data: KVKK club processes** (2026-11-13, safety data; spec §6) — not app features, for iltan/Samet: review
+  the holders of `members.safety` periodically; ask holders to turn on Google 2-Step Verification (the app can't
+  enforce it, sign-in is Google only); training and confidentiality undertaking for holders; never copy safety data
+  into WhatsApp groups. Risk if left: decision 2018/10 measures only half met.
 
 ## Features
 
@@ -109,11 +138,17 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   `member_motorcycles`) with important dates (insurance/sigorta, inspection/muayene, last and next service or
   maintenance, …) and personal notes. Design questions: private to the owner (unlike the directory's brand/model/cc);
   fixed date types vs. free-form entries; reminders before a date (Web Push / email, needs the notification work);
-  how it relates to the plate per bike planned in safety data (2a′) — consider designing the two together. KVKK:
+  plates already exist per bike (`member_motorcycles.plate`, safety data) — build on that column. KVKK:
   plates, insurance details and notes are personal data; collect only what members choose to enter.
 - **Web Install API / `<install>` element: switch when stable** (2026-11-12, install prompt) — Chrome's declarative
   install element is in an origin trial (2026), not stable. When it ships broadly, replace our `beforeinstallprompt`
   capture/banner plumbing (`src/lib/pwa/`) with it. Source: developer.chrome.com/blog/install-element-ot.
+- **Emergency contact required to join a ride** (2026-11-13, safety data) — decide with Events whether joining a ride
+  needs at least one emergency contact (today only a gentle prompt on `/account`).
+- **Organizers see their ride participants' safety cards** (2026-11-13, safety data) — with Events, a ride's
+  organizers get the participants' safety cards without `members.safety`; needs its own access rule and log entries.
+- **Access-log viewer for admins** (2026-11-13, safety data) — `safety_access_log` is written but only readable via
+  SQL. Add an admin screen (paginated). Risk if left: the log exists but nobody can audit it in the app.
 
 ## Parked edge cases (known, judged harmless for now)
 
@@ -166,6 +201,10 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   `applications.decide` calling the new RPCs (covered indirectly by `private.has_permission`).
 - **Learnings note** (2026-11-09) — `session_replication_role = replica` (used to plant legacy rows in pgTAP) also
   skips foreign-key checks; add one clause to the `docs/learnings/testing.md` entry.
+- **Safety data pgTAP / SQL minors** (2026-11-13, safety data reviews) — (a) Task 1: the 0606 post-check can't prove
+  row survival. (b) Task 4: `safety_directory.test.sql` creates a temp table as `authenticated` (needs TEMP on the
+  database; watch at the production `test db` run). (c) The blood/no-contact predicates and the permission check are
+  duplicated between `member_directory` and `member_directory_counts`; extract them if a third caller appears.
 
 ### App logic
 - **`isGoogleMailAddress("gmail.com")` returns true** without an `@` (`src/lib/applications/contact.ts`). Callers
@@ -228,6 +267,12 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   look newer and a tab opened from an `/en/…` link would bounce to the last switched language. Clock-free fix: snapshot
   the stored `rv-locale` value at page load (inline script) and follow only if it changed. (f) `parseAuthMark` accepts
   an empty time (`"abc@"` → 0) while `localeSwitchedSince` rejects it; harmless (time 0 always loses), inconsistent.
+- **Safety data app minors** (2026-11-13, safety data reviews) — `normalizePlate` folds `ı`/`ß` into ASCII via
+  `toUpperCase` (DB-safe; stricter option: reject anything outside `[A-Za-z0-9 -]`); `fail()` maps any 23505 to
+  `contactLimit` (only contacts raise it today); a truncated long contact name can hide the "(ana kişi)" suffix;
+  `BloodSelect` keeps its initial value across back/forward while mounted; the safety card content collapses during
+  the close animation and its close button isn't in `DialogFooter`; `SafetyFilters` `side` prop is typed
+  `string | null`; `visibility-form.tsx` indentation. All cosmetic or harmless today.
 
 ### UI / accessibility
 - **Focus drops to `<body>` when the install banner unmounts** (2026-11-12, install-prompt final review) — pressing
@@ -307,6 +352,10 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   shorter page (no profile sections, or only the photo consent), so their skeleton overshoots. The status is
   request-time data, so the fallback can't know it. (Default-state heights are measured: all Δh 0, 2026-11-10.)
   Members without a birth date (2026-11-11) see a taller visibility card (date field, hint, button) than the skeleton.
+  Members without an emergency contact (2026-11-13, safety data) also get the prompt card (~146px at 390px) above the
+  account card, which the skeleton doesn't have: the page below jumps down once when it streams in. The Acil durum
+  skeleton mirrors the default state "no contact, no blood-type consent" (Δh 0 at 390 and 1280, dark and light);
+  members with contacts or a stored blood type see a different height. Inactive members' section is shorter.
 - **Locale switcher shows no pending feedback** (2026-11-10, loading-states) — it uses `router.replace` in a
   transition, not a `Link`, so neither the progress bar nor the dim appears (it still switches and re-enables its
   button). Could drive the pending store from `useTransition`.
@@ -359,6 +408,7 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 - **Dead-code sweep** (2026-11-11, iltan) — iltan wants dead code removed when there is no reason to keep it, and a
   sweep now and then. First sweep: unused exports/files/dependencies (tool still open, see "Dead-code tool?" under
   Open decisions), unused message keys in `messages/*.json`, stale comments and follow-up items that point at removed code.
+  Known: `hasStaffAccess` in `src/lib/auth/permissions.ts` has no callers (pre-existing, 2026-11-13).
 - **Supabase CLI 3.1.0 is available** (2026-11-10; installed 3.0.0).
 - **Members E2E looseness** (2026-11-10, members review) — some assertions are loose or vacuous in
   `scripts/e2e/members-e2e.mjs`: pending "no member cards" (passes if the list simply didn't render), "remaining 4

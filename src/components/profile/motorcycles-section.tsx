@@ -22,7 +22,7 @@ import { ActionStatus, useProfileAction } from "./use-profile-action";
 
 export const MAX_MOTORCYCLES = 10;
 
-type Item = { id: string; brand: string; model: string; cc: number | null };
+type Item = { id: string; brand: string; model: string; cc: number | null; plate?: string | null; plateForeign: boolean };
 
 /** The member's motorcycles: add, edit (dialog) and delete (confirm). */
 export function MotorcyclesSection({ motorcycles }: { motorcycles: Item[] }) {

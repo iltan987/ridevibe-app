@@ -68,7 +68,7 @@ pnpm db:types                 # regenerate src/lib/supabase/database.types.ts
 pnpm exec supabase migration up   # apply new migrations locally, keeping data (db:reset wipes auth users; after
                                   # an iteration that reset, restore iltan's local admin before browser review)
 kill $(ss -ltnp | grep ':3123 ' | grep -oP 'pid=\K[0-9]+')   # stop a local server; never `pkill -f` (kills own shell)
-PUPPETEER_DIR=~/e2e-tools node scripts/e2e/{nav,members,header,apply,apply-nav,install,cross-tab}-e2e.mjs   # browser E2E vs `pnpm start -p 3123` (setup: scripts/e2e/README.md)
+PUPPETEER_DIR=~/e2e-tools node scripts/e2e/{nav,members,safety,header,apply,apply-nav,install,cross-tab}-e2e.mjs   # browser E2E vs `pnpm start -p 3123` (setup: scripts/e2e/README.md)
 # signed-in parts need fixture users (admin@/member@/pending-noapp@test.local) that `db:reset` wipes: recreate per README
 # headless hides scrollbars (launch({ scrollbars: true }) keeps them); Next keeps the previous route hidden in the DOM: select visible elements
 # members E2E needs only its fixtures active: park other active profiles, restore by id (docs/learnings/testing.md)
@@ -103,6 +103,9 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   Members can't edit `full_name`/`avatar_url` (staff: `set_member_name`). Names are tidied on insert only (`private.tidy_name`: Turkish rules, mixed case
   untouched); staff corrections are stored as typed. `avatar_url` follows the Google photo at each sign-in (trigger
   on `auth.identities`); after sign-up never read `raw_user_meta_data` — users can rewrite it via the Auth API.
+- **Safety data:** `member_emergency_contacts` and `member_health` (blood type, written only via `set_my_blood_type` /
+  `withdraw_my_blood_type_consent`) are own row only; others only via `member_safety_card` / the directory filters
+  with `members.safety`. Every blood-type read/write is logged in `safety_access_log` (readable by admins only).
 - Turkish text in SQL: `lower/upper/ilike` mishandle `İ/ı` (`lower('İ')` = `i̇`) — search with `private.search_fold`,
   sort with `collate "tr-x-icu"`.
 - **Roles & permissions** (`supabase/schemas/05_roles.sql`): admins create roles and tick permissions
@@ -134,8 +137,8 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   the fewest columns (mask emails), never write personal data into the repo or logs.
 - **Deleting an account** (no in-app delete): only on iltan's explicit OK; first check status/role/linked application
   and `applications.reviewed_by`, then `DELETE {SUPABASE_URL}/auth/v1/admin/users/<id>` with `SUPABASE_SECRET_KEY`
-  (cascades profile, member_contacts, member_details and member_motorcycles; applications become unlinked,
-  `reviewed_by` → null). Their access token stays valid up to 1 h; the app shows them signed out because the profile
+  (cascades profile, member_contacts, member_details, member_motorcycles, member_emergency_contacts and
+  member_health; applications become unlinked, `reviewed_by` → null; `safety_access_log` rows stay with actor/target null). Their access token stays valid up to 1 h; the app shows them signed out because the profile
   row is gone (`getCurrentUser`). Use `getCurrentUser()`, not bare `getClaims()`, wherever "who is signed in" matters.
 - **Auth/config as code:** production overrides live in `[remotes.production]` in `supabase/config.toml`. Always run
   `pnpm exec supabase config diff --remote=igqqicbfejhnsggfuydh` and review before `config push --remote=… --yes`.

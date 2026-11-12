@@ -46,6 +46,7 @@ Intended staff roles (2026-11-08, iltan):
 | Başvuru Sorumlusu | applications: view, review, approve/reject | people who check and approve applications |
 | Üye Sorumlusu | members.manage (+ `members.notes`, `members.discipline` once built) | people responsible for members' conduct |
 | Organizatör | applications: view, review (migrated default; adjust in the UI) | ride organizers |
+| Güvenlik ekibi (or add to Organizatör) | `members.safety` ("Güvenlik bilgilerini görme": safety cards, blood-type filter) | ride organizers / captains; iltan ticks it per role in `/admin/roles` (2026-11-13) |
 
 Application flow: public form → staff review (New → Contacted → Approved / Rejected) → on approval admin sends a
 WhatsApp invite link → person signs in with Google → account is linked to the application.
@@ -97,8 +98,13 @@ Build in this order, one branch each:
    motorcycles, visibility, photo consent). Tidy name capitalization (Turkish rules) and name lock for active members.
    Members without a birth date (activated by hand) can enter it once on `/account` (2026-11-11).
    Spec: `docs/superpowers/specs/2026-11-10-members-design.md`.
-   2a′. **Safety data** (next) — emergency contact, blood type with explicit consent, plate per bike, a new
-   `members.safety`-style permission, consents, privacy text.
+   2a′. **Safety data** (done 2026-11-13) — members enter up to 2 emergency contacts (name, relationship, phone), a
+   blood type (only with a separate explicit consent, withdrawable; withdrawal deletes it) and a plate per bike
+   (shown in the directory unless "Plakalarımı göster" is off) on `/account`; a gentle prompt while no contact exists.
+   New permission `members.safety`: holders open a safety card (contacts with call/WhatsApp, blood type, plates) from
+   `/members` and can filter by blood type (donor search) and "no emergency contact". Every blood-type operation and
+   card view is logged in `safety_access_log` (admins only). Inactive members disappear from staff view. Privacy
+   notice updated (version `2026-11-12-draft-3`). Spec: `docs/superpowers/specs/2026-11-12-safety-data-design.md`.
    2b. **Member conduct** — confidential staff notes, warnings, suspend/ban (see "Member conduct" below).
 3. **Events** — organizers create rides (date, route, capacity); rides have a **route** (path with start, stops,
    finish), not a single meeting point — see spec §6; members RSVP with a waiting list; home page shows upcoming events.
@@ -207,7 +213,11 @@ backups or outgrows the free limits. Split across members it is negligible.
   any special-category data.
 - Data minimisation: the application form collects only what is needed to evaluate it. Emergency contact etc. is
   collected after approval.
-- Blood type is health data (special category) → optional, explicit consent, visible only to organizers.
+- Blood type is health data (special category) → optional, separate explicit consent (açık rıza, withdrawable; withdrawal
+  deletes it), visible only to holders of `members.safety` (ride organizers / captains), per KVKK Board decision 2018/10.
+  Every blood-type operation and every safety-card view is logged in `safety_access_log` (admins only). Emergency
+  contacts and plates rest on legitimate interest (+ vital interest in an emergency), proposed, lawyer to confirm.
+  Encryption relies on the hosted database's disk encryption (no app-level encryption); see `docs/follow-ups.md`.
 - Data stored outside Turkey (Frankfurt) = cross-border transfer under KVKK art. 9 (amended 2024): standard contract
   with the processor and notification to the Authority within 5 business days.
 - Members can download and delete their data; rejected applications are deleted after a retention period.

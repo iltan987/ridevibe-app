@@ -75,7 +75,7 @@ export function normalizePhone(input: string) {
 // Contact fields: shared by the public form and staff corrections (contactSchema).
 const fullNameField = text(2, 120);
 
-const phoneField = z
+export const phoneField = z
   .string(err("required"))
   .min(1, err("required"))
   .transform(normalizePhone)

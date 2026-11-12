@@ -52,7 +52,7 @@ reset role;
 select is(
   (select name || '|' || (select count(*) from public.role_permissions where role_id = r.id)::text
    from public.roles r where r.id = '00000000-0000-0000-0000-0000000001f1'),
-  'pgtap-everything|5',
+  'pgtap-everything|6',
   'non-admins cannot rename roles or revoke permissions (even with every permission)'
 );
 

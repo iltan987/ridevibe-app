@@ -25,6 +25,17 @@ Run against a **local** stack only (local Supabase + a server on port 3123); nev
   birthday + Instagram shown), `nobirth@test.local` (active, no birth date), `pending-noapp@test.local`, and 26 more
   active profiles (29 active in total, so the pager appears); fixture recipe in the header of the script. It plants and
   removes bikes through `docker exec … psql` (`DB_CONTAINER`, local only). Screenshots go to `OUT_DIR`.
+- `safety-e2e.mjs` — safety data (PASS/FAIL lines, exit code != 0 on failure; each scenario in its own browser context):
+  emergency contacts on `/account` (prompt card, add, limit of two, delete, re-add becomes the main contact, landline
+  error), blood type with its own consent (save disabled until ticked, set, change, withdraw), plates (tidied to
+  `34 ABC 123`, shown in `/members`, hidden by "Plakalarımı göster"), a plain member (no safety controls, filter params
+  ignored, no access-log rows), a `members.safety` holder (blood-type and "no contact" filters, safety card with `tel:`
+  and `api.whatsapp.com` links, blood type, plate even when hidden, `view_card`/`filter_blood_type` log rows) and an
+  inactive member (delete and withdraw only). Needs `admin@test.local` (admin role), `member@test.local`,
+  `second@test.local` (all active) and `inactive@test.local`; recipe in the script header. It plants and deletes
+  contacts, blood types, bikes and access-log rows of these four users through `docker exec … psql`
+  (`DB_CONTAINER`, local only), before and after the run. Works on a DB with other active members. Screenshots go to
+  `OUT_DIR`.
 - `header-e2e.mjs` — `<head>` theme script across a language switch and an unknown path (theme kept, client-created
   script inert, no React "script tag" warning), theme sync to other tabs, no colour transitions on a theme switch,
   the user-menu skeleton (signed out: button; signed in: the avatar, photo kept on a language switch; language
