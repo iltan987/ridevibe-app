@@ -9,8 +9,10 @@ import { BottomNav } from "@/components/layout/bottom-nav";
 import { BottomNavForUser } from "@/components/layout/nav-for-user";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
+import { InlineScript } from "@/components/inline-script";
 import { ThemeScript } from "@/components/theme/theme-script";
 import { routing } from "@/i18n/routing";
+import { installCaptureScript } from "@/lib/pwa/install-script";
 import { THEME_COLORS } from "@/lib/theme";
 import "../globals.css";
 
@@ -48,6 +50,7 @@ export default async function LocaleLayout({
     >
       <head>
         <ThemeScript />
+        <InlineScript html={installCaptureScript} />
       </head>
       <body className="flex min-h-full flex-col">
         <NextIntlClientProvider>

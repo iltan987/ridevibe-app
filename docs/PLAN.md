@@ -82,6 +82,8 @@ open to anonymous visitors; instead:
 Live at https://ridevibe.com.tr: TR/EN site, Google sign-in (roles/statuses), public application form, draft privacy
 notice, staff-only applications list/detail. Google OAuth app is **published** (any Google account can sign in;
 new accounts start as `pending`).
+Own "install the app" prompt done (2026-11-12): banner on `/account` and `/members`, avatar-menu entry, guide for
+iPhone/Android-manual; no service worker (spec `docs/superpowers/specs/2026-11-12-install-prompt-design.md`).
 
 ## MVP for Samet (agreed 2026-11-08)
 
@@ -100,6 +102,8 @@ Build in this order, one branch each:
    2b. **Member conduct** — confidential staff notes, warnings, suspend/ban (see "Member conduct" below).
 3. **Events** — organizers create rides (date, route, capacity); rides have a **route** (path with start, stops,
    finish), not a single meeting point — see spec §6; members RSVP with a waiting list; home page shows upcoming events.
+   Events have **requirements** (e.g. minimum bike cc, membership stage) — depends on the **"ön alım"** probation stage
+   (approved members watched in a separate WhatsApp group first; open decision in `docs/follow-ups.md`, 2026-11-12).
 4. **Announcements** — short organizer posts, pinned on the home page.
 5. Right after the MVP: **event photo gallery** (Cloudflare R2).
 

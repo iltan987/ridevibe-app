@@ -2,8 +2,8 @@
 
 Run against a **local** stack only (local Supabase + a server on port 3123); never against production.
 
-- `e2e-lib.mjs` — helpers: `launch({ scrollbars })` (system Chrome, `CHROME_PATH` to override; `scrollbars: true` keeps
-  classic scrollbars, hidden by default in headless), `newPage()` (390x844, Turkish),
+- `e2e-lib.mjs` — helpers: `launch({ scrollbars, args })` (system Chrome, `CHROME_PATH` to override; `scrollbars: true` keeps
+  classic scrollbars, hidden by default in headless; `args` = extra Chrome flags), `newPage()` (390x844, Turkish),
   `signIn(page, email)` (sets Supabase session cookies via email/password), `throttle()` (CDP network throttling).
   The keys in it are the public local-Supabase demo keys, not secrets.
 - `nav-e2e.mjs` — navigation progress bar / pending dim checks (PASS/FAIL lines, exit code != 0 on failure).
@@ -38,6 +38,14 @@ Run against a **local** stack only (local Supabase + a server on port 3123); nev
   `pnpm start -p 3123` and the local stack; writes one application for `apply-e2e@test.local` and deletes it before and
   after through `docker exec … psql` (`DB_CONTAINER`, local only). The last check (signed in: no Google button) needs
   email sign-in plus `pending-noapp@test.local` and prints `SKIP` otherwise. Screenshots (390px) go to `OUT_DIR`.
+- `install-e2e.mjs` — the "install the app" prompt (PASS/FAIL lines, exit code != 0 on failure): banner and avatar-menu
+  entry on `/account` and `/members`, `prompt()` called once and a dismissal remembered (also across tabs), iPhone
+  Safari and Android Firefox guides, installed states (standalone via a `matchMedia` stub, stored flag), audiences
+  (pending / inactive / signed out), banner layout at 390px, TR to EN switch, no hydration warnings. Uses the real
+  `beforeinstallprompt` (Chrome flag `--bypass-app-banner-engagement-checks`) with `prompt()`/`userChoice` stubbed on
+  the instance. Needs `pnpm start -p 3123`, local email sign-in and `member@test.local` (active),
+  `pending-noapp@test.local` (pending) and `inactive@test.local` (status `inactive`; create it like the others, then
+  `update profiles set status = 'inactive'`). `BASE_URL` overrides the server.
 - `skeletons.mjs <baseUrl> <out.md> [routes…]` — measures each `data-skeleton` fallback against its
   `data-skeleton-result` (JS off vs on); see `docs/learnings/testing.md`.
 

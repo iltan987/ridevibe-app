@@ -10,17 +10,11 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ## Next up (iltan asked for these; in priority order; start in a new session)
 
-- **Own "install the app" prompt** (2026-11-11, iltan: people close the browser's install pop-up) — design round
-  first. Android + Chrome/Edge desktop: catch `beforeinstallprompt`, suppress the browser's pop-up, show our own
-  card/button (one tap → system install dialog). iPhone/iPad: no programmatic install (Safari has no
-  `beforeinstallprompt`, WebKit WONTFIX) → own short "Paylaş → Ana Ekrana Ekle" guide; since iOS 26 every Home Screen
-  site opens as a web app. In-app browsers: existing "open in browser" notice first. Never ask when already installed
-  (`display-mode: standalone`); remember dismissals, re-ask later. Moments: after approval / first sign-in, a member
-  home card, the avatar menu. Strongest pitch is notifications (iOS Web Push only works for Home Screen apps) → decide
-  whether it ships with the service worker + Web Push. Watch Chrome's Web Install API / `<install>` element (origin
-  trial 2026, not stable). Native apps not needed (a TWA could put the PWA on Play Store if ever wanted; Apple rejects
-  thin wrappers). Sources: MDN BeforeInstallPromptEvent, caniuse, WebKit bug 193959, heise (iOS 26),
-  developer.chrome.com/blog/install-element-ot (checked 2026-11-11).
+- **Cross-tab sign-in and language sync** (2026-11-12, iltan, install-prompt design) — signing in (or out) in one tab
+  should sign the other open tabs in/out too, following their `next` URL if any; switching the language in one tab
+  should switch the others. Like the theme's cross-tab sync. Research first how `@supabase/ssr` cookie sessions behave
+  across tabs (`onAuthStateChange`, BroadcastChannel / `storage` events) and what it costs; only if the overhead is
+  small. Kept out of the install-prompt iteration (auth/i18n, not install).
 - **Safety data (2a′)** (2026-11-10, iltan) — next step after Members in `docs/PLAN.md`: emergency contact, blood type
   with explicit consent (special-category data), plate per bike, a new `members.safety`-style permission, separate
   consents and the privacy text. Through the usual design → plan → build flow.
@@ -41,6 +35,12 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 
 ## Open decisions (need iltan)
+
+- **"Ön alım" (probation) stage** (2026-11-12, iltan) — after approval the club moves a new member into a separate
+  "ön alım" WhatsApp group to see how they behave; they can still join some events. If it doesn't work out they leave
+  on their own or are removed. The app has no such stage today (approved = `active`). To discuss before Events: a new
+  status or a membership stage on active profiles, who sets/ends it (permission), what ön alım members can see, and
+  event requirements (e.g. minimum bike cc, membership stage) that organizers set per event. See `docs/PLAN.md` step 3.
 
 - **Dead-code tool?** (2026-11-11, iltan) — which tool, if any, for the dead-code sweep (Tooling). Candidates to
   compare when we talk: `knip` (unused files, exports, dependencies; Next.js plugin), `ts-prune`/`ts-unused-exports`
@@ -94,9 +94,24 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   fixed date types vs. free-form entries; reminders before a date (Web Push / email, needs the notification work);
   how it relates to the plate per bike planned in safety data (2a′) — consider designing the two together. KVKK:
   plates, insurance details and notes are personal data; collect only what members choose to enter.
+- **Web Install API / `<install>` element: switch when stable** (2026-11-12, install prompt) — Chrome's declarative
+  install element is in an origin trial (2026), not stable. When it ships broadly, replace our `beforeinstallprompt`
+  capture/banner plumbing (`src/lib/pwa/`) with it. Source: developer.chrome.com/blog/install-element-ot.
 
 ## Parked edge cases (known, judged harmless for now)
 
+- **Install prompt: iOS in-app webviews look like Safari** (2026-11-12, install-prompt final review) — Instagram /
+  Facebook in-app browsers on iOS classify as `ios-safari` (`src/lib/pwa/platform.ts`), so they'd get Safari steps
+  that don't work there. Signed-in users can't be in those webviews today (Google blocks OAuth there; `/sign-in` shows
+  the in-app notice), and the banner shows only to signed-in members; revisit if that changes.
+- **"Şimdi değil" does nothing visible with blocked storage** (2026-11-12, install-prompt final review) — with a
+  throwing `localStorage`, `dismiss()` can't store the timestamp and the banner stays (`install-store.ts`). Rare
+  (privacy modes); fix if it ever matters: an in-memory "dismissed for this page" flag.
+- **Install prompt: real-device checks not done** (2026-11-12, install-prompt final review) — (1) Google sign-in
+  inside the installed iOS Home Screen app (it has its own cookie jar, so members sign in again there; check the OAuth
+  round trip stays inside the app); (2) whether `getInstalledRelatedApps()` recognises Android installs made before
+  `related_applications` was added to the manifest, and whether Samsung Internet supports it. Deferred: needs real
+  phones; risk: a sign-in dead end in the iOS app, or the banner showing to already-installed Android members.
 - **Email-based activation skips the "already linked" guard** (2026-11-09, final review) — correcting an approved
   application's email (or signing in with it) can activate an account that still has its own open linked application;
   that application lingers until staff reject it. `link_application` refuses this case; the trigger path doesn't.
@@ -159,8 +174,41 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   query has no element validation; `instagramUrl` doesn't encode the handle (safe: handles are `[A-Za-z0-9._]`);
   city choice "other" accepts "İstanbul" (check form parity); `z.uuid` is strict about fixture-style ids;
   `fail()` / `finish()` in the profile actions are untested.
+- **Install prompt review minors** (2026-11-12, install-prompt reviews) — (a) `platform.ts`: the `OPT` token in the
+  iOS "other browser" regex is a bare substring (could match inside another UA word). The iPadOS case (Mac UA with
+  touch) is tested; untested are a Mac UA with 1–2 touch points, iOS `OPT`/`Ddg`/`YaBrowser`, macOS Edge and Android
+  `OPR`. Deferred: the rules come from `pwa-install` and these browsers are rare in the club; risk: a wrong guide
+  (e.g. Safari steps in another browser), never a crash. (b) `install-script` / store vm tests run node-stripped
+  source, not the build's output, and `win.Event` is used unguarded in `captureInstall`. Deferred: the browser E2E runs
+  the real built script, and every browser that fires the install events has `Event`; risk: a build-only
+  transpilation difference would show up only in the E2E. (c) `install-store` tests: "event before 30 s" doesn't prove
+  the timer is cancelled, no test for concurrent `install()` calls; the Android watch also runs when the app is
+  already installed (harmless: variant stays `none`). (d) `account/page.tsx` import order. Deferred: cosmetic, lint
+  doesn't enforce it. (e) `useInstall()` is called twice (banner + avatar menu; harmless, one shared store) and
+  `guideOpen` may stay `true` if the variant flips to `none` while the dialog is open (reopens on the next flip back).
+- **Install E2E minors** (2026-11-12, install-prompt Task 6 review) — `scripts/e2e/install-e2e.mjs`: no
+  `try/finally` around scenarios (a thrown error skips `ctx.close()`, later scenarios inherit cookies/storage); the
+  fallback `page.mouse.click(195, 400)` in `open()` (user activation when the event is late) can hit real UI; the
+  `apply-nav-e2e.mjs` "showed the guess first" check flaked once (passed on rerun). From the fix-wave re-review: the
+  iPhone "installed flag still set" check is near-tautological (`initScript` sets the flag on every document; the real
+  assertions there are "no banner / no menu entry"); the language-switch scenario doesn't assert exactly one spacer
+  after the switch; the comment near line 39 still states "Chrome ignores a re-dispatched real event" as fact (see the
+  verify-or-drop item below). Deferred: test-only, all green today; risk: a confusing cascade of FAILs or a rare flake.
+- **Install prompt: after an accepted install, a later install event in the same page is ignored** (2026-11-12,
+  install-prompt fix-wave re-review) — the in-memory `accepted` flag (`install-store.ts`) treats the app as installed
+  for the page's lifetime, so if the install then fails, the menu entry returns only after a reload. Deferred: by
+  design (avoids the guide flashing while Chrome builds the app); risk: a rare failed install needs one reload.
+- **Verify or drop the "re-dispatched `beforeinstallprompt` is ignored" learning** (2026-11-12, install-prompt final
+  review) — `docs/learnings/testing.md` says a held real event re-dispatched with `window.dispatchEvent` reached no
+  listener; that was observed once, not verified (the DOM spec says re-dispatching a dispatched event should work).
+  Try it again in isolation; if it works, simplify `__release()` in `install-e2e.mjs` to re-dispatch the real event.
+  Risk if left: a wrong learning steers later tests to synthetic events.
 
 ### UI / accessibility
+- **Focus drops to `<body>` when the install banner unmounts** (2026-11-12, install-prompt final review) — pressing
+  "Şimdi değil", or a dismissed system dialog, removes the banner with focus on its button, so keyboard and
+  screen-reader users land on `<body>` (`src/components/pwa/install-banner.tsx`). Deferred: the banner is a phone
+  feature for touch users; fix: move focus to the main heading (or announce) before unmounting.
 - **Application form steps review minors (2026-11-11)** — all optional; the final review removes what it fixes.
   - Unit tests/draft: no direct tests for `stepOfField` / `isLastStep` (`steps.ts`); `parseDraft` keeps empty strings
     and restored strings have no length cap (Zod catches them on submit); `browserStorage` throw path untested.

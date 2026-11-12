@@ -5,7 +5,10 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Ride & Vibe",
     short_name: "Ride & Vibe",
+    id: "/",
     start_url: "/",
+    // Lets getInstalledRelatedApps() recognise the installed copy of this very app (the install store reads it).
+    related_applications: [{ platform: "webapp", url: "https://ridevibe.com.tr/manifest.webmanifest" }],
     display: "standalone",
     background_color: THEME_COLORS.dark,
     theme_color: THEME_COLORS.dark,

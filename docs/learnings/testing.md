@@ -190,3 +190,26 @@
   elements are 375.
 - **Do:** compare full-width elements with `document.body` width, not `innerWidth` (follow-up for `nav-e2e.mjs`).
 - **Source:** found by testing (hide-Başvur Task 5).
+
+### `display-mode` can't be emulated in headless Chrome: stub `matchMedia` (2026-11-12)
+- **Symptom:** `page.emulateMediaFeatures([{ name: "display-mode", value: "standalone" }])` (and the CDP
+  `Emulation.setEmulatedMedia`) fails with "Unsupported media feature: display-mode" in Chrome 157, so an "installed
+  PWA" state can't be tested the usual way.
+- **Cause:** `display-mode` isn't an emulatable media feature in CDP.
+- **Do:** replace `window.matchMedia` in `page.evaluateOnNewDocument` so `(display-mode: standalone)` returns an
+  object with `matches: true` (plus no-op `addEventListener`/`addListener`), and pass other queries to the real one
+  (`scripts/e2e/install-e2e.mjs`, `initScript`). Real `beforeinstallprompt` fires in headless Chrome with
+  `--bypass-app-banner-engagement-checks` (`launch({ args })`); to stub `prompt()`/`userChoice` on the real event, add a
+  capture-phase `beforeinstallprompt` listener in `evaluateOnNewDocument` (it runs before the page's own listener).
+- **Source:** found by testing (install prompt).
+
+### `beforeinstallprompt` fires only in the default browser context; re-dispatching a real one didn't work (2026-11-12)
+- **Symptom:** in a `browser.createBrowserContext()` page the install event never fired (banner tests failed); a
+  real event held back with `stopImmediatePropagation()` and re-dispatched with `window.dispatchEvent(held)` reached no
+  listener.
+- **Cause:** Chrome treats incognito-style contexts as non-installable. The re-dispatch is only *observed* (once), not
+  a verified cause: the DOM spec says re-dispatching an event after its dispatch finished should work (follow-up:
+  verify or drop).
+- **Do:** use `browser.newPage()` (default context) and wipe cookies and site data between scenarios
+  (`freshContext()` in `scripts/e2e/install-e2e.mjs`); to show the banner *after* load, release a synthetic event.
+- **Source:** found by testing (install prompt).
