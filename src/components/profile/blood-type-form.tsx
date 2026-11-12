@@ -54,6 +54,7 @@ export function BloodTypeForm({ bloodType, consent, withdrawOnly }: Props) {
       () => {
         setEditing(false);
         setTicked(false);
+        setSelected("");
       },
     );
   }
@@ -71,7 +72,14 @@ export function BloodTypeForm({ bloodType, consent, withdrawOnly }: Props) {
           <AlertDialogAction
             variant="destructive"
             disabled={isPending}
-            onClick={() => run(withdrawBloodTypeConsent, () => setConfirmOpen(false))}
+            onClick={() =>
+              run(withdrawBloodTypeConsent, () => {
+                setConfirmOpen(false);
+                setSelected("");
+                setTicked(false);
+                setEditing(false);
+              })
+            }
           >
             {t("withdraw")}
           </AlertDialogAction>

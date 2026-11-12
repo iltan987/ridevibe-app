@@ -139,6 +139,9 @@ export const emergencyContactSchema = z.object({
   phone: phoneField,
 });
 
+/** At most this many emergency contacts per member (the DB allows positions 1 and 2). */
+export const MAX_EMERGENCY_CONTACTS = 2;
+
 export type EmergencyContactInput = z.input<typeof emergencyContactSchema>;
 
 export const bloodTypeSchema = z.object({

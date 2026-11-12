@@ -20,11 +20,10 @@ import { Separator } from "@/components/ui/separator";
 import { deleteEmergencyContact } from "@/lib/members/actions";
 import type { BloodType } from "@/lib/members/blood-type";
 import type { EmergencyContact } from "@/lib/members/queries";
+import { MAX_EMERGENCY_CONTACTS } from "@/lib/members/schema";
 import { BloodTypeForm } from "./blood-type-form";
 import { EmergencyContactDialog } from "./emergency-contact-dialog";
 import { ActionStatus, useProfileAction } from "./use-profile-action";
-
-export const MAX_CONTACTS = 2;
 
 type Props = {
   contacts: EmergencyContact[];
@@ -42,7 +41,7 @@ export function EmergencySection({ contacts, bloodType, bloodConsent, withdrawOn
   // `target` outlives the dialog so its text doesn't blank while it animates closed.
   const [target, setTarget] = useState<EmergencyContact | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const full = contacts.length >= MAX_CONTACTS;
+  const full = contacts.length >= MAX_EMERGENCY_CONTACTS;
   const mainPosition = Math.min(...contacts.map((c) => c.position));
   const hasBlood = bloodConsent && bloodType !== null;
 
@@ -62,13 +61,13 @@ export function EmergencySection({ contacts, bloodType, bloodConsent, withdrawOn
             {contacts.map((contact) => (
               <li key={contact.id} className="flex items-center justify-between gap-2 py-2 first:pt-0 last:pb-0">
                 <div className="min-w-0 text-sm">
-                  <p className="font-medium">
+                  <p className="truncate font-medium">
                     {contact.name}
                     {contact.position === mainPosition && contacts.length > 1 && (
                       <span className="ml-2 font-normal text-muted-foreground">({t("mainContact")})</span>
                     )}
                   </p>
-                  <p className="text-muted-foreground">
+                  <p className="truncate text-muted-foreground">
                     {t(`relationships.${contact.relationship}`)} · {formatPhoneNumberIntl(contact.phone) || contact.phone}
                   </p>
                 </div>

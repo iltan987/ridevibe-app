@@ -8,6 +8,7 @@ import {
   type BirthDateInput,
   birthDateSchema,
   firstErrorPerField,
+  MAX_EMERGENCY_CONTACTS,
   type EmergencyContactInput,
   emergencyContactSchema,
   type BloodTypeInput,
@@ -178,8 +179,6 @@ export async function deleteMotorcycle(id: string): Promise<ProfileActionResult>
   return finish(error, data, "deleteMotorcycle");
 }
 
-const MAX_CONTACTS = 2;
-
 /** Inserts at the lowest free position (1 or 2); a lost race on the same slot surfaces as 23505 → contactLimit. */
 export async function addEmergencyContact(input: EmergencyContactInput): Promise<ProfileActionResult> {
   const parsed = emergencyContactSchema.safeParse(input);
@@ -195,7 +194,7 @@ export async function addEmergencyContact(input: EmergencyContactInput): Promise
   const taken = new Set(existing.map((c) => c.position));
   let position = 1;
   while (taken.has(position)) position++;
-  if (position > MAX_CONTACTS) return { status: "contactLimit" };
+  if (position > MAX_EMERGENCY_CONTACTS) return { status: "contactLimit" };
 
   const { data, error } = await supabase
     .from("member_emergency_contacts")
