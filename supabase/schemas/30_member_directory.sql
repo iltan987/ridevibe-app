@@ -91,6 +91,7 @@ begin
       select jsonb_agg(
         jsonb_build_object(
           'brand', m.brand, 'model', m.model, 'cc', m.cc,
+          -- every profile gets a member_details row at sign-up: the coalesce only mirrors the column default
           'plate', case when coalesce(d.show_plates, true) then m.plate end
         ) order by m.created_at, m.id)
       from public.member_motorcycles m

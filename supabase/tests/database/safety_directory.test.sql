@@ -2,16 +2,17 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(35);
+select plan(38);
 
--- Fixtures (postgres bypasses RLS). Ids 0000…0631–0637, roles 0655/0656; every query is scoped to them.
+-- Fixtures (postgres bypasses RLS). Ids 0000…0631–0638, roles 0655/0656; every query is scoped to them.
 -- 631 viewer, 632 safety holder, 633 member (contact, 0-, plate shown), 634 member (plate hidden, no contact),
--- 635 inactive with contact, 636 inactive safety holder, 637 members.manage only.
+-- 635 inactive with contact, 636 inactive safety holder, 637 members.manage only, 638 second 0- member (cursor test).
 insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-000000000631', 'pgtap-sd-viewer@pgtap.invalid',   '{"full_name": "Vedat Viewer"}'),
   ('00000000-0000-0000-0000-000000000632', 'pgtap-sd-safety@pgtap.invalid',   '{"full_name": "Selim Safety"}'),
-  ('00000000-0000-0000-0000-000000000633', 'pgtap-sd-contact@pgtap.invalid',  '{"full_name": "Cemal Contact"}'),
-  ('00000000-0000-0000-0000-000000000634', 'pgtap-sd-nocontact@pgtap.invalid', '{"full_name": "Nuri Nocontact"}'),
+  ('00000000-0000-0000-0000-000000000633', 'pgtap-sd-contact@pgtap.invalid',  '{"full_name": "Cemal Pgtapsd Contact"}'),
+  ('00000000-0000-0000-0000-000000000634', 'pgtap-sd-nocontact@pgtap.invalid', '{"full_name": "Nuri Pgtapsd Nocontact"}'),
+  ('00000000-0000-0000-0000-000000000638', 'pgtap-sd-twin@pgtap.invalid',     '{"full_name": "Cemal Pgtapsd Twin"}'),
   ('00000000-0000-0000-0000-000000000635', 'pgtap-sd-inactive@pgtap.invalid', '{"full_name": "Ilker Inactive"}'),
   ('00000000-0000-0000-0000-000000000636', 'pgtap-sd-inactsafe@pgtap.invalid', '{"full_name": "Sabri Inactsafe"}'),
   ('00000000-0000-0000-0000-000000000637', 'pgtap-sd-manager@pgtap.invalid',  '{"full_name": "Mehmet Manager"}');
@@ -25,7 +26,7 @@ insert into public.role_permissions (role_id, permission) values
 
 update public.profiles set status = 'active'
   where id in ('00000000-0000-0000-0000-000000000631', '00000000-0000-0000-0000-000000000633',
-               '00000000-0000-0000-0000-000000000634');
+               '00000000-0000-0000-0000-000000000634', '00000000-0000-0000-0000-000000000638');
 update public.profiles set status = 'active', role_id = '00000000-0000-0000-0000-000000000655'
   where id = '00000000-0000-0000-0000-000000000632';
 update public.profiles set status = 'active', role_id = '00000000-0000-0000-0000-000000000656'
@@ -45,7 +46,8 @@ insert into public.member_emergency_contacts (profile_id, position, name, relati
   ('00000000-0000-0000-0000-000000000633', 1, 'Ali Contact', 'parent', '+905551112244'),
   ('00000000-0000-0000-0000-000000000635', 1, 'Inactive Contact', 'sibling', '+905551112255');
 insert into public.member_health (profile_id, blood_type, consent_blood_type, consent_blood_type_at, consent_blood_type_version)
-  values ('00000000-0000-0000-0000-000000000633', '0-', true, now(), 'v1');
+  values ('00000000-0000-0000-0000-000000000633', '0-', true, now(), 'v1'),
+         ('00000000-0000-0000-0000-000000000638', '0-', true, now(), 'v1');
 
 create function pg_temp.login(uid uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
@@ -84,15 +86,15 @@ select is(
     where id = '00000000-0000-0000-0000-000000000634'),
   true, 'the plate key is present when hidden');
 select is(
-  (select motorcycles->0->>'plate' from public.member_directory(search => 'Nuri')
-    where id = '00000000-0000-0000-0000-000000000634'),
-  null, 'viewer sees a null plate when show_plates is off');
+  (select count(*)::int from public.member_directory(search => 'Nuri')
+    where id = '00000000-0000-0000-0000-000000000634' and motorcycles->0->>'plate' is null),
+  1, 'viewer sees a null plate when show_plates is off (row present)');
 select is(
   (select count(*)::int from public.member_directory(search => 'pgtap-never') ), 0, 'search still filters');
 select is(
-  (select has_emergency_contact from public.member_directory(search => 'Cemal')
-    where id = '00000000-0000-0000-0000-000000000633'),
-  null, 'has_emergency_contact is null for the viewer');
+  (select count(*)::int from public.member_directory(search => 'Cemal')
+    where id = '00000000-0000-0000-0000-000000000633' and has_emergency_contact is null),
+  1, 'has_emergency_contact is null for the viewer (row present)');
 select is(pg_temp.error_of($$ select * from public.member_directory(blood_filter => '0-') $$), '42501', 'viewer: blood filter -> 42501');
 select is(pg_temp.error_of($$ select * from public.member_directory(no_contact => true) $$), '42501', 'viewer: no_contact -> 42501');
 select is(pg_temp.error_of($$ select * from public.member_directory_counts(blood_filter => '0-') $$), '42501', 'viewer: counts blood filter -> 42501');
@@ -116,10 +118,26 @@ select results_eq(
       where id in ('00000000-0000-0000-0000-000000000633', '00000000-0000-0000-0000-000000000634') $$,
   $$ values ('00000000-0000-0000-0000-000000000634') $$,
   'no_contact returns the member without contacts only');
-select is((select total::int from public.member_directory_counts(search => 'Cemal', blood_filter => '0-')), 1, 'counts: blood filter matches');
+select is((select total::int from public.member_directory_counts(search => 'Cemal Pgtapsd Contact', blood_filter => '0-')), 1, 'counts: blood filter matches');
 select is((select total::int from public.member_directory_counts(search => 'Nuri', blood_filter => '0-')), 0, 'counts: blood filter excludes');
 select is((select total::int from public.member_directory_counts(search => 'Nuri', no_contact => true)), 1, 'counts: no_contact matches');
-select is((select total::int from public.member_directory_counts(search => 'Cemal', no_contact => true)), 0, 'counts: no_contact excludes');
+select is((select total::int from public.member_directory_counts(search => 'Cemal Pgtapsd Contact', no_contact => true)), 0, 'counts: no_contact excludes');
+
+-- Blood filter with the keyset cursor (page_size 1 returns the page plus one peek row)
+create temp table sd_page1 on commit drop as
+  select id, full_name from public.member_directory(search => 'pgtapsd', blood_filter => '0-', page_size => 1);
+select results_eq(
+  $$ select id::text from sd_page1 order by full_name collate "tr-x-icu", id $$,
+  $$ values ('00000000-0000-0000-0000-000000000633'), ('00000000-0000-0000-0000-000000000638') $$,
+  'page 1 holds both 0- fixtures and not the non-0- one');
+select results_eq(
+  $$ select id::text from public.member_directory(search => 'pgtapsd', blood_filter => '0-', page_size => 1,
+       after_name => (select full_name from sd_page1 order by full_name collate "tr-x-icu", id limit 1),
+       after_id => (select id from sd_page1 order by full_name collate "tr-x-icu", id limit 1)) $$,
+  $$ values ('00000000-0000-0000-0000-000000000638') $$,
+  'page 2 after the first row holds the second 0- fixture only');
+select is((select count(*)::int from sd_page1 where id = '00000000-0000-0000-0000-000000000634'), 0,
+  'the non-0- member never appears under the blood filter');
 
 -- Card
 select results_eq(
@@ -127,7 +145,7 @@ select results_eq(
             contacts->1->>'position', jsonb_array_length(contacts)::text, blood_type::text,
             motorcycles->0->>'plate'
        from public.member_safety_card('00000000-0000-0000-0000-000000000633') $$,
-  $$ values ('Cemal Contact', '1', 'Ali Contact', 'parent', '2', '2', '0-', '34 ABC 123') $$,
+  $$ values ('Cemal Pgtapsd Contact', '1', 'Ali Contact', 'parent', '2', '2', '0-', '34 ABC 123') $$,
   'card: contacts by position, blood type and plate');
 select results_eq(
   $$ select motorcycles->0->>'plate', jsonb_array_length(contacts)::text, blood_type::text
@@ -147,8 +165,9 @@ select set_config('role', 'postgres', true);
 select results_eq(
   $$ select actor_id::text, target_id::text, detail from public.safety_access_log
       where action = 'filter_blood_type' and actor_id = '00000000-0000-0000-0000-000000000632' $$,
-  $$ values ('00000000-0000-0000-0000-000000000632', null, '0-') $$,
-  'exactly one filter_blood_type row: the blood filter logged, no_contact and counts did not');
+  $$ values ('00000000-0000-0000-0000-000000000632', null, '0-'), ('00000000-0000-0000-0000-000000000632', null, '0-'),
+            ('00000000-0000-0000-0000-000000000632', null, '0-') $$,
+  'three filter_blood_type rows (one per blood-filter call); no_contact and counts logged none');
 select results_eq(
   $$ select actor_id::text, target_id::text from public.safety_access_log
       where action = 'view_card' and actor_id = '00000000-0000-0000-0000-000000000632'
