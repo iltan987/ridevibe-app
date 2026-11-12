@@ -120,7 +120,7 @@ const memberCard = (page, name) =>
     (name) => [...document.querySelectorAll("li[data-skeleton-result=members-row]")].find((li) => li.textContent.includes(name))?.innerText ?? null,
     name,
   );
-/** Clicks the nth visible "Kaydet" submit button: 0 location, 1 visibility, 2 photo consent (bike dialogs are closed). */
+/** Clicks the nth visible "Kaydet" submit button: 0 location, 1 blood type (no consent yet), 2 visibility, 3 photo consent (dialogs are closed). */
 const saveNth = async (page, n) => {
   const buttons = await page.evaluateHandle(() => [...document.querySelectorAll("button[type=submit]")].filter((b) => b.getBoundingClientRect().width > 0 && b.textContent.trim() === "Kaydet"));
   const el = (await buttons.getProperties()).get(String(n));
@@ -293,7 +293,7 @@ sql(`update member_details set birth_date = null, show_birthday = true where pro
   await typeInto(await find(page, "#profile-instagram"), "https://www.instagram.com/testig/?igsh=abc");
   await (await switchFor(page, "Instagram'ımı")).asElement().click();
   await (await switchFor(page, "Doğum günümü")).asElement().click();
-  await saveNth(page, 1);
+  await saveNth(page, 2);
   check("visibility: save shows 'Kaydedildi.'", !!(await hasText(page, /Kaydedildi\./)));
   const igNow = await page.$eval("#profile-instagram", (i) => i.value);
   check("visibility: input shows the normalised handle right after saving", igNow === "testig", igNow);
@@ -308,7 +308,7 @@ sql(`update member_details set birth_date = null, show_birthday = true where pro
   await go(page, "/account");
   await (await switchFor(page, "Instagram'ımı")).asElement().click();
   await (await switchFor(page, "Doğum günümü")).asElement().click();
-  await saveNth(page, 1);
+  await saveNth(page, 2);
   await hasText(page, /Kaydedildi\./);
   await go(page, "/members?q=Test");
   const c5 = await memberCard(page, "Test Üye");
@@ -317,7 +317,7 @@ sql(`update member_details set birth_date = null, show_birthday = true where pro
   // invalid Instagram
   await go(page, "/account");
   await typeInto(await find(page, "#profile-instagram"), "not valid!");
-  await saveNth(page, 1);
+  await saveNth(page, 2);
   check("visibility: invalid Instagram rejected", !!(await hasText(page, /Geçerli bir Instagram kullanıcı adı/)));
 
   // photo consent
@@ -325,7 +325,7 @@ sql(`update member_details set birth_date = null, show_birthday = true where pro
   const before = await bodyText(page);
   check("consent: neutral 'not given' without a date before any choice", before.includes("İzin verilmedi.") && !before.includes("İzin verdin"));
   await (await switchFor(page, "kulüp galerisinde paylaşılmasına")).asElement().click();
-  await saveNth(page, 2);
+  await saveNth(page, 3);
   check("consent: saving shows the date", !!(await hasText(page, /İzin verdin \(\d{1,2} \p{L}+ \d{4}\)\./u)));
   await shot(page, "consent");
   // Saving an unchanged consent is ok but writes nothing (version and timestamp stay together).
@@ -333,11 +333,11 @@ sql(`update member_details set birth_date = null, show_birthday = true where pro
   sql(`update member_details set consent_photos_version = 'stale' where profile_id = '${MEMBER_ID}'`);
   const stamped = consentRow();
   await go(page, "/account");
-  await saveNth(page, 2);
+  await saveNth(page, 3);
   check("consent: re-saving unchanged consent shows 'Kaydedildi.' and writes nothing", !!(await hasText(page, /Kaydedildi\./)) && consentRow() === stamped, consentRow());
   // Withdrawing: neutral wording, version written with the change.
   await (await switchFor(page, "kulüp galerisinde paylaşılmasına")).asElement().click();
-  await saveNth(page, 2);
+  await saveNth(page, 3);
   check("consent: withdrawing shows 'İzin verilmedi.' and stores the notice version", !!(await hasText(page, /İzin verilmedi\./)) && !consentRow().endsWith("|stale"), consentRow());
   await ctx.close();
 }
@@ -359,7 +359,7 @@ sql(`update member_details set birth_date = null, show_birthday = true where pro
   await shot(page, "no-birthdate");
 
   // Saving visibility without touching the switch keeps the stored default (on).
-  await saveNth(page, 1);
+  await saveNth(page, 2);
   await hasText(page, /Kaydedildi\./);
   check("no birth date: saving visibility keeps show_birthday on", stored() === "null|true", stored());
   await go(page, "/account");
@@ -390,7 +390,7 @@ sql(`update member_details set birth_date = null, show_birthday = true where pro
   // Switching it on later shows it.
   await go(page, "/account");
   await (await switchFor(page, "Doğum günümü")).asElement().click();
-  await saveNth(page, 1);
+  await saveNth(page, 2);
   await hasText(page, /Kaydedildi\./);
   await go(page, "/members?q=Tarihsiz");
   const card = await memberCard(page, "Tarihsiz Fixture");
