@@ -3,10 +3,12 @@ import { getCurrentUser } from "@/lib/auth/user";
 import { encodeNameCursor, type NameCursor, PAGE_SIZE, splitPage } from "@/lib/pagination";
 import { createClient } from "@/lib/supabase/server";
 import type { Enums } from "@/lib/supabase/database.types";
+import type { BloodType } from "./blood-type";
 import type { Motorcycle } from "./format";
 
 export type { Motorcycle };
 export type IstanbulSide = Enums<"istanbul_side">;
+export type EmergencyRelationship = Enums<"emergency_relationship">;
 
 export type DirectoryMember = {
   id: string;
@@ -17,6 +19,16 @@ export type DirectoryMember = {
   birthday: { month: number; day: number } | null;
   instagram: string | null;
   motorcycles: Motorcycle[];
+  /** null unless the viewer may see safety data (members.safety). */
+  hasEmergencyContact: boolean | null;
+};
+
+export type EmergencyContact = {
+  id: string;
+  position: 1 | 2;
+  name: string;
+  relationship: EmergencyRelationship;
+  phone: string;
 };
 
 export type MyProfile = {
@@ -30,7 +42,10 @@ export type MyProfile = {
   showInstagram: boolean;
   consentPhotos: boolean;
   consentPhotosAt: string | null;
-  motorcycles: (Motorcycle & { id: string })[];
+  motorcycles: (Motorcycle & { id: string; plateForeign: boolean })[];
+  emergencyContacts: EmergencyContact[];
+  bloodType: BloodType | null;
+  bloodConsent: boolean;
 };
 
 /** One page of the member directory (active members only; the DB sorts by Turkish name and hides opted-out fields). */
@@ -38,10 +53,14 @@ export async function listDirectory({
   query,
   side,
   cursor,
+  bloodType,
+  noContact,
 }: {
   query?: string;
   side?: IstanbulSide | null;
   cursor?: NameCursor | null;
+  bloodType?: BloodType | null;
+  noContact?: boolean;
 }) {
   const supabase = await createClient();
   // Generated arg types are non-nullable: omit absent args instead of passing null.
@@ -50,6 +69,8 @@ export async function listDirectory({
     ...(query ? { search: query } : {}),
     ...(side ? { side_filter: side } : {}),
     ...(cursor ? { after_name: cursor.name, after_id: cursor.id } : {}),
+    ...(bloodType ? { blood_filter: bloodType } : {}),
+    ...(noContact ? { no_contact: true } : {}),
   });
   if (error) throw new Error(`listDirectory failed: ${error.code}`);
 
@@ -65,15 +86,28 @@ export async function listDirectory({
         row.birth_month != null && row.birth_day != null ? { month: row.birth_month, day: row.birth_day } : null,
       instagram: (row.instagram as string | null) ?? null,
       motorcycles: Array.isArray(row.motorcycles) ? (row.motorcycles as Motorcycle[]) : [],
+      hasEmergencyContact: (row.has_emergency_contact as boolean | null) ?? null,
     }),
   );
   return splitPage(members, PAGE_SIZE, (last) => encodeNameCursor({ name: last.fullName, id: last.id }));
 }
 
 /** Directory totals for the filter chips; the side counts ignore the side filter but honour the search. */
-export async function countDirectory(query?: string) {
+export async function countDirectory({
+  query,
+  bloodType,
+  noContact,
+}: {
+  query?: string;
+  bloodType?: BloodType | null;
+  noContact?: boolean;
+}) {
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("member_directory_counts", query ? { search: query } : {});
+  const { data, error } = await supabase.rpc("member_directory_counts", {
+    ...(query ? { search: query } : {}),
+    ...(bloodType ? { blood_filter: bloodType } : {}),
+    ...(noContact ? { no_contact: true } : {}),
+  });
   if (error) throw new Error(`countDirectory failed: ${error.code}`);
   const row = data[0];
   // bigint columns may arrive as strings or numbers
@@ -86,7 +120,7 @@ export async function getMyProfile(): Promise<MyProfile | null> {
   if (!user) return null;
 
   const supabase = await createClient();
-  const [profile, details, bikes] = await Promise.all([
+  const [profile, details, bikes, contacts, health] = await Promise.all([
     supabase.from("profiles").select("city, district, side").eq("id", user.id).maybeSingle(),
     supabase
       .from("member_details")
@@ -95,14 +129,22 @@ export async function getMyProfile(): Promise<MyProfile | null> {
       .maybeSingle(),
     supabase
       .from("member_motorcycles")
-      .select("id, brand, model, cc")
+      .select("id, brand, model, cc, plate, plate_foreign")
       .eq("profile_id", user.id)
       .order("created_at")
       .order("id"),
+    supabase
+      .from("member_emergency_contacts")
+      .select("id, position, name, relationship, phone")
+      .eq("profile_id", user.id)
+      .order("position"),
+    supabase.from("member_health").select("blood_type, consent_blood_type").eq("profile_id", user.id).maybeSingle(),
   ]);
   if (profile.error) throw new Error(`getMyProfile failed: ${profile.error.code}`);
   if (details.error) throw new Error(`getMyProfile failed: ${details.error.code}`);
   if (bikes.error) throw new Error(`getMyProfile failed: ${bikes.error.code}`);
+  if (contacts.error) throw new Error(`getMyProfile failed: ${contacts.error.code}`);
+  if (health.error) throw new Error(`getMyProfile failed: ${health.error.code}`);
   if (!profile.data) return null;
 
   return {
@@ -116,6 +158,9 @@ export async function getMyProfile(): Promise<MyProfile | null> {
     showPlates: details.data?.show_plates ?? true, // schema default
     consentPhotos: details.data?.consent_photos ?? false,
     consentPhotosAt: details.data?.consent_photos_at ?? null,
-    motorcycles: bikes.data,
+    motorcycles: bikes.data.map(({ plate_foreign, ...bike }) => ({ ...bike, plateForeign: plate_foreign })),
+    emergencyContacts: contacts.data.map((c) => ({ ...c, position: c.position === 2 ? 2 : 1 })),
+    bloodType: health.data?.blood_type ?? null,
+    bloodConsent: health.data?.consent_blood_type ?? false,
   };
 }

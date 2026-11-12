@@ -145,6 +145,7 @@
       "invalid": "Bilgilerde bir sorun var, kontrol edip tekrar dene.",
       "forbidden": "Bu işlem için yetkin yok.",
       "limit": "En fazla 10 motosiklet ekleyebilirsin.",
+      "contactLimit": "En fazla 2 acil durum kişisi ekleyebilirsin.",
       "error": "Bir şeyler ters gitti. Lütfen tekrar dene.",
       "required": "Bu alan zorunlu.",
       "tooLong": "Çok uzun.",

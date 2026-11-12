@@ -63,7 +63,7 @@ async function Directory({ searchParams }: { searchParams: PageProps<"/[locale]/
   const query = typeof params.q === "string" ? params.q.trim().slice(0, 60) : "";
   const cursor = decodeNameCursor(params.cursor);
 
-  const [page, counts] = await Promise.all([listDirectory({ query, side, cursor }), countDirectory(query)]);
+  const [page, counts] = await Promise.all([listDirectory({ query, side, cursor }), countDirectory({ query })]);
 
   const chips: { side: IstanbulSide | null; label: string; count: number }[] = [
     { side: null, label: t("sides.all"), count: counts.total },

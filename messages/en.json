@@ -145,6 +145,7 @@
       "invalid": "Something is wrong with the details, check and try again.",
       "forbidden": "You don't have permission to do this.",
       "limit": "You can add up to 10 motorcycles.",
+      "contactLimit": "You can add at most 2 emergency contacts.",
       "error": "Something went wrong. Please try again.",
       "required": "This field is required.",
       "tooLong": "Too long.",
