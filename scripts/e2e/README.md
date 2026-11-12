@@ -46,6 +46,13 @@ Run against a **local** stack only (local Supabase + a server on port 3123); nev
   the instance. Needs `pnpm start -p 3123`, local email sign-in and `member@test.local` (active),
   `pending-noapp@test.local` (pending) and `inactive@test.local` (status `inactive`; create it like the others, then
   `update profiles set status = 'inactive'`). `BASE_URL` overrides the server.
+- `cross-tab-e2e.mjs` — cross-tab sync (PASS/FAIL lines, exit code != 0 on failure): sign-out in one tab sends a
+  background tab on `/members` to `/sign-in?next=…` (and makes no more than two RSC requests there), sign-in takes a
+  tab on `/sign-in?next=/members` to `/members`, an account switch shows the new user, a frozen tab
+  (`Page.setWebLifecycleState`) catches up, signed-in `?next=/sign-in` lands on `/account`, and a language switch
+  moves other tabs (query kept) except `/apply` and `/account`. Needs `pnpm start -p 3123`, local email sign-in and
+  two active users `member@test.local` and `second@test.local` whose names have different initials. `BASE_URL`
+  overrides the server.
 - `skeletons.mjs <baseUrl> <out.md> [routes…]` — measures each `data-skeleton` fallback against its
   `data-skeleton-result` (JS off vs on); see `docs/learnings/testing.md`.
 

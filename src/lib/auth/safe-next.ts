@@ -18,3 +18,15 @@ export function safeNextPath(next: unknown, fallback = "/") {
 
   return `${url.pathname}${url.search}${url.hash}`;
 }
+
+// The sign-in page in any locale (`/sign-in`, `/en/sign-in`), with or without a trailing slash.
+const SIGN_IN_PATH = /^(?:\/[a-z]{2})?\/sign-in\/?$/;
+
+/**
+ * Where `/sign-in` sends a visitor who is already signed in (e.g. after signing in in another tab): the safe `next`,
+ * or `fallback` (their account page) when it is missing, unsafe or the sign-in page itself.
+ */
+export function signedInDestination(next: unknown, fallback: string) {
+  const path = safeNextPath(next, fallback);
+  return SIGN_IN_PATH.test(new URL(path, BASE).pathname) ? fallback : path;
+}
