@@ -213,3 +213,15 @@
 - **Do:** use `browser.newPage()` (default context) and wipe cookies and site data between scenarios
   (`freshContext()` in `scripts/e2e/install-e2e.mjs`); to show the banner *after* load, release a synthetic event.
 - **Source:** found by testing (install prompt).
+
+### E2E in a background tab: streamed content stays unrevealed; freezing a tab (2026-11-12)
+- **Symptom:** in the hidden tab of a two-tab test, the header still showed the user-menu skeleton and the streamed
+  trigger had zero size seconds after `networkidle0`; the dropdown's portal (name label, `keepMounted`) didn't exist
+  until `bringToFront()`.
+- **Cause:** observed only (not traced into React): a hidden document keeps the Suspense fallback on screen and the
+  streamed content hidden, and Base UI mounts the portal later; both settle when the tab is shown. Users never see
+  this (the tab is hidden).
+- **Do:** read state in background tabs without visibility filters (e.g. the trigger's own text, not
+  `getBoundingClientRect` or the menu label; `shownUser` in `scripts/e2e/cross-tab-e2e.mjs`), or `bringToFront()`
+  first. To simulate a frozen background tab use CDP `Page.setWebLifecycleState` (`frozen` → `active`).
+- **Source:** found by testing (cross-tab sync).

@@ -175,3 +175,12 @@ Bundled docs are the source of truth: `node_modules/next/dist/docs/` (grep them 
   (`goToStep` in `src/components/apply/apply-form.tsx`; back/forward hit the same effect with no request). Read the
   current params from `window.location.search` when building the next URL (fresh even before the re-render).
 - **Source:** Next source above; behaviour verified in the browser (heading focused after "Devam", no POST).
+
+### `router.refresh()` follows a Server Component's `redirect()` (2026-11-12)
+- **Need:** a tab that learns "the session changed" (cross-tab sync) must land where a fresh load would: private page
+  → `/sign-in?next=…`, `/sign-in` → its `next`, public page → re-rendered header.
+- **Cause:** the refresh re-runs the page's server code; a `redirect()` there turns into a client navigation (one RSC
+  request for the refresh, one for the target). Client state of unaffected components is kept. Works in hidden tabs.
+- **Do:** let the server decide: `router.refresh()` and no routing logic in the tab (`src/components/auth/auth-sync.tsx`).
+- **Source:** found by testing (two Puppeteer tabs, production build); `use-router.md` describes `refresh()` but not
+  redirects.

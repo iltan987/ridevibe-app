@@ -10,11 +10,6 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ## Next up (iltan asked for these; in priority order; start in a new session)
 
-- **Cross-tab sign-in and language sync** (2026-11-12, iltan, install-prompt design) — signing in (or out) in one tab
-  should sign the other open tabs in/out too, following their `next` URL if any; switching the language in one tab
-  should switch the others. Like the theme's cross-tab sync. Research first how `@supabase/ssr` cookie sessions behave
-  across tabs (`onAuthStateChange`, BroadcastChannel / `storage` events) and what it costs; only if the overhead is
-  small. Kept out of the install-prompt iteration (auth/i18n, not install).
 - **Safety data (2a′)** (2026-11-10, iltan) — next step after Members in `docs/PLAN.md`: emergency contact, blood type
   with explicit consent (special-category data), plate per bike, a new `members.safety`-style permission, separate
   consents and the privacy text. Through the usual design → plan → build flow.
@@ -205,6 +200,13 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   listener; that was observed once, not verified (the DOM spec says re-dispatching a dispatched event should work).
   Try it again in isolation; if it works, simplify `__release()` in `install-e2e.mjs` to re-dispatch the real event.
   Risk if left: a wrong learning steers later tests to synthetic events.
+
+- **Cross-tab sync minors** (2026-11-12, cross-tab sync) — (a) the language switcher drops the query in its *own* tab
+  (`router.replace(pathname, …)`: `/members?q=…` → `/en/members`), while the tabs that follow keep it; keep the query
+  in both if it matters (check `/apply?step=N` and the apply E2E first). (b) The E2E's frozen-tab check can't tell
+  whether the queued `storage` event or the visibility re-check did the work; the unit tests cover the re-check.
+  (c) A tab that reveals a hidden copy of an older layout could publish a stale user id once; the other tabs then
+  refresh one extra time and converge (seen only in reasoning, not observed).
 
 ### UI / accessibility
 - **Focus drops to `<body>` when the install banner unmounts** (2026-11-12, install-prompt final review) — pressing
