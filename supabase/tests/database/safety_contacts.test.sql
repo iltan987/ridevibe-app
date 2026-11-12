@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(26);
+select plan(44);
 
 -- Fixtures (postgres bypasses RLS). Ids 0000…0601–0606, roles 0651/0652; every query is scoped to them.
 -- 601 owner (active), 602 other active, 603 members.manage, 604 members.safety, 605 pending, 606 inactive.
@@ -31,6 +31,9 @@ update public.profiles set status = 'inactive' where id = '00000000-0000-0000-00
 -- The inactive member already has a contact (seeded as postgres).
 insert into public.member_emergency_contacts (profile_id, position, name, relationship, phone)
   values ('00000000-0000-0000-0000-000000000606', 1, 'Eski Kişi', 'friend', '+905320000000');
+
+insert into public.member_emergency_contacts (profile_id, position, name, relationship, phone)
+  values ('00000000-0000-0000-0000-000000000605', 1, 'Bekleyen Kişi', 'friend', '+905320000001');
 
 create function pg_temp.login(uid uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
@@ -61,6 +64,17 @@ select is(private.is_valid_phone('+902161234567'), false, 'TR landline is invali
 select is(private.is_valid_phone('+4915123456789'), true, 'foreign E.164 number is valid');
 select is(private.is_valid_phone('05321234567'), false, 'national format is invalid');
 select is(private.is_valid_phone('+90532'), false, 'too short is invalid');
+select is(private.is_valid_phone('+1234567'), true, '7 digits is valid');
+select is(private.is_valid_phone('+123456'), false, '6 digits is invalid');
+select is(private.is_valid_phone('+123456789012345'), true, '15 digits is valid');
+select is(private.is_valid_phone('+1234567890123456'), false, '16 digits is invalid');
+select is(private.is_valid_phone('+90532123456'), false, '+90 with 11 digits is not a mobile');
+
+-- Nobody but the owner role can call the private helpers
+select is(has_function_privilege('anon', 'private.is_valid_phone(text)', 'execute'), false, 'anon cannot execute is_valid_phone');
+select is(has_function_privilege('authenticated', 'private.is_valid_phone(text)', 'execute'), false, 'authenticated cannot execute is_valid_phone');
+select is(has_function_privilege('anon', 'private.member_emergency_contacts_check_phone()', 'execute'), false, 'anon cannot execute the phone trigger function');
+select is(has_function_privilege('authenticated', 'private.member_emergency_contacts_check_phone()', 'execute'), false, 'authenticated cannot execute the phone trigger function');
 
 -- Anonymous
 set local role anon;
@@ -109,6 +123,17 @@ select is(
   '23514|member_emergency_contacts_phone',
   'updating to a TR landline is rejected (member_emergency_contacts_phone)'
 );
+select is(
+  pg_temp.error_of($$ update public.member_emergency_contacts set name = repeat('a', 81)
+      where profile_id = '00000000-0000-0000-0000-000000000601' and position = 1 $$),
+  '23514|member_emergency_contacts_name_check',
+  'a name of 81 characters is rejected'
+);
+select lives_ok(
+  $$ update public.member_emergency_contacts set name = repeat('a', 80)
+      where profile_id = '00000000-0000-0000-0000-000000000601' and position = 1 $$,
+  'a name of 80 characters is accepted'
+);
 select lives_ok(
   $$ delete from public.member_emergency_contacts
       where profile_id = '00000000-0000-0000-0000-000000000601' and position = 1 $$,
@@ -144,6 +169,17 @@ select throws_ok(
 
 -- Other members, staff roles: no read access
 select pg_temp.login('00000000-0000-0000-0000-000000000602');
+select throws_ok(
+  $$ insert into public.member_emergency_contacts (profile_id, position, name, relationship, phone)
+     values ('00000000-0000-0000-0000-000000000601', 1, 'Sızan', 'friend', '+905321234567') $$,
+  '42501', null, 'another active member cannot insert a contact for the owner'
+);
+with u as (update public.member_emergency_contacts set name = 'Hacked'
+            where profile_id = '00000000-0000-0000-0000-000000000601' returning 1)
+select is((select count(*)::int from u), 0, 'another active member updates 0 of the owner''s contacts');
+with d as (delete from public.member_emergency_contacts
+            where profile_id = '00000000-0000-0000-0000-000000000601' returning 1)
+select is((select count(*)::int from d), 0, 'another active member deletes 0 of the owner''s contacts');
 select is(
   (select count(*)::int from public.member_emergency_contacts where profile_id = '00000000-0000-0000-0000-000000000601'),
   0, 'another active member sees none of the owner''s contacts'
@@ -161,12 +197,18 @@ select is(
 
 -- Pending and inactive cannot write; inactive may delete their own
 select pg_temp.login('00000000-0000-0000-0000-000000000605');
+with u as (update public.member_emergency_contacts set name = 'Hacked'
+            where profile_id = '00000000-0000-0000-0000-000000000605' returning 1)
+select is((select count(*)::int from u), 0, 'pending member updates 0 of their own contacts');
 select throws_ok(
   $$ insert into public.member_emergency_contacts (profile_id, position, name, relationship, phone)
      values ('00000000-0000-0000-0000-000000000605', 1, 'Kişi', 'friend', '+905321234567') $$,
   '42501', null, 'pending member cannot insert'
 );
 select pg_temp.login('00000000-0000-0000-0000-000000000606');
+with u as (update public.member_emergency_contacts set name = 'Hacked'
+            where profile_id = '00000000-0000-0000-0000-000000000606' returning 1)
+select is((select count(*)::int from u), 0, 'inactive member updates 0 of their own contacts');
 select throws_ok(
   $$ insert into public.member_emergency_contacts (profile_id, position, name, relationship, phone)
      values ('00000000-0000-0000-0000-000000000606', 2, 'Kişi', 'friend', '+905321234567') $$,
@@ -175,6 +217,19 @@ select throws_ok(
 with d as (delete from public.member_emergency_contacts
             where profile_id = '00000000-0000-0000-0000-000000000606' returning 1)
 select is((select count(*)::int from d), 1, 'inactive member deletes their own contact');
+
+reset role;
+select is(
+  (select count(*)::int from public.member_emergency_contacts
+    where profile_id = '00000000-0000-0000-0000-000000000601' and name <> 'Hacked'),
+  2, 'the owner''s two contacts are untouched and still present'
+);
+select is(
+  (select count(*)::int from public.member_emergency_contacts
+    where profile_id in ('00000000-0000-0000-0000-000000000605', '00000000-0000-0000-0000-000000000606')
+      and name = 'Hacked'),
+  0, 'pending/inactive contacts were not changed'
+);
 
 select * from finish();
 rollback;
