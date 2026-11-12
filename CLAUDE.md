@@ -72,6 +72,9 @@ PUPPETEER_DIR=~/e2e-tools node scripts/e2e/{nav,members,header,apply,apply-nav,i
 # signed-in parts need fixture users (admin@/member@/pending-noapp@test.local) that `db:reset` wipes: recreate per README
 # headless hides scrollbars (launch({ scrollbars: true }) keeps them); Next keeps the previous route hidden in the DOM: select visible elements
 # members E2E needs only its fixtures active: park other active profiles, restore by id (docs/learnings/testing.md)
+# background tabs: streamed parts stay unrevealed/unhydrated until first shown (React reveals via rAF) — no visibility
+#   filters there; to load a tab in the background, bringToFront() another first; seed shared localStorage before other tabs exist
+# throwaway spikes need no app code: `window.next.router` (refresh/replace/push) is callable from puppeteer page scripts
 ```
 
 Signed-in local E2E needs email sign-in: `SUPABASE_AUTH_EMAIL_ENABLED=true pnpm exec supabase start` (temporary;
@@ -213,6 +216,8 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
 - Server Actions: validate with Zod, let RLS decide, map error codes to results, call `refresh()` (`next/cache`)
   after a successful mutation (exception: `submitApplication`, whose success card a refresh would replace). They and
   Route Handlers can't read the locale root param — derive it from data.
+- `Date.now()` in an async Server Component after a session read (request-time) trips `react-hooks/purity`: use
+  `// eslint-disable-line react-hooks/purity -- <reason>`, never move it into a helper to dodge the rule.
 - Lists use keyset pagination (`src/lib/pagination.ts` + `Pager`); access checks via `can()` / `requirePermission()`.
 - **Every list paginates.** No fixed caps like `.limit(200)`: the club grew to ~130 members in two weeks. Design
   queries and screens with pagination (and visible totals) from the start; don't let counts fail silently.
