@@ -218,14 +218,25 @@ for (const how of ["close button", "Escape"]) {
   await ctx.close();
 }
 
-// 6. Installed: standalone (matchMedia stub) and the stored flag -> no banner, no menu entry, though the event fires.
-for (const [name, cfg] of [["standalone (matchMedia stub)", { standalone: true }], ['rv-install-installed = "1"', { installed: true }]]) {
-  const { ctx, page } = await fresh({ email: "member@test.local", cfg });
-  await open(page, "/account");
-  check(`${name}: real event reached the page (test is meaningful)`, await heldPrompt(page));
+// 6. Installed: standalone (matchMedia stub, the real event still fires) and the stored flag (event suppressed, as on
+//    an iPhone: a real event clears the flag, see 6b) -> no banner, no menu entry.
+for (const [name, cfg, ua] of [["standalone (matchMedia stub)", { standalone: true }], ['rv-install-installed = "1" (iPhone)', { installed: true, suppress: true }, IPHONE_UA]]) {
+  const { ctx, page } = await fresh({ email: "member@test.local", cfg, ua });
+  await open(page, "/account", { expectEvent: !cfg.suppress });
+  if (cfg.suppress) check(`${name}: flag still set (test is meaningful: an iPhone without it shows the banner, section 3)`, await page.evaluate(() => localStorage.getItem("rv-install-installed") === "1"));
+  else check(`${name}: real event reached the page (test is meaningful)`, await heldPrompt(page));
   check(`${name}: no banner`, !(await hasBanner(page)));
   await openMenu(page, name);
   check(`${name}: no menu entry`, !(await menuEntry(page)));
+  await ctx.close();
+}
+// 6b. A real `beforeinstallprompt` clears a stale "installed" flag (Chrome offers install only when the app isn't
+//     installed in this browser): the banner with "Yükle" is back.
+{
+  const { ctx, page } = await fresh({ email: "member@test.local", cfg: { installed: true } });
+  await open(page, "/account");
+  check('stale installed flag: real event cleared it', (await heldPrompt(page)) && (await page.evaluate(() => localStorage.getItem("rv-install-installed") === null)));
+  check('stale installed flag: banner with "Yükle" back', (await hasBanner(page)) && Boolean(await bannerButton(page, TR.install)));
   await ctx.close();
 }
 
@@ -302,7 +313,8 @@ for (const path of ["/account", "/members"]) {
     let bottom = 0, last = null;
     for (const e of document.querySelectorAll("body *")) {
       if (!vis(e) || fixed(e) || e.contains(spacer) || spacer.contains(e) || banner.contains(e)) continue;
-      const b = e.getBoundingClientRect().bottom;
+      // <main>'s own box includes its tab-bar padding (pb-20, empty by design): measure its content edge instead.
+      const b = e.getBoundingClientRect().bottom - (e.tagName === "MAIN" ? parseFloat(getComputedStyle(e).paddingBottom) : 0);
       if (b > bottom) { bottom = b; last = e.tagName + (e.textContent.trim().slice(0, 20) ? `("${e.textContent.trim().slice(0, 20)}")` : ""); }
     }
     const kaydet = [...document.querySelectorAll("button")].filter((e) => vis(e) && e.textContent.trim() === "Kaydet").pop();
@@ -320,6 +332,46 @@ for (const path of ["/account", "/members"]) {
   check(`${path}: last content ends above the banner`, m.contentBottom <= m.bannerTop + 0.5, `content=${f(m.contentBottom)} (${m.last}) banner.top=${f(m.bannerTop)}`);
   if (path === "/account") check("/account: the last \"Kaydet\" ends above the banner", m.kaydetBottom !== null && m.kaydetBottom <= m.bannerTop + 0.5, `kaydet=${m.kaydetBottom && f(m.kaydetBottom)} banner.top=${f(m.bannerTop)}`);
   check(`${path}: banner bottom <= tab bar top`, m.tabTop !== null && m.bannerBottom <= m.tabTop + 0.5, `banner.bottom=${f(m.bannerBottom)} tabbar.top=${m.tabTop && f(m.tabTop)}`);
+  await ctx.close();
+}
+
+// 8b. Layout at 1280px: the spacer sits after the footer, so scrolled to the bottom the footer (privacy link) ends
+//     above the banner, also on pages too short to scroll.
+for (const path of ["/account", "/members"]) {
+  const { ctx, page } = await fresh({ email: "member@test.local", viewport: { width: 1280, height: 800 } });
+  await open(page, path);
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await sleep(500);
+  const m = await page.evaluate((label) => {
+    const vis = (e) => e.getBoundingClientRect().width > 0 && e.getBoundingClientRect().height > 0;
+    const banner = [...document.querySelectorAll('[role="region"]')].find((e) => e.getAttribute("aria-label") === label && vis(e));
+    const footer = [...document.querySelectorAll("footer")].find(vis);
+    if (!banner || !footer) return null;
+    const links = [...footer.querySelectorAll("a")].filter(vis);
+    return {
+      bannerTop: banner.getBoundingClientRect().top, footerBottom: footer.getBoundingClientRect().bottom,
+      linksBottom: Math.max(...links.map((a) => a.getBoundingClientRect().bottom)), links: links.length,
+      atBottom: Math.ceil(window.scrollY + window.innerHeight) >= document.documentElement.scrollHeight - 1,
+    };
+  }, TR.banner);
+  const f = (n) => Math.round(n * 10) / 10;
+  if (!m) { check(`1280px ${path}: banner and footer present`, false); await ctx.close(); continue; }
+  check(`1280px ${path}: scrolled to the bottom`, m.atBottom);
+  check(`1280px ${path}: footer and its links end above the banner`, m.links > 0 && m.footerBottom <= m.bannerTop + 0.5 && m.linksBottom <= m.bannerTop + 0.5, `footer.bottom=${f(m.footerBottom)} links.bottom=${f(m.linksBottom)} banner.top=${f(m.bannerTop)}`);
+  await ctx.close();
+}
+
+// 8c. The spacer is portalled into <body>: leaving the page client-side must not leave it (or its height) behind.
+{
+  const { ctx, page } = await fresh({ email: "member@test.local" });
+  await open(page, "/account");
+  const spacerShown = () => page.evaluate(() => [...document.querySelectorAll("div[inert]")].some((e) => e.classList.contains("invisible") && e.getBoundingClientRect().height > 0));
+  check("client navigation: spacer present on /account first", await spacerShown());
+  await (await visible(page, 'nav a[href="/"]'))?.click();
+  const left = await until(() => page.evaluate(() => location.pathname === "/"), 8000);
+  await sleep(600);
+  check("client navigation: on / without a reload", left);
+  check("client navigation: no banner and no spacer left on /", !(await hasBanner(page)) && !(await spacerShown()));
   await ctx.close();
 }
 
