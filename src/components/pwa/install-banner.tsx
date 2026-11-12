@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { ClubBadge } from "@/components/brand/club-badge";
 import { InstallGuideDialog } from "@/components/pwa/install-guide-dialog";
 import { useInstall } from "@/components/pwa/use-install";
@@ -9,8 +10,9 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 /**
- * Floating "install the app" card above the phone tab bar. It renders the same card a second time in normal flow
- * (invisible, inert) so the page reserves exactly the banner's height at its end: put it as the LAST child of the page.
+ * Floating "install the app" card above the phone tab bar (desktop: bottom right). It renders the same card a second
+ * time in normal flow (invisible, inert) at the end of `<body>`, after the footer, so the page reserves exactly the
+ * banner's height (plus its offset) and nothing ends up behind it. Client-only: the server snapshot never shows it.
  */
 export function InstallBanner() {
   const { variant, banner, install, dismiss } = useInstall();
@@ -19,26 +21,29 @@ export function InstallBanner() {
 
   if (!banner) return null;
 
+  // Phones: 40px tap targets side by side, 8px apart, the primary action on the outer edge.
   const card = (
-    <div className="flex items-center gap-3 rounded-xl border bg-card p-3 text-card-foreground shadow-lg">
-      <ClubBadge className="w-10 shrink-0" sizes="40px" />
-      <div className="min-w-0 flex-1">
-        <p className="text-sm leading-snug font-medium">{t("bannerTitle")}</p>
-        <p className="text-xs text-muted-foreground">{t("bannerBody")}</p>
+    <div className="flex flex-col gap-2 rounded-xl border bg-card p-3 text-card-foreground shadow-lg">
+      <div className="flex items-center gap-3">
+        <ClubBadge className="w-10 shrink-0" sizes="40px" />
+        <div className="min-w-0 flex-1">
+          <p className="text-sm leading-snug font-medium">{t("bannerTitle")}</p>
+          <p className="text-xs text-muted-foreground">{t("bannerBody")}</p>
+        </div>
       </div>
-      <div className="flex shrink-0 flex-col gap-1">
+      <div className="flex justify-end gap-2">
+        <Button variant="ghost" className="h-10 md:h-8" onClick={dismiss}>
+          {t("notNow")}
+        </Button>
         {variant === "prompt" ? (
-          <Button size="sm" onClick={() => void install()}>
+          <Button className="h-10 md:h-8" onClick={() => void install()}>
             {t("install")}
           </Button>
         ) : (
-          <Button size="sm" onClick={() => setGuideOpen(true)}>
+          <Button className="h-10 md:h-8" onClick={() => setGuideOpen(true)}>
             {t("howTo")}
           </Button>
         )}
-        <Button size="sm" variant="ghost" onClick={dismiss}>
-          {t("notNow")}
-        </Button>
       </div>
     </div>
   );
@@ -55,10 +60,18 @@ export function InstallBanner() {
       >
         {card}
       </div>
-      {/* Spacer: same markup, in flow, so the last content never ends up behind the fixed card. */}
-      <div aria-hidden inert className="invisible md:ml-auto md:w-96">
-        {card}
-      </div>
+      {/* Spacer: same card in flow at the end of <body> (after the footer on desktop), padded by the banner's offset:
+          phones `main pb-20` already clears the tab bar, the safe area is added here; desktop adds bottom-4 + a gap. */}
+      {createPortal(
+        <div
+          aria-hidden
+          inert
+          className="invisible px-3 pb-[env(safe-area-inset-bottom)] md:ml-auto md:w-96 md:px-0 md:pb-8"
+        >
+          {card}
+        </div>,
+        document.body,
+      )}
       {variant !== "prompt" && variant !== "none" && (
         <InstallGuideDialog variant={variant} open={guideOpen} onOpenChange={setGuideOpen} />
       )}
