@@ -86,7 +86,7 @@ export function PrivacyEn() {
         <li>Member data: kept during membership and for <Placeholder>1 YEAR</Placeholder> after it ends, then deleted or anonymised.</li>
         <li>Photos: removed from the gallery when you withdraw your consent.</li>
         <li>Safety logs (who viewed or changed blood-type data, and when): kept for the same period as other member data.</li>
-        <li>Emergency contacts, blood type and plates: kept for the same period as other member data. You can delete your emergency contacts and plates on your account page at any time; your blood type is deleted when you withdraw your consent.</li>
+        <li>Emergency contacts, blood type and plates: kept for the same period as other member data. You can delete your emergency contacts on your account page at any time, and your plates while your membership is active; your blood type is deleted when you withdraw your consent.</li>
       </ul>
 
       <h2>7. How we collect it</h2>

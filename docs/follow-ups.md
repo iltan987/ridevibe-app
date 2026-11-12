@@ -84,8 +84,16 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   with AES-256 and in transit via TLS."; the shared-responsibility page
   (https://supabase.com/docs/guides/deployment/shared-responsibility-model) says "Data is encrypted at rest and in
   transit by Supabase." and suggests encrypting at the application layer if needed; `/docs/guides/platform/security`
-  only covers TLS. Ask whether disk encryption is enough for blood type. Risk if left: the notice states a basis
-  nobody has confirmed.
+  only covers TLS. Ask whether disk encryption is enough for blood type. (c) The safety team and `members.manage` see
+  plates even with "Plakalarımı göster" off (the safety card ignores the switch). (d) Admins also see blood types
+  (access log, `members.safety` via admin role) while the consent text names only the safety team. (e) The
+  blood-filter log row has no target: a name-narrowed filter does not record whose type was revealed (logging the
+  search text would put names into the log). Risk if left: the notice states a basis nobody has confirmed.
+- **Safety data: small test and polish leftovers** (2026-11-13, safety data) — no `motorcycleSchema` test for an invalid
+  foreign plate (covered in `plate.test.ts`); Acil durum and account skeleton heights not measured in English;
+  `/members` blood select: a choice made before hydration has no `name`, so it does not filter;
+  `scripts/e2e/safety-e2e.mjs` blood-filter check assumes exactly one consented A+ member locally; stray double blank
+  lines in `safety-e2e.mjs` and `members-e2e.mjs`. Low risk: test-only or cosmetic.
 - **Safety data: retention** (2026-11-13, safety data) — how long safety data (contacts, blood type, plates) of
   inactive or departed members is kept, and how long `safety_access_log` rows live; no deletion job exists, the notice
   says "same period as other member data". Decide with the member-data retention rule.
@@ -393,6 +401,7 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 - **Dead-code sweep** (2026-11-11, iltan) — iltan wants dead code removed when there is no reason to keep it, and a
   sweep now and then. First sweep: unused exports/files/dependencies (tool still open, see "Dead-code tool?" under
   Open decisions), unused message keys in `messages/*.json`, stale comments and follow-up items that point at removed code.
+  Known: `hasStaffAccess` in `src/lib/auth/permissions.ts` has no callers (pre-existing, 2026-11-13).
 - **Supabase CLI 3.1.0 is available** (2026-11-10; installed 3.0.0).
 - **Members E2E looseness** (2026-11-10, members review) — some assertions are loose or vacuous in
   `scripts/e2e/members-e2e.mjs`: pending "no member cards" (passes if the list simply didn't render), "remaining 4

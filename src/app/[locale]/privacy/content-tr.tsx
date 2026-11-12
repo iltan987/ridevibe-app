@@ -82,7 +82,7 @@ export function PrivacyTr() {
         <li>Üye bilgileri: üyelik süresince ve üyelik sona erdikten sonra <Placeholder>1 YIL</Placeholder> boyunca saklanır, ardından silinir veya anonim hale getirilir.</li>
         <li>Fotoğraflar: açık rızanızı geri aldığınızda galeriden kaldırılır.</li>
         <li>Güvenlik kayıtları (kan grubu verisini kimin ne zaman görüntülediği veya değiştirdiği): diğer üye bilgileriyle aynı süre saklanır.</li>
-        <li>Acil durum kişileri, kan grubu ve plakalar: diğer üye bilgileriyle aynı süre saklanır. Acil durum kişilerinizi ve plakalarınızı hesap sayfanızdan istediğiniz zaman silebilirsiniz; kan grubunuz rızanızı geri aldığınızda silinir.</li>
+        <li>Acil durum kişileri, kan grubu ve plakalar: diğer üye bilgileriyle aynı süre saklanır. Acil durum kişilerinizi hesap sayfanızdan istediğiniz zaman, plakalarınızı üyeliğiniz aktif olduğu sürece hesap sayfanızdan silebilirsiniz; kan grubunuz rızanızı geri aldığınızda silinir.</li>
       </ul>
 
       <h2>7. Verileri nasıl topluyoruz?</h2>
