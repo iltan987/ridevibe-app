@@ -115,12 +115,16 @@ async function open(page, path, { expectEvent = true } = {}) {
   }
   await sleep(600);
 }
-async function openMenu(page) {
+/** Opens the avatar menu and checks (FAIL, not a silent skip) that the trigger exists and the menu really opened:
+ *  the always-present sign-out item must be visible, so a later "no install entry" can't pass vacuously. */
+async function openMenu(page, name) {
   const trigger = await visible(page, `button[aria-label="${TR.menu}"]`);
-  if (!trigger) return null;
+  check(`${name}: avatar menu trigger present`, Boolean(trigger));
+  if (!trigger) return false;
   await trigger.click();
-  await sleep(500);
-  return trigger;
+  const opened = await until(() => menuEntry(page, "Çıkış Yap"), 3000, 50);
+  check(`${name}: avatar menu opened (sign-out item visible)`, opened);
+  return opened;
 }
 const menuEntry = (page, text = TR.entry) => page.evaluate((text) =>
   [...document.querySelectorAll('[role="menuitem"]')].some((e) => e.getBoundingClientRect().width > 0 && e.textContent.trim() === text), text);
@@ -135,7 +139,7 @@ for (const path of ["/members", "/account"]) {
   check(`${path}: outcome dismissed hides the banner`, await until(async () => !(await hasBanner(page)), 3000));
   await open(page, path);
   check(`${path}: still gone after reload (event fired again: ${await heldPrompt(page)})`, (await heldPrompt(page)) && !(await hasBanner(page)));
-  await openMenu(page);
+  await openMenu(page, `${path}`);
   check(`${path}: avatar-menu entry "Uygulamayı yükle" still there after the dismissal`, await menuEntry(page));
   await ctx.close();
 }
@@ -174,7 +178,7 @@ for (const how of ["close button", "Escape"]) {
   const { ctx, page } = await fresh({ email: "member@test.local", cfg: { suppress: true }, ua: IPHONE_UA });
   await open(page, "/members", { expectEvent: false });
   await until(() => hasBanner(page), 5000);
-  await openMenu(page);
+  await openMenu(page, `menu (${how})`);
   check(`menu (${how}): entry "Uygulamayı yükle" present on iPhone`, await menuEntry(page));
   await (await visible(page, '[role="menuitem"]', TR.entry))?.click();
   const opened = await until(() => dialogOpen(page), 3000);
@@ -220,7 +224,7 @@ for (const [name, cfg] of [["standalone (matchMedia stub)", { standalone: true }
   await open(page, "/account");
   check(`${name}: real event reached the page (test is meaningful)`, await heldPrompt(page));
   check(`${name}: no banner`, !(await hasBanner(page)));
-  await openMenu(page);
+  await openMenu(page, name);
   check(`${name}: no menu entry`, !(await menuEntry(page)));
   await ctx.close();
 }
@@ -230,7 +234,7 @@ for (const [name, cfg] of [["standalone (matchMedia stub)", { standalone: true }
   const { ctx, page } = await fresh({ email: "pending-noapp@test.local" });
   await open(page, "/account");
   check("pending: banner on /account", await hasBanner(page));
-  await openMenu(page);
+  await openMenu(page, "pending");
   check("pending: menu entry present", await menuEntry(page));
   await open(page, "/members");
   check("pending: no banner on /members", !(await hasBanner(page)), new URL(page.url()).pathname);
@@ -240,10 +244,11 @@ for (const [name, cfg] of [["standalone (matchMedia stub)", { standalone: true }
   const { ctx, page } = await fresh({ email: "inactive@test.local" });
   for (const path of ["/account", "/members"]) {
     await open(page, path);
+    check(`inactive: ${path} renders as a real page, no redirect`, new URL(page.url()).pathname === path, new URL(page.url()).pathname);
     check(`inactive: event reached the page on ${path}`, await heldPrompt(page));
     check(`inactive: no banner on ${path}`, !(await hasBanner(page)));
   }
-  await openMenu(page);
+  await openMenu(page, "inactive");
   check("inactive: no menu entry", !(await menuEntry(page)));
   await ctx.close();
 }
@@ -290,8 +295,8 @@ for (const path of ["/account", "/members"]) {
   const m = await page.evaluate((label) => {
     const vis = (e) => e.getBoundingClientRect().width > 0 && e.getBoundingClientRect().height > 0;
     const banner = [...document.querySelectorAll('[role="region"]')].find((e) => e.getAttribute("aria-label") === label && vis(e));
-    if (!banner) return null;
     const spacer = [...document.querySelectorAll("div[inert]")].find((e) => e.classList.contains("invisible") && vis(e));
+    if (!banner || !spacer) return null;
     const tabBar = [...document.querySelectorAll("nav.fixed")].find(vis);
     const fixed = (e) => { for (let n = e; n && n !== document.body; n = n.parentElement) if (getComputedStyle(n).position === "fixed") return true; return false; };
     let bottom = 0, last = null;
@@ -305,12 +310,12 @@ for (const path of ["/account", "/members"]) {
     return {
       bannerTop: br.top, bannerBottom: br.bottom, tabTop: tabBar?.getBoundingClientRect().top ?? null,
       contentBottom: bottom, last, kaydetBottom: kaydet?.getBoundingClientRect().bottom ?? null,
-      atBottom: Math.ceil(window.scrollY + window.innerHeight) >= document.documentElement.scrollHeight - 1,
+      atBottom: window.scrollY > 0 && Math.ceil(window.scrollY + window.innerHeight) >= document.documentElement.scrollHeight - 1,
       spacerTop: spacer.getBoundingClientRect().top, spacerBottom: spacer.getBoundingClientRect().bottom,
     };
   }, TR.banner);
   const f = (n) => Math.round(n * 10) / 10;
-  if (!m) { check(`${path}: banner present for the layout measurements`, false); await ctx.close(); continue; }
+  if (!m) { check(`${path}: banner and in-flow spacer present for the layout measurements`, false); await ctx.close(); continue; }
   check(`${path}: scrolled to the bottom (test is meaningful)`, m.atBottom);
   check(`${path}: last content ends above the banner`, m.contentBottom <= m.bannerTop + 0.5, `content=${f(m.contentBottom)} (${m.last}) banner.top=${f(m.bannerTop)}`);
   if (path === "/account") check("/account: the last \"Kaydet\" ends above the banner", m.kaydetBottom !== null && m.kaydetBottom <= m.bannerTop + 0.5, `kaydet=${m.kaydetBottom && f(m.kaydetBottom)} banner.top=${f(m.bannerTop)}`);
