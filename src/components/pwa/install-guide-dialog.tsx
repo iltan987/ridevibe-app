@@ -45,7 +45,14 @@ export function InstallGuideDialog({
             const StepIcon = icons[i];
             return (
               <li key={i} className="flex items-start gap-3">
-                <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                {/* The <ol> already numbers the steps for screen readers. */}
+                <span
+                  aria-hidden
+                  className="mt-1 flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground tabular-nums"
+                >
+                  {i + 1}
+                </span>
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
                   <StepIcon className="size-4" aria-hidden />
                 </span>
                 <span className="pt-1 text-sm">{step}</span>
