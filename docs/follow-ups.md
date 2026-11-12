@@ -189,8 +189,15 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 - **Install E2E minors** (2026-11-12, install-prompt Task 6 review) — `scripts/e2e/install-e2e.mjs`: no
   `try/finally` around scenarios (a thrown error skips `ctx.close()`, later scenarios inherit cookies/storage); the
   fallback `page.mouse.click(195, 400)` in `open()` (user activation when the event is late) can hit real UI; the
-  `apply-nav-e2e.mjs` "showed the guess first" check flaked once (passed on rerun). Deferred: test-only, all green
-  today; risk: a confusing cascade of FAILs or a rare flake.
+  `apply-nav-e2e.mjs` "showed the guess first" check flaked once (passed on rerun). From the fix-wave re-review: the
+  iPhone "installed flag still set" check is near-tautological (`initScript` sets the flag on every document; the real
+  assertions there are "no banner / no menu entry"); the language-switch scenario doesn't assert exactly one spacer
+  after the switch; the comment near line 39 still states "Chrome ignores a re-dispatched real event" as fact (see the
+  verify-or-drop item below). Deferred: test-only, all green today; risk: a confusing cascade of FAILs or a rare flake.
+- **Install prompt: after an accepted install, a later install event in the same page is ignored** (2026-11-12,
+  install-prompt fix-wave re-review) — the in-memory `accepted` flag (`install-store.ts`) treats the app as installed
+  for the page's lifetime, so if the install then fails, the menu entry returns only after a reload. Deferred: by
+  design (avoids the guide flashing while Chrome builds the app); risk: a rare failed install needs one reload.
 - **Verify or drop the "re-dispatched `beforeinstallprompt` is ignored" learning** (2026-11-12, install-prompt final
   review) — `docs/learnings/testing.md` says a held real event re-dispatched with `window.dispatchEvent` reached no
   listener; that was observed once, not verified (the DOM spec says re-dispatching a dispatched event should work).
