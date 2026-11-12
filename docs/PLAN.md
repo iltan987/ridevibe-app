@@ -45,8 +45,9 @@ Intended staff roles (2026-11-08, iltan):
 | Yönetici (built-in admin) | everything, incl. editing/assigning roles | iltan (app manager), Samet (founder/owner) |
 | Başvuru Sorumlusu | applications: view, review, approve/reject | people who check and approve applications |
 | Üye Sorumlusu | members.manage (+ `members.notes`, `members.discipline` once built) | people responsible for members' conduct |
-| Organizatör | applications: view, review (migrated default; adjust in the UI) | ride organizers |
-| Güvenlik ekibi (or add to Organizatör) | `members.safety` ("Güvenlik bilgilerini görme": safety cards, blood-type filter) | ride organizers / captains; iltan ticks it per role in `/admin/roles` (2026-11-13) |
+| Organizatör | `members.safety` ("Güvenlik bilgilerini görme": safety cards, blood-type filter); event permissions once Events exist | ride organizers / captains: they need the safety data at the roadside (set 2026-11-13; no separate safety role) |
+
+Who gets which role is decided once the site is ready (iltan, 2026-11-13). Keep Organizatör small (health data).
 
 Application flow: public form → staff review (New → Contacted → Approved / Rejected) → on approval admin sends a
 WhatsApp invite link → person signs in with Google → account is linked to the application.
