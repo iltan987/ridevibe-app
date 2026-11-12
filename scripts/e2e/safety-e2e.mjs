@@ -30,7 +30,7 @@ import path from "node:path";
 import { launch, newPage, signIn } from "./e2e-lib.mjs";
 
 const DIR = process.env.OUT_DIR ?? os.tmpdir();
-const BASE = "http://localhost:3123";
+const BASE = process.env.BASE_URL ?? "http://localhost:3123";
 const DB = process.env.DB_CONTAINER ?? "supabase_db_ridevibe";
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let fails = 0;
@@ -49,8 +49,9 @@ function clean() {
   sql(`delete from safety_access_log where actor_id in (${IDS}) or target_id in (${IDS})`);
   sql(`delete from member_emergency_contacts where profile_id in (${IDS})`);
   sql(`delete from member_health where profile_id in (${IDS})`);
-  sql(`delete from member_motorcycles where profile_id in (${IDS})`);
-  sql(`update member_details set show_plates = true where profile_id in (${IDS})`);
+  // Only what this script plants: members-e2e.mjs shares these fixtures (e.g. second's Honda CB500).
+  sql(`delete from member_motorcycles where profile_id = '${ID.member}' and brand = 'Yamaha' and model = 'MT-07'`);
+  sql(`update member_details set show_plates = true where profile_id = '${ID.member}' and show_plates = false`);
 }
 const contactCount = (id) => Number(sql(`select count(*) from member_emergency_contacts where profile_id = '${id}'`));
 const logCount = (actor, action, target) =>
@@ -58,16 +59,12 @@ const logCount = (actor, action, target) =>
 
 const browser = await launch();
 
-async function fresh(email) {
-  const ctx = await browser.createBrowserContext();
-  const page = await newPage(ctx);
-  await signIn(page, email);
-  return { ctx, page };
-}
 /** Runs one scenario in its own context; always closes it and records a crash as a FAIL. */
 async function scenario(name, email, fn) {
-  const { ctx, page } = await fresh(email);
+  const ctx = await browser.createBrowserContext();
   try {
+    const page = await newPage(ctx);
+    await signIn(page, email, BASE);
     await fn(page);
   } catch (e) {
     check(`${name}: finished without an exception`, false, e.message);
@@ -183,6 +180,7 @@ await scenario("contacts", "member@test.local", async (page) => {
   const addBtn = await find(page, "#emergency button", "Kişi ekle");
   const full = await addBtn.evaluate((b) => b.disabled);
   const t2 = await sectionText(page);
+  check("contacts: active member has edit buttons (label exists)", !!(await find(page, "#emergency button", "kişisini düzenle")));
   check("contacts: two contacts -> 'Kişi ekle' disabled with the limit hint", full && t2.includes("En fazla 2 acil durum kişisi ekleyebilirsin.") && /Ayşe Yılmaz\s*\(ana kişi\)/.test(t2), t2.replace(/\n/g, " | "));
   await shot(page, "contacts-two");
 
@@ -292,23 +290,30 @@ sql(`update member_details set show_plates = false where profile_id = '${ID.memb
 
 // 4 plain member sees nothing of it
 await scenario("plain", "second@test.local", async (page) => {
+  const cards = (p) => p.evaluate(() => document.querySelectorAll("li[data-skeleton-result=members-row]").length);
+  await go(page, "/members?q=Test%20%C3%9Cye");
+  const card = await memberCard(page, "Test Üye");
+  check("plain: the 'Test Üye' card is rendered with its bike line", !!card && /Yamaha MT-07 · 689 cc/.test(card), JSON.stringify(card));
+  check("plain: hidden plate and 'Acil durum' button/badge absent from that card", !!card && !card.includes("34 ABC 123") && !/Acil durum|Acil kişi/.test(card));
   await go(page, "/members");
   const all = await total(page);
+  const n = await cards(page);
   const text = await bodyText(page);
+  check("plain: unfiltered list rendered", n > 0 && !!all, `${n} cards, ${all}`);
   check("plain: no 'Acil durum' buttons, badges or safety filters", !/Acil durum|Acil kişi/.test(text) && !(await find(page, "[aria-label='Kan grubu']")) && !(await find(page, "[role=group]", "Güvenlik filtreleri")));
-  check("plain: bike plate hidden by its owner is absent", !text.includes("34 ABC 123"));
   await go(page, "/members?blood=A%2B&noContact=1");
   const filtered = await total(page);
-  check("plain: ?blood=A+&noContact=1 ignored (normal list, same total)", filtered === all && !!all, `${all} vs ${filtered}`);
+  check("plain: ?blood=A+&noContact=1 ignored (normal list, same total, cards rendered)", filtered === all && (await cards(page)) === n && n > 0, `${all} vs ${filtered}`);
   check("plain: filter params left no 'filter_blood_type' log row", logCount(ID.second, "filter_blood_type") === 0 && Number(sql(`select count(*) from safety_access_log where actor_id = '${ID.second}'`)) === 0);
 });
+
 
 // 5 staff (admin holds members.safety)
 await scenario("staff", "admin@test.local", async (page) => {
   await go(page, "/members");
   const all = await total(page);
   const text = await bodyText(page);
-  check("staff: safety filters shown", !!(await find(page, "[aria-label='Kan grubu']")) && text.includes("Acil kişisi yok"), all);
+  check("staff: safety filters shown (group, blood select, no-contact chip)", !!(await find(page, "[aria-label='Kan grubu']")) && !!(await find(page, "[role=group]", "Güvenlik filtreleri")) && text.includes("Acil kişisi yok"), all);
   await go(page, "/members?q=%C3%87elik"); // search: with other active members the fixtures may not be on page one
   const secondCard = await memberCard(page, "Çelik Fixture");
   check("staff: member without contacts gets the 'Acil kişi yok' badge", !!secondCard && /Acil kişi yok/.test(secondCard));
@@ -316,6 +321,7 @@ await scenario("staff", "admin@test.local", async (page) => {
   const memberCardText = await memberCard(page, "Test Üye");
   check("staff: member with contacts has no badge and (plate hidden) no plate in the card line", !!memberCardText && !/Acil kişi yok/.test(memberCardText) && /Acil durum/.test(memberCardText) && !/34 ABC 123/.test(memberCardText), JSON.stringify(memberCardText));
 
+  const expectedBlood = sql(`select count(*) from member_health h join profiles p on p.id = h.profile_id where h.blood_type = 'A+' and h.consent_blood_type and p.status = 'active'`);
   await go(page, "/members");
   await page.select("[aria-label='Kan grubu']", "A+");
   await click(page, "button[type=submit]", "Uygula");
@@ -323,7 +329,7 @@ await scenario("staff", "admin@test.local", async (page) => {
   await sleep(600);
   const byBlood = await total(page);
   const names = await page.evaluate(() => [...document.querySelectorAll("li[data-skeleton-result=members-row] p.font-medium")].map((p) => p.textContent));
-  check("staff: blood-type filter A Rh+ narrows the list to the member", byBlood === "1 üye" && byBlood !== all && names.length === 1 && names[0] === "Test Üye", `${all} -> ${byBlood} ${JSON.stringify(names)}`);
+  check("staff: blood-type filter A Rh+ narrows the list to the member", byBlood === `${expectedBlood} üye` && expectedBlood === "1" && byBlood !== all && names.length === 1 && names[0] === "Test Üye", `${all} -> ${byBlood} ${JSON.stringify(names)}`);
   check("staff: filter logged with the blood type as detail", logCount(ID.admin, "filter_blood_type") >= 1 && sql(`select detail from safety_access_log where actor_id = '${ID.admin}' and action = 'filter_blood_type' order by id desc limit 1`) === "A+");
 
   await go(page, "/members?noContact=1");

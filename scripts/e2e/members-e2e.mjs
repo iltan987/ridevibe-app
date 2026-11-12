@@ -120,16 +120,23 @@ const memberCard = (page, name) =>
     (name) => [...document.querySelectorAll("li[data-skeleton-result=members-row]")].find((li) => li.textContent.includes(name))?.innerText ?? null,
     name,
   );
-/** Clicks the nth visible "Kaydet" submit button: 0 location, 1 blood type (no consent yet), 2 visibility, 3 photo consent (dialogs are closed). */
-const saveNth = async (page, n) => {
-  const buttons = await page.evaluateHandle(() => [...document.querySelectorAll("button[type=submit]")].filter((b) => b.getBoundingClientRect().width > 0 && b.textContent.trim() === "Kaydet"));
-  const el = (await buttons.getProperties()).get(String(n));
-  const handle = el?.asElement();
+/** Clicks the "Kaydet" submit of the visible form holding `inner`: a selector, or "text:<label text>" for a switch. */
+const saveForm = async (page, inner) => {
+  const handle = (
+    await page.evaluateHandle((inner) => {
+      const vis = (e) => e.getBoundingClientRect().width > 0;
+      const el = inner.startsWith("text:")
+        ? [...document.querySelectorAll("label")].filter((l) => vis(l) && l.textContent.includes(inner.slice(5))).map((l) => l.querySelector("[role=switch]"))[0]
+        : [...document.querySelectorAll(inner)].find(vis);
+      return [...(el?.closest("form")?.querySelectorAll("button[type=submit]") ?? [])].find((b) => b.textContent.trim() === "Kaydet") ?? null;
+    }, inner)
+  ).asElement();
   if (!handle) return false;
   await handle.evaluate((b) => b.scrollIntoView({ block: "center" }));
   await handle.click();
   return true;
 };
+
 
 /** Sets a controlled input's value the way React notices (typing into type=date depends on the browser locale). */
 async function setInputValue(page, selector, value) {
@@ -228,7 +235,7 @@ sql(`update member_details set birth_date = null, show_birthday = true where pro
 
   // district
   await page.select("#profile-district", "Beşiktaş");
-  await saveNth(page, 0);
+  await saveForm(page, "#profile-district");
   check("location: district change shows 'Kaydedildi.'", !!(await hasText(page, /Kaydedildi\./)));
   await go(page, "/account");
   const district = await page.$eval("#profile-district", (s) => s.value);
@@ -293,7 +300,7 @@ sql(`update member_details set birth_date = null, show_birthday = true where pro
   await typeInto(await find(page, "#profile-instagram"), "https://www.instagram.com/testig/?igsh=abc");
   await (await switchFor(page, "Instagram'ımı")).asElement().click();
   await (await switchFor(page, "Doğum günümü")).asElement().click();
-  await saveNth(page, 2);
+  await saveForm(page, "#profile-instagram");
   check("visibility: save shows 'Kaydedildi.'", !!(await hasText(page, /Kaydedildi\./)));
   const igNow = await page.$eval("#profile-instagram", (i) => i.value);
   check("visibility: input shows the normalised handle right after saving", igNow === "testig", igNow);
@@ -308,7 +315,7 @@ sql(`update member_details set birth_date = null, show_birthday = true where pro
   await go(page, "/account");
   await (await switchFor(page, "Instagram'ımı")).asElement().click();
   await (await switchFor(page, "Doğum günümü")).asElement().click();
-  await saveNth(page, 2);
+  await saveForm(page, "#profile-instagram");
   await hasText(page, /Kaydedildi\./);
   await go(page, "/members?q=Test");
   const c5 = await memberCard(page, "Test Üye");
@@ -317,7 +324,7 @@ sql(`update member_details set birth_date = null, show_birthday = true where pro
   // invalid Instagram
   await go(page, "/account");
   await typeInto(await find(page, "#profile-instagram"), "not valid!");
-  await saveNth(page, 2);
+  await saveForm(page, "#profile-instagram");
   check("visibility: invalid Instagram rejected", !!(await hasText(page, /Geçerli bir Instagram kullanıcı adı/)));
 
   // photo consent
@@ -325,7 +332,7 @@ sql(`update member_details set birth_date = null, show_birthday = true where pro
   const before = await bodyText(page);
   check("consent: neutral 'not given' without a date before any choice", before.includes("İzin verilmedi.") && !before.includes("İzin verdin"));
   await (await switchFor(page, "kulüp galerisinde paylaşılmasına")).asElement().click();
-  await saveNth(page, 3);
+  await saveForm(page, "text:kulüp galerisinde paylaşılmasına");
   check("consent: saving shows the date", !!(await hasText(page, /İzin verdin \(\d{1,2} \p{L}+ \d{4}\)\./u)));
   await shot(page, "consent");
   // Saving an unchanged consent is ok but writes nothing (version and timestamp stay together).
@@ -333,11 +340,11 @@ sql(`update member_details set birth_date = null, show_birthday = true where pro
   sql(`update member_details set consent_photos_version = 'stale' where profile_id = '${MEMBER_ID}'`);
   const stamped = consentRow();
   await go(page, "/account");
-  await saveNth(page, 3);
+  await saveForm(page, "text:kulüp galerisinde paylaşılmasına");
   check("consent: re-saving unchanged consent shows 'Kaydedildi.' and writes nothing", !!(await hasText(page, /Kaydedildi\./)) && consentRow() === stamped, consentRow());
   // Withdrawing: neutral wording, version written with the change.
   await (await switchFor(page, "kulüp galerisinde paylaşılmasına")).asElement().click();
-  await saveNth(page, 3);
+  await saveForm(page, "text:kulüp galerisinde paylaşılmasına");
   check("consent: withdrawing shows 'İzin verilmedi.' and stores the notice version", !!(await hasText(page, /İzin verilmedi\./)) && !consentRow().endsWith("|stale"), consentRow());
   await ctx.close();
 }
@@ -359,7 +366,7 @@ sql(`update member_details set birth_date = null, show_birthday = true where pro
   await shot(page, "no-birthdate");
 
   // Saving visibility without touching the switch keeps the stored default (on).
-  await saveNth(page, 2);
+  await saveForm(page, "#profile-instagram");
   await hasText(page, /Kaydedildi\./);
   check("no birth date: saving visibility keeps show_birthday on", stored() === "null|true", stored());
   await go(page, "/account");
@@ -390,7 +397,7 @@ sql(`update member_details set birth_date = null, show_birthday = true where pro
   // Switching it on later shows it.
   await go(page, "/account");
   await (await switchFor(page, "Doğum günümü")).asElement().click();
-  await saveNth(page, 2);
+  await saveForm(page, "#profile-instagram");
   await hasText(page, /Kaydedildi\./);
   await go(page, "/members?q=Tarihsiz");
   const card = await memberCard(page, "Tarihsiz Fixture");
