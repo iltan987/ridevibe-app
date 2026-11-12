@@ -21,6 +21,7 @@ announcements, photo galleries, attendance. Plan and decisions: `docs/PLAN.md`. 
   completion` (lint, tsc, test, db:test, build, browser E2E) → `requesting-code-review` (+ `/security-review` for
   RLS/grant changes) → iltan reviews → merge. Small fixes skip design/plan. No git worktrees (one local Supabase DB);
   no PRs (local `--no-ff` merge). End of session: `claude-md-management:revise-claude-md`.
+  Plans: a task that changes a shared type/schema also updates its consumers, so every commit passes tsc.
 - **Follow-ups — read before, write after.** `docs/follow-ups.md` is the one backlog of everything consciously not
   done: open decisions, deferred features, parked edge cases, review minors, polish. Read it before planning. Every
   item deferred, parked or declared out of scope (incl. "minor (deferred)"/"parked" lines from review ledgers in
@@ -93,6 +94,7 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
 - Security-definer helpers live in the non-exposed `private` schema with `set search_path = ''` and fully qualified
   names. Use `(select auth.uid())` / `(select private.has_permission('…'))` in policies (evaluated once per query).
   Trigger functions in `private` fired by anon/authenticated writes must be `security definer` too.
+  A `check` constraint can't call a `private.*` helper (it runs with the writer's rights): use a security-definer trigger.
 - Conditional self-service writes (only once, only while null, only when active) need a `public` security-definer
   RPC with no target id: it writes `where profile_id = (select auth.uid())`, locks the row (`for update`), and is
   granted to `authenticated` only (example: `set_my_birth_date`).
@@ -106,6 +108,7 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
 - **Safety data:** `member_emergency_contacts` and `member_health` (blood type, written only via `set_my_blood_type` /
   `withdraw_my_blood_type_consent`) are own row only; others only via `member_safety_card` / the directory filters
   with `members.safety`. Every blood-type read/write is logged in `safety_access_log` (readable by admins only).
+  RPCs that write `safety_access_log` are `volatile`; call each once per render.
 - Turkish text in SQL: `lower/upper/ilike` mishandle `İ/ı` (`lower('İ')` = `i̇`) — search with `private.search_fold`,
   sort with `collate "tr-x-icu"`.
 - **Roles & permissions** (`supabase/schemas/05_roles.sql`): admins create roles and tick permissions
@@ -125,6 +128,8 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   hand-written data step in between. Seed rows the app relies on (e.g. built-in roles) go in the migration.
 - Never put a `private.*` function in an index/default on a table that anon/authenticated write (it runs with the
   writer's rights → the public form breaks).
+- New arguments via `create or replace` create an overload: make sure the migration drops the old signature (pgTAP: one
+  row in `pg_proc`).
 
 ### Production (hosted Supabase `ridevibe-db`, ref `igqqicbfejhnsggfuydh`, Frankfurt)
 
@@ -133,6 +138,7 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
 - **Migrations:** `pnpm exec supabase db push --remote=<POSTGRES_URL_NON_POOLING> --dry-run` first, then without
   `--dry-run` + `--yes`; then run `supabase test db` against the same target. Get the URL with
   `vercel env pull --environment=production <file outside the repo>` and delete the file afterwards.
+- Changing app data on production (e.g. role permissions): an idempotent hand-written data migration, never ad-hoc SQL.
 - **Investigating production data:** read-only psql only (`set default_transaction_read_only = on`, see below), select
   the fewest columns (mask emails), never write personal data into the repo or logs.
 - **Deleting an account** (no in-app delete): only on iltan's explicit OK; first check status/role/linked application
