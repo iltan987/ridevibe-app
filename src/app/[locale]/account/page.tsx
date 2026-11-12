@@ -8,6 +8,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EmergencyPrompt } from "@/components/profile/emergency-prompt";
+import { EmergencySection } from "@/components/profile/emergency-section";
 import { LocationForm } from "@/components/profile/location-form";
 import { MotorcyclesSection } from "@/components/profile/motorcycles-section";
 import { PhotoConsentForm } from "@/components/profile/photo-consent-form";
@@ -58,6 +60,7 @@ async function AccountDetails() {
   return (
     <>
       {profile?.status === "pending" && <PendingCard />}
+      {profile?.status === "active" && myProfile?.emergencyContacts.length === 0 && <EmergencyPrompt />}
       <Card data-skeleton-result="account">
         <CardHeader className="flex flex-row items-center gap-4">
           <Avatar className="size-14">
@@ -93,6 +96,12 @@ async function AccountDetails() {
             <>
               <LocationForm city={myProfile.city} district={myProfile.district} />
               <MotorcyclesSection motorcycles={myProfile.motorcycles} />
+              <EmergencySection
+                contacts={myProfile.emergencyContacts}
+                bloodType={myProfile.bloodType}
+                bloodConsent={myProfile.bloodConsent}
+                withdrawOnly={false}
+              />
               <VisibilityForm
                 instagram={myProfile.instagram}
                 showInstagram={myProfile.showInstagram}
@@ -101,6 +110,14 @@ async function AccountDetails() {
                 birthDate={myProfile.birthDate}
               />
             </>
+          )}
+          {profile?.status === "inactive" && (
+            <EmergencySection
+              contacts={myProfile.emergencyContacts}
+              bloodType={myProfile.bloodType}
+              bloodConsent={myProfile.bloodConsent}
+              withdrawOnly
+            />
           )}
           <PhotoConsentForm consent={myProfile.consentPhotos} consentAt={myProfile.consentPhotosAt} />
         </>
@@ -111,9 +128,9 @@ async function AccountDetails() {
 }
 
 /**
- * Mirrors the default (active member) page: the account card plus the four profile sections (heights measured with
+ * Mirrors the default (active member) page: the account card plus the five profile sections (heights measured with
  * `scripts/e2e/skeletons.mjs`: inputs are `h-10 md:h-9`, the native select `h-10 md:h-8`, the visibility hint wraps to
- * two lines on a phone). Pending and inactive pages are shorter (status is request-time data).
+ * two lines on a phone; the Acil durum card shows the no-contact, no-consent state). Pending and inactive pages are shorter (status is request-time data).
  */
 function AccountSkeleton() {
   return (
@@ -151,11 +168,36 @@ function AccountSkeleton() {
         <Skeleton className="h-5 w-52" />
         <Skeleton className="mb-2 h-8 w-36" />
       </SectionSkeleton>
+      <SectionSkeleton id="profile-emergency">
+        <Skeleton className="h-5 w-56" />
+        {/* add button, two hint lines on phones (one from sm), and the (empty) status line that adds a gap */}
+        <div className="flex flex-col gap-2">
+          <Skeleton className="h-8 w-28" />
+          <Skeleton className="h-8 w-full sm:h-4" />
+          <div />
+        </div>
+        <Skeleton className="h-px w-full" />
+        {/* blood-type form (no consent yet): one child, like the real form */}
+        <div className="flex flex-col gap-4">
+          <Skeleton className="h-5 w-24" />
+          <Skeleton className="h-15 w-full sm:h-10" />
+          <div className="flex flex-col gap-2">
+            <Skeleton className="h-[19.25px] w-24" />
+            <Skeleton className="h-10 w-28 md:h-8" />
+          </div>
+          <div className="flex flex-col gap-2">
+            <Skeleton className="h-35 w-full sm:h-20" />
+            <Skeleton className="h-5 w-32" />
+          </div>
+          <Skeleton className="h-8 w-20" />
+        </div>
+      </SectionSkeleton>
       <SectionSkeleton id="profile-visibility" description>
         <div className="flex flex-col gap-2">
           <Skeleton className="h-[19.25px] w-40" />
           <Skeleton className="h-10 w-full md:h-9" />
         </div>
+        <Skeleton className="h-10 w-full" />
         <Skeleton className="h-10 w-full" />
         <Skeleton className="h-10 w-full" />
         <Skeleton className="h-5 w-full" />

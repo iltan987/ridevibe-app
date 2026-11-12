@@ -16,7 +16,6 @@ type Props = {
   instagram: string | null;
   showInstagram: boolean;
   showBirthday: boolean;
-  /** Not editable here yet; sent unchanged with the save so it is never reset. */
   showPlates: boolean;
   /** `YYYY-MM-DD` or null (manually activated members have none). */
   birthDate: string | null;
@@ -35,6 +34,7 @@ export function VisibilityForm({ instagram, showInstagram, showBirthday, showPla
   // The stored value, also without a birth date (opt-out: on by default, members may turn it off before entering
   // the date). Don't derive it from birthDate: useState keeps its first value when refresh() brings the date.
   const [birthdayOn, setBirthdayOn] = useState(showBirthday);
+  const [platesOn, setPlatesOn] = useState(showPlates);
   const birthDateEntry = useBirthDateEntry(birthdayOn);
 
   function onSubmit(event: React.FormEvent) {
@@ -45,7 +45,7 @@ export function VisibilityForm({ instagram, showInstagram, showBirthday, showPla
           instagram: submitted,
           show_instagram: instagramOn,
           show_birthday: birthdayOn,
-          show_plates: showPlates,
+          show_plates: platesOn,
         }),
       // Show the handle as saved ("@x" or a profile URL is stored as "x").
       () => setHandle(normalizeInstagram(submitted) ?? ""),
@@ -81,6 +81,11 @@ export function VisibilityForm({ instagram, showInstagram, showBirthday, showPla
           <label className="flex min-h-10 cursor-pointer items-center justify-between gap-4 text-sm">
             {t("showInstagram")}
             <Switch checked={instagramOn} onCheckedChange={setInstagramOn} />
+          </label>
+
+          <label className="flex min-h-10 cursor-pointer items-center justify-between gap-4 text-sm">
+            {t("showPlates")}
+            <Switch checked={platesOn} onCheckedChange={setPlatesOn} />
           </label>
 
           {!birthDate && <BirthDateFields entry={birthDateEntry} />}

@@ -158,6 +158,53 @@
       "notTurkishMobile": "Türkiye numarası 5 ile başlayan bir cep telefonu olmalı (WhatsApp).",
       "invalidPlate": "Geçerli bir plaka gir (ör. 34 ABC 123) ya da “Yabancı plaka”yı işaretle.",
       "consentRequired": "Kaydetmek için açık rıza kutusunu işaretlemelisin."
+    },
+    "plate": "Plaka",
+    "platePlaceholder": "34 ABC 123",
+    "plateForeign": "Yabancı plaka",
+    "showPlates": "Plakalarımı göster",
+    "emergency": {
+      "title": "Acil durum",
+      "promptTitle": "Sürüşler için acil durum kişisi ekle",
+      "promptText": "Bir şey olursa kulübün güvenlik sorumluları yakınına ulaşabilsin.",
+      "promptAction": "Kişi ekle",
+      "contacts": "Acil durum kişileri",
+      "noContacts": "Henüz acil durum kişisi eklemedin.",
+      "mainContact": "ana kişi",
+      "add": "Kişi ekle",
+      "addTitle": "Acil durum kişisi ekle",
+      "editTitle": "Acil durum kişisini düzenle",
+      "editLabel": "{name} kişisini düzenle",
+      "deleteLabel": "{name} kişisini sil",
+      "deleteTitle": "Kişiyi sil",
+      "deleteConfirm": "{name} kişisini silmek istediğine emin misin?",
+      "name": "Ad soyad",
+      "relationship": "Yakınlık",
+      "relationshipPlaceholder": "Seç",
+      "phone": "Telefon",
+      "limitReached": "En fazla 2 acil durum kişisi ekleyebilirsin.",
+      "hintVisibility": "Yalnızca kulübün güvenlik sorumluları görür.",
+      "hintNotify": "Eklediğin kişiye haber ver.",
+      "relationships": {
+        "spouse_partner": "Eş / partner",
+        "parent": "Anne / baba",
+        "sibling": "Kardeş",
+        "child": "Çocuk",
+        "friend": "Arkadaş",
+        "other": "Diğer"
+      }
+    },
+    "bloodType": {
+      "title": "Kan grubu",
+      "intro": "İstersen kan grubunu ekleyebilirsin. Yalnızca açık rızanla saklanır ve yalnızca kulübün güvenlik sorumlularına görünür.",
+      "consentLabel": "Kan grubumun; kaza veya acil durumda sağlık ekiplerine iletilmesi ve kulüp içinde kan ihtiyacı olduğunda uygun bağışçıların bulunması amacıyla kulübün güvenlik sorumlularınca görülmesine açık rıza veriyorum. Bu rızayı istediğim zaman profilimden geri alabilirim.",
+      "select": "Kan grubu",
+      "placeholder": "Seç",
+      "current": "Kan grubun: {type}",
+      "change": "Değiştir",
+      "withdraw": "Rızamı geri al",
+      "withdrawTitle": "Rızanı geri al",
+      "withdrawConfirm": "Kan grubun silinecek ve güvenlik sorumluları artık göremeyecek. Emin misin?"
     }
   },
   "Apply": {

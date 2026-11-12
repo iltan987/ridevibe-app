@@ -307,6 +307,10 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   shorter page (no profile sections, or only the photo consent), so their skeleton overshoots. The status is
   request-time data, so the fallback can't know it. (Default-state heights are measured: all Δh 0, 2026-11-10.)
   Members without a birth date (2026-11-11) see a taller visibility card (date field, hint, button) than the skeleton.
+  Members without an emergency contact (2026-11-13, safety data) also get the prompt card (~146px at 390px) above the
+  account card, which the skeleton doesn't have: the page below jumps down once when it streams in. The Acil durum
+  skeleton mirrors the default state "no contact, no blood-type consent" (Δh 0 at 390 and 1280, dark and light);
+  members with contacts or a stored blood type see a different height. Inactive members' section is shorter.
 - **Locale switcher shows no pending feedback** (2026-11-10, loading-states) — it uses `router.replace` in a
   transition, not a `Link`, so neither the progress bar nor the dim appears (it still switches and re-enables its
   button). Could drive the pending store from `useTransition`.
