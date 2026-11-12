@@ -212,7 +212,12 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   can't tell whether the queued `storage` event or the visibility re-check did the work; the unit tests cover the
   re-check. (c) Following tabs drop the URL hash (`#…`). (d) Only `/apply` and `/account` keep their language:
   a background tab on an admin page with a typed review note or an open rename/role dialog loses that text when
-  another tab switches language; add those paths (or a "dirty form" flag) if staff hit it.
+  another tab switches language; add those paths (or a "dirty form" flag) if staff hit it. (e) The language
+  catch-up on mount compares another tab's `Date.now()` with this page's `performance.timeOrigin`; reportedly
+  (unverified) Chrome's `timeOrigin` can run early after system sleep, so a switch made before the page loaded could
+  look newer and a tab opened from an `/en/…` link would bounce to the last switched language. Clock-free fix: snapshot
+  the stored `rv-locale` value at page load (inline script) and follow only if it changed. (f) `parseAuthMark` accepts
+  an empty time (`"abc@"` → 0) while `localeSwitchedSince` rejects it; harmless (time 0 always loses), inconsistent.
 
 ### UI / accessibility
 - **Focus drops to `<body>` when the install banner unmounts** (2026-11-12, install-prompt final review) — pressing
