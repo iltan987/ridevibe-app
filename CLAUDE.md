@@ -68,7 +68,7 @@ pnpm db:types                 # regenerate src/lib/supabase/database.types.ts
 pnpm exec supabase migration up   # apply new migrations locally, keeping data (db:reset wipes auth users; after
                                   # an iteration that reset, restore iltan's local admin before browser review)
 kill $(ss -ltnp | grep ':3123 ' | grep -oP 'pid=\K[0-9]+')   # stop a local server; never `pkill -f` (kills own shell)
-PUPPETEER_DIR=~/e2e-tools node scripts/e2e/{nav,members,header,apply}-e2e.mjs   # browser E2E vs `pnpm start -p 3123` (setup: scripts/e2e/README.md)
+PUPPETEER_DIR=~/e2e-tools node scripts/e2e/{nav,members,header,apply,apply-nav}-e2e.mjs   # browser E2E vs `pnpm start -p 3123` (setup: scripts/e2e/README.md)
 # signed-in parts need fixture users (admin@/member@/pending-noapp@test.local) that `db:reset` wipes: recreate per README
 # headless hides scrollbars (launch({ scrollbars: true }) keeps them); Next keeps the previous route hidden in the DOM: select visible elements
 # members E2E needs only its fixtures active: park other active profiles, restore by id (docs/learnings/testing.md)
@@ -183,7 +183,10 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   prefetched); no `loading.tsx` unless the dev instant-navigation check flags the segment (`docs/learnings/nextjs.md`).
   A language switch remounts the `[locale]` layout and re-shows fallbacks: test skeletons on a switch *back* too.
   Session-dependent fallbacks take their shape from `hasSessionCookie()` (`src/lib/auth/session-hint.ts`), never a
-  server read. Inline scripts only via `InlineScript` (`src/components/inline-script.tsx`).
+  server read; when the shape depends on more than signed-in/out, also remember the last streamed answer in
+  `localStorage` (pattern: `src/lib/applications/apply-hint.ts`). Inline scripts only via `InlineScript`
+  (`src/components/inline-script.tsx`); a hint script marks its previous sibling, so render it right after the element
+  in every Suspense copy (`docs/learnings/ui.md`).
 - Client-only reads (localStorage, user agent) via `useSyncExternalStore(noSubscribe, client, server)` or a `useState`
   initializer after a hydration key; never `setState` in an effect (React Compiler lint).
 - Application form (`/apply`): a new question goes into the Zod schema **and** a step in
@@ -196,7 +199,8 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   form (`applyView` / `getApplyView`); nav and hero guess from the session cookie + `rv-apply-hidden` until the
   answer streams in; a signed-in submit hides it at once (`markApplySubmitted`, no `refresh()`).
 - Server Actions: validate with Zod, let RLS decide, map error codes to results, call `refresh()` (`next/cache`)
-  after a successful mutation. They and Route Handlers can't read the locale root param — derive it from data.
+  after a successful mutation (exception: `submitApplication`, whose success card a refresh would replace). They and
+  Route Handlers can't read the locale root param — derive it from data.
 - Lists use keyset pagination (`src/lib/pagination.ts` + `Pager`); access checks via `can()` / `requirePermission()`.
 - **Every list paginates.** No fixed caps like `.limit(200)`: the club grew to ~130 members in two weeks. Design
   queries and screens with pagination (and visible totals) from the start; don't let counts fail silently.
