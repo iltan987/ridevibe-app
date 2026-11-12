@@ -68,3 +68,9 @@
   are only in `claude-plugins-official`. Never enable the same plugin from both (duplicate skills).
 - **Check:** `claude -p "print your auto memory directory path"` → `…/ridingclub/.claude/memory/`.
 - **Source:** code.claude.com/docs/en/memory (autoMemoryDirectory), settings-reference, plugins/install; found by testing.
+
+### `docker exec` ignores piped SQL without `-i` (2026-11-12)
+- **Symptom:** `docker exec <db> psql … <<'SQL' … SQL` prints nothing and changes nothing.
+- **Cause:** without `-i`, docker doesn't attach stdin, so psql never receives the heredoc.
+- **Do:** `docker exec -i supabase_db_ridevibe psql -U postgres -v ON_ERROR_STOP=1 <<'SQL'`; check counts afterwards.
+- **Source:** found by testing (fixture cleanup, 2026-11-12).

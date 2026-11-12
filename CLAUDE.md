@@ -75,7 +75,9 @@ PUPPETEER_DIR=~/e2e-tools node scripts/e2e/{nav,members,header,apply,apply-nav,i
 ```
 
 Signed-in local E2E needs email sign-in: `SUPABASE_AUTH_EMAIL_ENABLED=true pnpm exec supabase start` (temporary;
-recipe and test users in `docs/learnings/testing.md`), then restart normally and delete the test rows.
+recipe and test users in `docs/learnings/testing.md`), then restart normally and delete the test rows:
+`docker exec -i supabase_db_ridevibe psql -U postgres` (`-i`, or piped SQL is silently ignored), delete
+`public.applications` then `auth.users` where the email ends in `@test.local` / `@fixture.invalid`.
 
 ## Database (Supabase)
 
@@ -195,6 +197,9 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
 - WhatsApp links: `whatsAppUrl()` (`src/lib/applications/contact.ts`, `api.whatsapp.com/send`), never `wa.me` —
   its desktop redirect turns emoji into "�".
 - Mobile-first: design for ~390px first; the bottom tab bar is the main navigation on phones.
+- PWA: manifest only, no service worker yet (Web Push comes with Events). Own install prompt: `src/lib/pwa/` +
+  `src/components/pwa/`; `<InstallBanner />` floats (its spacer is portaled after the footer) on `/account`
+  (active/pending) and `/members` (active): add it to a member home page when one exists.
 - Primary nav items live in `src/components/layout/nav-items.ts`. "Başvur" is shown only when `/apply` would show the
   form (`applyView` / `getApplyView`); nav and hero guess from the session cookie + `rv-apply-hidden` until the
   answer streams in; a signed-in submit hides it at once (`markApplySubmitted`, no `refresh()`).
