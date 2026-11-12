@@ -11,6 +11,7 @@ create table public.member_details (
   instagram text check (instagram ~ '^[A-Za-z0-9._]{1,30}$'),
   show_birthday boolean not null default true, -- opt-out since 2026-11-11 (iltan asked the members)
   show_instagram boolean not null default false,
+  show_plates boolean not null default true,
   consent_photos boolean not null default false,
   consent_photos_at timestamptz,
   consent_photos_version text check (char_length(consent_photos_version) <= 40),
@@ -52,7 +53,7 @@ for each row execute function private.member_details_stamp_consent();
 
 revoke all on table public.member_details from anon, authenticated;
 grant select on table public.member_details to authenticated;
-grant update (instagram, show_birthday, show_instagram, consent_photos, consent_photos_version)
+grant update (instagram, show_birthday, show_instagram, show_plates, consent_photos, consent_photos_version)
   on table public.member_details to authenticated;
 
 alter table public.member_details enable row level security;

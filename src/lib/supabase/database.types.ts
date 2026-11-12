@@ -53,14 +53,14 @@ isOneToOne: true
                   ]
                 },"member_details": {
                   Row: {
-                    "birth_date": string | null,"consent_photos": boolean,"consent_photos_at": string | null,"consent_photos_version": string | null,"instagram": string | null,"profile_id": string,"show_birthday": boolean,"show_instagram": boolean,"updated_at": string
+                    "birth_date": string | null,"consent_photos": boolean,"consent_photos_at": string | null,"consent_photos_version": string | null,"instagram": string | null,"profile_id": string,"show_birthday": boolean,"show_instagram": boolean,"show_plates": boolean,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "birth_date"?: string | null,"consent_photos"?: boolean,"consent_photos_at"?: string | null,"consent_photos_version"?: string | null,"instagram"?: string | null,"profile_id": string,"show_birthday"?: boolean,"show_instagram"?: boolean,"updated_at"?: string
+                    "birth_date"?: string | null,"consent_photos"?: boolean,"consent_photos_at"?: string | null,"consent_photos_version"?: string | null,"instagram"?: string | null,"profile_id": string,"show_birthday"?: boolean,"show_instagram"?: boolean,"show_plates"?: boolean,"updated_at"?: string
                   }
                   Update: {
-                    "birth_date"?: string | null,"consent_photos"?: boolean,"consent_photos_at"?: string | null,"consent_photos_version"?: string | null,"instagram"?: string | null,"profile_id"?: string,"show_birthday"?: boolean,"show_instagram"?: boolean,"updated_at"?: string
+                    "birth_date"?: string | null,"consent_photos"?: boolean,"consent_photos_at"?: string | null,"consent_photos_version"?: string | null,"instagram"?: string | null,"profile_id"?: string,"show_birthday"?: boolean,"show_instagram"?: boolean,"show_plates"?: boolean,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -113,14 +113,14 @@ isOneToOne: true
                   ]
                 },"member_motorcycles": {
                   Row: {
-                    "brand": string,"cc": number | null,"created_at": string,"id": string,"model": string,"profile_id": string,"updated_at": string
+                    "brand": string,"cc": number | null,"created_at": string,"id": string,"model": string,"plate": string | null,"plate_foreign": boolean,"profile_id": string,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "brand": string,"cc"?: number | null,"created_at"?: string,"id"?: string,"model": string,"profile_id": string,"updated_at"?: string
+                    "brand": string,"cc"?: number | null,"created_at"?: string,"id"?: string,"model": string,"plate"?: string | null,"plate_foreign"?: boolean,"profile_id": string,"updated_at"?: string
                   }
                   Update: {
-                    "brand"?: string,"cc"?: number | null,"created_at"?: string,"id"?: string,"model"?: string,"profile_id"?: string,"updated_at"?: string
+                    "brand"?: string,"cc"?: number | null,"created_at"?: string,"id"?: string,"model"?: string,"plate"?: string | null,"plate_foreign"?: boolean,"profile_id"?: string,"updated_at"?: string
                   }
                   Relationships: [
                     {
