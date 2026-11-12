@@ -45,6 +45,9 @@ export function createInstallStore(env: InstallEnv): InstallStore {
   let snapshot: InstallSnapshot | null = null;
   let started = false;
   let relatedInstalled = false;
+  // The system dialog was accepted: treat as installed for this page's lifetime. Not stored, because the install can
+  // still fail; `appinstalled` stores the flag once it really happened.
+  let accepted = false;
   let androidFallback = false;
   let watchTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -58,8 +61,9 @@ export function createInstallStore(env: InstallEnv): InstallStore {
     }
   }
 
+  const platform = () => detectInstallPlatform({ userAgent: nav.userAgent, maxTouchPoints: nav.maxTouchPoints ?? 0 });
+
   function compute(): InstallSnapshot {
-    const platform = detectInstallPlatform({ userAgent: nav.userAgent, maxTouchPoints: nav.maxTouchPoints ?? 0 });
     let standalone = false;
     try {
       standalone = win.matchMedia(STANDALONE_QUERY).matches;
@@ -67,8 +71,12 @@ export function createInstallStore(env: InstallEnv): InstallStore {
       // no matchMedia: not standalone
     }
     const installed =
-      standalone || nav.standalone === true || readStorage(INSTALL_INSTALLED_KEY) === "1" || relatedInstalled;
-    const variant = installVariant({ platform, hasPrompt: Boolean(heldPrompt()), installed, androidFallback });
+      accepted ||
+      standalone ||
+      nav.standalone === true ||
+      readStorage(INSTALL_INSTALLED_KEY) === "1" ||
+      relatedInstalled;
+    const variant = installVariant({ platform: platform(), hasPrompt: Boolean(heldPrompt()), installed, androidFallback });
     const raw = readStorage(INSTALL_DISMISSED_KEY);
     const dismissedAt = raw === null || Number.isNaN(Number(raw)) ? null : Number(raw);
     return { variant, banner: showsBanner(variant) && !isDismissed(dismissedAt, env.now()) };
@@ -92,9 +100,7 @@ export function createInstallStore(env: InstallEnv): InstallStore {
   // not installable...), offer the manual guide 30 s after the first user activation.
   function startAndroidWatch(): void {
     if (androidFallback || watchTimer !== undefined || heldPrompt()) return;
-    if (detectInstallPlatform({ userAgent: nav.userAgent, maxTouchPoints: nav.maxTouchPoints ?? 0 }) !== "android") {
-      return;
-    }
+    if (platform() !== "android") return;
     if (!("BeforeInstallPromptEvent" in win)) {
       androidFallback = true;
       return;
@@ -146,7 +152,7 @@ export function createInstallStore(env: InstallEnv): InstallStore {
     try {
       win.localStorage.setItem(INSTALL_DISMISSED_KEY, String(env.now()));
     } catch {
-      // storage unavailable: the banner comes back on the next load
+      // storage unavailable: nothing is remembered, so the banner stays (follow-up: in-memory fallback)
     }
     update();
   }
@@ -172,9 +178,12 @@ export function createInstallStore(env: InstallEnv): InstallStore {
       (win as unknown as Record<string, unknown>)[INSTALL_PROMPT_PROP] = null;
       try {
         await event.prompt();
-        if ((await event.userChoice).outcome === "dismissed") dismiss();
+        const { outcome } = await event.userChoice;
+        if (outcome === "accepted") accepted = true;
+        else if (outcome === "dismissed") dismiss();
       } catch {
-        // already used or blocked: just drop it
+        // already used or blocked: drop it and fall back to the platform's guide (on Android the manual one, at once)
+        if (platform() === "android") androidFallback = true;
       }
       update();
       if (started) startAndroidWatch();

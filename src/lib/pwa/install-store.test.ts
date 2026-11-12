@@ -137,14 +137,32 @@ test("dismissed outcome: banner off, dismissal stored, variant falls back", asyn
   assert.equal(t.data.get(INSTALL_DISMISSED_KEY), String(t.env.now()));
 });
 
-test("prompt() rejecting does not throw and the variant falls back", async () => {
+test("prompt() rejecting does not throw and falls back to the Android guide at once", async () => {
   const t = makeEnv({ ua: ANDROID_UA, bipEvent: true });
   t.hold(fakePrompt("throws").ev);
   const store = createInstallStore(t.env);
   store.subscribe(() => {});
   await store.install();
   assert.equal(t.win[INSTALL_PROMPT_PROP], null);
-  assert.equal(store.getSnapshot().variant, "none");
+  assert.deepEqual(store.getSnapshot(), { variant: "android-manual", banner: true });
+});
+
+test("accepted outcome: nothing shown for the rest of the page, even with the fallback elapsed", async () => {
+  const t = makeEnv({ ua: ANDROID_UA, bipEvent: true });
+  const store = createInstallStore(t.env);
+  store.subscribe(() => {});
+  t.setActivation();
+  t.advance(31_000);
+  assert.equal(store.getSnapshot().variant, "android-manual");
+  t.hold(fakePrompt("accepted").ev);
+  t.emit(INSTALL_CHANGE_EVENT);
+  assert.equal(store.getSnapshot().variant, "prompt");
+  await store.install();
+  assert.deepEqual(store.getSnapshot(), NO_INSTALL);
+  t.advance(60_000);
+  t.emit("storage");
+  assert.deepEqual(store.getSnapshot(), NO_INSTALL);
+  assert.equal(t.data.get(INSTALL_INSTALLED_KEY), undefined); // not stored: the install could still fail
 });
 
 test("a new event after a dismissed outcome: menu usable, banner still dismissed", async () => {
