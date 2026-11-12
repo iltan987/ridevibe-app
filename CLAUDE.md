@@ -198,10 +198,12 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
 - WhatsApp links: `whatsAppUrl()` (`src/lib/applications/contact.ts`, `api.whatsapp.com/send`), never `wa.me` —
   its desktop redirect turns emoji into "�".
 - Mobile-first: design for ~390px first; the bottom tab bar is the main navigation on phones.
-- Cross-tab sync (`src/lib/cross-tab.ts`, one `localStorage` key per topic): `AuthSync` in `UserMenu` publishes the
-  rendered user id (`rv-auth`), other tabs `router.refresh()` and the server decides where they land; the language
-  switcher publishes `rv-locale`, other tabs follow except `/apply` and `/account` (unsaved form input). Theme syncs
-  the same way via its own `theme` key.
+- Cross-tab sync (`src/lib/cross-tab.ts`, one `localStorage` key per topic): `AuthSync` in `UserMenu` stores a hash of
+  the user + server render time (`rv-auth`; newer render wins), other tabs `router.refresh()` and the server decides
+  where they land; the language switcher stores a unique event per switch (`rv-locale`), other tabs follow (and catch
+  up when shown late) except `/apply` and `/account` (unsaved form input). Stored values outlive sessions and
+  background tabs hydrate late: never compare with "the stored value" alone (`docs/learnings/ui.md`). Theme syncs via
+  its own `theme` key.
 - PWA: manifest only, no service worker yet (Web Push comes with Events). Own install prompt: `src/lib/pwa/` +
   `src/components/pwa/`; `<InstallBanner />` floats (its spacer is portaled after the footer) on `/account`
   (active/pending) and `/members` (active): add it to a member home page when one exists.

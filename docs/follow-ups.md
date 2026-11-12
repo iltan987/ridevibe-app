@@ -60,6 +60,11 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 - **Ban evasion vs. linking** (2026-11-09, application gaps) — when the ban list is built (PLAN "Member conduct"),
   check new applications *and* staff links (`link_application`) against it.
+- **Privacy notice: cross-tab sync storage?** (2026-11-12, cross-tab review) — the browser now keeps `rv-auth` (a
+  12-character hash of the account id + a time; `""` after sign-out, left in place if a session just expires) and
+  `rv-locale` (last language switch) in `localStorage`. The notice lists the session cookie and the application draft
+  as browser storage. Decide whether to mention these (technically necessary, no tracking); a text change bumps
+  `PRIVACY_NOTICE_VERSION`.
 - **Privacy notice: directory purpose and legal basis** (2026-11-10, members review) — sections 3/4 of the notice
   (purposes, legal basis) don't mention the in-club member directory (name, district, bikes, birthday, opt-in
   Instagram shown to active members). Question for the lawyer review of the notice. Since 2026-11-11 the birthday is
@@ -201,12 +206,13 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   Try it again in isolation; if it works, simplify `__release()` in `install-e2e.mjs` to re-dispatch the real event.
   Risk if left: a wrong learning steers later tests to synthetic events.
 
-- **Cross-tab sync minors** (2026-11-12, cross-tab sync) — (a) the language switcher drops the query in its *own* tab
-  (`router.replace(pathname, …)`: `/members?q=…` → `/en/members`), while the tabs that follow keep it; keep the query
-  in both if it matters (check `/apply?step=N` and the apply E2E first). (b) The E2E's frozen-tab check can't tell
-  whether the queued `storage` event or the visibility re-check did the work; the unit tests cover the re-check.
-  (c) A tab that reveals a hidden copy of an older layout could publish a stale user id once; the other tabs then
-  refresh one extra time and converge (seen only in reasoning, not observed).
+- **Cross-tab sync minors** (2026-11-12, cross-tab sync + review) — (a) the language switcher drops the query in its
+  *own* tab (`router.replace(pathname, …)`: `/members?q=…` → `/en/members`), while the tabs that follow keep it; keep
+  the query in both if it matters (check `/apply?step=N` and the apply E2E first). (b) The E2E's frozen-tab check
+  can't tell whether the queued `storage` event or the visibility re-check did the work; the unit tests cover the
+  re-check. (c) Following tabs drop the URL hash (`#…`). (d) Only `/apply` and `/account` keep their language:
+  a background tab on an admin page with a typed review note or an open rename/role dialog loses that text when
+  another tab switches language; add those paths (or a "dirty form" flag) if staff hit it.
 
 ### UI / accessibility
 - **Focus drops to `<body>` when the install banner unmounts** (2026-11-12, install-prompt final review) — pressing

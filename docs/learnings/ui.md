@@ -205,3 +205,16 @@
 - **Do:** portalling page-owned layout helpers into `<body>` is safe with Next's hidden routes; the E2E keeps a check
   (`scripts/e2e/install-e2e.mjs`, section 8c).
 - **Source:** found by testing (install prompt final fixes).
+
+### Cross-tab state: stored values outlive what they describe; background tabs mount late (2026-11-12)
+- **Symptom:** (code review + E2E) a language switch to the language already in `localStorage` reached no tab (no
+  write, no event); a tab opened in the background and shown after a sign-out elsewhere stored its outdated user, so
+  the next real sign-in looked like "no change"; a background tab missed a language switch made before it was shown.
+- **Cause:** a `localStorage` value outlives the session it came from (the `NEXT_LOCALE` cookie may be gone, the
+  account signed out), and a tab's streamed header hydrates only when the tab is first shown
+  (`docs/learnings/testing.md`), so "compare with the stored value" is wrong in both directions.
+- **Do:** treat user actions as events (`localeEvent`: unique value per switch) and catch up on mount with events
+  newer than the page load (`localeSwitchedSince(…, performance.timeOrigin)`); give state a time and let only newer
+  state win (`authMark` with the server render time, `authRenderAction`; refresh at most once per stored mark so a
+  server clock behind can't loop). Code: `src/lib/cross-tab.ts`.
+- **Source:** code review of `feat/cross-tab-sync`; `scripts/e2e/cross-tab-e2e.mjs`.

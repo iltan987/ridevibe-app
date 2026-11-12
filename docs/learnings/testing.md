@@ -218,10 +218,15 @@
 - **Symptom:** in the hidden tab of a two-tab test, the header still showed the user-menu skeleton and the streamed
   trigger had zero size seconds after `networkidle0`; the dropdown's portal (name label, `keepMounted`) didn't exist
   until `bringToFront()`.
-- **Cause:** observed only (not traced into React): a hidden document keeps the Suspense fallback on screen and the
-  streamed content hidden, and Base UI mounts the portal later; both settle when the tab is shown. Users never see
-  this (the tab is hidden).
+- **Cause:** React's streaming runtime reveals a completed Suspense boundary with `requestAnimationFrame($RV…)`
+  (`next/dist/compiled/react-dom-experimental/cjs/react-dom-server*.production.js`), and hidden tabs run no animation
+  frames; the boundary's client components hydrate (and their effects run) only after that, so Base UI's portal and
+  any `useEffect` inside streamed parts wait until the tab is first shown. Product consequence: see
+  `docs/learnings/ui.md` (cross-tab state in late-mounting tabs).
 - **Do:** read state in background tabs without visibility filters (e.g. the trigger's own text, not
   `getBoundingClientRect` or the menu label; `shownUser` in `scripts/e2e/cross-tab-e2e.mjs`), or `bringToFront()`
-  first. To simulate a frozen background tab use CDP `Page.setWebLifecycleState` (`frozen` → `active`).
-- **Source:** found by testing (cross-tab sync).
+  first. To simulate a frozen background tab use CDP `Page.setWebLifecycleState` (`frozen` → `active`). To load a tab
+  in the background, `bringToFront()` another tab before its `goto`. Seeding a cross-tab `localStorage` key with
+  `page.evaluate` is itself a `storage` event for every other open tab (they may follow it and change cookies): seed
+  before other tabs exist.
+- **Source:** found by testing (cross-tab sync); React source above.
