@@ -6,17 +6,17 @@ import { updateSession } from "./lib/supabase/proxy";
 const handleI18nRouting = createMiddleware(routing);
 
 export default async function proxy(request: NextRequest) {
-  // next-intl falls back to Accept-Language when there is no cookie, which redirects first-time visitors (and
-  // crawlers) away from "/". Hide the header from it only; updateSession keeps the original request (it mutates
-  // request.cookies).
-  const headers = new Headers(request.headers);
-  headers.delete("accept-language");
-  const i18nRequest = new NextRequest(request, { headers });
-
   // /auth/* are non-localized route handlers (e.g. the OAuth callback).
-  const response = request.nextUrl.pathname.startsWith("/auth/")
-    ? NextResponse.next({ request })
-    : handleI18nRouting(i18nRequest);
+  if (request.nextUrl.pathname.startsWith("/auth/")) {
+    return updateSession(request, NextResponse.next({ request }));
+  }
+
+  // next-intl falls back to Accept-Language when there is no cookie, which redirects first-time visitors (and
+  // crawlers) away from "/". Pin the header to the default locale for next-intl only: without a header it sets the
+  // cookie on every first visit. updateSession keeps the original request (it mutates request.cookies).
+  const headers = new Headers(request.headers);
+  headers.set("accept-language", routing.defaultLocale);
+  const response = handleI18nRouting(new NextRequest(request, { headers }));
 
   return updateSession(request, response);
 }

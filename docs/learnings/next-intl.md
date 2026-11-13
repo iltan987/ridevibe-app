@@ -51,8 +51,9 @@
   choice is forgotten when the browser closes.
 - **Cause:** `resolveLocale` goes prefix → `NEXT_LOCALE` cookie → `Accept-Language` → default. The default cookie has
   no `maxAge` (session cookie). `syncCookie` sets it on document requests only, when it is outdated or (no cookie and)
-  the locale differs from the header-derived one — so a header-less request sets it only for non-default locales.
-- **Do:** in `src/proxy.ts` give next-intl a `new NextRequest(request, { headers })` without `accept-language`
-  (cookie detection keeps working) and pass the original request to `updateSession`; in `routing.ts` set
+  the locale differs from the header-derived one. Without the header `getAcceptLanguageLocale` returns undefined, so
+  the cookie gets set on every first visit (also `/` and crawlers).
+- **Do:** in `src/proxy.ts` give next-intl a `new NextRequest(request, { headers })` with `accept-language` pinned to
+  the default locale (not deleted: see Cause; cookie detection keeps working) and pass the original request to `updateSession`; in `routing.ts` set
   `localeCookie: { maxAge: 60 * 60 * 24 * 365 }` (merged into the defaults; the client `syncLocaleCookie` reads it too).
 - **Source:** `next-intl/dist/esm/development/middleware/{resolveLocale,syncCookie}.js`, found by testing.
