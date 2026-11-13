@@ -23,7 +23,9 @@ export function PrivacyTr() {
         <li><strong>Motosiklet plakası:</strong> isteğe bağlı olarak, her motosiklet için girdiğiniz plaka.</li>
         <li><strong>Güvenlik kayıtları:</strong> kan grubu işlemlerinin ve acil durum bilgisi görüntülemelerinin kaydı (kim, ne zaman, hangi üye).</li>
         <li><strong>Görsel veriler:</strong> yalnızca açık rıza vermeniz halinde, etkinliklerde çekilen ve sizi gösteren fotoğraflar; ayrıca buna açıkça izin verdiyseniz, kulübün herkese açık internet sitesinde yayınlanan ve sizi gösteren sürüş ve buluşma fotoğrafları.</li>
-        <li><strong>Teknik veriler:</strong> giriş yapabilmeniz için zorunlu oturum çerezi. Başvuru formunu doldururken cevaplarınız (iletişim bilgileri ve onaylar hariç) gönderene kadar yalnızca kendi tarayıcınızda saklanır ve bize ulaşmaz; başvuruyu gönderdiğinizde silinir, 7 gün sonra da geçersiz olur. Dil tercihinizi hatırlamak için bir dil çerezi (1 yıl). Ayrıca tarayıcınız; tema seçiminizi, son dil değişikliğini, açık sekmeleri senkron tutmak için hesabınızdan türetilen kısa bir kodu, uygulama yükleme önerisinin durumunu ve başvuru bağlantısının gösterilip gösterilmeyeceğine dair bir işareti yalnızca kendi cihazınızda saklar. Bunlar sitenin çalışması için gereklidir, sizi izlemek için kullanılmaz ve dil çerezi dışında bize gönderilmez.</li>
+        <li><strong>Oturum çerezi:</strong> giriş yapabilmeniz için zorunlu çerez.</li>
+        <li><strong>Başvuru formu taslağı:</strong> formu doldururken cevaplarınız (iletişim bilgileri ve onaylar hariç) gönderene kadar yalnızca kendi tarayıcınızda saklanır ve bize ulaşmaz; başvuruyu gönderdiğinizde silinir, 7 gün sonra da geçersiz olur.</li>
+        <li><strong>Dil çerezi ve tarayıcı depolaması:</strong> dil tercihinizi hatırlamak için bir dil çerezi (1 yıl). Ayrıca tarayıcınız; tema seçiminizi, son dil değişikliğini, açık sekmeleri senkron tutmak için hesabınızdan türetilen kısa bir kodu, uygulama yükleme önerisinin durumunu ve başvuru bağlantısının gösterilip gösterilmeyeceğine dair bir işareti yalnızca kendi cihazınızda saklar. Bunlar sitenin çalışması için gereklidir, sizi izlemek için kullanılmaz ve dil çerezi dışında bize gönderilmez.</li>
       </ul>
 
       <h2>3. Hangi amaçlarla işliyoruz?</h2>
@@ -43,8 +45,8 @@ export function PrivacyTr() {
         <li>Üyelik ilişkisinin kurulması ve yürütülmesi için gerekli olması (KVKK m.5/2-c),</li>
         <li>Temel hak ve özgürlüklerinize zarar vermemek kaydıyla kulübün meşru menfaati (KVKK m.5/2-f): kulüp yönetimi, etkinlik güvenliği, tanıtım kanallarının ölçümü,</li>
         <li>Fotoğraflarınızın galeride paylaşılması için açık rızanız (KVKK m.5/1). Bu rızayı istediğiniz zaman hesap sayfanızdan verebilir veya geri alabilirsiniz; geri almak üyeliğinizi etkilemez.</li>
-        <li>Fotoğraflarınızın herkese açık internet sitemizde yayınlanması için ayrıca verdiğiniz açık rıza (KVKK m.5/1). Bu rızayı istediğiniz zaman 9. bölümdeki yöntemle bize yazarak geri alabilirsiniz; fotoğraf siteden kaldırılır.</li>
-        <li>Kan grubunuz için açık rızanız (KVKK m.6). Bu rıza fotoğraf rızasından ayrıdır; istediğiniz zaman hesap sayfanızdan geri alabilirsiniz. Geri aldığınızda kan grubunuz silinir; üyeliğiniz etkilenmez.</li>
+        <li>Fotoğraflarınızın herkese açık internet sitemizde yayınlanması için ayrıca verdiğiniz açık rıza (KVKK m.5/1). Bu rızayı istediğiniz zaman 9. bölümdeki yöntemle bize yazarak veya kulüp yönetimine (ör. WhatsApp üzerinden) ileterek geri alabilirsiniz; fotoğraf siteden kaldırılır.</li>
+        <li>Kan grubunuz için açık rızanız (KVKK m.6). Bu rıza fotoğraf rızalarından ayrıdır; istediğiniz zaman hesap sayfanızdan geri alabilirsiniz. Geri aldığınızda kan grubunuz silinir; üyeliğiniz etkilenmez.</li>
         <li>Acil durum kişileriniz ve plakanız için kulübün meşru menfaati (KVKK m.5/2-f) ve acil durumda sizin veya bir başkasının hayatını ya da beden bütünlüğünü korumak (KVKK m.5/2-b).</li>
       </ul>
 
@@ -72,10 +74,15 @@ export function PrivacyTr() {
         <li><strong>Supabase</strong> — veritabanı ve kimlik doğrulama; veriler Avrupa Birliği&apos;nde (Frankfurt, Almanya) saklanır.</li>
         <li><strong>Vercel</strong> — web sitesinin barındırılması; sunucu işlemleri Frankfurt&apos;ta yapılır.</li>
         <li><strong>Google</strong> — &quot;Google ile giriş&quot; hizmeti.</li>
+        <li><strong>GitHub</strong> — kaynak kodunun ve internet sitesindeki fotoğrafların saklanması; sunucuları Türkiye dışındadır.</li>
       </ul>
       <p>
         Bu sağlayıcılar Türkiye dışında bulunduğundan, aktarım KVKK m.9 kapsamında Kurul tarafından ilan edilen
         standart sözleşmeler esas alınarak yapılır. <Placeholder>STANDART SÖZLEŞME VE KURUL BİLDİRİMİ DURUMU</Placeholder>
+      </p>
+
+      <p>
+        İnternet sitemizde yayınlanan fotoğraflar herkes tarafından görülebilir ve arama motorları tarafından dizine eklenebilir.
       </p>
 
       <h2>6. Ne kadar süre saklıyoruz?</h2>
@@ -90,7 +97,7 @@ export function PrivacyTr() {
       <h2>7. Verileri nasıl topluyoruz?</h2>
       <p>
         Verileriniz; başvuru formu, Google ile giriş ve sitemizi kullanımınız sırasında (oturum ve dil çerezleri) elektronik
-        ortamda, otomatik veya kısmen otomatik yollarla toplanır.
+        ortamda, otomatik veya kısmen otomatik yollarla toplanır. İnternet sitesinde yayınlanacak fotoğraflar ve bunları yayınlama rızanız ise sizden yazılı olarak (ör. kulübün WhatsApp grubu üzerinden) alınır.
       </p>
 
       <h2>8. Haklarınız (KVKK m.11)</h2>
@@ -105,11 +112,11 @@ export function PrivacyTr() {
         <li>münhasıran otomatik sistemlerle analiz edilmesi sonucu aleyhinize bir sonuç çıkmasına itiraz etme,</li>
         <li>kanuna aykırı işlenmesi sebebiyle zarara uğramanız halinde zararın giderilmesini talep etme</li>
       </ul>
-      <p>haklarına sahipsiniz. Kan grubu rızanızı ve galeri fotoğrafları için verdiğiniz rızayı ayrıca hesap sayfanızdan istediğiniz zaman geri alabilirsiniz; internet sitemizdeki fotoğraflar için verdiğiniz rızayı 9. bölümdeki yöntemle bize yazarak geri alabilirsiniz.</p>
+      <p>haklarına sahipsiniz. Kan grubu rızanızı ve galeri fotoğrafları için verdiğiniz rızayı ayrıca hesap sayfanızdan istediğiniz zaman geri alabilirsiniz; internet sitemizdeki fotoğraflar için verdiğiniz rızayı 9. bölümdeki yöntemle bize yazarak veya kulüp yönetimine (ör. WhatsApp üzerinden) ileterek geri alabilirsiniz.</p>
 
       <h2>9. Başvuru yöntemi</h2>
       <p>
-        Taleplerinizi <Placeholder>İLETİŞİM E-POSTASI</Placeholder> adresine iletebilirsiniz. Talepleriniz en geç 30 gün
+        Taleplerinizi (rıza geri alma dahil) <Placeholder>İLETİŞİM E-POSTASI</Placeholder> adresine iletebilirsiniz. Talepleriniz en geç 30 gün
         içinde ücretsiz olarak sonuçlandırılır.
       </p>
     </>
