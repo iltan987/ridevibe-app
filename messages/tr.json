@@ -410,6 +410,7 @@
       "unlinked": "Giriş yapmadı"
     },
     "empty": "Bu durumda başvuru yok.",
+    "range": "{from}–{to} / {total} başvuru",
     "back": "Başvurulara dön",
     "submittedAt": "Başvuru tarihi",
     "age": "{age} yaş",
@@ -586,8 +587,7 @@
     "label": "Sayfalar",
     "previous": "Önceki sayfa",
     "page": "Sayfa {page}",
-    "next": "Sonraki sayfa",
-    "first": "İlk sayfa"
+    "next": "Sonraki sayfa"
   },
   "NotFound": {
     "title": "Sayfa bulunamadı",

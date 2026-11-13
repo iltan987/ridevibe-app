@@ -410,6 +410,7 @@
       "unlinked": "Not signed in"
     },
     "empty": "No applications with this status.",
+    "range": "{from}–{to} of {total, plural, one {# application} other {# applications}}",
     "back": "Back to applications",
     "submittedAt": "Submitted",
     "age": "{age} years old",
@@ -586,8 +587,7 @@
     "label": "Pages",
     "previous": "Previous page",
     "page": "Page {page}",
-    "next": "Next page",
-    "first": "First page"
+    "next": "Next page"
   },
   "NotFound": {
     "title": "Page not found",

@@ -208,3 +208,13 @@
   result through `uniqueById`. An RPC that logs (blood filter) logs once per chunk call: keep such results within one chunk.
 - **Source:** spec `docs/superpowers/specs/2026-11-13-list-ux-design.md`; `loadDirectory` in
   `src/lib/members/queries.ts`.
+
+### `.range()` past the last row is an empty page, not an error (2026-11-13)
+- **Question:** a server-paged list (`/admin/applications`) runs its page query alongside the counts, before it
+  knows whether `?page=` is past the end. Does a too-large offset fail (HTTP 416 "range not satisfiable")?
+- **Cause:** supabase-js `.range(from, to)` sends `offset`/`limit` query parameters (not a `Range` header);
+  PostgREST answers `200 []` for an offset past the end (checked locally up to offset 99,999,975).
+- **Do:** run the page query in parallel with the counts and redirect afterwards when `serverPage` (`src/lib/list-url.ts`)
+  flags the URL; no need to wait for the count first.
+- **Source:** `postgrest-js` `range()` in `node_modules/@supabase/postgrest-js/dist/index.mjs`; curl against local
+  PostgREST.

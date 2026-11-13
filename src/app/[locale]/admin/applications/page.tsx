@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { useTranslations } from "next-intl";
-import { getFormatter, getTranslations } from "next-intl/server";
+import { getFormatter, getLocale, getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Link } from "@/i18n/navigation";
+import { Link, redirect } from "@/i18n/navigation";
 import {
   APPLICATION_FILTERS,
   type ApplicationFilter,
@@ -13,8 +13,12 @@ import {
 } from "@/lib/applications/queries";
 import { requirePermission } from "@/lib/auth/require-access";
 import { ListSkeleton } from "@/components/admin/list-skeleton";
-import { Pager } from "@/components/pager";
-import { decodeCursor } from "@/lib/pagination";
+import { ChipCount, listChipClasses } from "@/components/lists/list-chip";
+import { PagerLinks } from "@/components/pager";
+import { listQuery, paramOff, serverPage } from "@/lib/list-url";
+import { PAGE_SIZE, pageCount, parsePage } from "@/lib/pagination";
+
+const DEFAULTS = { status: "new", page: 1 };
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("Admin");
@@ -27,7 +31,7 @@ export default function ApplicationsPage({ searchParams }: PageProps<"/[locale]/
   return (
     <section className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8">
       <h1 className="heading text-3xl">{t("applications")}</h1>
-      <Suspense fallback={<ListSkeleton rows={6} rowClassName="h-26" />}>
+      <Suspense fallback={<ListSkeleton rows={6} rowClassName="h-26" pager />}>
         <ApplicationsList searchParams={searchParams} />
       </Suspense>
     </section>
@@ -42,18 +46,26 @@ async function ApplicationsList({
   await requirePermission("applications.view", "/admin/applications");
 
   const params = await searchParams;
-  const status: ApplicationFilter = APPLICATION_FILTERS.includes(params.status as ApplicationFilter)
-    ? (params.status as ApplicationFilter)
-    : "new";
-  const cursor = decodeCursor(params.cursor);
+  const status: ApplicationFilter = APPLICATION_FILTERS.find((s) => s === params.status) ?? "new";
 
-  const [page, counts, t, tApply, format] = await Promise.all([
-    listApplications(status, cursor),
+  // The list query runs alongside the counts with the page as asked; a URL the counts correct redirects instead.
+  const [rows, counts, locale, t, tApply, format] = await Promise.all([
+    listApplications(status, parsePage(params.page)),
     countApplicationsByStatus(),
+    getLocale(),
     getTranslations("Admin"),
     getTranslations("Apply"),
     getFormatter(),
   ]);
+  const total = counts[status];
+  const { page, off } = serverPage(params.page, total);
+  const href = (target: { status?: ApplicationFilter; page?: number }) => ({
+    pathname: "/admin/applications" as const,
+    query: listQuery({ status, page, ...target }, DEFAULTS),
+  });
+  // Malformed, repeated, default or past-the-end values (e.g. a page emptied since): go to the canonical URL.
+  if (off || paramOff(params.status, status, DEFAULTS.status)) return redirect({ href: href({}), locale });
+  const from = (page - 1) * PAGE_SIZE;
 
   return (
     <>
@@ -61,21 +73,21 @@ async function ApplicationsList({
         {APPLICATION_FILTERS.map((s) => (
           <Link
             key={s}
-            href={{ pathname: "/admin/applications", query: { status: s } }}
+            href={href({ status: s, page: 1 })}
             aria-current={s === status ? "page" : undefined}
-            className="flex shrink-0 items-center gap-1.5 rounded-full border border-input px-3.5 py-1.5 text-sm font-medium text-muted-foreground aria-[current=page]:border-primary aria-[current=page]:bg-primary aria-[current=page]:text-primary-foreground"
+            className={listChipClasses.current}
           >
             {t(`statuses.${s}`)}
-            <span className="tabular-nums opacity-70">{counts[s]}</span>
+            <ChipCount count={counts[s]} />
           </Link>
         ))}
       </nav>
 
-      {page.items.length === 0 ? (
+      {rows.length === 0 ? (
         <p className="py-10 text-center text-muted-foreground">{t("empty")}</p>
       ) : (
         <ul className="flex flex-col gap-3">
-          {page.items.map((a) => (
+          {rows.map((a) => (
             <li key={a.id} data-skeleton-result="admin-row">
               <Link href={`/admin/applications/${a.id}`} className="block rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
                 <Card className="transition-colors hover:bg-muted/40">
@@ -108,7 +120,14 @@ async function ApplicationsList({
         </ul>
       )}
 
-      <Pager pathname="/admin/applications" query={{ status }} nextCursor={page.nextCursor} onFirstPage={!cursor} />
+      {rows.length > 0 && (
+        <PagerLinks
+          page={page}
+          pageCount={pageCount(total)}
+          rangeLabel={t("range", { from: from + 1, to: from + rows.length, total })}
+          href={(target) => href({ page: target })}
+        />
+      )}
     </>
   );
 }

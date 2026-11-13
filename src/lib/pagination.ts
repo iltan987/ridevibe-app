@@ -1,6 +1,7 @@
-// Keyset ("seek") pagination for lists ordered newest first by
-// (created_at desc, id desc). Unlike offsets it stays fast and stable while
-// rows are being added. Every list in the app paginates — never a fixed cap.
+// Pagination helpers. Lists either load fully (up to LIST_CEILING, `readAll`) and page in the browser (`slicePage`),
+// or page on the server with `?page=N` offsets (`parsePage` / `clampPage`). Both show numbered pages (`pageItems`)
+// and a total; never a silent cap. Keyset ("seek") cursors remain only for the account-link "load more"
+// (`findLinkableAccounts`), which pages through a set that changes while you scroll.
 // Dependency-free so `node --test` can run its tests.
 
 export const PAGE_SIZE = 25;
@@ -9,17 +10,18 @@ export const PAGE_SIZE = 25;
 export const LIST_CEILING = 2000;
 export const CHUNK_SIZE = 1000;
 
-export type Cursor = { createdAt: string; id: string };
+/** Keyset position: rows come after it in (created_at desc, id desc) order. */
+type Cursor = { createdAt: string; id: string };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 // Postgres timestamptz as returned by PostgREST, e.g. 2026-11-08T18:31:35.619123+00:00
 const TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,6})?(Z|[+-]\d{2}:\d{2})$/;
 
-export function encodeCursor({ createdAt, id }: Cursor) {
+function encodeCursor({ createdAt, id }: Cursor) {
   return Buffer.from(`${createdAt}|${id}`).toString("base64url");
 }
 
-/** Parses an untrusted `?cursor=` value; null when absent or malformed. */
+/** Parses an untrusted cursor (sent back by the client); null when absent or malformed. */
 export function decodeCursor(value: unknown): Cursor | null {
   if (typeof value !== "string" || value.length > 200) return null;
   const [createdAt, id, ...rest] = Buffer.from(value, "base64url").toString("utf8").split("|");
@@ -27,22 +29,13 @@ export function decodeCursor(value: unknown): Cursor | null {
   return { createdAt, id };
 }
 
-/** PostgREST `.or()` filter: rows that come after `cursor` in (created_at desc, id desc) order. */
-export function afterCursorFilter({ createdAt, id }: Cursor) {
-  return `created_at.lt."${createdAt}",and(created_at.eq."${createdAt}",id.lt.${id})`;
-}
-
-/** Fetch size + 1 rows; this splits them into the page and the next cursor (built from the last item on the page). */
-export function splitPage<T>(rows: T[], size: number, cursorOf: (last: T) => string) {
+/** Fetch PAGE_SIZE + 1 rows; this splits them into the page and the next cursor (built from the page's last item). */
+export function toPage<T extends { created_at: string; id: string }>(rows: T[], size = PAGE_SIZE) {
   const items = rows.slice(0, size);
   const last = items.at(-1);
-  const nextCursor = rows.length > size && last !== undefined ? cursorOf(last) : null;
+  const nextCursor =
+    rows.length > size && last !== undefined ? encodeCursor({ createdAt: last.created_at, id: last.id }) : null;
   return { items, nextCursor };
-}
-
-/** Fetch PAGE_SIZE + 1 rows; this splits them into the page and the next cursor. */
-export function toPage<T extends { created_at: string; id: string }>(rows: T[], size = PAGE_SIZE) {
-  return splitPage(rows, size, (last) => encodeCursor({ createdAt: last.created_at, id: last.id }));
 }
 
 /** Parses an untrusted `?page=` value (1-based); anything but a canonical positive integer is page 1. */

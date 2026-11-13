@@ -109,8 +109,10 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   `withdraw_my_blood_type_consent`) are own row only; others only via `member_safety_card` / the directory filters
   with `members.safety`. Every blood-type read/write is logged in `safety_access_log` (readable by admins only).
   RPCs that write `safety_access_log` are `volatile`; call each once per render.
-- Turkish text in SQL: `lower/upper/ilike` mishandle `İ/ı` (`lower('İ')` = `i̇`) — search with `private.search_fold`,
-  sort with `collate "tr-x-icu"`.
+- Turkish text in SQL: `lower/upper/ilike` mishandle `İ/ı` (`lower('İ')` = `i̇`) — sort with `collate "tr-x-icu"`;
+  client search with `foldSearch` (`src/lib/search-fold.ts`).
+- PostgREST caps every select and set-returning RPC at `[api] max_rows` (1,000) without an error: read longer lists in
+  `.range()` chunks of `CHUNK_SIZE` with `readAll` (`src/lib/pagination.ts`), ordered totally (ending in `id`).
 - **Roles & permissions** (`supabase/schemas/05_roles.sql`): admins create roles and tick permissions
   (`public.permission` enum); each profile has at most one `role_id` (null = regular member). The built-in admin role
   (`roles.is_admin`) has every permission plus admin-only powers (editing roles, assigning roles). Only **active**
@@ -227,9 +229,12 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   Route Handlers can't read the locale root param — derive it from data.
 - `Date.now()` in an async Server Component after a session read (request-time) trips `react-hooks/purity`: use
   `// eslint-disable-line react-hooks/purity -- <reason>`, never move it into a helper to dodge the rule.
-- Lists use keyset pagination (`src/lib/pagination.ts` + `Pager`); access checks via `can()` / `requirePermission()`.
-- **Every list paginates.** No fixed caps like `.limit(200)`: the club grew to ~130 members in two weeks. Design
-  queries and screens with pagination (and visible totals) from the start; don't let counts fail silently.
+- **Every list paginates, with numbered pages and a visible total** (`src/lib/pagination.ts`, `PagerButtons` /
+  `PagerLinks`). Either load fully on the server up to `LIST_CEILING` (2,000) with `readAll` and filter/page in the
+  browser, failing loudly above it (`CeilingNotice`; `/members`, `/admin/members`), or page on the server with offsets
+  (`?page=N`, out-of-range → redirect) when a list grows without bound (`/admin/applications`). No silent caps like
+  `.limit(200)`: the club grew to ~130 members in two weeks. Keyset cursors only for a "load more" over a changing set
+  (`findLinkableAccounts`). Access checks via `can()` / `requirePermission()`.
 
 ## Privacy (KVKK)
 

@@ -2,26 +2,26 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
-  afterCursorFilter,
   chunks,
   decodeCursor,
-  encodeCursor,
   clampPage,
   pageCount,
   pageItems,
   parsePage,
   readAll,
   slicePage,
-  splitPage,
   toPage,
   uniqueById,
 } from "./pagination.ts";
 
 const id = "6f1c2a3b-4d5e-4f60-8a7b-9c0d1e2f3a4b";
 
-test("cursor round-trips", () => {
-  const cursor = { createdAt: "2026-11-08T18:31:35.619123+00:00", id };
-  assert.deepEqual(decodeCursor(encodeCursor(cursor)), cursor);
+test("cursor round-trips (toPage encodes, decodeCursor parses)", () => {
+  const rows = [
+    { created_at: "2026-11-08T18:31:35.619123+00:00", id },
+    { created_at: "2026-11-08T18:30:00+00:00", id: "00000000-0000-4000-8000-000000000000" },
+  ];
+  assert.deepEqual(decodeCursor(toPage(rows, 1).nextCursor), { createdAt: rows[0].created_at, id });
 });
 
 test("rejects malformed or hostile cursors", () => {
@@ -40,26 +40,14 @@ test("rejects malformed or hostile cursors", () => {
   }
 });
 
-test("filter selects rows after the cursor", () => {
-  assert.equal(
-    afterCursorFilter({ createdAt: "2026-11-08T18:31:35Z", id }),
-    `created_at.lt."2026-11-08T18:31:35Z",and(created_at.eq."2026-11-08T18:31:35Z",id.lt.${id})`,
-  );
-});
-
 test("toPage returns a next cursor only when there are more rows", () => {
   const rows = [1, 2, 3].map((n) => ({ id: `${n}`, created_at: `t${n}` }));
   assert.deepEqual(toPage(rows, 3), { items: rows, nextCursor: null });
+  assert.deepEqual(toPage([], 2), { items: [], nextCursor: null });
   const page = toPage(rows, 2);
   assert.equal(page.items.length, 2);
   assert.deepEqual(decodeCursor(page.nextCursor), null, "test rows aren't real timestamps/uuids");
   assert.equal(Buffer.from(page.nextCursor!, "base64url").toString(), "t2|2");
-});
-
-test("splitPage cuts the extra row and builds the cursor from the last item", () => {
-  assert.deepEqual(splitPage([1, 2, 3], 3, String), { items: [1, 2, 3], nextCursor: null });
-  assert.deepEqual(splitPage([1, 2, 3], 2, (n) => `c${n}`), { items: [1, 2], nextCursor: "c2" });
-  assert.deepEqual(splitPage([], 2, String), { items: [], nextCursor: null });
 });
 
 test("parsePage accepts canonical positive integers only", () => {
