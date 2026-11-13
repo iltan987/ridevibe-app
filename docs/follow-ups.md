@@ -10,24 +10,6 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ## Next up (iltan asked for these; in priority order; start in a new session)
 
-- **List UX iteration: instant filtering, clean URLs, page numbers, caching** (2026-11-10, iltan, after testing
-  `/members`) — applies to `/members` and the admin lists (`/admin/members`, `/admin/applications`). Design first;
-  points iltan raised:
-  - **Feels like a reload:** a side chip or a name search goes back to the server and waits. Wanted: instant results
-    from data already loaded. Options to weigh: load all active members once and filter on the client (≈150–300 rows
-    is small, but it conflicts with the "every list paginates" rule, so that rule needs a decision), or keep server
-    filtering with transitions, a debounced search-as-you-type and the old list kept visible while loading.
-  - **Empty `?q=`:** clearing the search leaves `?q=` in the URL; drop empty params.
-  - **Cursor in the URL** (`?cursor=…`) looks bad. Page numbers (`?page=14`) would fix this and the next point.
-  - **Pagination design and logic:** with 300+ members you have to press "next" 13 times to reach page 14. Wanted:
-    numbered pages / jump to page (or another pattern, e.g. "load more"); offset pagination is fine at this size but
-    replaces the keyset convention in CLAUDE.md, so decide it explicitly. Also restyle the pager.
-  - **Caching:** e.g. Next 16 `use cache` + `cacheTag` for directory data (the same for every active member;
-    invalidate on profile/bike changes with `updateTag`), keeping the auth check outside the cached part. Check in the
-    current docs where `use cache` stores entries on Vercel. Never cache safety/health data.
-  - **Redis: not now** (2026-11-12, iltan asked) — functions in `fra1` sit next to the Frankfurt DB (a query is a few
-    ms), ~150 members fit in Postgres memory; Redis would add a service, a KVKK processor and RLS-bypass risk in a
-    shared cache. Measure first; prefer Next's built-in cache. Revisit Redis for rate limiting (e.g. form spam).
 - **SEO** (2026-11-12, iltan: "we should work on SEO") — iltan added ridevibe.com.tr to Google Search Console
   (2026-11-12). Design round first; start from what Search Console reports (indexing, coverage, queries). Today
   there is no `robots.ts` / `sitemap.ts` in `src/app` and no `hreflang` alternates for `tr` (`/`) ↔ `en` (`/en`);
@@ -149,6 +131,9 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   organizers get the participants' safety cards without `members.safety`; needs its own access rule and log entries.
 - **Access-log viewer for admins** (2026-11-13, safety data) — `safety_access_log` is written but only readable via
   SQL. Add an admin screen (paginated). Risk if left: the log exists but nobody can audit it in the app.
+- **Search on `/admin/applications`** (2026-11-13, list UX spec) — the list has status tabs and numbered server pages
+  but no search (it grows without bound, so it isn't loaded whole like `/admin/members`). Add a server-side search
+  (debounced, `?q=`) only if staff ask for it.
 
 ## Parked edge cases (known, judged harmless for now)
 
@@ -201,11 +186,28 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   `applications.decide` calling the new RPCs (covered indirectly by `private.has_permission`).
 - **Learnings note** (2026-11-09) — `session_replication_role = replica` (used to plant legacy rows in pgTAP) also
   skips foreign-key checks; add one clause to the `docs/learnings/testing.md` entry.
+- **Caching for lists: measure first** (2026-11-13, list UX) — no shared `use cache` for the directory: the RPC
+  checks `auth.uid()` and a shared cache can't read the session, so a cached fetch would need the secret key and
+  bypass RLS. Measured server time of `/members` (production build on WSL, local Docker DB, 29 active members, signed
+  in, 20 loads over 4 runs of `members-e2e.mjs`; document timing from the request): first byte (static shell)
+  6–10 ms, streamed directory complete (`responseEnd`) 44–71 ms. Re-measure on production (Vercel `fra1` + Frankfurt DB, Vercel logs) when the club grows
+  past a few hundred members; only if it is slow, design a cache (never safety/health data). **Redis: not now**
+  (2026-11-12, iltan asked) — functions in `fra1` sit next to the Frankfurt DB (a query is a few ms), ~150 members
+  fit in Postgres memory; Redis would add a service, a KVKK processor and RLS-bypass risk in a shared cache. Prefer
+  Next's built-in cache; revisit Redis for rate limiting (e.g. form spam).
 - **Safety data pgTAP / SQL minors** (2026-11-13, safety data reviews) — (a) Task 1: the 0606 post-check can't prove
   row survival. (b) Task 4: `safety_directory.test.sql` creates a temp table as `authenticated` (needs TEMP on the
   database; watch at the production `test db` run).
 
 ### App logic
+- **List UX review minors** (2026-11-13, list UX reviews) — (a) `readAll` (`src/lib/pagination.ts`) stops silently
+  if Supabase `max_rows` is ever set below `CHUNK_SIZE` (a short chunk looks like the end); keep the two in sync (doc
+  note only). (b) Untested edges: `pageItems(…, 0)`, `normalizeQuery(null)`, `readAll` when a chunk throws. (c) A
+  decomposed `İ` (`I` + U+0307) folds to `i̇`, not `i` (same as the dropped SQL fold). (d) `PagerLinks` types its
+  `href` with the literal pathname `/admin/applications`; widen it when a second server-paged list appears. (e) Counts
+  can drift by a row between two chunked reads while rows change (only past 1,000 rows; self-heals on the next load).
+  (f) `useListParams` keeps its own write until the router catches up (`shownSearch`); its chain logic is
+  unit-tested, the hook itself only via E2E.
 - **`isGoogleMailAddress("gmail.com")` returns true** without an `@` (`src/lib/applications/contact.ts`). Callers
   validate the email first.
 - **`chromeIntentUrl` hard-codes `https`** (`src/lib/auth/in-app-browser.ts`) — only matters on `http://localhost`.
@@ -274,6 +276,10 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   `string | null`; `visibility-form.tsx` indentation. All cosmetic or harmless today.
 
 ### UI / accessibility
+- **Widest pager on 360px phones** (2026-11-13, list UX E2E) — from 7 pages the pager shows 7 numbers + 2 arrows
+  (36px each, 356px). It fits a 390px screen inside the page padding (spec) and still fits on a 360px screen, but
+  there it spills 14px into each side padding (`scripts/e2e/lists-e2e.mjs` prints it as INFO). If it looks cramped:
+  `size-8` buttons below `sm`, or a smaller gap.
 - **Focus drops to `<body>` when the install banner unmounts** (2026-11-12, install-prompt final review) — pressing
   "Şimdi değil", or a dismissed system dialog, removes the banner with focus on its button, so keyboard and
   screen-reader users land on `<body>` (`src/components/pwa/install-banner.tsx`). Deferred: the banner is a phone
@@ -376,10 +382,6 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   English "Sign in" button grows 59 → 63px and the header controls move ~4px (seen with throttling in
   `scripts/e2e/header-e2e.mjs`). The `next/font` fallback metrics don't fully match Saira's width axis; check
   `adjustFontFallback` / a closer fallback font if it's noticeable.
-- **`nav-e2e.mjs` "reduced motion: full width" fails since the scrollbar gutter** (2026-11-11, hide-Başvur E2E) —
-  on the long `/admin/applications` page, `scrollbar-gutter: stable` (commit `ad42e9a`) reserves 15px even in
-  headless Chrome with hidden scrollbars: the fixed bar and `<body>` are 375px, `innerWidth` (and `clientWidth`) 390.
-  Not a product bug; compare the bar with `document.body` width instead of `innerWidth`.
 - **Pending dim polish** (2026-11-10, loading-states review) — no fade-out when pending ends (animation is removed),
   undocumented; the 150 ms opacity animation still runs under `prefers-reduced-motion` (low risk).
 - **`pending-store.ts` robustness and tests** (2026-11-10, loading-states review) — a throwing listener stops later
@@ -399,6 +401,9 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 - **Re-run the instant-navigation dev check when adding pages** (2026-11-10, loading-states) — see
   `docs/learnings/nextjs.md`; the `/[locale]/[...rest]` catch-all always logs "Could not validate `instant`"
   (it calls `notFound()` by design).
+- **English application rows are taller on phones** (2026-11-13, list UX skeleton measurements) — at 390px the first
+  row of `/en/admin/applications` measured 130px against the 104px row skeleton (`h-26`; Turkish rows: 0px). The
+  English badge/source labels wrap to an extra line for some rows; content-dependent, like the member cards below.
 - **Members skeleton card height varies** (2026-11-10, members E2E) — the card skeleton is 94px (name, location, one
   bike, measured); real cards are 74px (no bike) to 114px+ (bike + birthday + Instagram, more bikes), so the list can
   jump a little on load. Accepted: card content varies per member.

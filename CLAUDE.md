@@ -69,7 +69,7 @@ pnpm db:types                 # regenerate src/lib/supabase/database.types.ts
 pnpm exec supabase migration up   # apply new migrations locally, keeping data (db:reset wipes auth users; after
                                   # an iteration that reset, restore iltan's local admin before browser review)
 kill $(ss -ltnp | grep ':3123 ' | grep -oP 'pid=\K[0-9]+')   # stop a local server; never `pkill -f` (kills own shell)
-PUPPETEER_DIR=~/e2e-tools node scripts/e2e/{nav,members,safety,header,apply,apply-nav,install,cross-tab}-e2e.mjs   # browser E2E vs `pnpm start -p 3123` (setup: scripts/e2e/README.md)
+PUPPETEER_DIR=~/e2e-tools node scripts/e2e/{nav,members,safety,header,apply,apply-nav,install,cross-tab,lists}-e2e.mjs   # browser E2E vs `pnpm start -p 3123` (setup: scripts/e2e/README.md)
 # signed-in parts need fixture users (admin@/member@/pending-noapp@test.local) that `db:reset` wipes: recreate per README
 # headless hides scrollbars (launch({ scrollbars: true }) keeps them); Next keeps the previous route hidden in the DOM: select visible elements
 # members E2E needs only its fixtures active: park other active profiles, restore by id (docs/learnings/testing.md)
@@ -112,7 +112,8 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
 - Turkish text in SQL: `lower/upper/ilike` mishandle `İ/ı` (`lower('İ')` = `i̇`) — sort with `collate "tr-x-icu"`;
   client search with `foldSearch` (`src/lib/search-fold.ts`).
 - PostgREST caps every select and set-returning RPC at `[api] max_rows` (1,000) without an error: read longer lists in
-  `.range()` chunks of `CHUNK_SIZE` with `readAll` (`src/lib/pagination.ts`), ordered totally (ending in `id`).
+  `.range()` chunks of `CHUNK_SIZE` with `readAll` (`src/lib/pagination.ts`), ordered totally (ending in `id`), and
+  dedupe the joined chunks with `uniqueById` (rows can shift between the chunk requests).
 - **Roles & permissions** (`supabase/schemas/05_roles.sql`): admins create roles and tick permissions
   (`public.permission` enum); each profile has at most one `role_id` (null = regular member). The built-in admin role
   (`roles.is_admin`) has every permission plus admin-only powers (editing roles, assigning roles). Only **active**
@@ -229,11 +230,12 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   Route Handlers can't read the locale root param — derive it from data.
 - `Date.now()` in an async Server Component after a session read (request-time) trips `react-hooks/purity`: use
   `// eslint-disable-line react-hooks/purity -- <reason>`, never move it into a helper to dodge the rule.
-- **Every list paginates, with numbered pages and a visible total** (`src/lib/pagination.ts`, `PagerButtons` /
-  `PagerLinks`). Either load fully on the server up to `LIST_CEILING` (2,000) with `readAll` and filter/page in the
-  browser, failing loudly above it (`CeilingNotice`; `/members`, `/admin/members`), or page on the server with offsets
-  (`?page=N`, out-of-range → redirect) when a list grows without bound (`/admin/applications`). No silent caps like
-  `.limit(200)`: the club grew to ~130 members in two weeks. Keyset cursors only for a "load more" over a changing set
+- **Every list paginates and shows its total; never a silent cap** like `.limit(200)` (the club grew to ~130 members
+  in two weeks). Lists people browse get numbered pages (`src/lib/pagination.ts`, `PagerButtons` / `PagerLinks`):
+  either load fully on the server up to `LIST_CEILING` (2,000) with `readAll` and filter/page in the browser, failing
+  loudly above it (`CeilingNotice`; `/members`, `/admin/members`; URL state via `useListParams`), or page on the
+  server with offsets (`?page=N`, odd values → redirect) when a list grows without bound (`/admin/applications`).
+  Search-and-pick results inside a dialog may instead "load more" with keyset cursors over a changing set
   (`findLinkableAccounts`). Access checks via `can()` / `requirePermission()`.
 
 ## Privacy (KVKK)

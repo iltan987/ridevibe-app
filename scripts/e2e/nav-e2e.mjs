@@ -164,9 +164,11 @@ await slowNav("list card -> detail (prefetched)", "/admin/applications", async (
   check("reduced motion: bar visible", r.ok);
   const info = await page.evaluate(() => {
     const inner = document.querySelector("[data-nav-progress] > div");
-    return { name: getComputedStyle(inner).animationName, anims: inner.getAnimations().length, w: inner.getBoundingClientRect().width, vw: innerWidth };
+    // Full width = the body's width: `scrollbar-gutter: stable` reserves 15px even in headless Chrome, so `innerWidth`
+    // is wider than the page on long pages (docs/learnings/testing.md).
+    return { name: getComputedStyle(inner).animationName, anims: inner.getAnimations().length, w: inner.getBoundingClientRect().width, body: document.body.clientWidth };
   });
-  check("reduced motion: no running animation, full width", info.name === "none" && info.anims === 0 && Math.abs(info.w - info.vw) < 1, JSON.stringify(info));
+  check("reduced motion: no running animation, full width", info.name === "none" && info.anims === 0 && Math.abs(info.w - info.body) < 1, JSON.stringify(info));
   await ctx.close();
 }
 
