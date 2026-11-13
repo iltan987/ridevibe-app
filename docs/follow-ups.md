@@ -176,14 +176,8 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   if it grows. `home-stats.tsx` builds message keys with a template literal (typed-key friction).
 - **Guard test for forbidden words** (2026-11-13, home content review) — optional: fail if kahve/ücretsiz/sohbet
   appear in the `Home` / `Metadata` messages (iltan's copy rules, `docs/content/home-page-questions.md`).
-- **Rules card title is an `h3`** (2026-11-13, home content review) — `src/components/home/home-join.tsx`; spec said
-  eyebrow/h2. Check the heading outline.
-- **`apply-nav-e2e.mjs` line 1 comment is overlong** (2026-11-13, home content review) — `scripts/e2e/`.
 - **Terrace photo is tall on desktop** (2026-11-13, home content review) — the portrait `who-terrace.jpg` renders ~580px
   tall at half width; `md:max-h-[480px]` would crop the group. iltan to decide.
-- **Privacy notice §9 and website-photo consent** (2026-11-13, home content review) — §9 could mention consent-withdrawal
-  requests explicitly; the notice doesn't say how website-photo consent is given (in writing, outside the app).
-  Bump `PRIVACY_NOTICE_VERSION` only once per release.
 - **Apply-form option `coffee_meetups`** (2026-11-13, home content review) — still reads "Kahvaltı / kahve buluşmaları"
   (`messages/tr.json`); iltan rejected "kahvede" for the home page. Ask iltan whether the form wording should change too.
 
@@ -241,9 +235,6 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   files. Deferred: no third language planned.
 - **"Don't disallow noindex pages" could be its own learning** (2026-11-13, SEO final review) — it is a rule inside
   another entry in `docs/learnings/seo.md`; a separate entry would be easier to find.
-- **Privacy notice "Teknik veriler" bullet mixes three topics** (2026-11-13, SEO review) — session cookie, form
-  draft, and language cookie + browser storage share one bullet (`src/app/[locale]/privacy/content-*.tsx`). Split
-  into separate bullets with the next notice edit (a text change bumps `PRIVACY_NOTICE_VERSION`).
 - **List UX review minors** (2026-11-13, list UX reviews) — (a) `readAll` (`src/lib/pagination.ts`) stops silently
   if Supabase `max_rows` is ever set below `CHUNK_SIZE` (a short chunk looks like the end); keep the two in sync (doc
   note only). (b) Untested edges: `pageItems(…, 0)`, `normalizeQuery(null)`, `readAll` when a chunk throws. (c) A

@@ -133,5 +133,7 @@ Teşekkürler! 🏍️
   repo. Removal on a withdrawal: CLAUDE.md "Removing a website photo".
 - **Consent basis:** written group agreement for the website (2026-11-13); the proof is kept by the club, not in the repo.
   The privacy notice (draft-5) covers website photos.
+- **After deploy (iltan):** post the `/privacy` link in the club WhatsApp group ("if you no longer want to appear on
+  the site, tell us"). Done: _not yet_ (note the date here).
 - **Copy rules (iltan):** no "ücretsiz", no "kahve" / "kahvede", no "sohbet", no payment talk.
 - **Member count:** "140+" (`Home.stats.membersValue`) is updated by hand as the club grows.
