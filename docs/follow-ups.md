@@ -10,24 +10,6 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ## Next up (iltan asked for these; in priority order; start in a new session)
 
-- **List UX iteration: instant filtering, clean URLs, page numbers, caching** (2026-11-10, iltan, after testing
-  `/members`) — applies to `/members` and the admin lists (`/admin/members`, `/admin/applications`). Design first;
-  points iltan raised:
-  - **Feels like a reload:** a side chip or a name search goes back to the server and waits. Wanted: instant results
-    from data already loaded. Options to weigh: load all active members once and filter on the client (≈150–300 rows
-    is small, but it conflicts with the "every list paginates" rule, so that rule needs a decision), or keep server
-    filtering with transitions, a debounced search-as-you-type and the old list kept visible while loading.
-  - **Empty `?q=`:** clearing the search leaves `?q=` in the URL; drop empty params.
-  - **Cursor in the URL** (`?cursor=…`) looks bad. Page numbers (`?page=14`) would fix this and the next point.
-  - **Pagination design and logic:** with 300+ members you have to press "next" 13 times to reach page 14. Wanted:
-    numbered pages / jump to page (or another pattern, e.g. "load more"); offset pagination is fine at this size but
-    replaces the keyset convention in CLAUDE.md, so decide it explicitly. Also restyle the pager.
-  - **Caching:** e.g. Next 16 `use cache` + `cacheTag` for directory data (the same for every active member;
-    invalidate on profile/bike changes with `updateTag`), keeping the auth check outside the cached part. Check in the
-    current docs where `use cache` stores entries on Vercel. Never cache safety/health data.
-  - **Redis: not now** (2026-11-12, iltan asked) — functions in `fra1` sit next to the Frankfurt DB (a query is a few
-    ms), ~150 members fit in Postgres memory; Redis would add a service, a KVKK processor and RLS-bypass risk in a
-    shared cache. Measure first; prefer Next's built-in cache. Revisit Redis for rate limiting (e.g. form spam).
 - **SEO** (2026-11-12, iltan: "we should work on SEO") — iltan added ridevibe.com.tr to Google Search Console
   (2026-11-12). Design round first; start from what Search Console reports (indexing, coverage, queries). Today
   there is no `robots.ts` / `sitemap.ts` in `src/app` and no `hreflang` alternates for `tr` (`/`) ↔ `en` (`/en`);
@@ -149,6 +131,9 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   organizers get the participants' safety cards without `members.safety`; needs its own access rule and log entries.
 - **Access-log viewer for admins** (2026-11-13, safety data) — `safety_access_log` is written but only readable via
   SQL. Add an admin screen (paginated). Risk if left: the log exists but nobody can audit it in the app.
+- **Search on `/admin/applications`** (2026-11-13, list UX spec) — the list has status tabs and numbered server pages
+  but no search (it grows without bound, so it isn't loaded whole like `/admin/members`). Add a server-side search
+  (debounced, `?q=`) only if staff ask for it.
 
 ## Parked edge cases (known, judged harmless for now)
 
@@ -174,16 +159,16 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ### Database / tests
 - **Turkish case folding in `linkable_accounts` search** (2026-11-09) — `ilike` doesn't fold `ı/İ`
-  (`supabase/schemas/20_applications.sql`). Email search and name-match ordering compensate. Fix: reuse
-  `private.search_fold` (`30_member_directory.sql`) on both sides of the `like`.
+  (`supabase/schemas/20_applications.sql`). Email search and name-match ordering compensate. Fix: a SQL fold helper
+  on both sides of the `like` (`private.search_fold` was dropped 2026-11-13 when directory search moved to the
+  browser; recipe in `docs/learnings/supabase.md`, "Turkish sort order and search").
 - **Members DB review minors** (2026-11-10, members review) — (a) `private.tidy_name(…, false)` maps `İ` to `I`, so
   `'ÇELİK'` stays mixed-case with `turkish = false`; unreachable through the triggers (`İ` forces Turkish). (b)
   Instagram check accepts `...` / a trailing `.` (same as `applications`; matches the spec). (c) The motorcycle cap
   trigger runs before the RLS check, so a foreign-profile insert on a target with 10 bikes gets `23514` instead of
   `42501` (tiny info leak, briefly locks the target profile); fix: early-return when `new.profile_id <> auth.uid()`
   or `for no key update`. (d) The photo-consent fill helper updates `member_details` unconditionally, bumping
-  `updated_at` for every backfilled profile. (e) The search-pattern block is duplicated in `member_directory` and its
-  count RPC; extract `private.search_pattern` if a third caller appears. (f) `consent_photos_version` is
+  `updated_at` for every backfilled profile. (e) `consent_photos_version` is
   member-writable free text (≤ 40 chars; the action writes `PRIVACY_NOTICE_VERSION` only on a real change); could be
   set server-side (trigger) instead of granted.
 - **Members pgTAP gaps** (2026-11-10, members review) — owner `INSERT` into `member_details` (no grant) not asserted;
@@ -201,12 +186,31 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   `applications.decide` calling the new RPCs (covered indirectly by `private.has_permission`).
 - **Learnings note** (2026-11-09) — `session_replication_role = replica` (used to plant legacy rows in pgTAP) also
   skips foreign-key checks; add one clause to the `docs/learnings/testing.md` entry.
-- **Safety data pgTAP / SQL minors** (2026-11-13, safety data reviews) — (a) Task 1: the 0606 post-check can't prove
-  row survival. (b) Task 4: `safety_directory.test.sql` creates a temp table as `authenticated` (needs TEMP on the
-  database; watch at the production `test db` run). (c) The blood/no-contact predicates and the permission check are
-  duplicated between `member_directory` and `member_directory_counts`; extract them if a third caller appears.
+- **Caching for lists: measure first** (2026-11-13, list UX) — no shared `use cache` for the directory: the RPC
+  checks `auth.uid()` and a shared cache can't read the session, so a cached fetch would need the secret key and
+  bypass RLS. Measured server time of `/members` (production build on WSL, local Docker DB, 29 active members, signed
+  in, 20 loads over 4 runs of `members-e2e.mjs`; document timing from the request): first byte (static shell)
+  6–10 ms, streamed directory complete (`responseEnd`) 44–71 ms. Re-measure on production (Vercel `fra1` + Frankfurt
+  DB, Vercel logs) when the club grows past a few hundred members; only if it is slow, design a cache (never
+  safety/health data). **Payload:** each directory member costs ~380 B in the page, so ~0.8–0.9 MB raw at the 2,000
+  ceiling; `/admin/members` also ships `search` (name + email again) and re-sends the whole list on every row action's
+  `refresh()`. Measure the document/RSC size at ~500 members; folding on the client would drop the duplicate field.
+  Deferred: small at today's ~150 members. **Redis: not now**
+  (2026-11-12, iltan asked) — functions in `fra1` sit next to the Frankfurt DB (a query is a few ms), ~150 members
+  fit in Postgres memory; Redis would add a service, a KVKK processor and RLS-bypass risk in a shared cache. Prefer
+  Next's built-in cache; revisit Redis for rate limiting (e.g. form spam).
+- **Safety data pgTAP / SQL minors** (2026-11-13, safety data reviews) — Task 1: the 0606 post-check can't prove
+  row survival.
 
 ### App logic
+- **List UX review minors** (2026-11-13, list UX reviews) — (a) `readAll` (`src/lib/pagination.ts`) stops silently
+  if Supabase `max_rows` is ever set below `CHUNK_SIZE` (a short chunk looks like the end); keep the two in sync (doc
+  note only). (b) Untested edges: `pageItems(…, 0)`, `normalizeQuery(null)`, `readAll` when a chunk throws. (c) A
+  decomposed `İ` (`I` + U+0307) folds to `i̇`, not `i` (same as the dropped SQL fold). (d) `PagerLinks` types its
+  `href` with the literal pathname `/admin/applications`; widen it when a second server-paged list appears. (e) Counts
+  can drift by a row between two chunked reads while rows change (only past 1,000 rows; self-heals on the next load).
+  (f) `useListParams` keeps its own write until the router catches up (`shownSearch`); its chain logic is
+  unit-tested, the hook itself only via E2E.
 - **`isGoogleMailAddress("gmail.com")` returns true** without an `@` (`src/lib/applications/contact.ts`). Callers
   validate the email first.
 - **`chromeIntentUrl` hard-codes `https`** (`src/lib/auth/in-app-browser.ts`) — only matters on `http://localhost`.
@@ -275,6 +279,19 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   `string | null`; `visibility-form.tsx` indentation. All cosmetic or harmless today.
 
 ### UI / accessibility
+- **Pager accessibility** (2026-11-13, list UX final review) — pressing "›" to reach the last page swaps the focused
+  button for a `span`, so focus falls to `<body>`; after a page change the view scrolls to the list top but focus stays
+  on the pager; the disabled end `<span aria-label>` has no role (ARIA forbids `aria-label` on generic elements). Fix:
+  `<button disabled>` for the ends and/or move focus to the list after a page change (`pager-buttons.tsx`,
+  `pager.tsx`). Deferred: found in the final review; keyboard/screen-reader use of the pager is rare on phones.
+- **Language switch drops the list's query** (2026-11-13, list UX final review) — `locale-switcher.tsx` calls
+  `router.replace(pathname)`, so switching TR/EN on `/members?q=ali&page=2` lands on the unfiltered list in the same
+  tab, while the cross-tab follow keeps `location.search`. Predates this branch, but it matters more now that the URL
+  holds the view. Deferred: out of the list-UX scope; fix by passing the current search params.
+- **Widest pager on 360px phones** (2026-11-13, list UX E2E) — from 7 pages the pager shows 7 numbers + 2 arrows
+  (36px each, 356px). It fits a 390px screen inside the page padding (spec) and still fits on a 360px screen, but
+  there it spills 14px into each side padding (`scripts/e2e/lists-e2e.mjs` prints it as INFO). If it looks cramped:
+  `size-8` buttons below `sm`, or a smaller gap.
 - **Focus drops to `<body>` when the install banner unmounts** (2026-11-12, install-prompt final review) — pressing
   "Şimdi değil", or a dismissed system dialog, removes the banner with focus on its button, so keyboard and
   screen-reader users land on `<body>` (`src/components/pwa/install-banner.tsx`). Deferred: the banner is a phone
@@ -348,6 +365,11 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   review"; harmless).
 
 ### Loading states
+- **Empty admin tab: the skeleton's range line shifts the content** (2026-11-13, list UX final review) — `ListSkeleton`
+  reserves the pager's range line, but an empty tab renders no pager (only the "empty" text), so the page ends up
+  shorter by the range line and its gap (16 + 24px) (`src/components/admin/list-skeleton.tsx`,
+  `src/app/[locale]/admin/applications/page.tsx`, `src/components/admin/members-list.tsx`). Deferred: the default tabs
+  (pending, new) usually have rows.
 - **`AccountSkeleton` only mirrors the active-member page** (2026-11-10, members) — pending and inactive accounts see a
   shorter page (no profile sections, or only the photo consent), so their skeleton overshoots. The status is
   request-time data, so the fallback can't know it. (Default-state heights are measured: all Δh 0, 2026-11-10.)
@@ -377,10 +399,6 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   English "Sign in" button grows 59 → 63px and the header controls move ~4px (seen with throttling in
   `scripts/e2e/header-e2e.mjs`). The `next/font` fallback metrics don't fully match Saira's width axis; check
   `adjustFontFallback` / a closer fallback font if it's noticeable.
-- **`nav-e2e.mjs` "reduced motion: full width" fails since the scrollbar gutter** (2026-11-11, hide-Başvur E2E) —
-  on the long `/admin/applications` page, `scrollbar-gutter: stable` (commit `ad42e9a`) reserves 15px even in
-  headless Chrome with hidden scrollbars: the fixed bar and `<body>` are 375px, `innerWidth` (and `clientWidth`) 390.
-  Not a product bug; compare the bar with `document.body` width instead of `innerWidth`.
 - **Pending dim polish** (2026-11-10, loading-states review) — no fade-out when pending ends (animation is removed),
   undocumented; the 150 ms opacity animation still runs under `prefers-reduced-motion` (low risk).
 - **`pending-store.ts` robustness and tests** (2026-11-10, loading-states review) — a throwing listener stops later
@@ -400,6 +418,9 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 - **Re-run the instant-navigation dev check when adding pages** (2026-11-10, loading-states) — see
   `docs/learnings/nextjs.md`; the `/[locale]/[...rest]` catch-all always logs "Could not validate `instant`"
   (it calls `notFound()` by design).
+- **English application rows are taller on phones** (2026-11-13, list UX skeleton measurements) — at 390px the first
+  row of `/en/admin/applications` measured 130px against the 104px row skeleton (`h-26`; Turkish rows: 0px). The
+  English badge/source labels wrap to an extra line for some rows; content-dependent, like the member cards below.
 - **Members skeleton card height varies** (2026-11-10, members E2E) — the card skeleton is 94px (name, location, one
   bike, measured); real cards are 74px (no bike) to 114px+ (bike + birthday + Instagram, more bikes), so the list can
   jump a little on load. Accepted: card content varies per member.
@@ -407,11 +428,12 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 ### Tooling
 - **Dead-code sweep** (2026-11-11, iltan) — iltan wants dead code removed when there is no reason to keep it, and a
   sweep now and then. First sweep: unused exports/files/dependencies (tool still open, see "Dead-code tool?" under
-  Open decisions), unused message keys in `messages/*.json`, stale comments and follow-up items that point at removed code.
+  Open decisions), unused message keys in `messages/*.json`, stale comments and follow-up items that point at removed
+  code.
   Known: `hasStaffAccess` in `src/lib/auth/permissions.ts` has no callers (pre-existing, 2026-11-13).
 - **Supabase CLI 3.1.0 is available** (2026-11-10; installed 3.0.0).
 - **Members E2E looseness** (2026-11-10, members review) — some assertions are loose or vacuous in
-  `scripts/e2e/members-e2e.mjs`: pending "no member cards" (passes if the list simply didn't render), "remaining 4
-  members" accepts 1..4 cards, the English check is a loose regexp; bikes planted for the 10-bike cap stay if a check
+  `scripts/e2e/members-e2e.mjs`: pending "no member cards" (passes if the list simply didn't render), the English
+  label check is a loose regexp; bikes planted for the 10-bike cap stay if a check
   throws mid-run (the next run resets them); the instant-navigation check is evidenced only by the dev log and the
   browser console.

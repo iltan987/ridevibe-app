@@ -138,7 +138,9 @@
   (`translate` of Turkish letters + `lower`); escape `\`, `%`, `_` in the term.
 - **Also:** a plpgsql function can't have a parameter with the same name as an output column (`parameter name "side"
   used more than once`) → `member_directory` takes `side_filter`.
-- **Source:** `supabase/schemas/30_member_directory.sql`, Members Task 5.
+- **Source:** `supabase/schemas/30_member_directory.sql`, Members Task 5. **Update 2026-11-13:** directory search moved
+  to the browser (`src/lib/search-fold.ts`, same fold) and `private.search_fold` was dropped; the recipe above still
+  holds for any new SQL search.
 
 ### Previewing a data migration on production before its functions exist (2026-11-10)
 - **Symptom:** the first name-tidy preview called `private.tidy_name(...)`, but rollout runs the preview *before*
@@ -194,3 +196,25 @@
   matters: a tab shown late mounts with an old render and must refresh instead of overwriting newer news (code
   review found this). No new dependency, ~1 KB.
 - **Source:** spike 2026-11-12 (two Puppeteer tabs, production build).
+
+### `max_rows` (1,000) silently truncates selects and set-returning RPCs (2026-11-13)
+- **Symptom (risk):** a list that "loads everything" stops at row 1,000 with no error: `data` just ends.
+- **Cause:** PostgREST caps every table select and set-returning RPC at `[api] max_rows` (`supabase/config.toml`: 1000;
+  the hosted default is also 1,000). It applies to `rpc()` too, like a hidden `limit`.
+- **Do:** read in `.range(from, to)` chunks of `CHUNK_SIZE` (= `max_rows`) with `readAll` (`src/lib/pagination.ts`):
+  it stops at a short chunk or `LIST_CEILING` + 1 rows. `supabase.rpc(…).range()` is typed and becomes
+  `offset`/`limit` on the function's output, so the query needs a total order ending in `id` (else chunks skip or
+  repeat rows). Chunks are separate requests, so a row changing in between can still repeat at a boundary: pass the
+  result through `uniqueById`. An RPC that logs (blood filter) logs once per chunk call: keep such results within one chunk.
+- **Source:** spec `docs/superpowers/specs/2026-11-13-list-ux-design.md`; `loadDirectory` in
+  `src/lib/members/queries.ts`.
+
+### `.range()` past the last row is an empty page, not an error (2026-11-13)
+- **Question:** a server-paged list (`/admin/applications`) runs its page query alongside the counts, before it
+  knows whether `?page=` is past the end. Does a too-large offset fail (HTTP 416 "range not satisfiable")?
+- **Cause:** supabase-js `.range(from, to)` sends `offset`/`limit` query parameters (not a `Range` header);
+  PostgREST answers `200 []` for an offset past the end (checked locally up to offset 99,999,975).
+- **Do:** run the page query in parallel with the counts and redirect afterwards when `serverPage` (`src/lib/list-url.ts`)
+  flags the URL; no need to wait for the count first.
+- **Source:** `postgrest-js` `range()` in `node_modules/@supabase/postgrest-js/dist/index.mjs`; curl against local
+  PostgREST.

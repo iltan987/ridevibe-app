@@ -1,7 +1,7 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import type { Enums } from "@/lib/supabase/database.types";
-import { afterCursorFilter, type Cursor, PAGE_SIZE, toPage } from "@/lib/pagination";
+import { PAGE_SIZE } from "@/lib/pagination";
 
 export type ApplicationStatus = Enums<"application_status">;
 export const APPLICATION_STATUSES = ["new", "contacted", "approved", "rejected"] as const satisfies readonly ApplicationStatus[];
@@ -13,19 +13,22 @@ export type ApplicationFilter = (typeof APPLICATION_FILTERS)[number];
 const LIST_COLUMNS =
   "id, status, full_name, city, district, side, license_class, owns_motorcycle, motorcycle_brand, motorcycle_model, heard_from, utm_campaign, created_at";
 
-// RLS returns rows only with applications.view; for anyone else these are empty.
-export async function listApplications(filter: ApplicationFilter, cursor?: Cursor | null) {
+/**
+ * One page (1-based, PAGE_SIZE rows) of a tab, newest first; the tab's total is `countApplicationsByStatus`.
+ * RLS returns rows only with applications.view; for anyone else these are empty.
+ */
+export async function listApplications(filter: ApplicationFilter, page: number) {
   const supabase = await createClient();
   let request = supabase.from("applications").select(LIST_COLUMNS);
   request =
     filter === "unlinked" ? request.eq("status", "approved").is("profile_id", null) : request.eq("status", filter);
-  if (cursor) request = request.or(afterCursorFilter(cursor));
+  const from = (page - 1) * PAGE_SIZE;
   const { data, error } = await request
     .order("created_at", { ascending: false })
     .order("id", { ascending: false })
-    .limit(PAGE_SIZE + 1);
+    .range(from, from + PAGE_SIZE - 1);
   if (error) throw new Error(`listApplications failed: ${error.code}`);
-  return toPage(data);
+  return data;
 }
 
 export async function countApplicationsByStatus() {

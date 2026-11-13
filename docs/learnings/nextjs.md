@@ -184,3 +184,24 @@ Bundled docs are the source of truth: `node_modules/next/dist/docs/` (grep them 
 - **Do:** let the server decide: `router.refresh()` and no routing logic in the tab (`src/components/auth/auth-sync.tsx`).
 - **Source:** found by testing (two Puppeteer tabs, production build); `use-router.md` describes `refresh()` but not
   redirects.
+
+### URL as list state: `pushState`/`replaceState` + `useSearchParams`, and the render in between (2026-11-13)
+- **Need:** `/members` filters in the browser with the state in the URL (`?q=…&side=…&page=…`), no server request.
+- **Cause:** Next's patched `history.pushState`/`replaceState` call `navigator.restore`, whose reducer
+  (`router-reducer/reducers/restore-reducer.js`) re-uses the current tree and the old `renderedSearch` — no RSC fetch
+  (verified in the browser: 0 document/RSC requests while typing, tapping chips and pages, and on back/forward;
+  `scripts/e2e/members-e2e.mjs`, `lists-e2e.mjs`). The router update runs in a transition, so it reaches the screen
+  **one frame after** the tap (measured: the frame painted right after a chip tap still showed the old list), and a
+  sync `setState` from the same event (the search box) renders once more with the old search params first. After
+  fast writes the router may also catch up one write at a time (`q=a` while the box already says `ab`).
+- **Do:** (1) read the list state through `useListParams`, which shows its own last write (`shownSearch` /
+  `addWrite` in `src/lib/list-url.ts`) while the router's URL is still one the write passed through, and drops it
+  when the router catches up, moves elsewhere, or on `popstate` (back before the router caught up would otherwise
+  land on a URL the write started from and keep showing the write); (2) keep the box text in state and let
+  `syncedInput` follow the URL only when it differs from the typed text (keeps a trailing space); (3) correct a bad
+  `?page=` in an effect with `replaceState` only (no `setState`). Read repeated keys as arrays (`rawParam`), like the
+  page's `searchParams`, so `?page=2&page=3` is corrected as on the server. `useSearchParams` works in SSR here (the
+  client list renders inside the page's request-time `<Suspense>`), so a shared `?q=çel&page=2` arrives filtered.
+- **Source:** `src/components/lists/use-list-params.ts`, `use-list-search.ts` (shared by `/members` and
+  `/admin/members`); Next source above; `04-linking-and-navigating.md` ("Native History API"); per-frame logs in the
+  list-UX E2E (2026-11-13).

@@ -188,7 +188,7 @@
 - **Cause:** `scrollbar-gutter: stable` on `<html>` reserves 15px on overflowing pages even in headless Chrome with
   hidden scrollbars; `innerWidth` and `document.documentElement.clientWidth` still say 390, `<body>` and fixed
   elements are 375.
-- **Do:** compare full-width elements with `document.body` width, not `innerWidth` (follow-up for `nav-e2e.mjs`).
+- **Do:** compare full-width elements with `document.body` width, not `innerWidth` (`nav-e2e.mjs` "reduced motion").
 - **Source:** found by testing (hide-Başvur Task 5).
 
 ### `display-mode` can't be emulated in headless Chrome: stub `matchMedia` (2026-11-12)
@@ -240,3 +240,21 @@
   `noContact`/`blood`) instead of the unfiltered first page. The blood-type consent checkbox is a `[role=checkbox]`
   (not a `button`), and its save button stays disabled until ticked, so `consentRequired` is unreachable from the UI.
 - **Source:** found while writing `scripts/e2e/safety-e2e.mjs`.
+
+### E2E for lists filtered in the browser: count server requests, check the next frame, emulate a phone (2026-11-13)
+- **Need:** prove that typing, chips and pages make no server round trip and change the list at once.
+- **Symptoms:** counting *every* request failed: Chrome re-requests the favicon (`/icon.svg`) on each History API URL
+  change. A "next frame" check after a chip tap failed although the list looked instant (it was one frame late, a real
+  bug: `docs/learnings/nextjs.md`, "URL as list state"). A pager width check at 390px reported 375px of room: plain
+  headless Chrome reserves the 15px scrollbar gutter.
+- **Do:** count only `resourceType() === "document"` and RSC fetches (`_rsc=` in the URL or an `rsc` header, which
+  includes prefetches) — `watchServer` in `scripts/e2e/e2e-lib.mjs` (with `pagerFit` and `clearAndType`). Read the list in a `requestAnimationFrame`
+  callback right after the action (`nextFrame`), and log the search box per frame to catch flips during zero-delay
+  typing (`trackFrames`). For phone widths use `{ isMobile: true, hasTouch: true }` in the viewport: overlay
+  scrollbars, `<body>` as wide as the screen (`scripts/e2e/lists-e2e.mjs`, widest pager). Measure fallbacks on a
+  language switch back with `SWITCH_BACK=1 node scripts/e2e/skeletons.mjs …` (JS on, throttled).
+- **Fixtures:** `lists-e2e.mjs` plants and deletes its own rows; `members-e2e.mjs` still needs exactly 29 active
+  members (park `admin@test.local` for that run) and moves "Test Üye" to Beşiktaş, which `safety-e2e.mjs` resets.
+  `cross-tab-e2e.mjs` reads avatar initials, so it failed ("?") while `member@test.local` had the photo
+  `header-e2e.mjs` needs: a loaded photo replaces the initials. Clear `avatar_url` between the two.
+- **Source:** found while writing the list-UX E2E.

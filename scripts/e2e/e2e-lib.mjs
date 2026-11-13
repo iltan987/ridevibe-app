@@ -60,3 +60,49 @@ export async function throttle(page, { latency = 400, kbps = 400 } = {}) {
   });
   return cdp;
 }
+
+/** Counts the requests that go to the server for a page: documents and RSC fetches (incl. prefetches). Other requests
+ *  don't count: Chrome refetches the favicon on every History API URL change (docs/learnings/testing.md). */
+export function watchServer(page, baseUrl = "http://localhost:3123") {
+  let seen = [];
+  page.on("request", (r) => {
+    const url = r.url();
+    if (r.resourceType() === "document" || url.includes("_rsc=") || r.headers()["rsc"]) seen.push(`${r.resourceType()} ${url.replace(baseUrl, "")}`);
+  });
+  return { reset: () => (seen = []), count: () => seen.length, list: () => seen };
+}
+
+/** The visible pager's button row (`nav[data-skeleton-result=pager]`): on one line, inside the page, and no sideways
+ *  scrolling anywhere. */
+export const pagerFit = (page) =>
+  page.evaluate(() => {
+    const nav = [...document.querySelectorAll("nav[data-skeleton-result=pager]")].find((n) => n.getBoundingClientRect().width > 0);
+    const row = nav?.querySelector("div");
+    if (!row) return { found: false };
+    const tops = new Set([...row.children].map((c) => Math.round(c.getBoundingClientRect().top)));
+    const r = row.getBoundingClientRect();
+    const doc = document.documentElement;
+    return {
+      oneRow: tops.size === 1,
+      fits: r.left >= 0 && r.right <= document.body.clientWidth && doc.scrollWidth <= doc.clientWidth,
+      items: row.children.length,
+      left: Math.round(r.left),
+      right: Math.round(r.right),
+      width: Math.round(r.width),
+      body: document.body.clientWidth,
+    };
+  });
+
+/** Clears the visible search box (`input[type=search]`) and types `value` with no delay between keys. */
+export async function clearAndType(page, value) {
+  const input = (
+    await page.evaluateHandle(() => [...document.querySelectorAll("input[type=search]")].find((e) => e.getBoundingClientRect().width > 0) ?? null)
+  ).asElement();
+  if (!input) throw new Error("no visible search box");
+  await input.focus();
+  await page.keyboard.down("Control");
+  await page.keyboard.press("a");
+  await page.keyboard.up("Control");
+  await page.keyboard.press("Backspace");
+  if (value) await input.type(value, { delay: 0 });
+}

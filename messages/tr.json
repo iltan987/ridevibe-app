@@ -85,6 +85,8 @@
   "Members": {
     "title": "Üyeler",
     "total": "{count} üye",
+    "range": "{from}–{to} / {total} üye",
+    "ceiling": "Liste eksik: 2.000'den fazla üye var, yalnızca ilk 2.000 üye gösteriliyor. Lütfen yöneticilere haber ver.",
     "search": "Üye ara",
     "searchLabel": "Üyelerde ara",
     "sides": {
@@ -408,6 +410,7 @@
       "unlinked": "Giriş yapmadı"
     },
     "empty": "Bu durumda başvuru yok.",
+    "range": "{from}–{to} / {total} başvuru",
     "back": "Başvurulara dön",
     "submittedAt": "Başvuru tarihi",
     "age": "{age} yaş",
@@ -442,9 +445,10 @@
         "inactive": "Pasif"
       },
       "pendingHint": "Google ile giriş yapmış ama henüz onaylanmamış kişiler. Tanıdığın kişileri aktifleştir. Başvurusu olanları başvuru sayfasından “Hesaba bağla” ile bağla; başvurusu yoksa kişiden formu doldurmasını iste.",
-      "search": "İsimle ara",
-      "searchButton": "Ara",
+      "search": "İsim ya da e-postayla ara",
       "empty": "Bu listede kimse yok.",
+      "range": "{from}–{to} / {total} kişi",
+      "ceiling": "Liste eksik: 2.000'den fazla kişi var, yalnızca ilk 2.000 kişi gösteriliyor. Lütfen yöneticilere haber ver.",
       "joined": "Kayıt: {date}",
       "you": "Sen",
       "role": "Rol",
@@ -580,8 +584,10 @@
     }
   },
   "Pagination": {
-    "next": "Sonraki sayfa",
-    "first": "İlk sayfa"
+    "label": "Sayfalar",
+    "previous": "Önceki sayfa",
+    "page": "Sayfa {page}",
+    "next": "Sonraki sayfa"
   },
   "NotFound": {
     "title": "Sayfa bulunamadı",

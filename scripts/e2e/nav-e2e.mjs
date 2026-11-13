@@ -86,7 +86,7 @@ async function slowNav(name, startPath, getEl, urlPart, { skeleton = false } = {
 // 1-4 bottom tab, chip, pager, card
 await slowNav("bottom tab", "/admin/applications", (p) => visibleLink(p, "/events", "", "nav.fixed"), "/events");
 await slowNav("filter chip", "/admin/applications", (p) => visibleLink(p, "status=approved"), "status=approved");
-await slowNav("pager next", "/admin/applications", (p) => visibleLink(p, "cursor=", "Sonraki"), "cursor=");
+await slowNav("pager page 2", "/admin/applications", (p) => visibleLink(p, "page=2"), "page=2");
 await slowNav("list card -> detail", "/admin/applications", async (p) => {
   const h = await p.evaluateHandle(() => [...document.querySelectorAll("a")].find((a) => a.getBoundingClientRect().width > 0 && /\/admin\/applications\/[0-9a-f-]{36}/.test(a.getAttribute("href") ?? "")) ?? null);
   return h.asElement();
@@ -164,9 +164,11 @@ await slowNav("list card -> detail (prefetched)", "/admin/applications", async (
   check("reduced motion: bar visible", r.ok);
   const info = await page.evaluate(() => {
     const inner = document.querySelector("[data-nav-progress] > div");
-    return { name: getComputedStyle(inner).animationName, anims: inner.getAnimations().length, w: inner.getBoundingClientRect().width, vw: innerWidth };
+    // Full width = the body's width: `scrollbar-gutter: stable` reserves 15px even in headless Chrome, so `innerWidth`
+    // is wider than the page on long pages (docs/learnings/testing.md).
+    return { name: getComputedStyle(inner).animationName, anims: inner.getAnimations().length, w: inner.getBoundingClientRect().width, body: document.body.clientWidth };
   });
-  check("reduced motion: no running animation, full width", info.name === "none" && info.anims === 0 && Math.abs(info.w - info.vw) < 1, JSON.stringify(info));
+  check("reduced motion: no running animation, full width", info.name === "none" && info.anims === 0 && Math.abs(info.w - info.body) < 1, JSON.stringify(info));
   await ctx.close();
 }
 

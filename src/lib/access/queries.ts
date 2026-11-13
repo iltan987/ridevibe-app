@@ -1,51 +1,56 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
-import type { Enums } from "@/lib/supabase/database.types";
-import { afterCursorFilter, type Cursor, ilikeContains, PAGE_SIZE, toPage } from "@/lib/pagination";
+import { CHUNK_SIZE, chunks, readAll, uniqueById } from "@/lib/pagination";
+import type { MemberStatus } from "./members-view";
 
-export type MemberStatus = Enums<"member_status">;
-export const MEMBER_STATUSES = ["pending", "active", "inactive"] as const satisfies readonly MemberStatus[];
+export type AdminProfile = {
+  id: string;
+  full_name: string;
+  avatar_url: string | null;
+  status: MemberStatus;
+  created_at: string;
+  role_id: string | null;
+  email: string | null;
+};
 
-// RLS returns other people's pending/inactive profiles and emails only to members.manage.
-export async function listMembers({ status, query, cursor }: { status: MemberStatus; query?: string; cursor?: Cursor | null }) {
+/**
+ * Every profile (all statuses) for the admin members list, newest first, read in CHUNK_SIZE pages up to
+ * LIST_CEILING; the browser filters and pages. RLS returns other people's pending/inactive profiles and emails only
+ * to members.manage.
+ */
+export async function listAllProfiles(): Promise<{ profiles: AdminProfile[]; overCeiling: boolean }> {
   const supabase = await createClient();
-  let request = supabase
-    .from("profiles")
-    .select("id, full_name, avatar_url, status, created_at, role_id, member_contacts(email)")
-    .eq("status", status);
-  if (query) request = request.ilike("full_name", ilikeContains(query));
-  if (cursor) request = request.or(afterCursorFilter(cursor));
-
-  const { data, error } = await request
-    .order("created_at", { ascending: false })
-    .order("id", { ascending: false })
-    .limit(PAGE_SIZE + 1);
-  if (error) throw new Error(`listMembers failed: ${error.code}`);
-  return toPage(data);
+  const { items, overCeiling } = await readAll(async (from, to) => {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, full_name, avatar_url, status, created_at, role_id, member_contacts(email)")
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .range(from, to);
+    if (error) throw new Error(`listAllProfiles failed: ${error.code}`);
+    return data;
+  });
+  const profiles = uniqueById(items).map(
+    ({ member_contacts, ...profile }): AdminProfile => ({ ...profile, email: member_contacts?.email ?? null }),
+  );
+  return { profiles, overCeiling };
 }
 
-/** Which of these profiles have an open (new/contacted/approved) application? Needs members.manage. */
+/**
+ * Which of these profiles have an open (new/contacted/approved) application? Needs members.manage. One call per
+ * CHUNK_SIZE ids: `max_rows` caps the RPC's result (one row per id) too.
+ */
 export async function getPendingApplicationFlags(ids: string[]): Promise<Map<string, boolean>> {
   if (!ids.length) return new Map();
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("pending_application_flags", { profile_ids: ids });
-  if (error) throw new Error(`getPendingApplicationFlags failed: ${error.code}`);
-  return new Map(data.map((row) => [row.profile_id, row.has_application]));
-}
-
-export async function countMembersByStatus() {
-  const supabase = await createClient();
-  const counts = await Promise.all(
-    MEMBER_STATUSES.map(async (status) => {
-      const { count, error } = await supabase
-        .from("profiles")
-        .select("id", { count: "exact", head: true })
-        .eq("status", status);
-      if (error) throw new Error(`countMembersByStatus failed: ${error.code}`);
-      return [status, count ?? 0] as const;
+  const results = await Promise.all(
+    chunks(ids, CHUNK_SIZE).map(async (profile_ids) => {
+      const { data, error } = await supabase.rpc("pending_application_flags", { profile_ids });
+      if (error) throw new Error(`getPendingApplicationFlags failed: ${error.code}`);
+      return data;
     }),
   );
-  return Object.fromEntries(counts) as Record<MemberStatus, number>;
+  return new Map(results.flat().map((row) => [row.profile_id, row.has_application]));
 }
 
 /**

@@ -34,7 +34,7 @@
 import { execFileSync } from "node:child_process";
 import os from "node:os";
 import path from "node:path";
-import { launch, newPage, signIn } from "./e2e-lib.mjs";
+import { clearAndType, launch, newPage, pagerFit, signIn, watchServer } from "./e2e-lib.mjs";
 
 const DIR = process.env.OUT_DIR ?? os.tmpdir();
 const BASE = "http://localhost:3123";
@@ -137,6 +137,57 @@ const saveForm = async (page, inner) => {
   return true;
 };
 
+const total = (page) => page.evaluate(() => [...document.querySelectorAll("[data-skeleton-result=members-total] p")].find((p) => p.getBoundingClientRect().width > 0)?.textContent ?? null);
+/** Names on the visible cards. */
+const names = (page) =>
+  page.evaluate(() => [...document.querySelectorAll("li[data-skeleton-result=members-row] p.font-medium")].filter((p) => p.getBoundingClientRect().width > 0).map((p) => p.textContent));
+/** Page numbers, current page and range line of the visible pager. */
+const pagerState = (page) =>
+  page.evaluate(() => {
+    const nav = [...document.querySelectorAll("nav[data-skeleton-result=pager]")].find((n) => n.getBoundingClientRect().width > 0);
+    return {
+      pages: [...(nav?.querySelectorAll("[aria-label^='Sayfa '], [aria-label^='Page ']") ?? [])].map((b) => b.textContent).join(),
+      current: nav?.querySelector("[aria-current=page]")?.textContent ?? null,
+      range: nav?.querySelector("p")?.textContent ?? null,
+    };
+  });
+/** Logs, per animation frame, whether a Suspense fallback (`data-skeleton`) is visible and the search box text
+ *  (`values`: each change, as painted). */
+const trackFrames = (page) =>
+  page.evaluate(() => {
+    window.__frames = { frames: 0, skeleton: 0, values: [] };
+    const tick = () => {
+      const f = window.__frames;
+      f.frames++;
+      if ([...document.querySelectorAll("[data-skeleton]")].some((e) => e.getBoundingClientRect().width > 0)) f.skeleton++;
+      const value = [...document.querySelectorAll("input[type=search]")].find((e) => e.getBoundingClientRect().width > 0)?.value;
+      if (value !== undefined && value !== f.values.at(-1)) f.values.push(value);
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+const framesSeen = (page) => page.evaluate(() => window.__frames);
+/** The directory as painted in the next animation frame: box text, card names, total, pressed chip, pager. */
+const nextFrame = (page) =>
+  page.evaluate(
+    () =>
+      new Promise((resolve) =>
+        requestAnimationFrame(() => {
+          const vis = (e) => e.getBoundingClientRect().width > 0;
+          const nav = [...document.querySelectorAll("nav[data-skeleton-result=pager]")].find(vis);
+          resolve({
+            value: [...document.querySelectorAll("input[type=search]")].find(vis)?.value ?? null,
+            names: [...document.querySelectorAll("li[data-skeleton-result=members-row] p.font-medium")].filter(vis).map((p) => p.textContent),
+            total: [...document.querySelectorAll("[data-skeleton-result=members-total] p")].find(vis)?.textContent ?? null,
+            chip: [...document.querySelectorAll("[data-skeleton-result=members-chips] button[aria-pressed=true]")].find(vis)?.firstChild?.textContent ?? null,
+            page: nav?.querySelector("[aria-current=page]")?.textContent ?? (nav ? "1" : null),
+            range: nav?.querySelector("p")?.textContent ?? null,
+          });
+        }),
+      ),
+  );
+const clickChip = (page, label) => click(page, "[data-skeleton-result=members-chips] button", `^${label}`);
+const clickPage = (page, n) => click(page, "nav[data-skeleton-result=pager] button", `Sayfa ${n}$|Page ${n}$`);
 
 /** Sets a controlled input's value the way React notices (typing into type=date depends on the browser locale). */
 async function setInputValue(page, selector, value) {
@@ -179,46 +230,134 @@ sql(`update member_details set birth_date = null, show_birthday = true where pro
   await ctx.close();
 }
 
-// 3 directory as an active member
+// 3 directory as an active member: search, chips and pages run in the browser (state in the URL, no server request)
 {
   const { ctx, page } = await fresh("member@test.local");
+  const server = watchServer(page, BASE);
   await go(page, "/members");
   const text = await bodyText(page);
-  const total = await page.evaluate(() => document.querySelector("[data-skeleton-result=members-total] p")?.textContent);
-  check("directory: total shown", total === "29 üye", total);
-  const rows = await page.evaluate(() => document.querySelectorAll("li[data-skeleton-result=members-row]").length);
-  check("directory: first page has 25 cards", rows === 25, String(rows));
-  check("directory: pager 'Sonraki' appears with > 25 members", !!(await find(page, "a", "Sonraki")));
-  check("directory: side chips with counts", /Tümü\s*29/.test(text) && /Anadolu\s*\d+/.test(text) && /Avrupa\s*\d+/.test(text));
+  check("directory: total shown", (await total(page)) === "29 üye", await total(page));
+  check("directory: first page has 25 cards", (await names(page)).length === 25, String((await names(page)).length));
+  check("directory: side chips with counts", /Tümü\s*29/.test(text) && /Anadolu\s*1/.test(text) && /Avrupa\s*1/.test(text), text.match(/Tümü[\s\S]{0,40}/)?.[0]);
+  check("directory: pager shows pages 1-2 and the range", (await pagerState(page)).pages === "1,2" && (await pagerState(page)).range === "1–25 / 29 üye", JSON.stringify(await pagerState(page)));
+  const fit = await pagerFit(page);
+  check("pager at 390px: one row, no horizontal overflow", fit.oneRow && fit.fits, JSON.stringify(fit));
   await shot(page, "directory");
 
-  // pager next
-  await click(page, "a", "Sonraki");
-  const second = await until(page, () => /cursor=/.test(location.search) && document.querySelectorAll("li[data-skeleton-result=members-row]").length > 0 && [...document.querySelectorAll("li[data-skeleton-result=members-row]")].length <= 4, null);
-  check("pager: second page shows the remaining 4 members and a 'first' link", !!second && !!(await find(page, "a", "İlk")), page.url().replace(BASE, ""));
-
-  // search without Turkish letters
-  await go(page, "/members");
+  // (a) typing narrows the list at once (checked in the first animation frame after the last key), no skeleton,
+  // no request to the server; zero-delay typing ends with exactly the typed text.
+  await trackFrames(page);
+  server.reset();
   const input = await find(page, "input[type=search]");
-  await input.type("celik");
-  await input.press("Enter");
-  await until(page, () => location.search.includes("q=celik"), null);
-  await sleep(800);
-  const names = await page.evaluate(() => [...document.querySelectorAll("li[data-skeleton-result=members-row] p.font-medium")].map((p) => p.textContent));
-  const totalAfter = await page.evaluate(() => document.querySelector("[data-skeleton-result=members-total] p")?.textContent);
-  check("search 'celik' finds 'Çelik Fixture' only", names.length === 1 && names[0] === "Çelik Fixture" && totalAfter === "1 üye", JSON.stringify(names) + " " + totalAfter);
+  await input.type("çel", { delay: 0 });
+  const typed = await nextFrame(page);
+  check("search: 'çel' narrows the list in the next frame", typed.value === "çel" && typed.names.join() === "Çelik Fixture" && typed.total === "1 üye", JSON.stringify(typed));
+  // (b) the URL carries only the search
+  check("search: URL is ?q=%C3%A7el", !!(await until(page, () => location.search === "?q=%C3%A7el", null)), await page.evaluate(() => location.search));
   const card = await memberCard(page, "Çelik Fixture");
   check("card shows district, side, bike, birthday and Instagram", !!card && /Beşiktaş · Avrupa/.test(card) && /Honda CB500 · 500 cc/.test(card) && /9 Mart/.test(card) && /@celikfx/.test(card), JSON.stringify(card));
   await shot(page, "search");
+  // Folded search: without Turkish letters, and capitals.
+  await clearAndType(page, "CELIK");
+  check("search: 'CELIK' finds 'Çelik Fixture' (folded)", (await nextFrame(page)).names.join() === "Çelik Fixture");
+  await clearAndType(page, "");
+  await page.evaluate(() => (window.__frames.values = []));
+  await clearAndType(page, "fixture üye 1");
+  const fast = await nextFrame(page);
+  const painted = (await framesSeen(page)).values;
+  check("fast typing: the box never flips back (every painted text is a prefix of the next)", painted.every((v, i) => i === 0 || v.startsWith(painted[i - 1])), JSON.stringify(painted));
+  const expected = ["Fixture Üye 1", ...Array.from({ length: 10 }, (_, i) => `Fixture Üye 1${i}`)].sort().join();
+  check("fast typing (no delay): box holds exactly the typed text and the list matches", fast.value === "fixture üye 1" && [...fast.names].sort().join() === expected, JSON.stringify(fast));
+  const caughtUp = await until(page, () => location.search === "?q=fixture+%C3%BCye+1", null);
+  await sleep(300);
+  const settled = await nextFrame(page);
+  check("fast typing: after the URL caught up the box still holds the typed text", !!caughtUp && settled.value === "fixture üye 1" && settled.names.length === 11, JSON.stringify(settled));
+  // Clearing leaves no empty q: the URL has no query at all.
+  await clearAndType(page, "");
+  check("search cleared: URL has no '?'", !!(await until(page, () => location.href.endsWith("/members"), null)) && (await names(page)).length === 25, page.url().replace(BASE, ""));
+  await sleep(300);
+  const frames = await framesSeen(page);
+  check("typing: no skeleton in any frame", frames.frames > 0 && frames.skeleton === 0, JSON.stringify(frames));
+  check("typing: no document or RSC request", server.count() === 0, server.list().join(" | "));
 
-  // side chip
+  // (c) reload restores the view
+  await clearAndType(page, "çel");
+  await until(page, () => location.search === "?q=%C3%A7el", null);
+  await page.reload({ waitUntil: "networkidle0" });
+  await sleep(400);
+  const restored = await nextFrame(page);
+  check("reload: ?q=%C3%A7el restores the box and the list", restored.value === "çel" && restored.names.join() === "Çelik Fixture", JSON.stringify(restored));
+
+  // chips and pages: no request either
   await go(page, "/members");
-  await click(page, "nav[data-skeleton-result=members-chips] a", "Avrupa");
-  await until(page, () => location.search.includes("side=european"), null);
-  await sleep(800);
-  const euro = await page.evaluate(() => [...document.querySelectorAll("li[data-skeleton-result=members-row]")].map((li) => li.innerText));
-  const chipTotal = await page.evaluate(() => document.querySelector("nav[data-skeleton-result=members-chips] a[aria-current=page]")?.textContent);
-  check("side chip 'Avrupa' filters (every card is European, Test Üye absent)", euro.length > 0 && euro.every((c) => /Avrupa/.test(c)) && !euro.some((c) => c.includes("Test Üye")), `${euro.length} cards, chip=${chipTotal}`);
+  await trackFrames(page);
+  server.reset();
+  await clickChip(page, "Avrupa");
+  const euro = await nextFrame(page);
+  check("chip 'Avrupa': only European cards, URL ?side=european", euro.names.join() === "Çelik Fixture" && euro.chip === "Avrupa" && !!(await until(page, () => location.search === "?side=european", null)), JSON.stringify(euro));
+  await clickChip(page, "Tümü");
+  await until(page, () => location.search === "", null);
+  await clickPage(page, "2");
+  const p2 = await nextFrame(page);
+  check("page 2: the remaining 4 members, URL ?page=2, range 26–29", p2.names.length === 4 && p2.range === "26–29 / 29 üye" && !!(await until(page, () => location.search === "?page=2", null)), JSON.stringify(p2));
+  await clickPage(page, "1");
+  await until(page, () => location.search === "", null);
+  check("chips and pages: no skeleton in any frame", (await framesSeen(page)).skeleton === 0, JSON.stringify(await framesSeen(page)));
+  check("chips and pages: no document or RSC request", server.count() === 0, server.list().join(" | "));
+
+  // (d) back / forward walk: box, chip, page and list follow the URL
+  await go(page, "/members");
+  await clearAndType(page, "fix"); // replaces the entry: ?q=fix (28 matches: two pages)
+  await until(page, () => location.search === "?q=fix", null);
+  await clickPage(page, "2"); // push ?q=fix&page=2
+  await until(page, () => location.search === "?q=fix&page=2", null);
+  await clearAndType(page, "çel"); // replaces that entry: ?q=%C3%A7el
+  await until(page, () => location.search === "?q=%C3%A7el", null);
+  await clickChip(page, "Avrupa"); // push ?q=%C3%A7el&side=european
+  await until(page, () => location.search === "?q=%C3%A7el&side=european", null);
+  server.reset();
+  const walk = [];
+  const step = async (label, move) => {
+    await move();
+    await sleep(300);
+    walk.push({ label, search: await page.evaluate(() => decodeURIComponent(location.search)), ...(await nextFrame(page)) });
+  };
+  await step("back", () => page.goBack());
+  await step("back", () => page.goBack());
+  await step("forward", () => page.goForward());
+  await step("forward", () => page.goForward());
+  const [b1, b2, f1, f2] = walk;
+  const fmt = JSON.stringify(walk.map(({ label, search, value, chip, names, page }) => ({ label, search, value, chip, page, n: names.length })));
+  check("back: ?q=çel — box 'çel', chip Tümü, 1 card", b1.search === "?q=çel" && b1.value === "çel" && b1.chip === "Tümü" && b1.names.join() === "Çelik Fixture", fmt);
+  check("back: ?q=fix — box 'fix', page 1 of 2 (25 cards)", b2.search === "?q=fix" && b2.value === "fix" && b2.chip === "Tümü" && b2.names.length === 25 && b2.page === "1", fmt);
+  check("forward: ?q=çel — box 'çel' again", f1.search === "?q=çel" && f1.value === "çel" && f1.names.join() === "Çelik Fixture", fmt);
+  check("forward: ?q=çel&side=european — chip Avrupa", f2.search === "?q=çel&side=european" && f2.value === "çel" && f2.chip === "Avrupa" && f2.names.join() === "Çelik Fixture", fmt);
+  check("back / forward: no document or RSC request", server.count() === 0, server.list().join(" | "));
+
+  // (e) odd URLs are corrected in place (replaceState): clamped page, invalid side, stale keyset cursor
+  for (const [from, to, n] of [
+    ["/members?page=99", "?page=2", 4],
+    ["/members?page=abc", "", 25],
+    ["/members?page=1", "", 25],
+    ["/members?page=2&page=3", "", 25],
+    ["/members?side=north&page=2", "?page=2", 4],
+    ["/members?cursor=MjAyNi0xMS0wOFQx&q=fix", "?q=fix", 25],
+  ]) {
+    await go(page, from);
+    const fixed = await until(page, (to) => location.search === to, to);
+    check(`URL fix: ${from} -> ${to || "(no query)"}`, !!fixed && (await names(page)).length === n, `${await page.evaluate(() => location.search)} ${(await names(page)).length} cards`);
+  }
+
+  // (f) server time of /members (document): logged for docs/follow-ups.md
+  const times = [];
+  for (let i = 0; i < 5; i++) {
+    await page.goto(BASE + "/members", { waitUntil: "networkidle0" });
+    times.push(await page.evaluate(() => {
+      const n = performance.getEntriesByType("navigation")[0];
+      return { responseStart: Math.round(n.responseStart - n.requestStart), responseEnd: Math.round(n.responseEnd - n.requestStart) };
+    }));
+  }
+  console.log(`INFO /members document timing (ms since request; responseEnd = the streamed directory is in): ${JSON.stringify(times)}`);
   await ctx.close();
 }
 
@@ -408,9 +547,23 @@ sql(`update member_details set birth_date = null, show_birthday = true where pro
 // 6 English
 {
   const { ctx, page } = await fresh("member@test.local");
+  const server = watchServer(page, BASE);
   await go(page, "/en/members");
   const t = await bodyText(page);
   check("English: /en/members renders translated labels", /Members/.test(t) && /Asian side|Anatolian|Asian/.test(t) && !/MISSING_MESSAGE/.test(t));
+  check("English: range line", (await pagerState(page)).range === "1–25 of 29 members", JSON.stringify(await pagerState(page)));
+  server.reset();
+  await clearAndType(page, "çel");
+  check("English: typing keeps the /en prefix", !!(await until(page, () => location.pathname + location.search === "/en/members?q=%C3%A7el", null)), page.url().replace(BASE, ""));
+  await click(page, "[data-skeleton-result=members-chips] button", "^European");
+  check("English: chip keeps the /en prefix", !!(await until(page, () => location.pathname + location.search === "/en/members?q=%C3%A7el&side=european", null)), page.url().replace(BASE, ""));
+  check("English: no document or RSC request", server.count() === 0, server.list().join(" | "));
+  await page.reload({ waitUntil: "networkidle0" });
+  await sleep(400);
+  const back = await nextFrame(page);
+  check("English: reload restores search and chip", back.value === "çel" && back.chip === "European side" && back.names.join() === "Çelik Fixture" && page.url().endsWith("/en/members?q=%C3%A7el&side=european"), JSON.stringify(back));
+  await go(page, "/en/members?page=2");
+  check("English: page 2 via URL, range 26–29", (await pagerState(page)).range === "26–29 of 29 members" && (await names(page)).length === 4, JSON.stringify(await pagerState(page)));
   await ctx.close();
 }
 

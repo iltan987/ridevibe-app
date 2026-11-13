@@ -27,7 +27,7 @@
 import { execFileSync } from "node:child_process";
 import os from "node:os";
 import path from "node:path";
-import { launch, newPage, signIn } from "./e2e-lib.mjs";
+import { launch, newPage, signIn, watchServer } from "./e2e-lib.mjs";
 
 const DIR = process.env.OUT_DIR ?? os.tmpdir();
 const BASE = process.env.BASE_URL ?? "http://localhost:3123";
@@ -149,6 +149,17 @@ const memberCard = (page, name) =>
     (name) => [...document.querySelectorAll("li[data-skeleton-result=members-row]")].find((li) => li.textContent.includes(name))?.innerText ?? null,
     name,
   );
+/** The visible directory: total, card names, search box text, pressed side chip. */
+const listState = (page) =>
+  page.evaluate(() => {
+    const vis = (e) => e.getBoundingClientRect().width > 0;
+    return {
+      total: [...document.querySelectorAll("[data-skeleton-result=members-total] p")].find(vis)?.textContent ?? null,
+      names: [...document.querySelectorAll("li[data-skeleton-result=members-row] p.font-medium")].filter(vis).map((p) => p.textContent),
+      value: [...document.querySelectorAll("input[type=search]")].find(vis)?.value ?? null,
+      chip: [...document.querySelectorAll("[data-skeleton-result=members-chips] button[aria-pressed=true]")].find(vis)?.firstChild?.textContent ?? null,
+    };
+  });
 const switchFor = (page, text) =>
   page.evaluateHandle(
     (text) =>
@@ -287,6 +298,7 @@ sql(`insert into member_emergency_contacts (profile_id, position, name, relation
 sql(`insert into member_health (profile_id, blood_type, consent_blood_type, consent_blood_type_at, consent_blood_type_version) values ('${ID.member}', 'A+', true, now(), 'e2e')`);
 sql(`insert into member_motorcycles (profile_id, brand, model, cc, plate) values ('${ID.member}', 'Yamaha', 'MT-07', 689, '34 ABC 123')`);
 sql(`update member_details set show_plates = false where profile_id = '${ID.member}'`);
+sql(`update profiles set district = 'Kadıköy', side = 'asian' where id = '${ID.member}'`); // members-e2e moves them
 
 // 4 plain member sees nothing of it
 await scenario("plain", "second@test.local", async (page) => {
@@ -336,6 +348,42 @@ await scenario("staff", "admin@test.local", async (page) => {
   const noContact = await total(page);
   const ncNames = await page.evaluate(() => [...document.querySelectorAll("li[data-skeleton-result=members-row] p.font-medium")].map((p) => p.textContent));
   check("staff: 'no contact' filter lists only members without contacts", noContact !== all && ncNames.length > 0 && !ncNames.includes("Test Üye"), `${all} -> ${noContact} ${JSON.stringify(ncNames)}`);
+
+  // In-browser search and chip as a holder: no server request (the "no contact" link must not prefetch per key),
+  // then the blood filter (a server navigation) keeps q and side, filters by all three and logs once per navigation.
+  await go(page, "/members");
+  const server = watchServer(page, BASE);
+  const box = await find(page, "input[type=search]");
+  await box.type("test", { delay: 0 });
+  await click(page, "[data-skeleton-result=members-chips] button", "^Anadolu");
+  await until(page, () => location.search === "?q=test&side=asian", null);
+  await sleep(1500); // a prefetch would have fired by now
+  check("staff: typing and a chip make no document or RSC request (no prefetch per keystroke)", server.count() === 0, server.list().join(" | "));
+  const logsBefore = logCount(ID.admin, "filter_blood_type");
+  await page.select("[aria-label='Kan grubu']", "A+");
+  await click(page, "button[type=submit]", "Uygula");
+  await until(page, () => location.search.includes("blood=A%2B"), null);
+  await sleep(600);
+  const params1 = await page.evaluate(() => Object.fromEntries(new URLSearchParams(location.search)));
+  const after1 = await listState(page);
+  check("staff: blood filter after a browser search keeps q and side", params1.q === "test" && params1.side === "asian" && params1.blood === "A+" && !("page" in params1), JSON.stringify(params1));
+  check("staff: ... and filters by search, side and blood type (box and chip kept)", after1.total === "1 üye" && after1.names.join() === "Test Üye" && after1.value === "test" && after1.chip === "Anadolu", JSON.stringify(after1));
+  check("staff: one filter_blood_type row for that navigation", logCount(ID.admin, "filter_blood_type") === logsBefore + 1, `${logsBefore} -> ${logCount(ID.admin, "filter_blood_type")}`);
+  await page.select("[aria-label='Kan grubu']", "0+");
+  await click(page, "button[type=submit]", "Uygula");
+  await until(page, () => location.search.includes("blood=0%2B"), null);
+  await sleep(600);
+  const params2 = await page.evaluate(() => Object.fromEntries(new URLSearchParams(location.search)));
+  check("staff: a second blood filter keeps q and side, writes one more row", params2.q === "test" && params2.side === "asian" && (await listState(page)).total === "0 üye" && logCount(ID.admin, "filter_blood_type") === logsBefore + 2, `${JSON.stringify(params2)} ${logCount(ID.admin, "filter_blood_type")}`);
+  // The "no contact" chip (a server navigation too) also keeps the browser's search and side.
+  await go(page, "/members");
+  await (await find(page, "input[type=search]")).type("çel", { delay: 0 });
+  await until(page, () => location.search === "?q=%C3%A7el", null);
+  await click(page, "[role=group] a", "Acil kişisi yok");
+  await until(page, () => location.search.includes("noContact=1"), null);
+  await sleep(600);
+  const params3 = await page.evaluate(() => Object.fromEntries(new URLSearchParams(location.search)));
+  check("staff: 'no contact' chip after a browser search keeps q, lists the member without contacts", params3.q === "çel" && (await listState(page)).names.join() === "Çelik Fixture", `${JSON.stringify(params3)} ${JSON.stringify(await listState(page))}`);
 
   await go(page, "/members?noContact=1&q=Test%20%C3%9Cye");
   check("staff: 'no contact' + search excludes the member who has contacts", (await total(page)) === "0 üye", String(await total(page)));
