@@ -1,6 +1,7 @@
 // Admin lists E2E: /admin/members (everything loaded once; tabs, search by name or email and pages in the browser,
-// state in the URL, no server request; a row action that empties the last page clamps it) and /admin/applications
-// (server offset pages; odd ?page= / ?status= / stale ?cursor= redirect to the canonical URL).
+// state in the URL, no server request; a row action that empties the last page clamps it, one under a tab + search +
+// page keeps all three) and /admin/applications (server offset pages; odd ?page= / ?status= / stale ?cursor=
+// redirect to the canonical URL).
 // Needs a production server on :3123 (pnpm build && pnpm start -p 3123), local email sign-in
 // (docs/learnings/testing.md, "Testing as a signed-in user locally") and admin@test.local (active, admin role; recipe
 // in scripts/e2e/safety-e2e.mjs). Works on a DB with other profiles and applications: totals are read from the DB.
@@ -10,7 +11,8 @@
 //     one and as many as make the pending tab 26 + 25k rows (k >= 0, any number of other pending profiles): its last
 //     page (LAST, from the DB count) holds exactly one row, which the script activates. That row must be a fixture:
 //     the script fails loudly and activates nothing if another pending profile is even older;
-//   - 160 inactive profiles lxi<N>@fixture.invalid, so the inactive tab has 7+ pages (widest pager: 7 items + arrows);
+//   - 160 inactive profiles lxi<N>@fixture.invalid ("Pasif Liste N"), so the inactive tab has 7+ pages (widest
+//     pager: 7 items + arrows); one of them is reactivated under ?status=inactive&q=pasif+liste&page=2;
 //   - 30 'new' and 2 'approved' applications lx-app<N>@fixture.invalid (a second page on the applications list).
 // Env: PUPPETEER_DIR (required), BASE_URL (default http://localhost:3123), OUT_DIR (screenshots, default: OS temp
 // dir), DB_CONTAINER (default supabase_db_ridevibe).
@@ -232,6 +234,30 @@ await scenario("admin action clamps", async (page) => {
   check("action: the profile is active in the DB", sql(`select status from profiles p join member_contacts c on c.profile_id = p.id where p.full_name = '${name}' and c.email like 'lxp%'`) === "active");
 });
 
+// 3b a row action with a tab, a search and a page in the URL: refresh() keeps all three (spec §6)
+await scenario("admin action keeps tab, search and page", async (page) => {
+  const url = "?status=inactive&q=pasif+liste&page=2";
+  const matching = num("select count(*) from profiles where status = 'inactive' and full_name like 'Pasif Liste %'");
+  await go(page, `/admin/members${url}`);
+  const before = await listState(page);
+  check("action with search: page 2 of the searched inactive tab", before.tab === "Pasif" && before.value === "pasif liste" && before.page === "2" && before.rows.length === 25 && matching > 50, fmt(before));
+  const name = before.rows[0];
+  if (!/^Pasif Liste \d+$/.test(name ?? "")) {
+    check("action with search: the row is a fixture (else nothing is changed)", false, fmt(before));
+    return;
+  }
+  const row = await find(page, "li[data-skeleton-result=admin-row]", name);
+  const button = (await row.evaluateHandle((li) => [...li.querySelectorAll("button")].find((b) => b.textContent.trim() === "Yeniden aktifleştir") ?? null)).asElement();
+  await button.evaluate((b) => b.scrollIntoView({ block: "center" }));
+  await button.click();
+  const gone = await until(page, (name) => ![...document.querySelectorAll("li[data-skeleton-result=admin-row]")].some((li) => li.getBoundingClientRect().width > 0 && li.textContent.includes(name)), name);
+  await sleep(500);
+  const after = await listState(page);
+  check("action with search: after refresh() the URL keeps tab, search and page", !!gone && (await search(page)) === url, await search(page));
+  check("action with search: box, tab and page kept, row gone, counts follow the search", after.tab === "Pasif" && after.value === "pasif liste" && after.page === "2" && after.rows.length === 25 && !after.rows.includes(name) && after.counts.Pasif === matching - 1 && after.counts.Aktif === 1, fmt(after));
+  check("action with search: the profile is active in the DB", sql(`select status from profiles p join member_contacts c on c.profile_id = p.id where p.full_name = '${name}' and c.email like 'lxi%'`) === "active");
+});
+
 // 4 English: the /en prefix stays
 await scenario("admin members en", async (page) => {
   await go(page, "/en/admin/members");
@@ -249,7 +275,7 @@ await scenario("admin members en", async (page) => {
 await scenario("applications", async (page) => {
   await go(page, "/admin/applications");
   const s1 = await listState(page);
-  const LAST = Math.ceil(NEW_APPS / 25);
+  const APP_LAST = Math.ceil(NEW_APPS / 25);
   check("applications: first page of 25, pages from 1-2", s1.rows.length === 25 && s1.pages.startsWith("1,2") && s1.range === `1–25 / ${NEW_APPS} başvuru`, fmt(s1));
   check("applications: pager at 390px fits", (await pagerFit(page)).fits && (await pagerFit(page)).oneRow, JSON.stringify(await pagerFit(page)));
   await click(page, "nav[data-skeleton-result=pager] a", "Sayfa 2$");
@@ -261,7 +287,7 @@ await scenario("applications", async (page) => {
   check("applications: ?page=2 loads directly", (await listState(page)).page === "2");
   for (const [from, to] of [
     ["/admin/applications?page=abc", ""],
-    ["/admin/applications?page=99", `?page=${LAST}`],
+    ["/admin/applications?page=99", `?page=${APP_LAST}`],
     ["/admin/applications?page=1", ""],
     ["/admin/applications?page=0", ""],
     ["/admin/applications?page=2&page=3", ""],
