@@ -64,8 +64,8 @@ test("writeApplyHint: writes '1' / '0' and swallows errors", () => {
   );
 });
 
-/** Runs the inline script in node:vm (proves it is self-contained); returns the attributes set on the sibling. */
-function runScript(cookie: string, stored: string | null | "throw", hasPrevious = true) {
+/** Runs the inline script in node:vm (proves it is self-contained); returns the attributes set on the script's parent element. */
+function runScript(cookie: string, stored: string | null | "throw", hasParent = true) {
   const attrs = new Map<string, string>();
   const el = { setAttribute: (k: string, v: string) => attrs.set(k, v) };
   const view =
@@ -77,7 +77,7 @@ function runScript(cookie: string, stored: string | null | "throw", hasPrevious 
         }
       : { localStorage: { getItem: () => stored } };
   const context = {
-    document: { cookie, defaultView: view, currentScript: { previousElementSibling: hasPrevious ? el : null } },
+    document: { cookie, defaultView: view, currentScript: { parentElement: hasParent ? el : null } },
   };
   vm.runInNewContext(applyHintScript, context);
   return attrs;
@@ -94,7 +94,7 @@ test("applyHintScript sets data-apply-hidden exactly when guessApplyHidden says 
   }
 });
 
-test("applyHintScript: throwing localStorage with a session still hides; missing sibling doesn't throw", () => {
+test("applyHintScript: throwing localStorage with a session still hides; missing parent doesn't throw", () => {
   assert.equal(runScript(SIGNED_IN[0], "throw").get("data-apply-hidden"), "");
   assert.equal(runScript(SIGNED_OUT[0], "throw").has("data-apply-hidden"), false);
   assert.doesNotThrow(() => runScript(SIGNED_IN[0], "1", false));

@@ -463,6 +463,9 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   Open decisions), unused message keys in `messages/*.json`, stale comments and follow-up items that point at removed
   code.
   Known: `hasStaffAccess` in `src/lib/auth/permissions.ts` has no callers (pre-existing, 2026-11-13).
+- **Session hint script has the same chunk-boundary risk** (2026-11-14) — `sessionHintScript` (user-menu skeleton)
+  still follows its element and marks `previousElementSibling`; the apply hint moved to first-child/`parentElement`
+  (`docs/learnings/ui.md`). Move it too if `header-e2e` ever shows an unmarked frame.
 - **Supabase CLI 3.1.0 is available** (2026-11-10; installed 3.0.0).
 - **Members E2E looseness** (2026-11-10, members review) — some assertions are loose or vacuous in
   `scripts/e2e/members-e2e.mjs`: pending "no member cards" (passes if the list simply didn't render), the English

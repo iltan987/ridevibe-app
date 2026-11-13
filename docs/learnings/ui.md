@@ -95,7 +95,7 @@
 - **Source:** found by testing (`scripts/e2e/header-e2e.mjs` logs the skeleton box per animation frame).
 
 ### A guessing fallback inside a pathname `<Suspense>` appears several times in the HTML (2026-11-11)
-- **Symptom (risk):** the "Başvur" nav guess (`applyHintScript`, marks its previous sibling) could miss copies of the
+- **Symptom (risk):** the "Başvur" nav guess (`applyHintScript`, then marking its previous sibling) could miss copies of the
   nav: the server HTML of `/` holds the guessing `DesktopNav`/`BottomNav` twice each (the pathname boundary's fallback
   and its content), plus the streamed final nav.
 - **Cause:** the outer session boundary (`DesktopNavForUser`/`BottomNavForUser`) falls back to the nav, which has its
@@ -106,6 +106,20 @@
   (member: 4 in every frame, visitor: 5, stale `"0"` as member: 5 → 4).
 - **Source:** `curl` of the production build HTML (local `pnpm start`; `</nav><script>` pairs), puppeteer frame
   sampling.
+
+### A hint script placed after its element can lose to a stream chunk boundary (2026-11-14)
+- **Symptom:** after the home redesign, `apply-nav-e2e` failed on phone TR second loads: a member's tab bar showed
+  5 tabs including "Başvur" for one frame, then the 4-tab guess. Visitors' "second load showed the guess first" check
+  failed too (the first frame was not a guess).
+- **Cause:** the script followed the `<nav>` and marked `previousElementSibling`. The parser can yield between the
+  nav and the script when the stream splits there, and the browser may paint the unmarked bar in between (a frame the
+  logger sees in `requestAnimationFrame` is a frame that can be painted). A bigger closing section moved the split.
+  Muting the test (skipping frames without a following sibling) would have hidden a real flash.
+- **Do:** make the script the first child of the element it marks and use `currentScript.parentElement`
+  (`applyHintScript`: both navs and the home "Başvur" links): it runs before any tab or label of that element is
+  parsed, wherever chunks split. Never filter frames in the logger to make such a failure disappear. The session hint
+  (`sessionHintScript`, user-menu skeleton) still uses the sibling pattern (`docs/follow-ups.md`).
+- **Source:** found by `scripts/e2e/apply-nav-e2e.mjs` (frame logger), reproduced 3 of 3 runs.
 
 ### Brand assets: tracing the wordmark and building the R&V icon (2026-11-09)
 - **Wordmark SVG:** potrace (pure-JS `potrace` npm) on the **half-resolution** alpha bitmap (1794×572, `turdSize` 10,

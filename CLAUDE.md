@@ -232,8 +232,9 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   Session-dependent fallbacks take their shape from `hasSessionCookie()` (`src/lib/auth/session-hint.ts`), never a
   server read; when the shape depends on more than signed-in/out, also remember the last streamed answer in
   `localStorage` (pattern: `src/lib/applications/apply-hint.ts`). Inline scripts only via `InlineScript`
-  (`src/components/inline-script.tsx`); a hint script marks its previous sibling, so render it right after the element
-  in every Suspense copy (`docs/learnings/ui.md`).
+  (`src/components/inline-script.tsx`); a hint script marks the element it sits in (the apply hint: first child, marks
+  `parentElement`; the session hint still marks its previous sibling), so render it in every Suspense copy
+  (`docs/learnings/ui.md`).
 - Client-only reads (localStorage, user agent) via `useSyncExternalStore(noSubscribe, client, server)` or a `useState`
   initializer after a hydration key; never `setState` in an effect (React Compiler lint).
 - Application form (`/apply`): a new question goes into the Zod schema **and** a step in
