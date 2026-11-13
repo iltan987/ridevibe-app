@@ -23,7 +23,7 @@ export function PrivacyTr() {
         <li><strong>Motosiklet plakası:</strong> isteğe bağlı olarak, her motosiklet için girdiğiniz plaka.</li>
         <li><strong>Güvenlik kayıtları:</strong> kan grubu işlemlerinin ve acil durum bilgisi görüntülemelerinin kaydı (kim, ne zaman, hangi üye).</li>
         <li><strong>Görsel veriler:</strong> yalnızca açık rıza vermeniz halinde, etkinliklerde çekilen ve sizi gösteren fotoğraflar.</li>
-        <li><strong>Teknik veriler:</strong> giriş yapabilmeniz için zorunlu oturum çerezi. Başvuru formunu doldururken cevaplarınız (iletişim bilgileri ve onaylar hariç) gönderene kadar yalnızca kendi tarayıcınızda saklanır ve bize ulaşmaz; başvuruyu gönderdiğinizde silinir, 7 gün sonra da geçersiz olur.</li>
+        <li><strong>Teknik veriler:</strong> giriş yapabilmeniz için zorunlu oturum çerezi. Başvuru formunu doldururken cevaplarınız (iletişim bilgileri ve onaylar hariç) gönderene kadar yalnızca kendi tarayıcınızda saklanır ve bize ulaşmaz; başvuruyu gönderdiğinizde silinir, 7 gün sonra da geçersiz olur. Dil tercihinizi hatırlamak için bir dil çerezi (1 yıl). Ayrıca tarayıcınız; tema seçiminizi, son dil değişikliğini, açık sekmeleri senkron tutmak için hesabınızdan türetilen kısa bir kodu, uygulama yükleme önerisinin durumunu ve başvuru yaptığınıza dair bir işareti yalnızca kendi cihazınızda saklar. Bunlar sitenin çalışması için gereklidir, sizi izlemek için kullanılmaz ve dil çerezi dışında bize gönderilmez.</li>
       </ul>
 
       <h2>3. Hangi amaçlarla işliyoruz?</h2>
@@ -87,7 +87,7 @@ export function PrivacyTr() {
 
       <h2>7. Verileri nasıl topluyoruz?</h2>
       <p>
-        Verileriniz; başvuru formu, Google ile giriş ve sitemizi kullanımınız sırasında (oturum çerezi) elektronik
+        Verileriniz; başvuru formu, Google ile giriş ve sitemizi kullanımınız sırasında (oturum ve dil çerezleri) elektronik
         ortamda, otomatik veya kısmen otomatik yollarla toplanır.
       </p>
 
