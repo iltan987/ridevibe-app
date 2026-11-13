@@ -14,13 +14,6 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   rides look like, who it is for, how to join): the bigger ranking lever (Google's helpful-content guidance). Needs
   facts from iltan/Samet and a design pass; round 1 (technical) is done. Start from what Search Console reports
   (indexing, queries) and the spec `docs/superpowers/specs/2026-11-13-seo-technical-design.md`.
-- **After-deploy SEO checklist** (2026-11-13, SEO round 1 spec) — for iltan, until done: (1) Search Console: submit
-  `https://ridevibe.com.tr/sitemap.xml`, URL inspection → request indexing for `/` and `/en`; (2) Rich Results Test /
-  Schema Markup Validator on `/` (no rich result expected; it should parse without errors); (3) optional: share a link
-  in Telegram and iMessage (Telegram may show no preview: open bug). Favicon and site name take days to weeks to appear.
-  Done 2026-11-13: deploy + `seo-check.mjs` on production (83 PASS), WhatsApp preview checked by hand. Skipped: the
-  Facebook Sharing Debugger (needs a Meta account; old Meta-cached previews keep pointing at the removed PNG URL, so a
-  link shared there before the deploy may show no image until Meta re-scrapes on its own).
 - **Self-service account deletion** (2026-11-12, iltan) — own design round. Decided so far: a confirm step says what
   gets deleted and what may be kept; on confirmation the account is marked for deletion at once (no admin approval, it
   should feel instant); signing in again within a grace period offers recovery; final deletion after the period. Today
