@@ -248,7 +248,7 @@
   bug: `docs/learnings/nextjs.md`, "URL as list state"). A pager width check at 390px reported 375px of room: plain
   headless Chrome reserves the 15px scrollbar gutter.
 - **Do:** count only `resourceType() === "document"` and RSC fetches (`_rsc=` in the URL or an `rsc` header, which
-  includes prefetches) — `watchServer` in `scripts/e2e/members-e2e.mjs`. Read the list in a `requestAnimationFrame`
+  includes prefetches) — `watchServer` in `scripts/e2e/e2e-lib.mjs` (with `pagerFit` and `clearAndType`). Read the list in a `requestAnimationFrame`
   callback right after the action (`nextFrame`), and log the search box per frame to catch flips during zero-delay
   typing (`trackFrames`). For phone widths use `{ isMobile: true, hasTouch: true }` in the viewport: overlay
   scrollbars, `<body>` as wide as the screen (`scripts/e2e/lists-e2e.mjs`, widest pager). Measure fallbacks on a

@@ -27,7 +27,7 @@
 import { execFileSync } from "node:child_process";
 import os from "node:os";
 import path from "node:path";
-import { launch, newPage, signIn } from "./e2e-lib.mjs";
+import { launch, newPage, signIn, watchServer } from "./e2e-lib.mjs";
 
 const DIR = process.env.OUT_DIR ?? os.tmpdir();
 const BASE = process.env.BASE_URL ?? "http://localhost:3123";
@@ -149,15 +149,6 @@ const memberCard = (page, name) =>
     (name) => [...document.querySelectorAll("li[data-skeleton-result=members-row]")].find((li) => li.textContent.includes(name))?.innerText ?? null,
     name,
   );
-/** Counts requests that go to the server for a page: documents and RSC fetches (incl. prefetches). */
-function watchServer(page) {
-  let seen = [];
-  page.on("request", (r) => {
-    const url = r.url();
-    if (r.resourceType() === "document" || url.includes("_rsc=") || r.headers()["rsc"]) seen.push(`${r.resourceType()} ${url.replace(BASE, "")}`);
-  });
-  return { reset: () => (seen = []), count: () => seen.length, list: () => seen };
-}
 /** The visible directory: total, card names, search box text, pressed side chip. */
 const listState = (page) =>
   page.evaluate(() => {
@@ -361,7 +352,7 @@ await scenario("staff", "admin@test.local", async (page) => {
   // In-browser search and chip as a holder: no server request (the "no contact" link must not prefetch per key),
   // then the blood filter (a server navigation) keeps q and side, filters by all three and logs once per navigation.
   await go(page, "/members");
-  const server = watchServer(page);
+  const server = watchServer(page, BASE);
   const box = await find(page, "input[type=search]");
   await box.type("test", { delay: 0 });
   await click(page, "[data-skeleton-result=members-chips] button", "^Anadolu");

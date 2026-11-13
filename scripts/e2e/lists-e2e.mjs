@@ -6,16 +6,18 @@
 // in scripts/e2e/safety-e2e.mjs). Works on a DB with other profiles and applications: totals are read from the DB.
 // The script plants its own fixtures through `docker exec … psql` (DB_CONTAINER, local only) and deletes them before
 // and after the run:
-//   - pending profiles lxp<N>@fixture.invalid ("Liste Fixture N", older than everyone else), as many as make the
-//     pending tab exactly 26 + 25k rows: its last page holds one row;
-//   - 160 inactive profiles lxi<N>@fixture.invalid, so the inactive tab has 7+ pages (widest pager: 7 numbers + arrows);
+//   - pending profiles lxp<N>@fixture.invalid ("Liste Fixture N", dated 400+ days back so they sort last), at least
+//     one and as many as make the pending tab 26 + 25k rows (k >= 0, any number of other pending profiles): its last
+//     page (LAST, from the DB count) holds exactly one row, which the script activates. That row must be a fixture:
+//     the script fails loudly and activates nothing if another pending profile is even older;
+//   - 160 inactive profiles lxi<N>@fixture.invalid, so the inactive tab has 7+ pages (widest pager: 7 items + arrows);
 //   - 30 'new' and 2 'approved' applications lx-app<N>@fixture.invalid (a second page on the applications list).
 // Env: PUPPETEER_DIR (required), BASE_URL (default http://localhost:3123), OUT_DIR (screenshots, default: OS temp
 // dir), DB_CONTAINER (default supabase_db_ridevibe).
 import { execFileSync } from "node:child_process";
 import os from "node:os";
 import path from "node:path";
-import { launch, newPage, signIn } from "./e2e-lib.mjs";
+import { clearAndType, launch, newPage, pagerFit, signIn, watchServer } from "./e2e-lib.mjs";
 
 const DIR = process.env.OUT_DIR ?? os.tmpdir();
 const BASE = process.env.BASE_URL ?? "http://localhost:3123";
@@ -35,9 +37,9 @@ function clean() {
 }
 clean();
 const otherPending = num("select count(*) from profiles where status = 'pending'");
-// Pending total 26 + 25k (> 25, one row on the last page).
+// Pending total 26 + 25k (> 25, one row on the last page), at least one fixture (the row the script activates).
 let plantPending = (((1 - otherPending) % 25) + 25) % 25;
-if (otherPending + plantPending <= 25) plantPending += 25;
+if (plantPending === 0 || otherPending + plantPending <= 25) plantPending += 25;
 sql(`insert into auth.users (id, email, raw_user_meta_data, created_at)
   select gen_random_uuid(), format('lxp%s@fixture.invalid', g), jsonb_build_object('full_name', 'Liste Fixture ' || g),
     now() - interval '400 days' - g * interval '1 day'
@@ -65,7 +67,12 @@ const PENDING = statusCount("pending");
 const ACTIVE = statusCount("active");
 const INACTIVE = statusCount("inactive");
 const NEW_APPS = num("select count(*) from applications where status = 'new'");
-console.log(`INFO pending ${PENDING} (planted ${plantPending}), active ${ACTIVE}, inactive ${INACTIVE}, new applications ${NEW_APPS}`);
+// The pending tab's last page and its one row (planted so: see the header).
+const LAST = Math.ceil(PENDING / 25);
+const ON_LAST = PENDING - 25 * (LAST - 1);
+/** The URL query for page `n` of the pending tab ("" for page 1). */
+const pendingPage = (n) => (n === 1 ? "" : `?page=${n}`);
+console.log(`INFO pending ${PENDING} (planted ${plantPending}; ${LAST} pages, ${ON_LAST} on the last), active ${ACTIVE}, inactive ${INACTIVE}, new applications ${NEW_APPS}`);
 
 const browser = await launch();
 async function scenario(name, fn, viewport) {
@@ -114,15 +121,6 @@ async function click(page, selector, text = "") {
   await el.click();
 }
 const shot = (page, name) => page.screenshot({ path: path.join(DIR, `lists-${name}.png`), fullPage: true });
-/** Counts requests that go to the server for a page: documents and RSC fetches (incl. prefetches). */
-function watchServer(page) {
-  let seen = [];
-  page.on("request", (r) => {
-    const url = r.url();
-    if (r.resourceType() === "document" || url.includes("_rsc=") || r.headers()["rsc"]) seen.push(`${r.resourceType()} ${url.replace(BASE, "")}`);
-  });
-  return { reset: () => (seen = []), count: () => seen.length, list: () => seen };
-}
 /** The visible list as painted in the next animation frame: tab counts, pressed tab, rows, box text, pager. */
 const listState = (page) =>
   page.evaluate(
@@ -144,38 +142,12 @@ const listState = (page) =>
         }),
       ),
   );
-/** The visible pager's button row: on one line, inside the page, and no sideways scrolling anywhere. */
-const pagerFit = (page) =>
-  page.evaluate(() => {
-    const nav = [...document.querySelectorAll("nav[data-skeleton-result=pager]")].find((n) => n.getBoundingClientRect().width > 0);
-    const row = nav?.querySelector("div");
-    if (!row) return { found: false };
-    const tops = new Set([...row.children].map((c) => Math.round(c.getBoundingClientRect().top)));
-    const r = row.getBoundingClientRect();
-    const doc = document.documentElement;
-    return {
-      oneRow: tops.size === 1,
-      fits: r.left >= 0 && r.right <= document.body.clientWidth && doc.scrollWidth <= doc.clientWidth,
-      items: row.children.length,
-      width: Math.round(r.width),
-      body: document.body.clientWidth,
-    };
-  });
-async function clearAndType(page, value) {
-  const input = await find(page, "input[type=search]");
-  await input.focus();
-  await page.keyboard.down("Control");
-  await page.keyboard.press("a");
-  await page.keyboard.up("Control");
-  await page.keyboard.press("Backspace");
-  if (value) await input.type(value, { delay: 0 });
-}
 const search = (page) => page.evaluate(() => location.search);
 const fmt = (s) => JSON.stringify({ ...s, rows: s.rows.length > 3 ? `${s.rows.length} rows` : s.rows });
 
 // 1 /admin/members: tabs, search by email, pages — in the browser, no request
 await scenario("admin members", async (page) => {
-  const server = watchServer(page);
+  const server = watchServer(page, BASE);
   await go(page, "/admin/members");
   const s0 = await listState(page);
   check("members: pending tab by default with the DB counts", s0.tab === "Onay bekleyen" && s0.counts["Onay bekleyen"] === PENDING && s0.counts.Aktif === ACTIVE && s0.counts.Pasif === INACTIVE, fmt(s0));
@@ -216,7 +188,7 @@ await scenario("admin members", async (page) => {
   for (const [from, to] of [
     ["/admin/members?status=pending", ""],
     ["/admin/members?status=bogus&q=fixture", "?q=fixture"],
-    ["/admin/members?page=99", "?page=2"],
+    ["/admin/members?page=99", pendingPage(LAST)],
     ["/admin/members?page=0", ""],
     ["/admin/members?page=2&page=3", ""],
     ["/admin/members?cursor=MjAyNi0xMS0wOFQx&status=active", "?status=active"],
@@ -233,7 +205,8 @@ for (const width of [390, 360]) {
     const fit = await pagerFit(page);
     const s = await listState(page);
     const name = `widest pager at ${width}px (${s.pages}): one row, no horizontal overflow`;
-    if (width === 390) check(name, s.pages.split(",").length === 7 && fit.items === 9 && fit.oneRow && fit.fits, JSON.stringify(fit));
+    // 7+ pages, page 4: always 7 items (numbers and gaps) + 2 arrows, the widest the pager gets.
+    if (width === 390) check(name, fit.items === 9 && fit.oneRow && fit.fits, JSON.stringify(fit));
     else console.log(`INFO ${name}: ${fit.oneRow && fit.fits ? "fits" : "DOES NOT FIT"} ${JSON.stringify(fit)}`);
     await shot(page, `pager-${width}`);
   }, { width, height: 844, isMobile: true, hasTouch: true });
@@ -241,16 +214,21 @@ for (const width of [390, 360]) {
 
 // 3 a row action that empties the last page: the page is clamped, counts update
 await scenario("admin action clamps", async (page) => {
-  await go(page, "/admin/members?page=2");
+  await go(page, `/admin/members?page=${LAST}`);
   const before = await listState(page);
-  check("action: page 2 of the pending tab holds one row", before.page === "2" && before.rows.length === 1, fmt(before));
+  check(`action: the last page (${LAST}) of the pending tab holds one row`, ON_LAST === 1 && before.page === String(LAST) && before.rows.length === 1, fmt(before));
   const name = before.rows[0];
+  // Never activate a real profile: the row must be one of this script's fixtures.
+  if (before.rows.length !== 1 || !/^Liste Fixture \d+$/.test(name ?? "")) {
+    check("action: the last pending row is a fixture (else nothing is activated)", false, fmt(before));
+    return;
+  }
   await click(page, "li[data-skeleton-result=admin-row] button", "^Aktifleştir$");
-  const clamped = await until(page, () => location.search === "", null);
+  const clamped = await until(page, (to) => location.search === to, pendingPage(LAST - 1));
   await sleep(500);
   const after = await listState(page);
-  check("action: URL clamped to page 1 (no query)", !!clamped, await search(page));
-  check("action: the row is gone, page 1 shows 25 rows, counts updated", !after.rows.includes(name) && after.rows.length === 25 && after.page === "1" && after.counts["Onay bekleyen"] === PENDING - 1 && after.counts.Aktif === ACTIVE + 1, fmt(after));
+  check(`action: URL clamped to page ${LAST - 1} (${pendingPage(LAST - 1) || "no query"})`, !!clamped, await search(page));
+  check("action: the row is gone, the new last page is full, counts updated", !after.rows.includes(name) && after.rows.length === 25 && after.page === String(LAST - 1) && after.counts["Onay bekleyen"] === PENDING - 1 && after.counts.Aktif === ACTIVE + 1, fmt(after));
   check("action: the profile is active in the DB", sql(`select status from profiles p join member_contacts c on c.profile_id = p.id where p.full_name = '${name}' and c.email like 'lxp%'`) === "active");
 });
 
@@ -260,8 +238,9 @@ await scenario("admin members en", async (page) => {
   await clearAndType(page, "liste fixture 1");
   check("English: typing keeps the /en prefix", !!(await until(page, () => location.pathname + location.search === "/en/admin/members?q=liste+fixture+1", null)), page.url().replace(BASE, ""));
   const s = await listState(page);
-  const n = num("select count(*) from profiles where status = 'pending' and full_name ~ '^Liste Fixture 1[0-9]?$'");
-  check("English: range line", s.range === `1–${n} of ${n} people` && s.rows.length === n, fmt(s));
+  // The search is a contains-match: every pending name holding "Liste Fixture 1" (1, 10–19, 100…).
+  const n = num("select count(*) from profiles where status = 'pending' and full_name like '%Liste Fixture 1%'");
+  check("English: range line", s.range === `1–${Math.min(n, 25)} of ${n} ${n === 1 ? "person" : "people"}` && s.rows.length === Math.min(n, 25), fmt(s));
   await click(page, "[data-skeleton-result=admin-chips] button", "^Active");
   check("English: tab tap keeps the /en prefix", !!(await until(page, () => location.pathname + location.search === "/en/admin/members?status=active&q=liste+fixture+1", null)), page.url().replace(BASE, ""));
 });

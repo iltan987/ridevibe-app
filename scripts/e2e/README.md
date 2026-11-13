@@ -4,7 +4,10 @@ Run against a **local** stack only (local Supabase + a server on port 3123); nev
 
 - `e2e-lib.mjs` — helpers: `launch({ scrollbars, args })` (system Chrome, `CHROME_PATH` to override; `scrollbars: true` keeps
   classic scrollbars, hidden by default in headless; `args` = extra Chrome flags), `newPage()` (390x844, Turkish),
-  `signIn(page, email)` (sets Supabase session cookies via email/password), `throttle()` (CDP network throttling).
+  `signIn(page, email)` (sets Supabase session cookies via email/password), `throttle()` (CDP network throttling),
+  `watchServer(page)` (counts document and RSC requests only; the favicon refetch on URL changes is ignored),
+  `pagerFit(page)` (the visible pager's button row: one line, no overflow) and `clearAndType(page, text)` (the visible
+  search box, zero-delay typing).
   The keys in it are the public local-Supabase demo keys, not secrets.
 - `nav-e2e.mjs` — navigation progress bar / pending dim checks (PASS/FAIL lines, exit code != 0 on failure).
   Needs a production build served on 3123: `pnpm build && pnpm start -p 3123`, `admin@test.local` and more than 25
@@ -91,6 +94,7 @@ Run against a **local** stack only (local Supabase + a server on port 3123); nev
   back, the widest pager (7 numbers + arrows) at 390px (360px as INFO), a status change that empties the last page
   (clamped to page 1, counts updated), `/en` prefix kept; `/admin/applications` server pages and redirects for odd
   `?page=` / `?status=` / stale `?cursor=`. Needs `pnpm start -p 3123`, local email sign-in and `admin@test.local`;
+  pages are derived from the DB counts, and the activated row must be one of its fixtures (it fails otherwise);
   plants its own pending/inactive profiles and applications (`lx…@fixture.invalid`, recipe in the header) through
   `docker exec … psql` (`DB_CONTAINER`, local only) and deletes them before and after. Totals are read from the DB.
 - `skeletons.mjs <baseUrl> <out.md> [routes…]` — measures each `data-skeleton` fallback against its

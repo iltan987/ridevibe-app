@@ -34,7 +34,7 @@
 import { execFileSync } from "node:child_process";
 import os from "node:os";
 import path from "node:path";
-import { launch, newPage, signIn } from "./e2e-lib.mjs";
+import { clearAndType, launch, newPage, pagerFit, signIn, watchServer } from "./e2e-lib.mjs";
 
 const DIR = process.env.OUT_DIR ?? os.tmpdir();
 const BASE = "http://localhost:3123";
@@ -151,33 +151,6 @@ const pagerState = (page) =>
       range: nav?.querySelector("p")?.textContent ?? null,
     };
   });
-/** The visible pager's button row: on one line, inside the page, and no sideways scrolling anywhere. */
-const pagerFit = (page) =>
-  page.evaluate(() => {
-    const nav = [...document.querySelectorAll("nav[data-skeleton-result=pager]")].find((n) => n.getBoundingClientRect().width > 0);
-    const row = nav?.querySelector("div");
-    if (!row) return { found: false };
-    const tops = new Set([...row.children].map((c) => Math.round(c.getBoundingClientRect().top)));
-    const r = row.getBoundingClientRect();
-    const doc = document.documentElement;
-    return {
-      oneRow: tops.size === 1,
-      fits: r.left >= 0 && r.right <= document.body.clientWidth && doc.scrollWidth <= doc.clientWidth,
-      items: row.children.length,
-      left: Math.round(r.left),
-      right: Math.round(r.right),
-      body: document.body.clientWidth,
-    };
-  });
-/** Counts requests that go to the server for a page: documents and RSC fetches (incl. prefetches). */
-function watchServer(page) {
-  let seen = [];
-  page.on("request", (r) => {
-    const url = r.url();
-    if (r.resourceType() === "document" || url.includes("_rsc=") || r.headers()["rsc"]) seen.push(`${r.resourceType()} ${url.replace(BASE, "")}`);
-  });
-  return { reset: () => (seen = []), count: () => seen.length, list: () => seen };
-}
 /** Logs, per animation frame, whether a Suspense fallback (`data-skeleton`) is visible and the search box text
  *  (`values`: each change, as painted). */
 const trackFrames = (page) =>
@@ -213,16 +186,6 @@ const nextFrame = (page) =>
         }),
       ),
   );
-/** Clears the visible search box and types `value` with no delay between keys. */
-async function clearAndType(page, value) {
-  const input = await find(page, "input[type=search]");
-  await input.focus();
-  await page.keyboard.down("Control");
-  await page.keyboard.press("a");
-  await page.keyboard.up("Control");
-  await page.keyboard.press("Backspace");
-  if (value) await input.type(value, { delay: 0 });
-}
 const clickChip = (page, label) => click(page, "[data-skeleton-result=members-chips] button", `^${label}`);
 const clickPage = (page, n) => click(page, "nav[data-skeleton-result=pager] button", `Sayfa ${n}$|Page ${n}$`);
 
@@ -270,7 +233,7 @@ sql(`update member_details set birth_date = null, show_birthday = true where pro
 // 3 directory as an active member: search, chips and pages run in the browser (state in the URL, no server request)
 {
   const { ctx, page } = await fresh("member@test.local");
-  const server = watchServer(page);
+  const server = watchServer(page, BASE);
   await go(page, "/members");
   const text = await bodyText(page);
   check("directory: total shown", (await total(page)) === "29 üye", await total(page));
@@ -584,7 +547,7 @@ sql(`update member_details set birth_date = null, show_birthday = true where pro
 // 6 English
 {
   const { ctx, page } = await fresh("member@test.local");
-  const server = watchServer(page);
+  const server = watchServer(page, BASE);
   await go(page, "/en/members");
   const t = await bodyText(page);
   check("English: /en/members renders translated labels", /Members/.test(t) && /Asian side|Anatolian|Asian/.test(t) && !/MISSING_MESSAGE/.test(t));
