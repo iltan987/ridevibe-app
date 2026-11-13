@@ -68,7 +68,7 @@ and email and the draft restores steps 1-3.
 
 | Field | Type | Required | Notes |
 |---|---|---|---|
-| License class | select: A1 / A2 / A / not yet | yes | |
+| License class | select: A1 / A2 / A / B (125 cc authorisation) / not yet | yes | |
 | Years of riding | number / range select | yes | |
 | Owns a motorcycle | yes/no | yes | |
 | Motorcycle brand, model, engine (cc) | text + number | if owns | Brand is free text with a `<datalist>` of common brands in Turkey (`MOTORCYCLE_BRAND_SUGGESTIONS` in `options.ts`) |

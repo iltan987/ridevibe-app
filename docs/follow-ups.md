@@ -30,13 +30,6 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ## Open decisions (need iltan)
 
-- **Application form for passengers and B-licence riders** (2026-11-13, SEO round 2 facts) — the club accepts
-  passengers (artçı: no bike or licence needed) and riders on 50cc with a B licence (Samet, iltan), but the form's
-  licence select is A1 / A2 / A / "not yet" and it requires riding years, riding style and group experience of everyone
-  (`docs/application-form.md` §2). Decide whether to add a B (or "M/B") option and a "joining as a passenger" path
-  that skips the riding questions. Decide before the home page tells passengers they're welcome (SEO round 2).
-  Facts: `docs/content/home-page-questions.md`.
-
 - **No lawyer** (iltan, 2026-11-13) — the "lawyer" questions below are Claude's to research and decide; iltan
   confirms the outcome. Reword them as they are settled.
 

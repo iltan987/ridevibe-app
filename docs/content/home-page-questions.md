@@ -112,7 +112,7 @@ Teşekkürler! 🏍️
 
 ## Notes for the content round (Claude, 2026-11-13)
 
-- **Founding year:** Samet says "1 Kasım" without a year — confirm with iltan before writing it on the page.
+- **Founded:** 1 November 2026 (year confirmed by iltan).
 - **Member count:** Samet wants the number checked before publishing ("140'tan fazla"). Read the current count of
   active members at that time; decide whether the page states a fixed "140+" or a number from the database.
 - **FAQ "do I need to be a member to join rides?":** Samet's answer ("ask the club management") is vague; the real
@@ -121,6 +121,6 @@ Teşekkürler! 🏍️
   no photos that glamorise risky riding.
 - **Tone keywords:** dostluk, özgürlük, tutku; "hep birlikte gidip hep birlikte dönmek"; "aynı yolu paylaşan güzel
   insanlarla bir aile olmak".
-- **Mismatch with the application form:** the club accepts passengers (artçı, no bike or licence needed) and B-licence
-  riders on 50cc, but the form's licence options are A1 / A2 / A / "not yet" and it asks riding years/style of
-  everyone. See the open decision in `docs/follow-ups.md`.
+- **Passengers and the form:** no separate passenger path (iltan, 2026-11-13): bike owners sometimes ride as
+  passengers too, so it isn't a member type. Passengers without a bike or licence apply with licence "Henüz yok" and
+  "no motorcycle"; B-licence riders already have the "B (125 cc yetkili)" option.
