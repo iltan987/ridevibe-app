@@ -46,6 +46,7 @@ announcements, photo galleries, attendance. Plan and decisions: `docs/PLAN.md`. 
 - `main` = production. One short-lived branch per iteration (`feat/…`, `fix/…`, `chore/…`, `docs/…`); iltan reviews,
   then merge into `main` with `--no-ff`. Small doc/config tweaks may go straight to `main`.
 - Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`).
+- Stage files by path; never `git commit -a` / `git add -A`: iltan's local `.claude/settings.json` change stays unstaged.
 
 ## Commands
 
@@ -158,6 +159,8 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
 - Rollout: merge → `db push` (dry-run first) → `test db --remote --yes` → push `main` (Vercel deploys). If the
   migration removes something old code uses, push `main` immediately after. Don't push branches with schema changes
   for a preview first: previews use the production DB.
+  Changing an RPC's arguments: the old overload can't stay beside the new one when both accept the same named args
+  (PostgREST can't choose), so pages calling it error until the deploy is Ready: tell iltan, pick a quiet hour.
 - After a `db push` that adds functions: run a read-only `has_function_privilege('anon' / 'authenticated', …)` check
   on production.
 - Before `db push`, run read-only checks for anything a new constraint/unique index could reject:
@@ -237,6 +240,8 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   server with offsets (`?page=N`, odd values → redirect) when a list grows without bound (`/admin/applications`).
   Search-and-pick results inside a dialog may instead "load more" with keyset cursors over a changing set
   (`findLinkableAccounts`). Access checks via `can()` / `requirePermission()`.
+  A `Link` whose `href` follows live client state (search box, chips) needs `prefetch={false}`, or it prefetches
+  on every change.
 
 ## Privacy (KVKK)
 
