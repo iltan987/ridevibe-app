@@ -194,7 +194,8 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   (`cookies()`, `headers()`, session) must sit behind `<Suspense>`; never await it at the top of a layout.
 - `proxy.ts` (not `middleware.ts`) runs next-intl locale routing.
 - **i18n (next-intl):** locales `tr` (default, served at `/`) and `en` (at `/en`). Turkish (`messages/tr.json`) is the
-  source of truth for message keys and types; every key must exist in `messages/en.json` too. No hard-coded UI strings.
+  source of truth for message keys and types; every key must exist in `messages/en.json` too
+  (`src/app/messages-parity.test.ts`). No hard-coded UI strings.
   Use `Link`, `redirect`, `useRouter`, `usePathname` from `@/i18n/navigation`, not from `next/*` (exception: a stored
   full path such as `?next=` already has its prefix → `redirect` from `next/navigation`, `docs/learnings/next-intl.md`).
   Locale on the server comes from `next/root-params` (see `src/i18n/request.ts`). Time zone: `Europe/Istanbul`.
@@ -206,11 +207,14 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   capitals in the source (`docs/learnings/ui.md`).
   Register: UI copy says "sen"; the privacy notice (`privacy/content-*.tsx`) says "siz". Any notice text change bumps
   `PRIVACY_NOTICE_VERSION` (stored with each consent) — once per release: a version not yet deployed absorbs more edits.
+  Turkish copy must read native: check everyday connotations ("kahvede" = old men's tea house, "sohbet" = religious
+  gathering) and leave out the obvious or transactional ("ücretsiz", who pays); offer 2–3 options for headlines.
 - **SEO:** public pages build metadata with `pageMetadata()` (`src/lib/seo/`) and pass `(await parent).openGraph?.images`
   (a page's `openGraph` replaces the layout's share-image file); unfinished pages get `index: false`; a new indexable
   page goes into `src/app/sitemap.ts`. Verify with `scripts/e2e/seo-check.mjs` (`docs/learnings/seo.md`).
   One-off image work (resize, JPEG): sharp from Next's own dependency
-  (`require(require.resolve('sharp', { paths: [require.resolve('next')] }))`), never a new package.
+  (`require(require.resolve('sharp', { paths: [require.resolve('next', { paths: [process.cwd()] })] }))`, run from
+  the repo root), never a new package. Partial blur: `docs/learnings/environment.md`.
 - **UI:** Tailwind CSS 4 + shadcn/ui (`base-nova` style, built on Base UI). Base UI composes with the `render` prop,
   **not** `asChild`. For links that look like buttons use `buttonVariants()` on `Link`. `cn` comes from the `cn`
   package (re-exported in `@/lib/utils`). Add components with `pnpm dlx shadcn@latest add <name>`.
@@ -219,6 +223,7 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   utilities; orange text uses `text-accent-text`, not `text-primary`. Brand: `Wordmark` / `ClubBadge`
   (`src/components/brand/`). Theme: dark default via `src/lib/theme.ts` + inline head script, switcher in the header
   only; never read cookies for theme (keeps routes static).
+  A section that must stay dark in both themes (home hero) carries the `dark` class: tokens and `dark:` re-resolve.
 - **Loading states:** a new page's skeleton copies the structure of what replaces it (`data-skeleton` /
   `data-skeleton-result` attributes, measured with JS off: `docs/learnings/testing.md`, `scripts/e2e/`); links from
   `@/i18n/navigation` already show pending feedback (progress bar + dim, or the page's skeleton when its shell is
@@ -247,7 +252,8 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   `src/components/pwa/`; `<InstallBanner />` floats (its spacer is portaled after the footer) on `/account`
   (active/pending) and `/members` (active): add it to a member home page when one exists.
 - Primary nav items live in `src/components/layout/nav-items.ts`. "Başvur" is shown only when `/apply` would show the
-  form (`applyView` / `getApplyView`); nav and hero guess from the session cookie + `rv-apply-hidden` until the
+  form (`applyView` / `getApplyView`); nav and the home hero/closing buttons (`HomeApplyButton`; E2E anchors
+  `data-home-hero` / `data-home-closing`) guess from the session cookie + `rv-apply-hidden` until the
   answer streams in; a signed-in submit hides it at once (`markApplySubmitted`, no `refresh()`).
 - Server Actions: validate with Zod, let RLS decide, map error codes to results, call `refresh()` (`next/cache`)
   after a successful mutation (exception: `submitApplication`, whose success card a refresh would replace). They and
@@ -269,5 +275,7 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
 Personal data is regulated by KVKK. Collect only what a feature needs, keep consents separate and explicit (never
 pre-ticked), treat blood type as special-category data, and never log personal data. See the KVKK section of
 `docs/PLAN.md`.
+Photos of people on the public site need their written consent for the website (the in-app photo consent covers
+only the members' gallery); blur bystanders; never commit originals or unused photos (removal: Production section).
 No lawyer review (iltan, 2026-11-13): research official sources (law text, KVKK Board decisions) and decide open KVKK
 questions yourself; never park them as "ask the lawyer".
