@@ -1,0 +1,187 @@
+<style>
+  .row { display: flex; gap: 28px; flex-wrap: wrap; align-items: flex-start; }
+  .col { display: flex; flex-direction: column; gap: 10px; }
+  .col h3 { margin: 0; }
+  .phone { width: 390px; height: 780px; overflow-y: auto; border-radius: 28px; border: 8px solid #222; }
+  .desk-frame { width: 768px; height: 780px; overflow-y: auto; overflow-x: hidden; border-radius: 10px; border: 8px solid #222; }
+  .desk { width: 1280px; transform: scale(.6); transform-origin: 0 0; }
+  .site { background: #0B0D10; color: #FBF5E5; font-family: system-ui, sans-serif; font-size: 15px; line-height: 1.5; }
+  .site * { box-sizing: border-box; }
+  .eyebrow { font-size: 11px; letter-spacing: .14em; color: #FBA04A; font-weight: 700; }
+  .h1 { font-size: 44px; line-height: 1.02; font-weight: 800; margin: 6px 0 10px; }
+  .h2 { font-size: 24px; font-weight: 800; margin: 0 0 8px; }
+  .muted { color: #A39C8C; }
+  .btn { display: block; text-align: center; padding: 12px 22px; border-radius: 10px; font-weight: 700; margin-top: 10px; }
+  .btn.primary { background: #F98D2F; color: #1A0E02; }
+  .card { background: #14171C; border: 1px solid #22272F; border-radius: 14px; padding: 16px; }
+  .sec { padding: 28px 18px 0; }
+  .stats { display: flex; gap: 8px; }
+  .stat { flex: 1; background: #14171C; border: 1px solid #22272F; border-radius: 12px; padding: 10px; text-align: center; }
+  .stat b { display: block; font-size: 20px; color: #FBA04A; }
+  .stat span { font-size: 11px; color: #A39C8C; }
+  .img { width: 100%; display: block; object-fit: cover; }
+  .rounded { border-radius: 14px; }
+  .steps { counter-reset: s; list-style: none; padding: 0; margin: 0; }
+  .steps li { counter-increment: s; display: flex; gap: 10px; margin: 8px 0; }
+  .steps li::before { content: counter(s); flex: none; width: 26px; height: 26px; border-radius: 50%;
+    background: #F98D2F; color: #1A0E02; font-weight: 800; display: grid; place-items: center; font-size: 13px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .chip { border: 1px solid #22272F; border-radius: 999px; padding: 3px 10px; font-size: 12px; color: #A39C8C; }
+  .faq div { border-top: 1px solid #22272F; padding: 10px 0; }
+  .faq b { display: block; }
+  .hero { position: relative; }
+  .hero img { position: absolute; inset: 0; height: 100%; }
+  .hero .shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(11,13,16,.1) 25%, #0B0D10 94%); }
+  .hero .txt { position: absolute; left: 18px; right: 18px; bottom: 18px; }
+  .badge { width: 64px; filter: drop-shadow(0 4px 14px rgba(0,0,0,.6)); }
+  .quote { font-size: 20px; font-weight: 700; text-align: center; padding: 30px 18px; }
+  /* desktop */
+  .d-hero { height: 720px; }
+  .d-hero .txt { left: 96px; right: auto; bottom: 64px; max-width: 560px; }
+  .d-hero .h1 { font-size: 76px; }
+  .d-hero .btn { display: inline-block; }
+  .wrap { max-width: 1088px; margin: 0 auto; padding: 0 24px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; padding-top: 72px; }
+  .two .h2 { font-size: 34px; }
+  .two img { height: 380px; border-radius: 16px; }
+  .d-stats { display: flex; gap: 16px; margin-top: 32px; }
+  .d-stats .stat { padding: 18px; } .d-stats .stat b { font-size: 28px; }
+  .d-quote { font-size: 32px; font-weight: 800; text-align: center; padding: 80px 24px 96px; }
+  .d-quote .btn { display: inline-block; font-size: 16px; margin-top: 20px; }
+  .nav { height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 24px;
+    border-bottom: 1px solid #22272F; font-weight: 700; }
+</style>
+
+<h2>A, revised (v3): "bir arada" instead of "sohbette"</h2>
+<p class="subtitle">Removed "ücretsiz", "kahvede" and the breakfast line; no "Etkinlikleri Gör" in the hero; small badge on the photo; the crop keeps the group and the sea. Copy is still a draft. Phone on the left, desktop (1280px, shown at 60%) on the right. Both scroll.</p>
+
+<div class="row">
+  <div class="col">
+    <h3>Phone</h3>
+    <div class="phone site">
+      <div class="hero" style="height:560px">
+        <img class="img" src="/files/road.jpg" alt="" style="object-position: 38% 50%">
+        <div class="shade"></div>
+        <div class="txt">
+          <img class="badge" src="/files/badge.png" alt="">
+          <div class="eyebrow" style="margin-top:10px">İSTANBUL MOTOSİKLET KULÜBÜ</div>
+          <div class="h1">Birlikte sürelim.</div>
+          <div class="muted">Hafta sonu sürüşleri, uzun turlar ve yeni dostluklar. Asya'dan Avrupa'ya, İstanbul'un her yakasından motorcularla tanış.</div>
+          <a class="btn primary">Kulübe Başvur</a>
+        </div>
+      </div>
+      <div class="stats" style="margin:14px 18px 0">
+        <div class="stat"><b>140+</b><span>üye</span></div>
+        <div class="stat"><b>Her hafta</b><span>sürüş</span></div>
+        <div class="stat"><b>İki yaka</b><span>Asya ve Avrupa</span></div>
+      </div>
+      <div class="sec">
+        <div class="eyebrow">SÜRÜŞLER</div>
+        <div class="h2">Hafta sonu yolda, hafta içi bir arada</div>
+        <p class="muted">Hava uygunsa her hafta sonu toplu sürüş: Şile, Ağva, Riva, Polonezköy. Rotaya göre yarım ya da tam gün; ara sıra birkaç günlük turlar.</p>
+        <img class="img rounded" src="/files/kizkulesi.jpg" alt="" style="height:210px">
+        <p class="muted">Hafta içi yakın oturanlarla bir kafede buluşup muhabbet ediyoruz, çoğu zaman deniz kenarında.</p>
+        <div class="chips"><span class="chip">Beşiktaş</span><span class="chip">Üsküdar</span><span class="chip">Kadıköy</span><span class="chip">Beykoz</span></div>
+      </div>
+      <div class="sec">
+        <div class="eyebrow">KİMLER KATILABİLİR</div>
+        <div class="h2">18 yaşını geçen herkes</div>
+        <p class="muted">50cc'den 1000cc'ye her motor, her ehliyet. Yeni başlayanlar, kadın sürücüler ve motoru olmayan artçılar da aramızda.</p>
+        <img class="img rounded" src="/files/terrace.jpg" alt="" style="height:240px">
+      </div>
+      <div class="sec">
+        <div class="eyebrow">NASIL KATILIRIM</div>
+        <ol class="steps">
+          <li><span><b>Başvur</b> — birkaç dakikalık form.</span></li>
+          <li><span><b>Onay</b> — kulüp ekibi başvurunu inceler.</span></li>
+          <li><span><b>Ön alım</b> — birkaç gün ayrı bir grupta tanışırız.</span></li>
+          <li><span><b>Ana grup</b> — artık ailedesin.</span></li>
+        </ol>
+      </div>
+      <div class="sec">
+        <div class="card">
+          <div class="eyebrow">SÜRÜŞ KURALLARIMIZ</div>
+          <p>Kask zorunlu; mont, eldiven ve bot öneriyoruz. Konvoy düzeni, güvenli mesafe, izinsiz sollama yok.</p>
+          <b>Hep birlikte gidip hep birlikte dönmek.</b>
+        </div>
+      </div>
+      <div class="sec faq">
+        <div class="eyebrow">SIK SORULANLAR</div>
+        <div><b>Motorum yok, katılabilir miyim?</b><span class="muted">Evet, artçı olarak katılabilirsin.</span></div>
+        <div><b>Yeni başladım, sorun olur mu?</b><span class="muted">Hayır. Konvoyda tempo herkese göre; kimse geride kalmaz.</span></div>
+        <div><b>Sürüşlere üye olmadan katılabilir miyim?</b><span class="muted">Sürüşler üyelere açık. Başvurunu yap, onaydan sonra ön alım grubunda ilk sürüşlere katılabilirsin.</span></div>
+      </div>
+      <img class="img" src="/files/breakfast.jpg" alt="" style="height:220px;margin-top:22px">
+      <div class="quote">Aynı yolu paylaşan insanlarla bir aile.<a class="btn primary" style="font-size:15px">Kulübe Başvur</a></div>
+    </div>
+  </div>
+
+  <div class="col">
+    <h3>Desktop</h3>
+    <div class="desk-frame">
+      <div class="desk site">
+        <div class="nav"><span>RIDE &amp; VIBE</span><span class="muted" style="font-weight:500">Ana Sayfa · Etkinlikler · Galeri · Başvur</span></div>
+        <div class="hero d-hero">
+          <img class="img" src="/files/road.jpg" alt="" style="object-position: 50% 40%">
+          <div class="shade" style="background: linear-gradient(90deg, rgba(11,13,16,.85) 0%, rgba(11,13,16,.35) 55%, rgba(11,13,16,0) 80%), linear-gradient(180deg, rgba(11,13,16,0) 60%, #0B0D10 100%)"></div>
+          <div class="txt">
+            <img class="badge" src="/files/badge.png" alt="" style="width:84px">
+            <div class="eyebrow" style="margin-top:12px">İSTANBUL MOTOSİKLET KULÜBÜ</div>
+            <div class="h1">Birlikte sürelim.</div>
+            <div class="muted" style="font-size:18px">Hafta sonu sürüşleri, uzun turlar ve yeni dostluklar. Asya'dan Avrupa'ya, İstanbul'un her yakasından motorcularla tanış.</div>
+            <a class="btn primary">Kulübe Başvur</a>
+          </div>
+        </div>
+        <div class="wrap">
+          <div class="d-stats">
+            <div class="stat"><b>140+</b><span>üye</span></div>
+            <div class="stat"><b>Her hafta</b><span>sürüş</span></div>
+            <div class="stat"><b>İki yaka</b><span>Asya ve Avrupa</span></div>
+          </div>
+          <div class="two">
+            <div>
+              <div class="eyebrow">SÜRÜŞLER</div>
+              <div class="h2">Hafta sonu yolda, hafta içi bir arada</div>
+              <p class="muted">Hava uygunsa her hafta sonu toplu sürüş: Şile, Ağva, Riva, Polonezköy. Rotaya göre yarım ya da tam gün; ara sıra birkaç günlük turlar.</p>
+              <p class="muted">Hafta içi yakın oturanlarla bir kafede buluşup muhabbet ediyoruz, çoğu zaman deniz kenarında.</p>
+              <div class="chips"><span class="chip">Beşiktaş</span><span class="chip">Üsküdar</span><span class="chip">Kadıköy</span><span class="chip">Beykoz</span></div>
+            </div>
+            <img class="img" src="/files/kizkulesi.jpg" alt="">
+          </div>
+          <div class="two">
+            <img class="img" src="/files/terrace.jpg" alt="" style="object-position: 50% 70%">
+            <div>
+              <div class="eyebrow">KİMLER KATILABİLİR</div>
+              <div class="h2">18 yaşını geçen herkes</div>
+              <p class="muted">50cc'den 1000cc'ye her motor, her ehliyet. Yeni başlayanlar, kadın sürücüler ve motoru olmayan artçılar da aramızda.</p>
+            </div>
+          </div>
+          <div class="two" style="align-items:start">
+            <div>
+              <div class="eyebrow">NASIL KATILIRIM</div>
+              <ol class="steps" style="margin-top:8px">
+                <li><span><b>Başvur</b> — birkaç dakikalık form.</span></li>
+                <li><span><b>Onay</b> — kulüp ekibi başvurunu inceler.</span></li>
+                <li><span><b>Ön alım</b> — birkaç gün ayrı bir grupta tanışırız.</span></li>
+                <li><span><b>Ana grup</b> — artık ailedesin.</span></li>
+              </ol>
+            </div>
+            <div class="card">
+              <div class="eyebrow">SÜRÜŞ KURALLARIMIZ</div>
+              <p>Kask zorunlu; mont, eldiven ve bot öneriyoruz. Konvoy düzeni, güvenli mesafe, izinsiz sollama yok.</p>
+              <b>Hep birlikte gidip hep birlikte dönmek.</b>
+            </div>
+          </div>
+          <div class="faq" style="padding-top:72px; max-width:720px">
+            <div class="eyebrow" style="margin-bottom:8px">SIK SORULANLAR</div>
+            <div><b>Motorum yok, katılabilir miyim?</b><span class="muted">Evet, artçı olarak katılabilirsin.</span></div>
+            <div><b>Yeni başladım, sorun olur mu?</b><span class="muted">Hayır. Konvoyda tempo herkese göre; kimse geride kalmaz.</span></div>
+            <div><b>Sürüşlere üye olmadan katılabilir miyim?</b><span class="muted">Sürüşler üyelere açık. Başvurunu yap, onaydan sonra ön alım grubunda ilk sürüşlere katılabilirsin.</span></div>
+          </div>
+        </div>
+        <img class="img" src="/files/breakfast.jpg" alt="" style="height:420px;margin-top:72px;object-position:50% 60%">
+        <div class="d-quote">Aynı yolu paylaşan insanlarla bir aile.<br><a class="btn primary">Kulübe Başvur</a></div>
+      </div>
+    </div>
+  </div>
+</div>
