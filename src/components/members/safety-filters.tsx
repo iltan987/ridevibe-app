@@ -41,6 +41,8 @@ export function SafetyFilters({ bloodType, noContact }: { bloodType: BloodType |
           },
         }}
         aria-current={noContact ? "page" : undefined}
+        // The href follows the live search: a prefetch would hit the server on every keystroke.
+        prefetch={false}
         className={listChipClasses.current}
       >
         {t("noContactFilter")}
