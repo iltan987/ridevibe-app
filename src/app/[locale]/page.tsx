@@ -1,10 +1,29 @@
+import type { Metadata, ResolvingMetadata } from "next";
 import { useTranslations } from "next-intl";
+import { getLocale, getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import { HeroApplyForUser } from "@/components/apply/hero-apply";
 import { HeroApplyGuess } from "@/components/apply/hero-apply-guess";
 import { ClubBadge } from "@/components/brand/club-badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
+import { pageMetadata } from "@/lib/seo/metadata";
+
+export async function generateMetadata(
+  _props: unknown,
+  parent: ResolvingMetadata,
+): Promise<Metadata> {
+  const [locale, t] = await Promise.all([getLocale(), getTranslations("Metadata")]);
+  const images = (await parent).openGraph?.images;
+  return pageMetadata({
+    locale,
+    path: "/",
+    title: t("homeTitle"),
+    description: t("description"),
+    absoluteTitle: true,
+    images,
+  });
+}
 
 export default function HomePage() {
   const t = useTranslations("Home");

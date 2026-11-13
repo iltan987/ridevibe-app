@@ -1,7 +1,8 @@
 {
   "Metadata": {
     "title": "Ride & Vibe",
-    "description": "Istanbul's motorcycle community. Rides, events and new friendships."
+    "homeTitle": "Ride & Vibe · Istanbul Motorcycle Club",
+    "description": "Istanbul's motorcycle club. Weekend rides, long tours and coffee meetups; meet riders from both sides of the city. Apply to join."
   },
   "Nav": {
     "home": "Home",
@@ -396,6 +397,7 @@
   },
   "Privacy": {
     "title": "Privacy Notice",
+    "description": "How Ride & Vibe processes personal data under KVKK, Turkey's data protection law.",
     "draftNotice": "DRAFT — This text has not been legally reviewed yet. Highlighted parts are still to be filled in.",
     "version": "Version: {version}"
   },
