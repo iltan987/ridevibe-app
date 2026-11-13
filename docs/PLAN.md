@@ -88,7 +88,8 @@ Own "install the app" prompt done (2026-11-12): banner on `/account` and `/membe
 iPhone/Android-manual; no service worker (spec `docs/superpowers/specs/2026-11-12-install-prompt-design.md`).
 SEO round 1 (technical) done (2026-11-13): canonical URLs (hreflang stays in next-intl's `Link` headers), Open
 Graph, robots.txt, sitemap.xml, icons, structured data (spec
-`docs/superpowers/specs/2026-11-13-seo-technical-design.md`); round 2 (home content) is in `docs/follow-ups.md`.
+`docs/superpowers/specs/2026-11-13-seo-technical-design.md`); round 2 (home content) shipped 2026-11-13 (`docs/content/home-page-questions.md`, spec
+`docs/superpowers/specs/2026-11-13-home-content-design.md`).
 
 ## MVP for Samet (agreed 2026-11-08)
 

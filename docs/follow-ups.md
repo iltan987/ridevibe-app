@@ -186,6 +186,7 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   Bump `PRIVACY_NOTICE_VERSION` only once per release.
 - **Apply-form option `coffee_meetups`** (2026-11-13, home content review) — still reads "Kahvaltı / kahve buluşmaları"
   (`messages/tr.json`); iltan rejected "kahvede" for the home page. Ask iltan whether the form wording should change too.
+
 ### Database / tests
 - **Turkish case folding in `linkable_accounts` search** (2026-11-09) — `ilike` doesn't fold `ı/İ`
   (`supabase/schemas/20_applications.sql`). Email search and name-match ordering compensate. Fix: a SQL fold helper

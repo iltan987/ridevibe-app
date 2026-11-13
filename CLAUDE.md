@@ -155,10 +155,11 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
 - **Removing a website photo** (someone withdraws consent): (1) remove/replace the file in `src/assets/home/` and its
   use, merge, deploy; (2) purge it from history: `git filter-repo --path src/assets/home/<file> --invert-paths`, force-push
   `main` (one-off exception to merge-only, iltan approves; other clones re-clone); (3) old Vercel deployments: checked
-  2026-11-13, `*.vercel.app` URLs redirect to Vercel login (Deployment Protection on), so no action; re-check
-  (`curl -sI` an old deployment URL, 302 = protected) before relying on it; (4) Search Console → "Remove outdated
-  content" for the old image URL; (5) originals and unused photos never enter the repo. The consent proof (WhatsApp
-  message) stays with the club, outside the repo.
+  2026-11-13, `*.vercel.app` URLs redirect to Vercel login (Protection on), so no action; re-check a production and a
+  preview URL (`curl -sI`, 302 = protected; may differ per environment); (4) if the old image URL still loads on
+  ridevibe.com.tr, purge the cached image (`invalidate_by_src_images` / dashboard); (5) Search Console → "Remove
+  outdated content"; (6) originals and unused photos never enter the repo. Consent proof (WhatsApp message) stays with
+  the club, outside the repo.
 - **Auth/config as code:** production overrides live in `[remotes.production]` in `supabase/config.toml`. Always run
   `pnpm exec supabase config diff --remote=igqqicbfejhnsggfuydh` and review before `config push --remote=… --yes`.
   Local defaults must not leak into production — pin hosted values in the remote block when the diff shows them.
