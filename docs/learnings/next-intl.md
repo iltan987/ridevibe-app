@@ -57,4 +57,6 @@
   the default locale (not deleted: see Cause; cookie detection keeps working) and pass the original request to
   `updateSession`. In `routing.ts` set `localeCookie: { maxAge: 60 * 60 * 24 * 365 }` (merged into the defaults; the
   client `syncLocaleCookie` reads it too).
+- **Caveat:** next-intl forwards those request headers on, so every localized page, layout and Server Action sees
+  `accept-language: tr`. Nothing reads it today; code that needs the visitor's real language must not rely on it.
 - **Source:** `next-intl/dist/esm/development/middleware/{resolveLocale,syncCookie}.js`, found by testing.

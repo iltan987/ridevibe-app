@@ -122,8 +122,8 @@
   `/opengraph-image.jpg` is 404.
 - **Cause:** the dynamic segment is replaced by `-` in the metadata route; it works (200, image/jpeg;
   the file was a PNG until 2026-11-13).
-- **Do:** nothing. `og:image` is absolute, built from `metadataBase`, which we deliberately leave unset (see
-  `nextjs.md`).
+- **Do:** nothing. `og:image` is absolute, built from `metadataBase`, which is fixed to the production origin
+  (see `nextjs.md`).
 
 ### `next/image` `priority` is deprecated in Next 16: use `preload` (2026-11-09)
 - **Do:** `<Image preload />` for above-the-fold images (`ClubBadge` takes `preload`); `placeholder="empty"` is the default, omit it.

@@ -5,7 +5,8 @@ everything here against the live Google/Meta docs when it looks off; the rules c
 with `scripts/e2e/seo-check.mjs` (`scripts/e2e/README.md`).
 
 ### Google ignores SVG favicons (2026-11-13)
-- **Symptom:** the site has only `icon.svg` + `favicon.ico` + `apple-icon.png`; no favicon in search results.
+- **Symptom (expected, per Google's docs; the site is not crawled yet):** with only `icon.svg` + `favicon.ico` +
+  `apple-icon.png`, Google would not show a favicon in search results.
 - **Cause:** Google's favicon docs list BMP, GIF, ICO, PNG, JPEG, PPM, TIFF, not SVG; they want a square raster
   icon, larger than 48 px recommended (a multiple of 48), linked from the **home page**. Next emits one
   `<link rel="icon">` per icon file, so `icon.svg` and a numbered `icon1.png` coexist and both are emitted (`sizes` is

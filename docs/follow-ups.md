@@ -217,6 +217,14 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   row survival.
 
 ### App logic
+- **`pageMetadata` call sites repeat a preamble** (2026-11-13, SEO final review) — the five pages calling
+  `pageMetadata` each do `getLocale()` + `(await parent).openGraph?.images`; a helper taking `parent` would stop a
+  future page from forgetting the images. Works as is; risk is a missing share image on a new page.
+- **Locales hard-coded in the SEO helpers** (2026-11-13, SEO final review) — `src/app/sitemap.ts` `LOCALES`, `ogLocale`
+  and `sharedOpenGraph` (`src/lib/seo/metadata.ts`) assume exactly two locales; a third language touches several
+  files. Deferred: no third language planned.
+- **"Don't disallow noindex pages" could be its own learning** (2026-11-13, SEO final review) — it is a rule inside
+  another entry in `docs/learnings/seo.md`; a separate entry would be easier to find.
 - **Privacy notice "Teknik veriler" bullet mixes three topics** (2026-11-13, SEO review) — session cookie, form
   draft, and language cookie + browser storage share one bullet (`src/app/[locale]/privacy/content-*.tsx`). Split
   into separate bullets with the next notice edit (a text change bumps `PRIVACY_NOTICE_VERSION`).
