@@ -49,8 +49,8 @@ function frameLogger() {
     const bottom = [...document.querySelectorAll("nav.fixed")].find(vis);
     const desktop = [...document.querySelectorAll("header nav")].find(vis);
     const nav = bottom ?? desktop;
-    const heroEvents = [...document.querySelectorAll('main a[href$="/events"]')].find(vis);
-    if (nav && heroEvents) {
+    const hero = [...document.querySelectorAll("main [data-home-hero]")].find(vis);
+    if (nav && hero) {
       const tabs = bottom ? [...bottom.querySelectorAll("a")].filter(vis) : [];
       const f = {
         tabs: tabs.length,

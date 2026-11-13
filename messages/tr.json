@@ -28,9 +28,17 @@
   "Home": {
     "eyebrow": "İstanbul Motosiklet Kulübü",
     "title": "Birlikte sürelim.",
-    "subtitle": "Hafta sonu sürüşleri, uzun turlar, kahve buluşmaları. Asya'dan Avrupa'ya, İstanbul'un her yakasından motorcularla tanış.",
+    "subtitle": "Hafta sonu sürüşleri, uzun turlar ve yeni dostluklar. Asya'dan Avrupa'ya, İstanbul'un her yakasından motorcularla tanış.",
     "apply": "Kulübe Başvur",
-    "events": "Etkinlikleri Gör"
+    "heroAlt": "Deniz kenarındaki bir yolda mola veren, kasklı kulüp üyeleri",
+    "stats": {
+      "membersValue": "140+",
+      "membersLabel": "üye",
+      "ridesValue": "Her hafta",
+      "ridesLabel": "sürüş",
+      "sidesValue": "İki yaka",
+      "sidesLabel": "Asya ve Avrupa"
+    }
   },
   "Footer": {
     "rights": "© Ride & Vibe · İstanbul",
