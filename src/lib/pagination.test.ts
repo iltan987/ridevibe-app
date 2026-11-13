@@ -13,6 +13,7 @@ import {
   readAll,
   splitPage,
   toPage,
+  uniqueById,
 } from "./pagination.ts";
 
 const id = "6f1c2a3b-4d5e-4f60-8a7b-9c0d1e2f3a4b";
@@ -108,4 +109,19 @@ test("readAll reads chunks until a short one and flags the ceiling", async () =>
     assert.equal(s.calls.length, calls);
     assert.ok(s.calls.every(([, to]) => to <= 2000), "never asks past ceiling + 1 rows");
   }
+});
+
+test("uniqueById keeps the first row of each id, in order", () => {
+  const rows = [
+    { id: "a", n: 1 },
+    { id: "b", n: 2 },
+    { id: "a", n: 3 },
+    { id: "c", n: 4 },
+  ];
+  assert.deepEqual(uniqueById(rows), [
+    { id: "a", n: 1 },
+    { id: "b", n: 2 },
+    { id: "c", n: 4 },
+  ]);
+  assert.deepEqual(uniqueById([]), []);
 });

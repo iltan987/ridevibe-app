@@ -40,8 +40,9 @@ export function DirectoryList({
   const urlQuery = normalizeQuery(params.get("q"));
   const side = SIDES.find((s) => s === params.get("side")) ?? null;
   const rawPage = params.get("page");
-  const blood = params.get("blood");
-  const noContact = params.get("noContact");
+  // Safety filters only exist for members.safety holders: never carry them for anyone else.
+  const blood = safety ? params.get("blood") : null;
+  const noContact = safety ? params.get("noContact") : null;
 
   // The box follows the URL on back/forward; typing updates only the text (see syncedInput).
   const [search, setSearch] = useState({ url: urlQuery, input: urlQuery });

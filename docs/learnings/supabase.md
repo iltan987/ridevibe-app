@@ -204,6 +204,7 @@
 - **Do:** read in `.range(from, to)` chunks of `CHUNK_SIZE` (= `max_rows`) with `readAll` (`src/lib/pagination.ts`):
   it stops at a short chunk or `LIST_CEILING` + 1 rows. `supabase.rpc(…).range()` is typed and becomes
   `offset`/`limit` on the function's output, so the query needs a total order ending in `id` (else chunks skip or
-  repeat rows). An RPC that logs (blood filter) logs once per chunk call: keep such results within one chunk.
+  repeat rows). Chunks are separate requests, so a row changing in between can still repeat at a boundary: pass the
+  result through `uniqueById`. An RPC that logs (blood filter) logs once per chunk call: keep such results within one chunk.
 - **Source:** spec `docs/superpowers/specs/2026-11-13-list-ux-design.md`; `loadDirectory` in
   `src/lib/members/queries.ts`.

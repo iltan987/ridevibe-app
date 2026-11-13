@@ -12,3 +12,11 @@ test("foldSearch mirrors the SQL fold", () => {
   assert.ok(matchesFolded("anything", ""));
   assert.equal(Array.from(normalizeQuery("ş".repeat(70))).length, 60);
 });
+
+test("normalizeQuery is idempotent: a space at the cut is trimmed too", () => {
+  const raw = `${"a".repeat(59)} b`;
+  const once = normalizeQuery(raw);
+  assert.equal(once, "a".repeat(59));
+  assert.equal(normalizeQuery(once), once);
+  assert.equal(normalizeQuery("  ali  "), "ali");
+});

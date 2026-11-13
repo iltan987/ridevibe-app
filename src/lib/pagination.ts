@@ -79,6 +79,15 @@ export function pageItems(current: number, count: number): (number | "gap")[] {
 }
 
 /**
+ * Drops repeated ids, keeping the first. Chunks are separate requests: if rows change between them, a row can come
+ * back twice at a chunk boundary.
+ */
+export function uniqueById<T extends { id: string }>(rows: T[]): T[] {
+  const seen = new Set<string>();
+  return rows.filter((row) => !seen.has(row.id) && seen.add(row.id));
+}
+
+/**
  * Reads a list in chunks until a short chunk or more than `ceiling` rows. Returns at most `ceiling` items;
  * never requests past index `ceiling` (so at most ceiling + 1 rows are fetched).
  */

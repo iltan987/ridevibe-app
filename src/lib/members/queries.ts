@@ -1,6 +1,6 @@
 import "server-only";
 import { getCurrentUser } from "@/lib/auth/user";
-import { readAll } from "@/lib/pagination";
+import { readAll, uniqueById } from "@/lib/pagination";
 import { createClient } from "@/lib/supabase/server";
 import type { Enums } from "@/lib/supabase/database.types";
 import type { BloodType } from "./blood-type";
@@ -70,7 +70,7 @@ export async function loadDirectory({
   });
 
   // Generated return types are non-nullable although the columns can be null.
-  const members = items.map(
+  const members = uniqueById(items).map(
     (row): DirectoryMember => ({
       id: row.id,
       fullName: row.full_name,
