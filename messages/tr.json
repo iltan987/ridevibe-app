@@ -2,7 +2,7 @@
   "Metadata": {
     "title": "Ride & Vibe",
     "homeTitle": "Ride & Vibe · İstanbul Motosiklet Kulübü",
-    "description": "İstanbul'un motosiklet kulübü. Hafta sonu sürüşleri, uzun turlar ve kahve buluşmaları; Asya'dan Avrupa'ya motorcularla tanış. Kulübe başvur."
+    "description": "İstanbul'un motosiklet kulübü. Hafta sonu sürüşleri, uzun turlar ve yeni dostluklar; 18 yaşını geçen her motorcuya açık. Kulübe başvur."
   },
   "Nav": {
     "home": "Ana Sayfa",
@@ -28,9 +28,65 @@
   "Home": {
     "eyebrow": "İstanbul Motosiklet Kulübü",
     "title": "Birlikte sürelim.",
-    "subtitle": "Hafta sonu sürüşleri, uzun turlar, kahve buluşmaları. Asya'dan Avrupa'ya, İstanbul'un her yakasından motorcularla tanış.",
+    "subtitle": "Hafta sonu sürüşleri, uzun turlar ve yeni dostluklar. Asya'dan Avrupa'ya, İstanbul'un her yakasından motorcularla tanış.",
     "apply": "Kulübe Başvur",
-    "events": "Etkinlikleri Gör"
+    "heroAlt": "Deniz kenarındaki bir yolda mola veren kulüp üyeleri",
+    "stats": {
+      "membersValue": "140+",
+      "membersLabel": "üye",
+      "ridesValue": "Her hafta",
+      "ridesLabel": "sürüş",
+      "sidesValue": "İki yaka",
+      "sidesLabel": "Asya ve Avrupa"
+    },
+    "rides": {
+      "eyebrow": "Sürüşler",
+      "title": "Hafta sonu yolda, hafta içi bir arada",
+      "weekend": "Hava uygunsa her hafta sonu toplu sürüşe çıkıyoruz: Şile, Ağva, Riva, Polonezköy ve İstanbul çevresindeki doğal rotalar. Rotaya göre yarım ya da tam gün sürüyor; ara sıra birkaç günlük turlar da planlıyoruz.",
+      "weekday": "Hafta içi yakın oturanlarla bir kafede buluşup muhabbet ediyoruz, çoğu zaman deniz kenarında.",
+      "district1": "Beşiktaş",
+      "district2": "Üsküdar",
+      "district3": "Kadıköy",
+      "district4": "Beykoz",
+      "alt": "Gece Üsküdar sahilinde kulüp üyeleri, arkada Kız Kulesi"
+    },
+    "who": {
+      "eyebrow": "Kimler katılabilir",
+      "title": "18 yaşını geçen herkes",
+      "body": "50cc'den 1000cc'ye her motor, her ehliyet. Yeni başlayanlar, kadın sürücüler ve motoru olmayan artçılar da aramızda.",
+      "conditions": "Bazı etkinliklerde motor sınıfı gibi katılım koşulları olabilir.",
+      "alt": "Bir sürüş molasında kafe terasında toplu fotoğraf"
+    },
+    "join": {
+      "eyebrow": "Nasıl katılırım",
+      "title": "Başvurudan ana gruba",
+      "step1Title": "Başvur",
+      "step1Body": "Birkaç dakikalık formu doldur.",
+      "step2Title": "Onay",
+      "step2Body": "Kulüp ekibi başvurunu inceler.",
+      "step3Title": "Ön alım",
+      "step3Body": "Birkaç gün ayrı bir grupta birbirimizi tanırız.",
+      "step4Title": "Ana grup",
+      "step4Body": "Artık ailedensin."
+    },
+    "rules": {
+      "title": "Sürüş kurallarımız",
+      "body": "Kask zorunlu; mont, eldiven ve bot öneriyoruz. Konvoy düzenini koruyoruz: güvenli mesafe, izinsiz sollama yok. Trafik kurallarına uyuyor, birbirimize saygıyla davranıyoruz.",
+      "motto": "Amacımız hızlı gitmek değil; hep birlikte gidip hep birlikte dönmek."
+    },
+    "faq": {
+      "title": "Sık sorulanlar",
+      "q1": "Motorum yok, katılabilir miyim?",
+      "a1": "Evet, artçı olarak katılabilirsin.",
+      "q2": "Yeni başladım, sorun olur mu?",
+      "a2": "Hayır. Konvoyda tempo herkese göre ayarlanır; kimse geride kalmaz.",
+      "q3": "Sürüşlere üye olmadan katılabilir miyim?",
+      "a3": "Sürüşler üyelere açık. Başvurunu yap; onaydan sonra ön alım grubundayken bazı sürüşlere katılabilirsin."
+    },
+    "closing": {
+      "line": "Aynı yolu paylaşan insanlarla bir aile.",
+      "alt": "Kanlıca'da toplu kahvaltıda kulüp üyeleri"
+    }
   },
   "Footer": {
     "rights": "© Ride & Vibe · İstanbul",

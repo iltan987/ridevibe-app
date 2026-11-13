@@ -152,6 +152,17 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   (cascades profile, member_contacts, member_details, member_motorcycles, member_emergency_contacts and
   member_health; applications become unlinked, `reviewed_by` → null; `safety_access_log` rows stay with actor/target null). Their access token stays valid up to 1 h; the app shows them signed out because the profile
   row is gone (`getCurrentUser`). Use `getCurrentUser()`, not bare `getClaims()`, wherever "who is signed in" matters.
+- **Removing or replacing a website photo** (consent withdrawn, or replaced for editorial reasons): (1) remove/replace
+  the file in `src/assets/home/` and its use, merge, deploy; a replacement always gets a NEW file name; (2) purge the
+  old path from history: `git filter-repo --path src/assets/home/<old-file> --invert-paths` (a same-named replacement
+  would be deleted too), force-push `main` (one-off exception to merge-only, iltan approves; other clones re-clone);
+  GitHub keeps orphaned commits reachable by SHA until its GC: private repo, accepted; if needed ask GitHub Support to
+  purge cached views; (3) old Vercel deployments: checked
+  2026-11-13, `*.vercel.app` URLs redirect to Vercel login (Protection on), so no action; re-check a production and a
+  preview URL (`curl -sI`, 302 = protected; may differ per environment); (4) if the old image URL still loads on
+  ridevibe.com.tr, purge the cached image (`invalidate_by_src_images` / dashboard); (5) Search Console → "Remove
+  outdated content"; (6) originals and unused photos never enter the repo. Consent proof (WhatsApp message) stays with
+  the club, outside the repo.
 - **Auth/config as code:** production overrides live in `[remotes.production]` in `supabase/config.toml`. Always run
   `pnpm exec supabase config diff --remote=igqqicbfejhnsggfuydh` and review before `config push --remote=… --yes`.
   Local defaults must not leak into production — pin hosted values in the remote block when the diff shows them.

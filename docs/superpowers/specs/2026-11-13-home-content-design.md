@@ -1,6 +1,6 @@
 # SEO round 2: home-page content — design
 
-Date: 2026-11-13 · Status: **draft for iltan's review** · Backlog item: "SEO round 2: home content" in
+Date: 2026-11-13 · Status: **approved by iltan (2026-11-13)** · Backlog item: "SEO round 2: home content" in
 `docs/follow-ups.md` (Next up). Round 1 (technical): `2026-11-13-seo-technical-design.md`.
 
 ## Intent
@@ -61,13 +61,13 @@ privacy notice covers photos on the public website.
   `.rotate()` (apply EXIF orientation), longest side unchanged (the WhatsApp originals are 1600 × 1200, 1200 × 1600
   and 1536 × 2048 for the terrace photo; never upscale), JPEG quality ~85, metadata stripped (sharp's default). Not
   `public/` (no sizing or blur), not Blob (overkill for four fixed files).
-- **Only consenting people stay recognisable** (builder check): the preparation step **crops** each photo so that
-  nobody outside the club group is in it — the Kanlıca photo has other diners at separate tables and near the counter
-  on the right (cut them off; the closing band shows the long club table), the Kız Kulesi photo has small passers-by
-  at the far left (cut or verify they're unrecognisable). It also **blurs legible name patches** on jackets (e.g. the
-  man crouching front right in the terrace photo): consent covered the photo, and a name next to a face is
-  identification the page doesn't need. The prepared files are checked by eye before committing; the crops are fixed
-  in the files, so `object-position` only fine-tunes.
+- **Only consenting people stay recognisable** (builder check): nobody outside the club group is recognisable. The
+  Kanlıca photo is cropped to a wide strip around the long table (1200 × 760 from y = 640) and the other diners on the
+  right are soft-blurred; the passers-by at the far left of the Kız Kulesi photo are soft-blurred. Blur instead of a
+  crop because cropping them out would cut through members (the red-shirt man; the front man's head). The prepared
+  files were checked by iltan before committing; `object-position` only fine-tunes.
+- **Name patches on jackets stay as they are** (iltan, 2026-11-13): the people consented to the photo as it is; a
+  blur would add nothing.
 - **The hero is always dark**: the hero `<section>` carries the `dark` class, so the tokens and `dark:` variants
   resolve to the night palette inside it (`.dark { … }` and `@custom-variant dark (&:is(.dark *))` in `globals.css`);
   cream text on the photo's dark gradient in both themes. The sections below follow the theme.

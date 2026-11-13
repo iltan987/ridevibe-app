@@ -231,3 +231,10 @@
   sizing a skeleton.
 - **Do:** put it inside the small group it belongs to (gap-2) and mirror it in the skeleton with an empty `<div />`.
 - **Source:** found by measuring (`scripts/e2e/skeletons.mjs`).
+
+### A section that must stay in the night palette: put the `dark` class on it (2026-11-13)
+- **Symptom:** cream text on a photo's dark gradient became unreadable (dark-on-dark / light-on-light) in the light theme.
+- **Cause:** the tokens (`text-foreground`, `bg-background`) follow the page theme; the photo gradient doesn't.
+- **Do:** give the section `className="dark …"`: the `.dark` scope makes the tokens resolve to the night palette inside
+  it, in both themes (`src/components/home/home-hero.tsx`).
+- **Source:** found by testing (home hero).

@@ -26,8 +26,10 @@ export function PrivacyEn() {
         <li><strong>Blood type:</strong> special-category personal data, processed only if you give a separate explicit consent and enter it on your account page.</li>
         <li><strong>Motorcycle plates:</strong> optionally, the plate you enter for each motorcycle.</li>
         <li><strong>Safety logs:</strong> a record of operations on blood types and of views of emergency information (who, when, which member).</li>
-        <li><strong>Images:</strong> only with your explicit consent, photos of you taken at events.</li>
-        <li><strong>Technical data:</strong> a session cookie that is strictly necessary for signing in. While you fill in the application form, your answers (except contact details and consents) are kept only in your own browser until you submit and don&apos;t reach us; they are deleted when you submit and expire after 7 days. A language cookie that remembers your language choice (1 year). Your browser also keeps, only on your device, your theme choice, your last language switch, a short code derived from your account that keeps open tabs in sync, the state of the install prompt and a note on whether to show the apply link. These are needed for the site to work, are not used to track you and, except for the language cookie, are not sent to us.</li>
+        <li><strong>Images:</strong> only with your explicit consent, photos of you taken at events; and, if you have expressly consented to it, ride and meet-up photos showing you that are published on the club&apos;s public website.</li>
+        <li><strong>Session cookie:</strong> a cookie that is strictly necessary for signing in.</li>
+        <li><strong>Application form draft:</strong> while you fill in the form, your answers (except contact details and consents) are kept only in your own browser until you submit and don&apos;t reach us; they are deleted when you submit and expire after 7 days.</li>
+        <li><strong>Language cookie and browser storage:</strong> a language cookie that remembers your language choice (1 year). Your browser also keeps, only on your device, your theme choice, your last language switch, a short code derived from your account that keeps open tabs in sync, the state of the install prompt and a note on whether to show the apply link. These are needed for the site to work, are not used to track you and, except for the language cookie, are not sent to us.</li>
       </ul>
 
       <h2>3. Why we process it</h2>
@@ -37,6 +39,7 @@ export function PrivacyEn() {
         <li>To check the 18+ requirement and to celebrate your birthday,</li>
         <li>To measure which promotion channels and ads work,</li>
         <li>With your explicit consent, to share event photos in the club gallery,</li>
+        <li>With your explicit consent, to publish ride and meet-up photos on our public website to promote the club,</li>
         <li>To ensure ride and event safety, reach your relatives in an emergency and inform health teams,</li>
         <li>With your explicit consent, to find blood donors within the club.</li>
       </ul>
@@ -46,7 +49,8 @@ export function PrivacyEn() {
         <li>Necessity for establishing and performing the membership relationship (KVKK art. 5/2-c),</li>
         <li>The club&apos;s legitimate interest, provided it does not harm your fundamental rights (KVKK art. 5/2-f): running the club, event safety, measuring promotion channels,</li>
         <li>Your explicit consent for sharing photos in the gallery (KVKK art. 5/1). You can give or withdraw it at any time on your account page, without affecting your membership.</li>
-        <li>Your explicit consent for your blood type (KVKK art. 6). This consent is separate from the photo consent; you can withdraw it at any time on your account page. When you withdraw it, your blood type is deleted; your membership is not affected.</li>
+        <li>Your separate explicit consent for publishing your photos on our public website (KVKK art. 5/1). You can withdraw this consent at any time by writing to us using the method in section 9 or by telling the club management (e.g. on WhatsApp); the photo is then removed from the site.</li>
+        <li>Your explicit consent for your blood type (KVKK art. 6). This consent is separate from the photo consents; you can withdraw it at any time on your account page. When you withdraw it, your blood type is deleted; your membership is not affected.</li>
         <li>For your emergency contacts and plates, the club&apos;s legitimate interest (KVKK art. 5/2-f) and, in an emergency, protecting the life or bodily integrity of you or another person (KVKK art. 5/2-b).</li>
       </ul>
 
@@ -74,17 +78,22 @@ export function PrivacyEn() {
         <li><strong>Supabase</strong> — database and authentication; data is stored in the European Union (Frankfurt, Germany).</li>
         <li><strong>Vercel</strong> — website hosting; server processing takes place in Frankfurt.</li>
         <li><strong>Google</strong> — &quot;Sign in with Google&quot;.</li>
+        <li><strong>GitHub</strong> — storage of the source code and of the website&apos;s photos; its servers are outside Türkiye.</li>
       </ul>
       <p>
         As these providers are located outside Türkiye, transfers are based on the standard contracts announced by the
         Personal Data Protection Board under KVKK art. 9. <Placeholder>STATUS OF STANDARD CONTRACTS AND BOARD NOTIFICATION</Placeholder>
       </p>
 
+      <p>
+        Photos published on our website are visible to anyone and can be indexed by search engines.
+      </p>
+
       <h2>6. How long we keep it</h2>
       <ul>
         <li>Rejected applications: deleted <Placeholder>6 MONTHS</Placeholder> after the decision.</li>
         <li>Member data: kept during membership and for <Placeholder>1 YEAR</Placeholder> after it ends, then deleted or anonymised.</li>
-        <li>Photos: removed from the gallery when you withdraw your consent.</li>
+        <li>Photos: gallery photos are removed from the gallery when you withdraw your consent; photos on our website are removed from the site when you withdraw that consent.</li>
         <li>Safety logs (who viewed or changed blood-type data, and when): kept for the same period as other member data.</li>
         <li>Emergency contacts, blood type and plates: kept for the same period as other member data. You can delete your emergency contacts on your account page at any time, and your plates while your membership is active; your blood type is deleted when you withdraw your consent.</li>
       </ul>
@@ -92,7 +101,7 @@ export function PrivacyEn() {
       <h2>7. How we collect it</h2>
       <p>
         Electronically, through the application form, Google sign-in and your use of the site (session and language cookies), by
-        automated or partly automated means.
+        automated or partly automated means. Photos to be published on the website, and your consent to publish them, are received from you in writing (e.g. via the club&apos;s WhatsApp group).
       </p>
 
       <h2>8. Your rights (KVKK art. 11)</h2>
@@ -107,11 +116,11 @@ export function PrivacyEn() {
         <li>object to a result against you arising solely from automated analysis,</li>
         <li>claim compensation for damages arising from unlawful processing.</li>
       </ul>
-      <p>You can also withdraw your blood type consent and your photo consent yourself on your account page at any time.</p>
+      <p>You can also withdraw your blood type consent and your gallery photo consent yourself on your account page at any time; you can withdraw your consent for photos on our website by writing to us using the method in section 9 or by telling the club management (e.g. on WhatsApp).</p>
 
       <h2>9. How to exercise your rights</h2>
       <p>
-        Send your request to <Placeholder>CONTACT EMAIL</Placeholder>. Requests are handled free of charge within 30 days
+        Send your request (including withdrawing a consent) to <Placeholder>CONTACT EMAIL</Placeholder>. Requests are handled free of charge within 30 days
         at the latest.
       </p>
     </>

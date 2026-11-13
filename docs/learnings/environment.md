@@ -74,3 +74,15 @@
 - **Cause:** without `-i`, docker doesn't attach stdin, so psql never receives the heredoc.
 - **Do:** `docker exec -i supabase_db_ridevibe psql -U postgres -v ON_ERROR_STOP=1 <<'SQL'`; check counts afterwards.
 - **Source:** found by testing (fixture cleanup, 2026-11-12).
+
+### sharp: blurring part of a photo (2026-11-13)
+- **Symptom:** a whole-image soft blur (blur a copy, `joinChannel` a feathered mask as alpha, composite over the
+  original) blurred the *entire* photo — or nothing at all on another photo — although the mask itself was correct.
+- **Cause:** sharp runs operations in its own fixed pipeline order, not call order: `.removeAlpha()` after
+  `.joinChannel()` drops the new alpha channel (output had 3 channels). The other failure was not pinned down.
+- **Do:** blur per region: extract a padded patch, `.blur()` it, build its RGBA buffer by hand (RGB from the patch,
+  alpha from a feathered SVG rect via `.extractChannel(0).raw()`), `composite([{ input, raw: { width, height,
+  channels: 4 }, left, top }])`. Then zoom into the output and check by eye; also check `metadata().exif` is unset.
+  Run the script from the repo root with `require.resolve('next', { paths: [process.cwd()] })` (a scratchpad script
+  can't resolve `next` relative to itself).
+- **Source:** found by testing (home-page photos, 2026-11-13).

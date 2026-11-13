@@ -54,4 +54,4 @@ export const MOTORCYCLE_BRAND_SUGGESTIONS: readonly string[] = [
 export const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"] as const;
 
 // Bump when the privacy notice text changes; stored with each consent.
-export const PRIVACY_NOTICE_VERSION = "2026-11-13-draft-4";
+export const PRIVACY_NOTICE_VERSION = "2026-11-13-draft-5";
