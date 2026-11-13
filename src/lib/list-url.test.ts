@@ -1,7 +1,17 @@
 // Run with: pnpm test
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { listQuery, listSearch, paramOff, serverPage, syncedInput } from "./list-url.ts";
+import {
+  addWrite,
+  listQuery,
+  listSearch,
+  paramOff,
+  rawParam,
+  serverPage,
+  shownSearch,
+  syncedInput,
+} from "./list-url.ts";
+import { parsePage } from "./pagination.ts";
 
 test("listSearch drops empty and default values", () => {
   assert.equal(listSearch({ q: "", side: null, page: 1 }, { page: 1 }), "");
@@ -39,6 +49,44 @@ test("paramOff: a parameter the list never writes (stale ?cursor= bookmarks) is 
   assert.equal(paramOff("MjAyNi0xMS0wOFQxODozMTozNS42MTkxMjMrMDA6MDB8YWJj", null), true);
   assert.equal(paramOff("", null), true);
   assert.equal(paramOff(["a", "b"], null), true);
+});
+
+test("rawParam reads a key like the page's searchParams: null when absent, an array when repeated", () => {
+  const params = new URLSearchParams("page=2&page=3&q=ali&empty=");
+  assert.deepEqual(rawParam(params, "page"), ["2", "3"]);
+  assert.equal(rawParam(params, "q"), "ali");
+  assert.equal(rawParam(params, "empty"), "");
+  assert.equal(rawParam(params, "side"), null);
+  // A repeated ?page= is shown as page 1 and corrected, as on the server.
+  assert.equal(parsePage(rawParam(params, "page")), 1);
+  assert.equal(paramOff(rawParam(params, "page"), 1, 1), true);
+});
+
+test("shownSearch / addWrite: the list's own write until the router's copy of the URL catches up", () => {
+  assert.equal(shownSearch("", null), "");
+  assert.equal(shownSearch("q=ali", null), "q=ali");
+  // A chip tap on ?q=ali: shown at once, while the router still says q=ali.
+  const tap = addWrite(null, "q=ali", "?q=ali&side=asian");
+  assert.deepEqual(tap, { from: ["q=ali"], search: "q=ali&side=asian" });
+  assert.equal(shownSearch("q=ali", tap), "q=ali&side=asian");
+  // Router caught up, or moved elsewhere (back/forward): the router's URL wins.
+  assert.equal(shownSearch("q=ali&side=asian", tap), "q=ali&side=asian");
+  assert.equal(shownSearch("", tap), "");
+  // Clearing the search writes "" (no query at all).
+  assert.equal(shownSearch("q=ali", addWrite(null, "q=ali", "")), "");
+});
+
+test("addWrite: fast writes never flip back when the router catches up one write at a time", () => {
+  // Typing "a", "ab", "abc" faster than the router: it may still show "", then q=a, then q=ab.
+  let pending = addWrite(null, "", "?q=a");
+  pending = addWrite(pending, "", "?q=ab");
+  pending = addWrite(pending, "", "?q=abc");
+  for (const router of ["", "q=a", "q=ab"]) assert.equal(shownSearch(router, pending), "q=abc", router);
+  assert.equal(shownSearch("q=abc", pending), "q=abc");
+  // Writing again after the router reached q=a keeps the chain.
+  assert.deepEqual(addWrite(pending, "q=a", "?q=abcd").from, ["", "q=a", "q=ab", "q=abc"]);
+  // A write after the router moved elsewhere starts over.
+  assert.deepEqual(addWrite(pending, "side=asian", "?side=asian&page=2"), { from: ["side=asian"], search: "side=asian&page=2" });
 });
 
 test("serverPage clamps ?page= to the list and flags URLs to correct", () => {

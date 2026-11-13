@@ -54,8 +54,8 @@ export function MembersList({
   // unknown ?status= the pending tab; correct the URL to match (also dropping a stale ?cursor= of the old pager).
   const urlOff =
     search.pageOff(view.page) ||
-    paramOff(params.get("status"), status, DEFAULTS.status) ||
-    paramOff(params.get("cursor"), null);
+    paramOff(params.raw("status"), status, DEFAULTS.status) ||
+    paramOff(params.raw("cursor"), null);
   useUrlFix(urlOff ? listSearch(urlValues({}), DEFAULTS) : null);
 
   const listTop = useRef<HTMLDivElement>(null);

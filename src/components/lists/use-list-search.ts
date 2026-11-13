@@ -10,25 +10,26 @@ import { normalizeQuery } from "@/lib/search-fold";
  * follows the URL on back/forward and is never overwritten by the URL catching up with the typed text
  * (`docs/learnings/nextjs.md`, "URL as list state").
  */
-export function useListSearch(params: { get: (key: string) => string | null }) {
+export function useListSearch(params: {
+  get: (key: string) => string | null;
+  raw: (key: string) => string | string[] | null;
+}) {
   const urlQuery = normalizeQuery(params.get("q"));
-  const rawPage = params.get("page");
-  // Typing updates only the text (see syncedInput).
+  // Repeated (`?page=2&page=3`) reads as an array: shown as page 1 and corrected, like on the server.
+  const rawPage = params.raw("page");
+  // Typing updates only the text (see syncedInput); the write to the URL shows in the same render (useListParams).
   const [search, setSearch] = useState({ url: urlQuery, input: urlQuery });
   const synced = syncedInput(search, urlQuery);
   if (synced !== search) setSearch(synced);
   const query = normalizeQuery(synced.input);
-  // A search change writes the URL without `page`, but useSearchParams catches up a render later: until then the
-  // URL still holds the old search and page, so show page 1 of the new search.
-  const settled = query === urlQuery;
 
   return {
     /** The box text, as typed. */
     input: synced.input,
-    /** The normalized search to filter by (ahead of the URL until it catches up). */
+    /** The normalized search to filter by. */
     query,
-    /** The URL's page (not clamped yet); 1 while the URL catches up with a search change. */
-    page: settled ? parsePage(rawPage) : 1,
+    /** The URL's page (not clamped yet). */
+    page: parsePage(rawPage),
     /** Updates the box. Returns the new normalized query when it changed (write it to the URL), else null. */
     type(value: string): string | null {
       setSearch((prev) => ({ ...prev, input: value }));
@@ -36,7 +37,7 @@ export function useListSearch(params: { get: (key: string) => string | null }) {
       return next === query ? null : next;
     },
     /** True when the URL's `page` differs from the (clamped) page shown: malformed or out of range. */
-    pageOff: (shown: number) => settled && paramOff(rawPage, shown, 1),
+    pageOff: (shown: number) => paramOff(rawPage, shown, 1),
   };
 }
 

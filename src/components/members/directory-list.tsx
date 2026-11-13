@@ -60,7 +60,7 @@ export function DirectoryList({
   // A malformed or out-of-range ?page= renders the clamped page, an unknown ?side= all sides; correct the URL to match
   // (also dropping a stale ?cursor= from bookmarks of the old keyset pager).
   const urlOff =
-    search.pageOff(view.page) || paramOff(params.get("side"), side) || paramOff(params.get("cursor"), null);
+    search.pageOff(view.page) || paramOff(params.raw("side"), side) || paramOff(params.raw("cursor"), null);
   useUrlFix(urlOff ? listSearch(urlValues({}), DEFAULTS) : null);
 
   const listTop = useRef<HTMLDivElement>(null);

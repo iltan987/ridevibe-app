@@ -37,6 +37,34 @@ export function paramOff(
   return (raw ?? null) !== canonical;
 }
 
+/** A URL key as the page's server-side `searchParams` gives it: null when absent, an array when repeated. */
+export function rawParam(params: { getAll(key: string): string[] }, key: string): string | string[] | null {
+  const values = params.getAll(key);
+  return values.length > 1 ? values : (values[0] ?? null);
+}
+
+/**
+ * A list's own History API writes the router hasn't caught up with yet: `search` = the last one, `from` = the
+ * router's query strings it may still show on the way there (where the first write started, then each earlier write).
+ */
+export type PendingWrite = { from: string[]; search: string };
+
+/**
+ * The query string (no `?`) a browser-filtered list renders from. After a History API write, the router's copy of
+ * the URL (`useSearchParams`) catches up in a transition, a frame later on screen, and after fast writes possibly
+ * one write at a time: while it shows a URL from `from`, show the last write, so a tap or key changes the list in the
+ * same frame and never flips back. Any other router URL (caught up, or back/forward) wins.
+ */
+export function shownSearch(routerSearch: string, pending: PendingWrite | null): string {
+  return pending && pending.from.includes(routerSearch) ? pending.search : routerSearch;
+}
+
+/** The pending write after writing `search` (from `listSearch`) while the router shows `routerSearch`. */
+export function addWrite(pending: PendingWrite | null, routerSearch: string, search: string): PendingWrite {
+  const from = pending && pending.from.includes(routerSearch) ? [...pending.from, pending.search] : [routerSearch];
+  return { from, search: new URLSearchParams(search).toString() };
+}
+
 /**
  * `?page=` of a list paginated on the server with `total` rows: the page to show (clamped) and whether the URL must
  * be corrected (malformed, `1` spelled out, repeated or past the last page).
