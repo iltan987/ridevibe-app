@@ -22,7 +22,7 @@ export function PrivacyTr() {
         <li><strong>Kan grubu:</strong> özel nitelikli kişisel veridir; yalnızca ayrı bir açık rıza vermeniz halinde ve hesap sayfanızdan girerseniz işlenir.</li>
         <li><strong>Motosiklet plakası:</strong> isteğe bağlı olarak, her motosiklet için girdiğiniz plaka.</li>
         <li><strong>Güvenlik kayıtları:</strong> kan grubu işlemlerinin ve acil durum bilgisi görüntülemelerinin kaydı (kim, ne zaman, hangi üye).</li>
-        <li><strong>Görsel veriler:</strong> yalnızca açık rıza vermeniz halinde, etkinliklerde çekilen ve sizi gösteren fotoğraflar.</li>
+        <li><strong>Görsel veriler:</strong> yalnızca açık rıza vermeniz halinde, etkinliklerde çekilen ve sizi gösteren fotoğraflar; ayrıca buna açıkça izin verdiyseniz, kulübün herkese açık internet sitesinde yayınlanan ve sizi gösteren sürüş ve buluşma fotoğrafları.</li>
         <li><strong>Teknik veriler:</strong> giriş yapabilmeniz için zorunlu oturum çerezi. Başvuru formunu doldururken cevaplarınız (iletişim bilgileri ve onaylar hariç) gönderene kadar yalnızca kendi tarayıcınızda saklanır ve bize ulaşmaz; başvuruyu gönderdiğinizde silinir, 7 gün sonra da geçersiz olur. Dil tercihinizi hatırlamak için bir dil çerezi (1 yıl). Ayrıca tarayıcınız; tema seçiminizi, son dil değişikliğini, açık sekmeleri senkron tutmak için hesabınızdan türetilen kısa bir kodu, uygulama yükleme önerisinin durumunu ve başvuru bağlantısının gösterilip gösterilmeyeceğine dair bir işareti yalnızca kendi cihazınızda saklar. Bunlar sitenin çalışması için gereklidir, sizi izlemek için kullanılmaz ve dil çerezi dışında bize gönderilmez.</li>
       </ul>
 
@@ -33,6 +33,7 @@ export function PrivacyTr() {
         <li>18 yaş şartını kontrol etmek ve doğum gününüzü kutlamak,</li>
         <li>Hangi tanıtım kanallarının ve reklamların işe yaradığını ölçmek,</li>
         <li>Açık rızanız varsa, etkinlik fotoğraflarını kulüp galerisinde paylaşmak,</li>
+        <li>Açık rızanız varsa, kulübü tanıtmak için sürüş ve buluşma fotoğraflarını herkese açık internet sitemizde yayınlamak,</li>
         <li>Sürüş ve etkinlik güvenliğini sağlamak, acil durumda yakınlarınıza ulaşmak ve sağlık ekiplerini bilgilendirmek,</li>
         <li>Açık rızanız varsa, kulüp içinde kan bağışçısı bulmak.</li>
       </ul>
@@ -42,6 +43,7 @@ export function PrivacyTr() {
         <li>Üyelik ilişkisinin kurulması ve yürütülmesi için gerekli olması (KVKK m.5/2-c),</li>
         <li>Temel hak ve özgürlüklerinize zarar vermemek kaydıyla kulübün meşru menfaati (KVKK m.5/2-f): kulüp yönetimi, etkinlik güvenliği, tanıtım kanallarının ölçümü,</li>
         <li>Fotoğraflarınızın galeride paylaşılması için açık rızanız (KVKK m.5/1). Bu rızayı istediğiniz zaman hesap sayfanızdan verebilir veya geri alabilirsiniz; geri almak üyeliğinizi etkilemez.</li>
+        <li>Fotoğraflarınızın herkese açık internet sitemizde yayınlanması için ayrıca verdiğiniz açık rıza (KVKK m.5/1). Bu rızayı istediğiniz zaman 9. bölümdeki yöntemle bize yazarak geri alabilirsiniz; fotoğraf siteden kaldırılır.</li>
         <li>Kan grubunuz için açık rızanız (KVKK m.6). Bu rıza fotoğraf rızasından ayrıdır; istediğiniz zaman hesap sayfanızdan geri alabilirsiniz. Geri aldığınızda kan grubunuz silinir; üyeliğiniz etkilenmez.</li>
         <li>Acil durum kişileriniz ve plakanız için kulübün meşru menfaati (KVKK m.5/2-f) ve acil durumda sizin veya bir başkasının hayatını ya da beden bütünlüğünü korumak (KVKK m.5/2-b).</li>
       </ul>
@@ -80,7 +82,7 @@ export function PrivacyTr() {
       <ul>
         <li>Reddedilen başvurular: karardan itibaren <Placeholder>6 AY</Placeholder> sonra silinir.</li>
         <li>Üye bilgileri: üyelik süresince ve üyelik sona erdikten sonra <Placeholder>1 YIL</Placeholder> boyunca saklanır, ardından silinir veya anonim hale getirilir.</li>
-        <li>Fotoğraflar: açık rızanızı geri aldığınızda galeriden kaldırılır.</li>
+        <li>Fotoğraflar: galerideki fotoğraflar açık rızanızı geri aldığınızda galeriden, internet sitemizdeki fotoğraflar bu rızayı geri aldığınızda siteden kaldırılır.</li>
         <li>Güvenlik kayıtları (kan grubu verisini kimin ne zaman görüntülediği veya değiştirdiği): diğer üye bilgileriyle aynı süre saklanır.</li>
         <li>Acil durum kişileri, kan grubu ve plakalar: diğer üye bilgileriyle aynı süre saklanır. Acil durum kişilerinizi hesap sayfanızdan istediğiniz zaman, plakalarınızı üyeliğiniz aktif olduğu sürece hesap sayfanızdan silebilirsiniz; kan grubunuz rızanızı geri aldığınızda silinir.</li>
       </ul>
