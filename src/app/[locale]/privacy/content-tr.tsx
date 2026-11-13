@@ -105,7 +105,7 @@ export function PrivacyTr() {
         <li>münhasıran otomatik sistemlerle analiz edilmesi sonucu aleyhinize bir sonuç çıkmasına itiraz etme,</li>
         <li>kanuna aykırı işlenmesi sebebiyle zarara uğramanız halinde zararın giderilmesini talep etme</li>
       </ul>
-      <p>haklarına sahipsiniz. Kan grubu rızanızı ve fotoğraf rızanızı ayrıca hesap sayfanızdan istediğiniz zaman geri alabilirsiniz.</p>
+      <p>haklarına sahipsiniz. Kan grubu rızanızı ve galeri fotoğrafları için verdiğiniz rızayı ayrıca hesap sayfanızdan istediğiniz zaman geri alabilirsiniz; internet sitemizdeki fotoğraflar için verdiğiniz rızayı 9. bölümdeki yöntemle bize yazarak geri alabilirsiniz.</p>
 
       <h2>9. Başvuru yöntemi</h2>
       <p>

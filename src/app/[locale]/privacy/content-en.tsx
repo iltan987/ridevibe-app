@@ -109,7 +109,7 @@ export function PrivacyEn() {
         <li>object to a result against you arising solely from automated analysis,</li>
         <li>claim compensation for damages arising from unlawful processing.</li>
       </ul>
-      <p>You can also withdraw your blood type consent and your photo consent yourself on your account page at any time.</p>
+      <p>You can also withdraw your blood type consent and your gallery photo consent yourself on your account page at any time; you can withdraw your consent for photos on our website by writing to us using the method in section 9.</p>
 
       <h2>9. How to exercise your rights</h2>
       <p>
