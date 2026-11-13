@@ -54,6 +54,7 @@
   the locale differs from the header-derived one. Without the header `getAcceptLanguageLocale` returns undefined, so
   the cookie gets set on every first visit (also `/` and crawlers).
 - **Do:** in `src/proxy.ts` give next-intl a `new NextRequest(request, { headers })` with `accept-language` pinned to
-  the default locale (not deleted: see Cause; cookie detection keeps working) and pass the original request to `updateSession`; in `routing.ts` set
-  `localeCookie: { maxAge: 60 * 60 * 24 * 365 }` (merged into the defaults; the client `syncLocaleCookie` reads it too).
+  the default locale (not deleted: see Cause; cookie detection keeps working) and pass the original request to
+  `updateSession`. In `routing.ts` set `localeCookie: { maxAge: 60 * 60 * 24 * 365 }` (merged into the defaults; the
+  client `syncLocaleCookie` reads it too).
 - **Source:** `next-intl/dist/esm/development/middleware/{resolveLocale,syncCookie}.js`, found by testing.

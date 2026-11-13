@@ -206,8 +206,7 @@ Bundled docs are the source of truth: `node_modules/next/dist/docs/` (grep them 
   `/admin/members`); Next source above; `04-linking-and-navigating.md` ("Native History API"); per-frame logs in the
   list-UX E2E (2026-11-13).
 
-## A page's `openGraph` drops the layout-level `opengraph-image` file
-
+### A page's `openGraph` drops the layout-level `opengraph-image` file (2026-11-13)
 - **Symptom:** after a page (e.g. `/apply`) set `openGraph` in `generateMetadata`, its `og:image` and `twitter:image`
   vanished and `twitter:card` fell back to `summary`; pages without `openGraph` kept the image.
 - **Cause:** nested metadata objects overwrite the parent's, file-based images included (the file image is attached
@@ -215,9 +214,3 @@ Bundled docs are the source of truth: `node_modules/next/dist/docs/` (grep them 
 - **Do:** pass the parent's images on: `generateMetadata(_props, parent: ResolvingMetadata)` and
   `images: (await parent).openGraph?.images` into `openGraph` (`pageMetadata` in `src/lib/seo/metadata.ts`).
 - **Source:** found by curl-testing the built site; `generate-metadata.md` ("Extending or overwriting parent images").
-
-### Icons: `icon.svg` + `icon1.png` coexist; share image as JPEG (2026-11-13)
-- **Symptom:** Google's favicon crawler wants a raster icon (multiple of 48 px); a 1200x630 PNG share image was ~310 KB, heavy for link-preview crawlers.
-- **Cause:** n/a, a sizing choice. Next numbers extra icons by suffix (`icon1.png`) and emits one `<link rel="icon">` per file with `sizes` read from the file, next to `icon.svg`, `favicon.ico` and `apple-icon.png`.
-- **Do:** keep `src/app/icon1.png` (192 px) beside `icon.svg`. Convert large share images with Next's own sharp (`require.resolve('sharp', { paths: [require.resolve('next')] })`, `.jpeg({ quality: 82, mozjpeg: true })`): 317 KB PNG became 69 KB JPEG, `opengraph-image.jpg` is picked up by the file convention (route `/-/opengraph-image.jpg`).
-- **Source:** bundled `app-icons.md`; found by testing.

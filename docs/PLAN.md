@@ -18,7 +18,7 @@ take applications, manage members, publish events/announcements, share event pho
 | Region | Supabase `eu-central-1` (Frankfurt) | Closest region to Istanbul; there is no Turkey region (see KVKK) |
 | Hosting | Vercel | Native Next.js hosting, preview deployments per branch |
 | Login | Google sign-in (Supabase OAuth) | Works on Android & iOS, needs no email sending |
-| i18n | next-intl, TR at `/`, EN at `/en` (`localePrefix: "as-needed"`), browser-language detection + remembered choice | URL-based locale keeps pages statically prerendered with Next 16 Cache Components (a cookie-only locale would make every page dynamic); easy to add languages later |
+| i18n | next-intl, TR at `/`, EN at `/en` (`localePrefix: "as-needed"`), no browser-language detection (`/` is Turkish on a first visit); the explicit choice is remembered in `NEXT_LOCALE` for 1 year (2026-11-13, SEO) | URL-based locale keeps pages statically prerendered with Next 16 Cache Components (a cookie-only locale would make every page dynamic); easy to add languages later |
 | Mobile | PWA (manifest + service worker + Web Push) | Android & iOS (16.4+, from Home Screen) without App Store fees |
 | Domain | `ridevibe.com.tr`, DNS on Vercel nameservers | All DNS records (site, email) managed from the Vercel CLI |
 | Email | Deferred until a feature needs it; then Resend on `ridevibe.com.tr` | Resend's test sender can only mail the account owner |
@@ -79,13 +79,16 @@ open to anonymous visitors; instead:
 - **Follow-up:** `unlink_application` RPC (`applications.decide`, open applications only) so a wrong link can be undone
   without SQL.
 
-## Status (2026-11-08)
+## Status (2026-11-13)
 
 Live at https://ridevibe.com.tr: TR/EN site, Google sign-in (roles/statuses), public application form, draft privacy
 notice, staff-only applications list/detail. Google OAuth app is **published** (any Google account can sign in;
 new accounts start as `pending`).
 Own "install the app" prompt done (2026-11-12): banner on `/account` and `/members`, avatar-menu entry, guide for
 iPhone/Android-manual; no service worker (spec `docs/superpowers/specs/2026-11-12-install-prompt-design.md`).
+SEO round 1 (technical) done (2026-11-13): canonical URLs (hreflang stays in next-intl's `Link` headers), Open
+Graph, robots.txt, sitemap.xml, icons, structured data (spec `docs/superpowers/specs/2026-11-13-seo-technical-design.md`); round 2 (home content) is in
+`docs/follow-ups.md`.
 
 ## MVP for Samet (agreed 2026-11-08)
 
@@ -158,9 +161,9 @@ with notes only they can see.
   never auto-rejected (false positives would turn away innocent people). Visible with `members.discipline`.
 - **KVKK:** conduct records are personal data → mention them in the privacy notice; members can request their data
   (art. 11), so notes must be factual and professional; same retention as other member data (anonymise/delete 1 year
-  after membership ends). Add to the lawyer/Samet questions.
+  after membership ends). Add to the Samet questions and the questions Claude researches (no lawyer).
 - KVKK for the ban list: legitimate interest (club safety); must be in the privacy notice with a retention limit
-  (e.g. while the ban lasts, max N years — ask the lawyer).
+  (e.g. while the ban lasts, max N years — Claude researches and proposes, no lawyer).
 
 ## Phase 1 (original scope)
 
@@ -208,7 +211,10 @@ backups or outgrows the free limits. Split across members it is negligible.
 3. **Organizer roster** — RSVP list with search and one-tap "present"; several organizers can work in parallel.
 4. **After-event fix-up** — members can claim "I was there", organizers approve; organizers can bulk-mark from the roster.
 
-## KVKK notes (not legal advice — confirm with a lawyer)
+## KVKK notes (not legal advice)
+
+No lawyer review (iltan, 2026-11-13): Claude researches and decides the open questions; remaining "lawyer" notes in this
+file and in `docs/follow-ups.md` are such questions.
 
 - Publish an *aydınlatma metni* (privacy notice) and get **separate** explicit consents (not bundled): photo sharing,
   any special-category data.
@@ -217,7 +223,8 @@ backups or outgrows the free limits. Split across members it is negligible.
 - Blood type is health data (special category) → optional, separate explicit consent (açık rıza, withdrawable; withdrawal
   deletes it), visible only to holders of `members.safety` (ride organizers / captains), per KVKK Board decision 2018/10.
   Every blood-type operation and every safety-card view is logged in `safety_access_log` (admins only). Emergency
-  contacts and plates rest on legitimate interest (+ vital interest in an emergency), proposed, lawyer to confirm.
+  contacts and plates rest on legitimate interest (+ vital interest in an emergency), proposed (no lawyer: Claude decides,
+  see above).
   Encryption relies on the hosted database's disk encryption (no app-level encryption); see `docs/follow-ups.md`.
 - Data stored outside Turkey (Frankfurt) = cross-border transfer under KVKK art. 9 (amended 2024): standard contract
   with the processor and notification to the Authority within 5 business days.
@@ -230,7 +237,7 @@ backups or outgrows the free limits. Split across members it is negligible.
   the privacy notice. iltan will ask once there is an MVP to show.
 - Contact email for data requests (e.g. `kvkk@ridevibe.com.tr` forwarded to a Gmail).
 - Retention periods: 6 months for rejected applications, 1 year after membership ends (proposed, accepted by iltan).
-- Cross-border transfer formalities (art. 9) — see the lawyer discussion; decide before public launch.
+- Cross-border transfer formalities (art. 9) — Claude researches the formalities (no lawyer); decide before public launch.
 - Member conduct notes/warnings/bans and the ban list (identifiers kept to detect re-joining): wording in the privacy
   notice, retention, and how to answer access requests.
 

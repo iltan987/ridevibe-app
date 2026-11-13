@@ -117,9 +117,11 @@
 - **Icons:** render SVG → PNG with headless Chrome (`--default-background-color=00000000` keeps transparency);
   maskable icon keeps the monogram inside ~56 % of the width (corners well inside the 80 % safe circle).
 
-### `opengraph-image.png` in `[locale]` is served from `/-/opengraph-image.png` (2026-11-09)
-- **Symptom:** `og:image` content is `…/-/opengraph-image.png?<hash>` (HTML of `/` and `/en`); `/opengraph-image.png` is 404.
-- **Cause:** the dynamic segment is replaced by `-` in the metadata route; it works (200, image/png).
+### `opengraph-image.jpg` in `[locale]` is served from `/-/opengraph-image.jpg` (2026-11-09)
+- **Symptom:** `og:image` content is `…/-/opengraph-image.jpg?<hash>` (HTML of `/` and `/en`);
+  `/opengraph-image.jpg` is 404.
+- **Cause:** the dynamic segment is replaced by `-` in the metadata route; it works (200, image/jpeg;
+  the file was a PNG until 2026-11-13).
 - **Do:** nothing. `og:image` is absolute, built from `metadataBase`, which we deliberately leave unset (see
   `nextjs.md`).
 

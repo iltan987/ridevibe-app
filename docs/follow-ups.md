@@ -10,13 +10,16 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ## Next up (iltan asked for these; in priority order; start in a new session)
 
-- **SEO** (2026-11-12, iltan: "we should work on SEO") — iltan added ridevibe.com.tr to Google Search Console
-  (2026-11-12). Design round first; start from what Search Console reports (indexing, coverage, queries). Today
-  there is no `robots.ts` / `sitemap.ts` in `src/app` and no `hreflang` alternates for `tr` (`/`) ↔ `en` (`/en`);
-  private pages already set `robots: { index: false }` (account, members, admin, sign-in). Likely scope: sitemap
-  (public pages per locale) + robots, `alternates.languages` / canonical per page, per-page titles/descriptions and
-  Open Graph for the public pages (home, apply, events, privacy), structured data (e.g. `SportsClub` /
-  `Organization`), Core Web Vitals check; research Next 16 metadata docs first. Submit the sitemap in Search Console.
+- **SEO round 2: home content** (2026-11-13, SEO round 1 spec "Intent") — real club information on the home page (what
+  rides look like, who it is for, how to join): the bigger ranking lever (Google's helpful-content guidance). Needs
+  facts from iltan/Samet and a design pass; round 1 (technical) is done. Start from what Search Console reports
+  (indexing, queries) and the spec `docs/superpowers/specs/2026-11-13-seo-technical-design.md`.
+- **After-deploy SEO checklist** (2026-11-13, SEO round 1 spec) — for iltan, until done: (1) Search Console: submit
+  `https://ridevibe.com.tr/sitemap.xml`, URL inspection → request indexing for `/` and `/en`; (2) Rich Results Test /
+  Schema Markup Validator on `/` (no rich result expected; it should parse without errors); (3) Facebook Sharing
+  Debugger: scrape `/` and `/en` (LinkedIn Post Inspector optional); (4) share a link by hand in WhatsApp, Telegram and
+  iMessage (Telegram may show no preview: open bug); (5) favicon and site name take days to weeks to appear. Run
+  `BASE=https://ridevibe.com.tr node scripts/e2e/seo-check.mjs` after the deploy.
 - **Self-service account deletion** (2026-11-12, iltan) — own design round. Decided so far: a confirm step says what
   gets deleted and what may be kept; on confirmation the account is marked for deletion at once (no admin approval, it
   should feel instant); signing in again within a grace period offers recovery; final deletion after the period. Today
@@ -31,6 +34,9 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 
 ## Open decisions (need iltan)
+
+- **No lawyer** (iltan, 2026-11-13) — the "lawyer" questions below are Claude's to research and decide; iltan
+  confirms the outcome. Reword them as they are settled.
 
 - **"Ön alım" (probation) stage** (2026-11-12, iltan) — after approval the club moves a new member into a separate
   "ön alım" WhatsApp group to see how they behave; they can still join some events. If it doesn't work out they leave
@@ -54,11 +60,6 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 - **Ban evasion vs. linking** (2026-11-09, application gaps) — when the ban list is built (PLAN "Member conduct"),
   check new applications *and* staff links (`link_application`) against it.
-- **Privacy notice: cross-tab sync storage?** (2026-11-12, cross-tab review) — the browser now keeps `rv-auth` (a
-  12-character hash of the account id + a time; `""` after sign-out, left in place if a session just expires) and
-  `rv-locale` (last language switch) in `localStorage`. The notice lists the session cookie and the application draft
-  as browser storage. Decide whether to mention these (technically necessary, no tracking); a text change bumps
-  `PRIVACY_NOTICE_VERSION`.
 - **Privacy notice: directory purpose and legal basis** (2026-11-10, members review) — sections 3/4 of the notice
   (purposes, legal basis) don't mention the in-club member directory (name, district, bikes, birthday, opt-in
   Instagram shown to active members). Question for the lawyer review of the notice. Since 2026-11-11 the birthday is
@@ -135,6 +136,14 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   but no search (it grows without bound, so it isn't loaded whole like `/admin/members`). Add a server-side search
   (debounced, `?q=`) only if staff ask for it.
 
+- **Index `/events` and `/gallery` once they have content** (2026-11-13, SEO round 1) — today they are thin pages
+  (near-empty 200s get reported as soft 404s); make them indexable and add them to `src/app/sitemap.ts` with real
+  content, public events only.
+- **Index `/privacy` and add it to the sitemap when the notice is final** (2026-11-13, SEO round 1) — it stays
+  `noindex` while the notice is a draft.
+- **Event structured data only for public events at a physical place** (2026-11-13, SEO round 1) — members-only rides
+  are ineligible for Google's Event rich results; add `Event` JSON-LD only if such events appear.
+
 ## Parked edge cases (known, judged harmless for now)
 
 - **Install prompt: iOS in-app webviews look like Safari** (2026-11-12, install-prompt final review) — Instagram /
@@ -154,6 +163,11 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   active member"; approval changes nothing for it. Cosmetic.
 - **Approve text when the linked account is hidden by RLS** (2026-11-09, task 7) — superseded by
   `application_account`, which shows status to every viewer; keep an eye on it if that RPC changes.
+
+- **Telegram link previews** (2026-11-13, SEO round 1) — Telegram has an open bug that drops valid previews
+  (bugs.telegram.org/c/61650, active 2026-11); our tags follow the community advice. Test by hand, don't chase.
+- **Sitemap `lastmod`** (2026-11-13, SEO round 1) — left out on purpose: Google uses it only when consistently
+  accurate. Add it if pages get tracked edit dates.
 
 ## Polish and tech debt
 
@@ -203,6 +217,9 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   row survival.
 
 ### App logic
+- **Privacy notice "Teknik veriler" bullet mixes three topics** (2026-11-13, SEO review) — session cookie, form
+  draft, and language cookie + browser storage share one bullet (`src/app/[locale]/privacy/content-*.tsx`). Split
+  into separate bullets with the next notice edit (a text change bumps `PRIVACY_NOTICE_VERSION`).
 - **List UX review minors** (2026-11-13, list UX reviews) — (a) `readAll` (`src/lib/pagination.ts`) stops silently
   if Supabase `max_rows` is ever set below `CHUNK_SIZE` (a short chunk looks like the end); keep the two in sync (doc
   note only). (b) Untested edges: `pageItems(…, 0)`, `normalizeQuery(null)`, `readAll` when a chunk throws. (c) A
