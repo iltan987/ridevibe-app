@@ -51,8 +51,11 @@ export function MembersList({
   });
 
   // A malformed or out-of-range ?page= (also a last page emptied by a row action) renders the clamped page, an
-  // unknown ?status= the pending tab; correct the URL to match.
-  const urlOff = search.pageOff(view.page) || paramOff(params.get("status"), status, DEFAULTS.status);
+  // unknown ?status= the pending tab; correct the URL to match (also dropping a stale ?cursor= of the old pager).
+  const urlOff =
+    search.pageOff(view.page) ||
+    paramOff(params.get("status"), status, DEFAULTS.status) ||
+    paramOff(params.get("cursor"), null);
   useUrlFix(urlOff ? listSearch(urlValues({}), DEFAULTS) : null);
 
   const listTop = useRef<HTMLDivElement>(null);

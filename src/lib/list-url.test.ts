@@ -33,6 +33,14 @@ test("paramOff: the raw URL value isn't how the value shown is written", () => {
   assert.equal(paramOff("99", 2, 1), true);
 });
 
+test("paramOff: a parameter the list never writes (stale ?cursor= bookmarks) is off whenever present", () => {
+  assert.equal(paramOff(null, null), false);
+  assert.equal(paramOff(undefined, null), false);
+  assert.equal(paramOff("MjAyNi0xMS0wOFQxODozMTozNS42MTkxMjMrMDA6MDB8YWJj", null), true);
+  assert.equal(paramOff("", null), true);
+  assert.equal(paramOff(["a", "b"], null), true);
+});
+
 test("serverPage clamps ?page= to the list and flags URLs to correct", () => {
   // 30 rows = 2 pages of 25.
   assert.deepEqual(serverPage(undefined, 30), { page: 1, off: false });

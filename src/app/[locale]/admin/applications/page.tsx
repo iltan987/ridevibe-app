@@ -63,8 +63,11 @@ async function ApplicationsList({
     pathname: "/admin/applications" as const,
     query: listQuery({ status, page, ...target }, DEFAULTS),
   });
-  // Malformed, repeated, default or past-the-end values (e.g. a page emptied since): go to the canonical URL.
-  if (off || paramOff(params.status, status, DEFAULTS.status)) return redirect({ href: href({}), locale });
+  // Malformed, repeated, default or past-the-end values (e.g. a page emptied since) and a stale ?cursor= of the old
+  // keyset pager: go to the canonical URL.
+  if (off || paramOff(params.status, status, DEFAULTS.status) || paramOff(params.cursor, null)) {
+    return redirect({ href: href({}), locale });
+  }
   const from = (page - 1) * PAGE_SIZE;
 
   return (
