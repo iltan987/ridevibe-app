@@ -55,6 +55,72 @@ ben yazacağım; çoğu bilgiyi biliyorum, birkaç şeyi sana sormak istedim. K�
 
 Teşekkürler! 🏍️
 
-## Answers from Samet
+## Answers from Samet (2026-11-13, verbatim)
 
-(pending)
+> Kanka, Ride & Vibe için cevaplarımız şöyle:
+>
+> 1. Kulübün hikâyesi
+>
+> * Ride & Vibe, 1 Kasım’da kuruldu. Motosiklet tutkusunu paylaşan insanları bir araya getirmek, birlikte yeni yollar
+>   keşfetmek ve güzel dostluklar kurmak amacıyla ortaya çıktı.
+> * Kulübü 3 kelimeyle anlatacak olursak: Dostluk, özgürlük, tutku.
+> * 140’tan fazla üye ifadesini kullanabiliriz, güncel üye sayımızı teyit ederek yazalım.
+>
+> 2. Sürüşler
+>
+> * Genellikle hafta sonları toplu sürüşler düzenliyoruz. Sürüşlerimizin süresi rotaya göre yarım gün veya tam gün
+>   olabiliyor. Zaman zaman daha uzun ve birkaç günlük turlar da planlayabiliriz.
+> * Tercih ettiğimiz rotalar arasında Şile, Ağva, Riva, Polonezköy ve İstanbul çevresindeki farklı doğal güzergâhlar
+>   bulunuyor.
+> * Beşiktaş, Üsküdar, Kadıköy ve Beykoz gibi İstanbul’un farklı noktalarında buluşmalar düzenliyoruz. Sahil bölgeleri
+>   buluşmalar için güzel alternatifler.
+>
+> 3. Katılım
+>
+> * Evet, artçı olarak da katılım mümkün. Motosiklet tutkusu olan herkesin bu deneyimi paylaşmasını istiyoruz.
+> * Kulübün temel beklentisi karşılıklı saygı, güvenlik ve sürüş kurallarına uyum. Katılmak isteyenlerin motosiklet
+>   kullanıcısı olması şart değil; artçı olarak da eşlik edebilirler.
+>
+> 4. Kurallar
+>
+> * Kask zorunlu. Bunun yanında sürüş güvenliği için motosiklet montu, eldiven ve uygun ayakkabı veya bot
+>   kullanılmasını öneriyoruz.
+> * Grup sürüşlerinde konvoy düzenini korumak, önündeki sürücüyle güvenli mesafeyi bırakmak, izinsiz sollama yapmamak
+>   ve grubun düzenini bozmamak temel kurallarımız arasında.
+> * Amacımız hızlı gitmek değil, hep birlikte güvenli şekilde gidip hep birlikte dönmek.
+>
+> 5. Sık sorulan sorular
+>
+> * Kulübe katılmak için motosiklet sahibi olmak zorunlu mu? Hayır, artçı olarak da katılım mümkün.
+> * Sürüşlere katılmak için önceden üye olmak gerekiyor mu? Katılım koşullarını kulüp yönetimiyle iletişime geçerek
+>   öğrenebilirsiniz.
+>
+> 6. Fotoğraflar
+>
+> * Grup sürüşlerinden, mola noktalarından, kahve buluşmalarından ve gezilerden fotoğraflar seçebiliriz.
+> * Fotoğraflarda kişilerin yüzleri ve plakaları görünüyorsa yayın izni alınmalı. İzin yoksa yüzler ve plakalar
+>   bulanıklaştırılmalı.
+>
+> 7. Sitede olmasın dediğimiz şeyler
+>
+> * Kulübü sadece hız ve yarış odaklı gösteren ifadeler olmasın.
+> * Tehlikeli sürüşü özendiren fotoğraf ve videolar kullanılmasın.
+> * Amacımızın dostluk, motosiklet tutkusu, güvenli sürüş ve birlikte güzel anılar biriktirmek olduğu ön planda olsun.
+>
+> Ride & Vibe’ın ruhunu yansıtan en önemli şey şu: Bizim için mesele sadece motosiklet sürmek değil, aynı yolu
+> paylaşan güzel insanlarla bir aile olmak.
+
+## Notes for the content round (Claude, 2026-11-13)
+
+- **Founding year:** Samet says "1 Kasım" without a year — confirm with iltan before writing it on the page.
+- **Member count:** Samet wants the number checked before publishing ("140'tan fazla"). Read the current count of
+  active members at that time; decide whether the page states a fixed "140+" or a number from the database.
+- **FAQ "do I need to be a member to join rides?":** Samet's answer ("ask the club management") is vague; the real
+  path is known (apply → approval → a few days of ön alım → main group). Write that, and show it to Samet.
+- **Photos:** faces/plates visible → publication consent needed, otherwise blur them (Samet). No speed/racing framing,
+  no photos that glamorise risky riding.
+- **Tone keywords:** dostluk, özgürlük, tutku; "hep birlikte gidip hep birlikte dönmek"; "aynı yolu paylaşan güzel
+  insanlarla bir aile olmak".
+- **Mismatch with the application form:** the club accepts passengers (artçı, no bike or licence needed) and B-licence
+  riders on 50cc, but the form's licence options are A1 / A2 / A / "not yet" and it asks riding years/style of
+  everyone. See the open decision in `docs/follow-ups.md`.
