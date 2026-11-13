@@ -1,7 +1,8 @@
 {
   "Metadata": {
     "title": "Ride & Vibe",
-    "description": "İstanbul'un motosiklet topluluğu. Sürüşler, etkinlikler ve yeni dostluklar."
+    "homeTitle": "Ride & Vibe · İstanbul Motosiklet Kulübü",
+    "description": "İstanbul'un motosiklet kulübü. Hafta sonu sürüşleri, uzun turlar ve kahve buluşmaları; Asya'dan Avrupa'ya motorcularla tanış. Kulübe başvur."
   },
   "Nav": {
     "home": "Ana Sayfa",
@@ -396,6 +397,7 @@
   },
   "Privacy": {
     "title": "Aydınlatma Metni",
+    "description": "Ride & Vibe'ın kişisel verileri KVKK kapsamında nasıl işlediğini anlatan aydınlatma metni.",
     "draftNotice": "TASLAK — Bu metin henüz hukuki incelemeden geçmedi. Sarı ile işaretli alanlar doldurulacak.",
     "version": "Sürüm: {version}"
   },

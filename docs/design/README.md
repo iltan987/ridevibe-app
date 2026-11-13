@@ -16,7 +16,9 @@ actions, teal for positive/status states, cream text, Saira type.
   it doesn't manage `meta[name=theme-color]`, which we'd need anyway. Borrowed from it instead: theme sync across tabs
   (`storage` event) and no colour transitions while the theme flips (`disableTransitionOnChange`).
 - **Brand:** `src/components/brand/{wordmark,club-badge}.tsx`, `src/assets/brand/badge.png` (production badge), `public/brand/` (wordmark SVG, icon PNGs),
-  `src/app/{favicon.ico,icon.svg,apple-icon.png,manifest.ts}`, `src/app/[locale]/opengraph-image.png`.
+  `src/app/{favicon.ico,icon.svg,apple-icon.png,manifest.ts}`, `src/app/icon1.png` (192 px PNG, a copy of
+  `public/brand/icon-192.png`, for Google's favicon: it ignores SVG), `src/app/[locale]/opengraph-image.jpg` (share
+  image, JPEG ~69 KB, converted with sharp at quality 82).
 - **Mockups:** `docs/design/mockups/` (`chosen-gece-turkuaz.html`, `directions-a-b-c.html`, `shelved-logo-concepts.*`).
   The Turkish sheets shown to Samet are in `mockups/samet-tr/` (PNG; PDFs were the same images, one page each).
 - **WhatsApp photos:** `docs/design/brand/whatsapp/` — `grup.jpg` for every group (circle crop),

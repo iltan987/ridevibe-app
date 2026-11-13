@@ -45,3 +45,18 @@
   `/sign-in` does for signed-in visitors (`signedInDestination`) and the OAuth callback; keep `@/i18n/navigation` for
   hrefs without a prefix.
 - **Source:** next-intl source (installed version).
+
+### Locale detection order and the `NEXT_LOCALE` cookie (2026-11-13)
+- **Symptom:** a first visit (or crawler) with `Accept-Language: en` is redirected from `/` to `/en`; the language
+  choice is forgotten when the browser closes.
+- **Cause:** `resolveLocale` goes prefix → `NEXT_LOCALE` cookie → `Accept-Language` → default. The default cookie has
+  no `maxAge` (session cookie). `syncCookie` sets it on document requests only, when it is outdated or (no cookie and)
+  the locale differs from the header-derived one. Without the header `getAcceptLanguageLocale` returns undefined, so
+  the cookie gets set on every first visit (also `/` and crawlers).
+- **Do:** in `src/proxy.ts` give next-intl a `new NextRequest(request, { headers })` with `accept-language` pinned to
+  the default locale (not deleted: see Cause; cookie detection keeps working) and pass the original request to
+  `updateSession`. In `routing.ts` set `localeCookie: { maxAge: 60 * 60 * 24 * 365 }` (merged into the defaults; the
+  client `syncLocaleCookie` reads it too).
+- **Caveat:** next-intl forwards those request headers on, so every localized page, layout and Server Action sees
+  `accept-language: tr`. Nothing reads it today; code that needs the visitor's real language must not rely on it.
+- **Source:** `next-intl/dist/esm/development/middleware/{resolveLocale,syncCookie}.js`, found by testing.

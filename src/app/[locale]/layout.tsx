@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Saira } from "next/font/google";
-import { NextIntlClientProvider } from "next-intl";
+import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations } from "next-intl/server";
 import { locale } from "next/root-params";
 import { Suspense } from "react";
@@ -13,6 +13,8 @@ import { InlineScript } from "@/components/inline-script";
 import { ThemeScript } from "@/components/theme/theme-script";
 import { routing } from "@/i18n/routing";
 import { installCaptureScript } from "@/lib/pwa/install-script";
+import { sharedOpenGraph } from "@/lib/seo/metadata";
+import { SITE_URL } from "@/lib/seo/site";
 import { THEME_COLORS } from "@/lib/theme";
 import "../globals.css";
 
@@ -28,10 +30,13 @@ export function generateStaticParams() {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("Metadata");
+  const [t, param] = await Promise.all([getTranslations("Metadata"), locale()]);
+  const currentLocale = hasLocale(routing.locales, param) ? param : routing.defaultLocale;
   return {
+    metadataBase: new URL(SITE_URL),
     title: { default: t("title"), template: `%s · ${t("title")}` },
     description: t("description"),
+    openGraph: sharedOpenGraph(currentLocale),
   };
 }
 

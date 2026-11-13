@@ -68,6 +68,9 @@
   `suppressHydrationWarning` (the docs' pattern; a server component can't do it, `window` is always undefined
   there). After a remount/client render the work must happen in client code (theme: `ThemeSwitcher`'s
   `useLayoutEffect`). Check: `scripts/e2e/header-e2e.mjs` against dev and prod.
+- **JSON-LD is the exception:** `<script type="application/ld+json">` (home page, `src/lib/seo/json-ld.ts`) is a data
+  block (`isScriptDataBlock`), so React never warns when it creates it on the client: keep a plain `<script>`, no
+  `InlineScript`.
 - **Also:** on every client navigation Next appends a fresh `meta[name=theme-color]` with the `viewport` value (dark)
   after ours; browsers use the first matching one in tree order (still ours), so the bar colour stays right.
 - **Source:** `preventing-flash-before-hydration.md` ("Extracting a reusable component"),
@@ -114,11 +117,13 @@
 - **Icons:** render SVG → PNG with headless Chrome (`--default-background-color=00000000` keeps transparency);
   maskable icon keeps the monogram inside ~56 % of the width (corners well inside the 80 % safe circle).
 
-### `opengraph-image.png` in `[locale]` is served from `/-/opengraph-image.png` (2026-11-09)
-- **Symptom:** `og:image` content is `…/-/opengraph-image.png?<hash>` (HTML of `/` and `/en`); `/opengraph-image.png` is 404.
-- **Cause:** the dynamic segment is replaced by `-` in the metadata route; it works (200, image/png).
-- **Do:** nothing. `og:image` is absolute, built from `metadataBase`, which we deliberately leave unset (see
-  `nextjs.md`).
+### `opengraph-image.jpg` in `[locale]` is served from `/-/opengraph-image.jpg` (2026-11-09)
+- **Symptom:** `og:image` content is `…/-/opengraph-image.jpg?<hash>` (HTML of `/` and `/en`);
+  `/opengraph-image.jpg` is 404.
+- **Cause:** the dynamic segment is replaced by `-` in the metadata route; it works (200, image/jpeg;
+  the file was a PNG until 2026-11-13).
+- **Do:** nothing. `og:image` is absolute, built from `metadataBase`, which is fixed to the production origin
+  (see `nextjs.md`).
 
 ### `next/image` `priority` is deprecated in Next 16: use `preload` (2026-11-09)
 - **Do:** `<Image preload />` for above-the-fold images (`ClubBadge` takes `preload`); `placeholder="empty"` is the default, omit it.

@@ -1,12 +1,24 @@
-import type { Metadata } from "next";
+import type { Metadata, ResolvingMetadata } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
 import { PRIVACY_NOTICE_VERSION } from "@/lib/applications/options";
+import { pageMetadata } from "@/lib/seo/metadata";
 import { PrivacyEn } from "./content-en";
 import { PrivacyTr } from "./content-tr";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("Privacy");
-  return { title: t("title") };
+export async function generateMetadata(
+  _props: unknown,
+  parent: ResolvingMetadata,
+): Promise<Metadata> {
+  const [locale, t] = await Promise.all([getLocale(), getTranslations("Privacy")]);
+  const images = (await parent).openGraph?.images;
+  return pageMetadata({
+    locale,
+    path: "/privacy",
+    title: t("title"),
+    description: t("description"),
+    index: false,
+    images,
+  });
 }
 
 export default async function PrivacyPage() {

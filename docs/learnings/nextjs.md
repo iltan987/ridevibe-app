@@ -77,12 +77,15 @@ Bundled docs are the source of truth: `node_modules/next/dist/docs/` (grep them 
   id and let the inputs keep what the user just saved.
 - **Source:** `03-api-reference/04-functions/refresh.md`; found by testing.
 
-### `metadataBase` is intentionally unset (2026-11-09)
-- **Symptom:** `og:image` / icon URLs are absolute; locally (`pnpm start`) they point at `http://localhost:3000`.
+### `metadataBase` is fixed to the production origin (2026-11-13)
+- **Symptom:** without `metadataBase`, `og:image` / canonical URLs follow the deployment: locally
+  (`pnpm start`) they point at `http://localhost:3000`, on previews at the branch URL.
 - **Cause:** without `metadataBase` Next falls back to `VERCEL_PROJECT_PRODUCTION_URL` in production and
-  `VERCEL_BRANCH_URL` on previews (`node_modules/next/dist/lib/metadata/resolvers/resolve-url.js`), so each deployment
-  already gets the right origin.
-- **Do:** leave it unset; set it only if a custom canonical origin is needed that differs from the Vercel production URL.
+  `VERCEL_BRANCH_URL` on previews (`node_modules/next/dist/lib/metadata/resolvers/resolve-url.js`).
+- **Do:** `src/app/[locale]/layout.tsx` sets `metadataBase: new URL(SITE_URL)` on purpose, so canonical and `og:url`
+  are always the production origin (also on previews and locally; `seo-check.mjs` relies on it). Side effect:
+  `og:image` URLs on preview deployments point at production, so a new share image shows there only after it is
+  deployed to production.
 - **Source:** Next source, above.
 
 ### Error page: `[locale]/error.tsx`, no `global-error.tsx` (2026-11-09)
@@ -205,3 +208,12 @@ Bundled docs are the source of truth: `node_modules/next/dist/docs/` (grep them 
 - **Source:** `src/components/lists/use-list-params.ts`, `use-list-search.ts` (shared by `/members` and
   `/admin/members`); Next source above; `04-linking-and-navigating.md` ("Native History API"); per-frame logs in the
   list-UX E2E (2026-11-13).
+
+### A page's `openGraph` drops the layout-level `opengraph-image` file (2026-11-13)
+- **Symptom:** after a page (e.g. `/apply`) set `openGraph` in `generateMetadata`, its `og:image` and `twitter:image`
+  vanished and `twitter:card` fell back to `summary`; pages without `openGraph` kept the image.
+- **Cause:** nested metadata objects overwrite the parent's, file-based images included (the file image is attached
+  at the segment that holds the file; its hashed URL can't be hardcoded).
+- **Do:** pass the parent's images on: `generateMetadata(_props, parent: ResolvingMetadata)` and
+  `images: (await parent).openGraph?.images` into `openGraph` (`pageMetadata` in `src/lib/seo/metadata.ts`).
+- **Source:** found by curl-testing the built site; `generate-metadata.md` ("Extending or overwriting parent images").
