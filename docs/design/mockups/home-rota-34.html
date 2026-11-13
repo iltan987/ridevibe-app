@@ -1,0 +1,215 @@
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Saira:wdth,wght@50..125,100..900&display=swap" rel="stylesheet">
+<style>
+  .row { display: flex; gap: 28px; flex-wrap: wrap; align-items: flex-start; }
+  .col { display: flex; flex-direction: column; gap: 8px; }
+  .col h3 { margin: 0; }
+  .site { background: #0B0D10; color: #FBF5E5; font-family: Saira, system-ui, sans-serif; font-size: 16px; line-height: 1.5; }
+  .site * { box-sizing: border-box; margin: 0; }
+  .site img { display: block; }
+  .phone { width: 390px; height: 800px; overflow-y: auto; overflow-x: hidden; border-radius: 28px; border: 8px solid #222; }
+  .desk-frame { width: 790px; height: 800px; overflow-y: auto; overflow-x: hidden; border-radius: 10px; border: 8px solid #222; background: #0B0D10; }
+  .desk { width: 1280px; zoom: .6; font-size: 18px; }
+  .btn { display: inline-block; background: #F98D2F; color: #1A0E02; font-weight: 700; padding: 13px 22px; border-radius: 6px; }
+  .mut { color: #A39C8C; }
+  .h1 { font-stretch: 62%; font-weight: 800; line-height: .86; letter-spacing: -.01em; }
+  .h2 { font-stretch: 70%; font-weight: 800; line-height: .95; }
+
+  /* plate */
+  .plate { position: relative; z-index: 2; display: flex; height: 64px; width: 300px; background: #F6F6F2; border: 3px solid #111;
+    border-radius: 8px; overflow: hidden; color: #111; box-shadow: 0 12px 30px rgba(0,0,0,.55); }
+  .plate .tr { width: 32px; background: #1F4FB3; color: #fff; display: flex; align-items: flex-end; justify-content: center;
+    font-size: 12px; font-weight: 700; padding-bottom: 6px; }
+  .plate .no { flex: 1; display: flex; align-items: center; justify-content: center; font-stretch: 88%; font-weight: 650;
+    font-size: 40px; letter-spacing: .06em; }
+
+  /* route */
+  .route { position: relative; }
+  .route::before { content: ""; position: absolute; left: var(--x); top: 0; bottom: 0; width: 3px; background: #2FD8BE; }
+  .stop { position: relative; }
+  .stop::before { content: ""; position: absolute; left: calc(var(--x) - var(--pad) - 6px); top: var(--dot-top, .42em); width: 15px; height: 15px;
+    border-radius: 50%; background: #0B0D10; border: 3px solid #2FD8BE; }
+  .place { font-stretch: 75%; font-weight: 700; line-height: 1.25; }
+  .place::before { width: 11px; height: 11px; background: #2FD8BE; border: 0; left: calc(var(--x) - var(--pad) - 4px); top: .5em; }
+  .stop.last::before { background: #F98D2F; border-color: #F98D2F; width: 19px; height: 19px; left: calc(var(--x) - var(--pad) - 8px); }
+  .steps b { display: block; font-stretch: 80%; }
+  .motto { color: #F98D2F; }
+  .faq dt { font-weight: 700; margin-top: 18px; }
+  .scale .bar { position: relative; height: 3px; background: #FBF5E5; margin: 18px 6px 8px; }
+  .scale .tick { position: absolute; top: -6px; width: 2px; height: 15px; background: #FBF5E5; }
+  .scale .lbl { display: flex; justify-content: space-between; font-size: 13px; color: #A39C8C; font-stretch: 85%; }
+
+  /* phone specifics */
+  .p .hero { position: relative; height: 640px; }
+  .p .hero img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 38% 40%; }
+  .p .hero .sh { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(11,13,16,0) 35%, rgba(11,13,16,.92) 80%, #0B0D10 100%); }
+  .p .hero .t { position: absolute; left: 20px; right: 20px; bottom: 54px; }
+  .p .h1 { font-size: 92px; }
+  .p .sub { margin: 14px 0 18px; max-width: 30ch; color: #E9E2D0; }
+  .p .plate { margin: -32px 0 0 20px; }
+  .p .route { --x: 27px; --pad: 58px; padding: 0 20px 0 58px; }
+  .p .sec { padding-top: 52px; }
+  .p .h2 { font-size: 40px; margin-bottom: 12px; }
+  .p .place { font-size: 30px; }
+  .p .photo { margin: 22px -20px 0 -58px; position: relative; }
+  .p .photo img { width: 100%; height: 300px; object-fit: cover; }
+  .p .photo::before { content: ""; position: absolute; left: 27px; top: 0; bottom: 0; width: 3px; background: #2FD8BE; z-index: 1; }
+  .p .steps .stop { padding-bottom: 18px; } .p .steps b { font-size: 22px; }
+  .p .motto { font-size: 44px; margin: 6px 0 14px; }
+  .p .faq dt { font-size: 18px; }
+  .p .end { margin-top: 56px; }
+  .p .end img { width: 100%; height: 360px; object-fit: cover; }
+  .p .end .t { padding: 26px 20px 40px; }
+
+  /* desktop specifics (1280 wide) */
+  .d .nav { height: 64px; display: flex; align-items: center; justify-content: space-between; padding: 0 64px; font-weight: 600; color: #A39C8C; }
+  .d .nav img { height: 30px; }
+  .d .hero { position: relative; height: 760px; }
+  .d .hero img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 38%; }
+  .d .hero .sh { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(11,13,16,.9) 0%, rgba(11,13,16,.55) 40%, rgba(11,13,16,0) 70%), linear-gradient(180deg, rgba(11,13,16,0) 65%, #0B0D10 100%); }
+  .d .hero .t { position: absolute; left: 96px; bottom: 110px; width: 600px; }
+  .d .h1 { font-size: 168px; }
+  .d .sub { margin: 20px 0 26px; max-width: 34ch; font-size: 21px; color: #E9E2D0; }
+  .d .plate { margin: -40px 0 0 96px; transform: scale(1.2); transform-origin: left center; }
+  .d .route { --x: 104px; --pad: 160px; padding: 0 96px 0 160px; }
+  .d .sec { padding-top: 110px; }
+  .d .h2 { font-size: 72px; margin-bottom: 18px; }
+  .d .place { font-size: 48px; }
+  .d .two.stop { --dot-top: 150px; }
+  .d .two { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: start; }
+  .d .two img { width: 100%; height: 520px; object-fit: cover; border-radius: 4px; }
+  .d .steps .stop { padding-bottom: 26px; } .d .steps b { font-size: 30px; }
+  .d .motto { font-size: 76px; margin-bottom: 20px; }
+  .d .faq { max-width: 760px; } .d .faq dt { font-size: 22px; margin-top: 26px; }
+  .d .end { position: relative; margin-top: 120px; height: 620px; }
+  .d .end img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .d .end .sh { position: absolute; inset: 0; background: linear-gradient(180deg, #0B0D10 0%, rgba(11,13,16,0) 30%, rgba(11,13,16,0) 45%, rgba(11,13,16,.9) 100%); }
+  .d .end .t { position: absolute; left: 160px; bottom: 80px; }
+  .d .end .h2 { font-size: 80px; max-width: 14ch; margin-bottom: 26px; }
+</style>
+
+<h2>A · Rota + 34 plate</h2>
+<p class="subtitle">The route line starts at the plate under the hero and runs to the end; heading "Her yaştan, her motordan". Phone on the left, desktop (1280px, shown at 60%) on the right. Both scroll.</p>
+
+<div class="row">
+<div class="col"><h3>Phone</h3>
+<div class="phone site p" lang="tr">
+  <div class="hero">
+    <img src="/files/hero-road.jpg" alt="">
+    <div class="sh"></div>
+    <div class="t">
+      <div class="h1">Birlikte<br>sürelim.</div>
+      <p class="sub">Hafta sonu sürüşleri, uzun turlar ve yeni dostluklar. Asya'dan Avrupa'ya, İstanbul'un her yakasından motorcularla tanış.</p>
+      <span class="btn">Kulübe Başvur</span>
+    </div>
+  </div>
+  <div class="plate"><div class="tr">TR</div><div class="no">34 RV 2026</div></div>
+  <div class="route">
+    <div class="sec stop">
+      <div class="h2">Hafta sonu yolda, hafta içi bir arada</div>
+      <p class="mut">Hava uygunsa her hafta sonu toplu sürüşe çıkıyoruz. Rotaya göre yarım ya da tam gün; ara sıra birkaç günlük turlar.</p>
+    </div>
+    <div style="margin:18px 0 6px">
+      <div class="stop place">Şile</div><div class="stop place">Ağva</div><div class="stop place">Riva</div><div class="stop place">Polonezköy</div>
+    </div>
+    <div class="photo"><img src="/files/rides-kiz-kulesi.jpg" alt=""></div>
+    <p class="mut" style="margin-top:16px">Hafta içi yakın oturanlarla bir kafede buluşup muhabbet ediyoruz, çoğu zaman deniz kenarında: Beşiktaş, Üsküdar, Kadıköy, Beykoz.</p>
+
+    <div class="sec stop">
+      <div class="h2">Her yaştan, her motordan</div>
+      <p class="mut">Aramızda yirmili yaşlarında olan da var, kırklı yaşlarında olan da. Her motor, her ehliyet; yeni başlayanlar, kadın sürücüler ve motoru olmayan artçılar da aramızda.</p>
+      <div class="scale"><div class="bar"><span class="tick" style="left:0"></span><span class="tick" style="left:20%"></span><span class="tick" style="left:40%"></span><span class="tick" style="left:60%"></span><span class="tick" style="left:80%"></span><span class="tick" style="left:calc(100% - 2px)"></span></div>
+        <div class="lbl"><span>50cc</span><span>125</span><span>250</span><span>400</span><span>700</span><span>1000cc</span></div></div>
+      <p class="mut" style="font-size:14px;margin-top:10px">Bazı etkinliklerde motor sınıfı gibi katılım koşulları olabilir.</p>
+    </div>
+    <div class="photo"><img src="/files/who-terrace.jpg" alt="" style="height:380px;object-position:50% 70%"></div>
+
+    <div class="sec steps">
+      <div class="h2">Başvurudan ana gruba</div>
+      <div class="stop"><b>Başvur</b><span class="mut">Birkaç dakikalık formu doldur.</span></div>
+      <div class="stop"><b>Onay</b><span class="mut">Kulüp ekibi başvurunu inceler.</span></div>
+      <div class="stop"><b>Ön alım</b><span class="mut">Birkaç gün ayrı bir grupta birbirimizi tanırız.</span></div>
+      <div class="stop last"><b>Ana grup</b><span class="mut">Artık ailedensin.</span></div>
+    </div>
+
+    <div class="sec">
+      <div class="h2 motto">Hep birlikte gidip, hep birlikte dönmek.</div>
+      <p class="mut">Kask zorunlu; mont, eldiven ve bot öneriyoruz. Konvoy düzenini koruyoruz: güvenli mesafe, izinsiz sollama yok. Trafik kurallarına uyuyor, birbirimize saygıyla davranıyoruz.</p>
+    </div>
+
+    <dl class="sec faq">
+      <div class="h2" style="font-size:32px">Sık sorulanlar</div>
+      <dt>Motorum yok, katılabilir miyim?</dt><dd class="mut">Evet, artçı olarak katılabilirsin.</dd>
+      <dt>Yeni başladım, sorun olur mu?</dt><dd class="mut">Hayır. Konvoyda tempo herkese göre ayarlanır; kimse geride kalmaz.</dd>
+      <dt>Sürüşlere üye olmadan katılabilir miyim?</dt><dd class="mut">Sürüşler üyelere açık. Başvurunu yap; onaydan sonra ön alım grubundayken bazı sürüşlere katılabilirsin.</dd>
+    </dl>
+  </div>
+  <div class="end">
+    <img src="/files/closing-breakfast.jpg" alt="">
+    <div class="t"><div class="h2" style="font-size:40px;margin-bottom:20px">Aynı yolu paylaşan insanlarla bir aile.</div><span class="btn">Kulübe Başvur</span></div>
+  </div>
+</div></div>
+
+<div class="col"><h3>Desktop</h3>
+<div class="desk-frame"><div class="desk site d" lang="tr">
+  <div class="nav"><img src="/files/wordmark.svg" alt="" style="filter: invert(94%) sepia(10%) saturate(300%)"><span>Ana Sayfa &nbsp;&nbsp; Etkinlikler &nbsp;&nbsp; Galeri &nbsp;&nbsp; Başvur</span></div>
+  <div class="hero">
+    <img src="/files/hero-road.jpg" alt="">
+    <div class="sh"></div>
+    <div class="t">
+      <div class="h1">Birlikte<br>sürelim.</div>
+      <p class="sub">Hafta sonu sürüşleri, uzun turlar ve yeni dostluklar. Asya'dan Avrupa'ya, İstanbul'un her yakasından motorcularla tanış.</p>
+      <span class="btn" style="font-size:19px;padding:15px 28px">Kulübe Başvur</span>
+    </div>
+  </div>
+  <div class="plate"><div class="tr">TR</div><div class="no">34 RV 2026</div></div>
+  <div class="route">
+    <div class="sec two stop">
+      <div>
+        <div class="h2">Hafta sonu yolda, hafta içi bir arada</div>
+        <p class="mut">Hava uygunsa her hafta sonu toplu sürüşe çıkıyoruz. Rotaya göre yarım ya da tam gün; ara sıra birkaç günlük turlar.</p>
+        <div style="margin:28px 0">
+          <div class="stop place">Şile</div><div class="stop place">Ağva</div><div class="stop place">Riva</div><div class="stop place">Polonezköy</div>
+        </div>
+        <p class="mut">Hafta içi yakın oturanlarla bir kafede buluşup muhabbet ediyoruz, çoğu zaman deniz kenarında: Beşiktaş, Üsküdar, Kadıköy, Beykoz.</p>
+      </div>
+      <img src="/files/rides-kiz-kulesi.jpg" alt="" style="margin-top:12px">
+    </div>
+    <div class="sec two stop">
+      <img src="/files/who-terrace.jpg" alt="" style="object-position:50% 70%">
+      <div style="padding-top:40px">
+        <div class="h2">Her yaştan, her motordan</div>
+        <p class="mut">Aramızda yirmili yaşlarında olan da var, kırklı yaşlarında olan da. Her motor, her ehliyet; yeni başlayanlar, kadın sürücüler ve motoru olmayan artçılar da aramızda.</p>
+        <div class="scale" style="margin-top:26px"><div class="bar"><span class="tick" style="left:0"></span><span class="tick" style="left:20%"></span><span class="tick" style="left:40%"></span><span class="tick" style="left:60%"></span><span class="tick" style="left:80%"></span><span class="tick" style="left:calc(100% - 2px)"></span></div>
+          <div class="lbl" style="font-size:16px"><span>50cc</span><span>125</span><span>250</span><span>400</span><span>700</span><span>1000cc</span></div></div>
+        <p class="mut" style="font-size:16px;margin-top:14px">Bazı etkinliklerde motor sınıfı gibi katılım koşulları olabilir.</p>
+      </div>
+    </div>
+    <div class="sec two">
+      <div class="steps">
+        <div class="h2">Başvurudan ana gruba</div>
+        <div class="stop"><b>Başvur</b><span class="mut">Birkaç dakikalık formu doldur.</span></div>
+        <div class="stop"><b>Onay</b><span class="mut">Kulüp ekibi başvurunu inceler.</span></div>
+        <div class="stop"><b>Ön alım</b><span class="mut">Birkaç gün ayrı bir grupta birbirimizi tanırız.</span></div>
+        <div class="stop last"><b>Ana grup</b><span class="mut">Artık ailedensin.</span></div>
+      </div>
+      <div style="padding-top:90px">
+        <div class="h2 motto">Hep birlikte gidip, hep birlikte dönmek.</div>
+        <p class="mut">Kask zorunlu; mont, eldiven ve bot öneriyoruz. Konvoy düzenini koruyoruz: güvenli mesafe, izinsiz sollama yok. Trafik kurallarına uyuyor, birbirimize saygıyla davranıyoruz.</p>
+      </div>
+    </div>
+    <dl class="sec faq">
+      <div class="h2" style="font-size:52px">Sık sorulanlar</div>
+      <dt>Motorum yok, katılabilir miyim?</dt><dd class="mut">Evet, artçı olarak katılabilirsin.</dd>
+      <dt>Yeni başladım, sorun olur mu?</dt><dd class="mut">Hayır. Konvoyda tempo herkese göre ayarlanır; kimse geride kalmaz.</dd>
+      <dt>Sürüşlere üye olmadan katılabilir miyim?</dt><dd class="mut">Sürüşler üyelere açık. Başvurunu yap; onaydan sonra ön alım grubundayken bazı sürüşlere katılabilirsin.</dd>
+    </dl>
+  </div>
+  <div class="end">
+    <img src="/files/closing-breakfast.jpg" alt="">
+    <div class="sh"></div>
+    <div class="t"><div class="h2">Aynı yolu paylaşan insanlarla bir aile.</div><span class="btn" style="font-size:19px;padding:15px 28px">Kulübe Başvur</span></div>
+  </div>
+</div></div></div>
+</div>
