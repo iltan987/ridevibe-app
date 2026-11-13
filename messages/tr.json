@@ -580,6 +580,9 @@
     }
   },
   "Pagination": {
+    "label": "Sayfalar",
+    "previous": "Önceki sayfa",
+    "page": "Sayfa {page}",
     "next": "Sonraki sayfa",
     "first": "İlk sayfa"
   },

@@ -14,3 +14,11 @@ export function listSearch(
   const query = params.toString();
   return query ? `?${query}` : "";
 }
+
+/** Store-previous-value helper: the search box text follows the URL value when that changes (back/forward). */
+export function syncedInput(
+  prev: { url: string; input: string },
+  urlValue: string,
+): { url: string; input: string } {
+  return urlValue === prev.url ? prev : { url: urlValue, input: urlValue };
+}

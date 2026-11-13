@@ -580,6 +580,9 @@
     }
   },
   "Pagination": {
+    "label": "Pages",
+    "previous": "Previous page",
+    "page": "Page {page}",
     "next": "Next page",
     "first": "First page"
   },
