@@ -85,6 +85,8 @@
   "Members": {
     "title": "Üyeler",
     "total": "{count} üye",
+    "range": "{from}–{to} / {total} üye",
+    "ceiling": "Liste eksik: 2.000'den fazla üye var ve ilk 2.000'i gösteriliyor. Lütfen yöneticilere haber ver.",
     "search": "Üye ara",
     "searchLabel": "Üyelerde ara",
     "sides": {

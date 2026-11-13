@@ -2,11 +2,11 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(38);
+select plan(29);
 
 -- Fixtures (postgres bypasses RLS). Ids 0000…0631–0638, roles 0655/0656; every query is scoped to them.
 -- 631 viewer, 632 safety holder, 633 member (contact, 0-, plate shown), 634 member (plate hidden, no contact),
--- 635 inactive with contact, 636 inactive safety holder, 637 members.manage only, 638 second 0- member (cursor test).
+-- 635 inactive with contact, 636 inactive safety holder, 637 members.manage only, 638 second 0- member.
 insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-000000000631', 'pgtap-sd-viewer@pgtap.invalid',   '{"full_name": "Vedat Viewer"}'),
   ('00000000-0000-0000-0000-000000000632', 'pgtap-sd-safety@pgtap.invalid',   '{"full_name": "Selim Safety"}'),
@@ -64,41 +64,39 @@ exception when others then
   return s;
 end $$;
 
--- Only the new signatures exist
+-- Only the new signature exists; search and counts moved to the browser, so their SQL helpers are gone
 select is((select count(*)::int from pg_proc where oid::regprocedure::text like 'member_directory(%' and pronamespace = 'public'::regnamespace),
   1, 'exactly one member_directory');
-select is((select count(*)::int from pg_proc where oid::regprocedure::text like 'member_directory_counts(%' and pronamespace = 'public'::regnamespace),
-  1, 'exactly one member_directory_counts');
+select is((select count(*)::int from pg_proc where proname = 'member_directory_counts' and pronamespace = 'public'::regnamespace),
+  0, 'member_directory_counts is dropped');
+select is((select count(*)::int from pg_proc where proname = 'search_fold' and pronamespace = 'private'::regnamespace),
+  0, 'private.search_fold is dropped');
 
-select is(has_function_privilege('anon', 'public.member_directory(text, public.istanbul_side, text, uuid, int, public.blood_type, boolean)', 'execute'), false, 'anon cannot execute member_directory');
-select is(has_function_privilege('anon', 'public.member_directory_counts(text, public.blood_type, boolean)', 'execute'), false, 'anon cannot execute member_directory_counts');
+select is(has_function_privilege('anon', 'public.member_directory(public.blood_type, boolean)', 'execute'), false, 'anon cannot execute member_directory');
+select is(has_function_privilege('authenticated', 'public.member_directory(public.blood_type, boolean)', 'execute'), true, 'authenticated can execute member_directory');
 select is(has_function_privilege('anon', 'public.member_safety_card(uuid)', 'execute'), false, 'anon cannot execute member_safety_card');
 select is(has_function_privilege('authenticated', 'public.member_safety_card(uuid)', 'execute'), true, 'authenticated can execute member_safety_card');
 
 -- Viewer: plates follow the switch, no safety data
 select pg_temp.login('00000000-0000-0000-0000-000000000631');
 select is(
-  (select motorcycles->0->>'plate' from public.member_directory(search => 'Cemal')
+  (select motorcycles->0->>'plate' from public.member_directory()
     where id = '00000000-0000-0000-0000-000000000633'),
   '34 ABC 123', 'viewer sees the plate when show_plates is on');
 select is(
-  (select motorcycles->0 ? 'plate' from public.member_directory(search => 'Nuri')
+  (select motorcycles->0 ? 'plate' from public.member_directory()
     where id = '00000000-0000-0000-0000-000000000634'),
   true, 'the plate key is present when hidden');
 select is(
-  (select count(*)::int from public.member_directory(search => 'Nuri')
+  (select count(*)::int from public.member_directory()
     where id = '00000000-0000-0000-0000-000000000634' and motorcycles->0->>'plate' is null),
   1, 'viewer sees a null plate when show_plates is off (row present)');
 select is(
-  (select count(*)::int from public.member_directory(search => 'pgtap-never') ), 0, 'search still filters');
-select is(
-  (select count(*)::int from public.member_directory(search => 'Cemal')
+  (select count(*)::int from public.member_directory()
     where id = '00000000-0000-0000-0000-000000000633' and has_emergency_contact is null),
   1, 'has_emergency_contact is null for the viewer (row present)');
 select is(pg_temp.error_of($$ select * from public.member_directory(blood_filter => '0-') $$), '42501', 'viewer: blood filter -> 42501');
 select is(pg_temp.error_of($$ select * from public.member_directory(no_contact => true) $$), '42501', 'viewer: no_contact -> 42501');
-select is(pg_temp.error_of($$ select * from public.member_directory_counts(blood_filter => '0-') $$), '42501', 'viewer: counts blood filter -> 42501');
-select is(pg_temp.error_of($$ select * from public.member_directory_counts(no_contact => true) $$), '42501', 'viewer: counts no_contact -> 42501');
 select is(pg_temp.error_of($$ select * from public.member_safety_card('00000000-0000-0000-0000-000000000633') $$), '42501', 'viewer: card -> 42501');
 
 -- Safety holder
@@ -118,26 +116,15 @@ select results_eq(
       where id in ('00000000-0000-0000-0000-000000000633', '00000000-0000-0000-0000-000000000634') $$,
   $$ values ('00000000-0000-0000-0000-000000000634') $$,
   'no_contact returns the member without contacts only');
-select is((select total::int from public.member_directory_counts(search => 'Cemal Pgtapsd Contact', blood_filter => '0-')), 1, 'counts: blood filter matches');
-select is((select total::int from public.member_directory_counts(search => 'Nuri', blood_filter => '0-')), 0, 'counts: blood filter excludes');
-select is((select total::int from public.member_directory_counts(search => 'Nuri', no_contact => true)), 1, 'counts: no_contact matches');
-select is((select total::int from public.member_directory_counts(search => 'Cemal Pgtapsd Contact', no_contact => true)), 0, 'counts: no_contact excludes');
 
--- Blood filter with the keyset cursor (page_size 1 returns the page plus one peek row)
-create temp table sd_page1 on commit drop as
-  select id, full_name from public.member_directory(search => 'pgtapsd', blood_filter => '0-', page_size => 1);
+-- Blood filter over every fixture: both 0- members (Contact before Twin), no one else; one call, one log row
 select results_eq(
-  $$ select id::text from sd_page1 order by full_name collate "tr-x-icu", id $$,
+  $$ select d.id::text from public.member_directory(blood_filter => '0-') with ordinality as d
+      where d.id in ('00000000-0000-0000-0000-000000000633', '00000000-0000-0000-0000-000000000634',
+                     '00000000-0000-0000-0000-000000000638')
+      order by d.ordinality $$,
   $$ values ('00000000-0000-0000-0000-000000000633'), ('00000000-0000-0000-0000-000000000638') $$,
-  'page 1 holds both 0- fixtures and not the non-0- one');
-select results_eq(
-  $$ select id::text from public.member_directory(search => 'pgtapsd', blood_filter => '0-', page_size => 1,
-       after_name => (select full_name from sd_page1 order by full_name collate "tr-x-icu", id limit 1),
-       after_id => (select id from sd_page1 order by full_name collate "tr-x-icu", id limit 1)) $$,
-  $$ values ('00000000-0000-0000-0000-000000000638') $$,
-  'page 2 after the first row holds the second 0- fixture only');
-select is((select count(*)::int from sd_page1 where id = '00000000-0000-0000-0000-000000000634'), 0,
-  'the non-0- member never appears under the blood filter');
+  'blood filter returns both 0- fixtures in name order and not the non-0- one');
 
 -- Card
 select results_eq(
@@ -165,10 +152,8 @@ select set_config('role', 'postgres', true);
 select results_eq(
   $$ select actor_id::text, target_id::text, detail from public.safety_access_log
       where action = 'filter_blood_type' and actor_id = '00000000-0000-0000-0000-000000000632' $$,
-  $$ values ('00000000-0000-0000-0000-000000000632', null, '0-'), ('00000000-0000-0000-0000-000000000632', null, '0-'),
-            ('00000000-0000-0000-0000-000000000632', null, '0-'), ('00000000-0000-0000-0000-000000000632', null, '0-'),
-            ('00000000-0000-0000-0000-000000000632', null, '0-') $$,
-  'five filter_blood_type rows (three directory + two counts calls with a blood filter); no_contact calls logged none');
+  $$ values ('00000000-0000-0000-0000-000000000632', null, '0-'), ('00000000-0000-0000-0000-000000000632', null, '0-') $$,
+  'two filter_blood_type rows (one per directory call with a blood filter); no_contact calls logged none');
 select results_eq(
   $$ select actor_id::text, target_id::text from public.safety_access_log
       where action = 'view_card' and actor_id = '00000000-0000-0000-0000-000000000632'
@@ -186,7 +171,6 @@ select is(
 select set_config('role', 'anon', true);
 select set_config('request.jwt.claims', '{"role":"anon"}', true);
 select is(pg_temp.error_of($$ select * from public.member_directory() $$), '42501', 'anon: directory -> 42501');
-select is(pg_temp.error_of($$ select * from public.member_directory_counts() $$), '42501', 'anon: counts -> 42501');
 select is(pg_temp.error_of($$ select * from public.member_safety_card('00000000-0000-0000-0000-000000000633') $$), '42501', 'anon: card -> 42501');
 
 select * from finish();

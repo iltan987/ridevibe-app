@@ -17,3 +17,9 @@ test("syncedInput keeps the typed text while the URL value is unchanged", () => 
 test("syncedInput follows the URL when it changes (back/forward)", () => {
   assert.deepEqual(syncedInput({ url: "ali", input: "alix" }, ""), { url: "", input: "" });
 });
+
+test("syncedInput keeps the typed text when the URL catches up with it (own write, trimmed)", () => {
+  // Typing "ali v" then deleting the "v": the URL becomes "ali"; the box keeps its trailing space.
+  assert.deepEqual(syncedInput({ url: "ali v", input: "ali " }, "ali"), { url: "ali", input: "ali " });
+  assert.deepEqual(syncedInput({ url: "", input: " ali" }, "ali"), { url: "ali", input: " ali" });
+});

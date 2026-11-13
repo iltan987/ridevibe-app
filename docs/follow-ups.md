@@ -174,16 +174,16 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ### Database / tests
 - **Turkish case folding in `linkable_accounts` search** (2026-11-09) — `ilike` doesn't fold `ı/İ`
-  (`supabase/schemas/20_applications.sql`). Email search and name-match ordering compensate. Fix: reuse
-  `private.search_fold` (`30_member_directory.sql`) on both sides of the `like`.
+  (`supabase/schemas/20_applications.sql`). Email search and name-match ordering compensate. Fix: a SQL fold helper
+  on both sides of the `like` (`private.search_fold` was dropped 2026-11-13 when directory search moved to the
+  browser; recipe in `docs/learnings/supabase.md`, "Turkish sort order and search").
 - **Members DB review minors** (2026-11-10, members review) — (a) `private.tidy_name(…, false)` maps `İ` to `I`, so
   `'ÇELİK'` stays mixed-case with `turkish = false`; unreachable through the triggers (`İ` forces Turkish). (b)
   Instagram check accepts `...` / a trailing `.` (same as `applications`; matches the spec). (c) The motorcycle cap
   trigger runs before the RLS check, so a foreign-profile insert on a target with 10 bikes gets `23514` instead of
   `42501` (tiny info leak, briefly locks the target profile); fix: early-return when `new.profile_id <> auth.uid()`
   or `for no key update`. (d) The photo-consent fill helper updates `member_details` unconditionally, bumping
-  `updated_at` for every backfilled profile. (e) The search-pattern block is duplicated in `member_directory` and its
-  count RPC; extract `private.search_pattern` if a third caller appears. (f) `consent_photos_version` is
+  `updated_at` for every backfilled profile. (e) `consent_photos_version` is
   member-writable free text (≤ 40 chars; the action writes `PRIVACY_NOTICE_VERSION` only on a real change); could be
   set server-side (trigger) instead of granted.
 - **Members pgTAP gaps** (2026-11-10, members review) — owner `INSERT` into `member_details` (no grant) not asserted;
@@ -203,8 +203,7 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   skips foreign-key checks; add one clause to the `docs/learnings/testing.md` entry.
 - **Safety data pgTAP / SQL minors** (2026-11-13, safety data reviews) — (a) Task 1: the 0606 post-check can't prove
   row survival. (b) Task 4: `safety_directory.test.sql` creates a temp table as `authenticated` (needs TEMP on the
-  database; watch at the production `test db` run). (c) The blood/no-contact predicates and the permission check are
-  duplicated between `member_directory` and `member_directory_counts`; extract them if a third caller appears.
+  database; watch at the production `test db` run).
 
 ### App logic
 - **`isGoogleMailAddress("gmail.com")` returns true** without an `@` (`src/lib/applications/contact.ts`). Callers

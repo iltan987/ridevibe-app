@@ -1,7 +1,7 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
 /**
- * Fallback for the member directory: total + profile link row, search row, the three side chips and 4 cards.
+ * Fallback for the member directory: total + profile link row, search box, the three side chips, 4 cards and the pager.
  * Mirrors the page layout (sections `gap-6` apart); card height is a typical card (name, location, one bike = 94px; measured).
  */
 export function DirectorySkeleton() {
@@ -11,9 +11,8 @@ export function DirectorySkeleton() {
         <Skeleton className="h-3.5 w-16" />
         <Skeleton className="h-3.5 w-28" />
       </div>
-      <div className="flex gap-2" data-skeleton="members-search">
+      <div className="flex" data-skeleton="members-search">
         <Skeleton className="h-8 flex-1" />
-        <Skeleton className="size-8" />
       </div>
       <div className="-mx-4 flex gap-2 overflow-hidden px-4 pb-1" data-skeleton="members-chips">
         {["w-16", "w-24", "w-24"].map((width, i) => (
@@ -24,6 +23,17 @@ export function DirectorySkeleton() {
         {[0, 1, 2, 3].map((i) => (
           <Skeleton key={i} data-skeleton="members-row" className="h-23.5 w-full rounded-xl" />
         ))}
+      </div>
+      {/* Pager of a typical club (~6 pages: ‹ 1 2 … 6 ›, 36px buttons) + range line; estimated from the classes. */}
+      <div className="flex flex-col items-center gap-2" data-skeleton="pager">
+        <div className="flex items-center gap-1">
+          {[0, 1, 2, 3, 4, 5].map((i) => (
+            <Skeleton key={i} className="size-9" />
+          ))}
+        </div>
+        <div className="flex h-4 items-center">
+          <Skeleton className="h-3 w-24" />
+        </div>
       </div>
     </div>
   );

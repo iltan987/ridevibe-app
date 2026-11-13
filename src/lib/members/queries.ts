@@ -1,6 +1,6 @@
 import "server-only";
 import { getCurrentUser } from "@/lib/auth/user";
-import { encodeNameCursor, type NameCursor, PAGE_SIZE, splitPage } from "@/lib/pagination";
+import { readAll } from "@/lib/pagination";
 import { createClient } from "@/lib/supabase/server";
 import type { Enums } from "@/lib/supabase/database.types";
 import type { BloodType } from "./blood-type";
@@ -48,34 +48,29 @@ export type MyProfile = {
   bloodConsent: boolean;
 };
 
-/** One page of the member directory (active members only; the DB sorts by Turkish name and hides opted-out fields). */
-export async function listDirectory({
-  query,
-  side,
-  cursor,
+/**
+ * Every active member for the directory (the DB sorts by Turkish name and hides opted-out fields), read in
+ * CHUNK_SIZE pages up to LIST_CEILING. The browser filters and pages; the safety filters stay here because a blood
+ * filter is logged per call.
+ */
+export async function loadDirectory({
   bloodType,
   noContact,
 }: {
-  query?: string;
-  side?: IstanbulSide | null;
-  cursor?: NameCursor | null;
   bloodType?: BloodType | null;
   noContact?: boolean;
-}) {
+}): Promise<{ members: DirectoryMember[]; overCeiling: boolean }> {
   const supabase = await createClient();
   // Generated arg types are non-nullable: omit absent args instead of passing null.
-  const { data, error } = await supabase.rpc("member_directory", {
-    page_size: PAGE_SIZE,
-    ...(query ? { search: query } : {}),
-    ...(side ? { side_filter: side } : {}),
-    ...(cursor ? { after_name: cursor.name, after_id: cursor.id } : {}),
-    ...(bloodType ? { blood_filter: bloodType } : {}),
-    ...(noContact ? { no_contact: true } : {}),
+  const args = { ...(bloodType ? { blood_filter: bloodType } : {}), ...(noContact ? { no_contact: true } : {}) };
+  const { items, overCeiling } = await readAll(async (from, to) => {
+    const { data, error } = await supabase.rpc("member_directory", args).range(from, to);
+    if (error) throw new Error(`loadDirectory failed: ${error.code}`);
+    return data;
   });
-  if (error) throw new Error(`listDirectory failed: ${error.code}`);
 
   // Generated return types are non-nullable although the columns can be null.
-  const members = data.map(
+  const members = items.map(
     (row): DirectoryMember => ({
       id: row.id,
       fullName: row.full_name,
@@ -89,29 +84,7 @@ export async function listDirectory({
       hasEmergencyContact: (row.has_emergency_contact as boolean | null) ?? null,
     }),
   );
-  return splitPage(members, PAGE_SIZE, (last) => encodeNameCursor({ name: last.fullName, id: last.id }));
-}
-
-/** Directory totals for the filter chips; the side counts ignore the side filter but honour the search. */
-export async function countDirectory({
-  query,
-  bloodType,
-  noContact,
-}: {
-  query?: string;
-  bloodType?: BloodType | null;
-  noContact?: boolean;
-}) {
-  const supabase = await createClient();
-  const { data, error } = await supabase.rpc("member_directory_counts", {
-    ...(query ? { search: query } : {}),
-    ...(bloodType ? { blood_filter: bloodType } : {}),
-    ...(noContact ? { no_contact: true } : {}),
-  });
-  if (error) throw new Error(`countDirectory failed: ${error.code}`);
-  const row = data[0];
-  // bigint columns may arrive as strings or numbers
-  return { total: Number(row?.total ?? 0), asian: Number(row?.asian ?? 0), european: Number(row?.european ?? 0) };
+  return { members, overCeiling };
 }
 
 /** The signed-in member's own editable profile data; null when signed out or the profile row is missing. */

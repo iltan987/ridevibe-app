@@ -4,9 +4,7 @@ import { test } from "node:test";
 import {
   afterCursorFilter,
   decodeCursor,
-  decodeNameCursor,
   encodeCursor,
-  encodeNameCursor,
   ilikeContains,
   clampPage,
   pageCount,
@@ -58,41 +56,6 @@ test("toPage returns a next cursor only when there are more rows", () => {
 
 test("ilikeContains escapes wildcards", () => {
   assert.equal(ilikeContains("50%_a\\b"), "%50\\%\\_a\\\\b%");
-});
-
-test("name cursor round-trips, including | and quotes", () => {
-  for (const name of ["Çelik Cem", 'Ali "Pilot" | Veli', "a"]) {
-    const cursor = { name, id };
-    assert.deepEqual(decodeNameCursor(encodeNameCursor(cursor)), cursor);
-  }
-});
-
-test("name cursor round-trips a 120-character name of 4-byte characters", () => {
-  const cursor = { name: "😀".repeat(120), id };
-  assert.deepEqual(decodeNameCursor(encodeNameCursor(cursor)), cursor);
-  assert.equal(decodeNameCursor(encodeNameCursor({ name: "😀".repeat(121), id })), null);
-});
-
-test("rejects malformed name cursors", () => {
-  const enc = (v: unknown) => Buffer.from(typeof v === "string" ? v : JSON.stringify(v)).toString("base64url");
-  for (const value of [
-    undefined,
-    ["x"],
-    "",
-    "x",
-    enc("not json"),
-    enc([1, 2]),
-    enc(["Ali"]),
-    enc(["Ali", id, "extra"]),
-    enc({ 0: "Ali", 1: id }),
-    enc(["", id]),
-    enc(["Ali", "not-a-uuid"]),
-    enc(["a".repeat(121), id]),
-    enc(["a".repeat(400), id]),
-  ]) {
-    assert.equal(decodeNameCursor(value), null, JSON.stringify(value));
-  }
-  assert.notEqual(decodeNameCursor(enc(["a".repeat(120), id])), null);
 });
 
 test("splitPage cuts the extra row and builds the cursor from the last item", () => {

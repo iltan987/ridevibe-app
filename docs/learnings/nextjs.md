@@ -184,3 +184,18 @@ Bundled docs are the source of truth: `node_modules/next/dist/docs/` (grep them 
 - **Do:** let the server decide: `router.refresh()` and no routing logic in the tab (`src/components/auth/auth-sync.tsx`).
 - **Source:** found by testing (two Puppeteer tabs, production build); `use-router.md` describes `refresh()` but not
   redirects.
+
+### URL as list state: `pushState`/`replaceState` + `useSearchParams`, and the render in between (2026-11-13)
+- **Need:** `/members` filters in the browser with the state in the URL (`?q=…&side=…&page=…`), no server request.
+- **Cause:** Next's patched `history.pushState`/`replaceState` call `navigator.restore`, whose reducer
+  (`router-reducer/reducers/restore-reducer.js`) re-uses the current tree and the old `renderedSearch` — no RSC fetch
+  is expected (browser check pending in the list-UX E2E). The router update runs in a transition, so a sync
+  `setState` from the same event (the search box) renders **once more with the old search params** first.
+- **Do:** (1) keep the box text in state and let `syncedInput` (`src/lib/list-url.ts`) follow the URL only when it
+  differs from the typed text — on typing update `input` only, else the echo eats a trailing space or flips the text
+  back for a frame; (2) filter by the typed text, and while it differs from the URL's `q` treat the page as 1 (the
+  write dropped `page`), else a page-clamp effect in that in-between render writes the stale page back; (3) correct a
+  bad `?page=` in an effect with `replaceState` only (no `setState`). `useSearchParams` works in SSR here (the client
+  list renders inside the page's request-time `<Suspense>`), so a shared `?q=çel&page=2` arrives filtered.
+- **Source:** `src/components/members/directory-list.tsx`; Next source above; `04-linking-and-navigating.md`
+  ("Native History API").

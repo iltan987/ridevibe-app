@@ -85,6 +85,8 @@
   "Members": {
     "title": "Members",
     "total": "{count, plural, one {# member} other {# members}}",
+    "range": "{from}–{to} of {total, plural, one {# member} other {# members}}",
+    "ceiling": "This list is incomplete: there are more than 2,000 members and only the first 2,000 are shown. Please tell the admins.",
     "search": "Search members",
     "searchLabel": "Search members",
     "sides": {

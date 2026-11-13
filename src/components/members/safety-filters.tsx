@@ -1,25 +1,22 @@
-import { getTranslations } from "next-intl/server";
+"use client";
+
+import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import type { BloodType } from "@/lib/members/blood-type";
 import { BloodSelect } from "./blood-select";
 
 /**
- * Safety filters of the directory (members.safety holders only): blood type (GET form that keeps the other
- * params) and the "no emergency contact" toggle chip. Both drop the cursor.
+ * Safety filters of the directory (members.safety holders only): blood type (GET form) and the "no emergency
+ * contact" toggle chip. Both are server navigations (a blood filter is logged); they keep the search and side the
+ * browser has put into the URL since the page loaded (read live, not from the server render) and drop the page.
  */
-export async function SafetyFilters({
-  bloodType,
-  noContact,
-  query,
-  side,
-}: {
-  bloodType: BloodType | null;
-  noContact: boolean;
-  query: string;
-  side: string | null;
-}) {
-  const t = await getTranslations("Members.safety");
+export function SafetyFilters({ bloodType, noContact }: { bloodType: BloodType | null; noContact: boolean }) {
+  const t = useTranslations("Members.safety");
+  const searchParams = useSearchParams();
+  const query = searchParams.get("q") ?? "";
+  const side = searchParams.get("side") ?? "";
 
   return (
     <div role="group" aria-label={t("filtersLabel")} className="flex flex-wrap items-center gap-2">

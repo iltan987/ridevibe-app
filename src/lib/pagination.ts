@@ -27,31 +27,6 @@ export function decodeCursor(value: unknown): Cursor | null {
   return { createdAt, id };
 }
 
-// Name cursor for lists ordered by (name, id) — the member directory (Turkish collation lives in the DB).
-export type NameCursor = { name: string; id: string };
-
-export function encodeNameCursor({ name, id }: NameCursor) {
-  return Buffer.from(JSON.stringify([name, id])).toString("base64url");
-}
-
-/** Parses an untrusted `?cursor=` value for name-ordered lists; null when absent or malformed. */
-export function decodeNameCursor(value: unknown): NameCursor | null {
-  if (typeof value !== "string" || value.length > 1000) return null;
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(Buffer.from(value, "base64url").toString("utf8"));
-  } catch {
-    return null;
-  }
-  if (!Array.isArray(parsed) || parsed.length !== 2) return null;
-  const [name, id] = parsed;
-  if (typeof name !== "string" || typeof id !== "string") return null;
-  // Count code points (the DB limit is in characters), not UTF-16 units: emoji take two.
-  const length = Array.from(name).length;
-  if (length < 1 || length > 120 || !UUID.test(id)) return null;
-  return { name, id };
-}
-
 /** PostgREST `.or()` filter: rows that come after `cursor` in (created_at desc, id desc) order. */
 export function afterCursorFilter({ createdAt, id }: Cursor) {
   return `created_at.lt."${createdAt}",and(created_at.eq."${createdAt}",id.lt.${id})`;
