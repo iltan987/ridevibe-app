@@ -30,7 +30,7 @@ export function PhotoSection({
           <Image
             src={photo}
             alt={alt}
-            sizes="(min-width: 768px) 50vw, 100vw"
+            sizes="(min-width: 1024px) 472px, (min-width: 768px) 50vw, 100vw"
             placeholder="blur"
             className="h-auto w-full rounded-2xl"
           />

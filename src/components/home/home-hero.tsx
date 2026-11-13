@@ -9,7 +9,7 @@ import { HomeApplyButton } from "@/components/home/home-apply-button";
 export function HomeHero() {
   const t = useTranslations("Home");
   return (
-    <section data-home-hero className="dark relative h-[560px] overflow-hidden bg-background md:h-[720px]">
+    <section data-home-hero className="dark relative flex min-h-[560px] flex-col justify-end overflow-hidden bg-background md:min-h-[720px]">
       <Image
         src={heroRoad}
         alt={t("heroAlt")}
@@ -27,7 +27,7 @@ export function HomeHero() {
         aria-hidden
         className="absolute inset-x-0 bottom-0 hidden h-40 bg-linear-to-b from-transparent to-background md:block"
       />
-      <div className="relative mx-auto flex h-full w-full max-w-5xl flex-col justify-end gap-4 px-4 pb-10 md:pb-16">
+      <div className="relative mx-auto flex w-full max-w-5xl flex-col gap-4 px-4 pb-10 md:pb-16">
         <ClubBadge sizes="(min-width: 768px) 84px, 64px" className="w-16 md:w-21" />
         <p className="eyebrow">{t("eyebrow")}</p>
         <h1 className="heading text-5xl leading-[1.05] text-balance text-foreground sm:text-7xl">

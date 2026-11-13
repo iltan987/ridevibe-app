@@ -6,7 +6,7 @@ import { InlineScript } from "@/components/inline-script";
 import { Link } from "@/i18n/navigation";
 import { applyHintScript } from "@/lib/applications/apply-hint";
 
-// The hero's "Başvur" in the static shell, before the session is known: shown unless we guess the visitor is a member
+// The home page's "Başvur" buttons (hero and closing) in the static shell, before the session is known: shown unless we guess the visitor is a member
 // or open applicant (inline script in the server HTML, hook on client renders). No UTM params here (see HeroApplyForUser).
 export function HeroApplyGuess({ className, children }: { className?: string; children: ReactNode }) {
   const hidden = useApplyHiddenGuess();

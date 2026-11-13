@@ -28,7 +28,7 @@ export function HomeJoin() {
           ))}
         </ol>
         <div className="rounded-xl border bg-card p-5 md:w-1/2">
-          <h3 className="eyebrow">{t("rules.title")}</h3>
+          <h2 className="eyebrow">{t("rules.title")}</h2>
           <p className="mt-3 text-pretty text-foreground/90">{t("rules.body")}</p>
           <p className="mt-3 font-bold text-pretty">{t("rules.motto")}</p>
         </div>
