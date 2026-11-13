@@ -4,13 +4,14 @@ import { cn } from "@/lib/utils";
 
 /**
  * Fallback for the admin lists (applications, members): the filter chip row, an optional search row, `rows`
- * skeleton rows and an optional pager. Mirrors the page layout: sections are `gap-6` apart, rows have their own gap.
+ * skeleton rows and an optional range line. Mirrors the page layout: sections are `gap-6` apart, rows have their own gap.
  *
  * - `rowClassName`: the row's height class (and breakpoints), measured on the real row.
  * - `listClassName`: gap between rows, same as the real `<ul>`.
  * - `search`: the members search form (input only, `h-8`).
  * - `hint`: the members pending-tab helper paragraph (`text-sm`, h-5 lines: four on phones, two from `sm`).
- * - `pager`: the numbered pager + range line (`PagerSkeleton`, estimated, not measured yet).
+ * - `pager`: the range line under the list. Not the button row: the default tabs (pending members, new
+ *   applications) usually fit one page, where the pager shows the range line only.
  */
 export function ListSkeleton({
   rows,
@@ -54,7 +55,7 @@ export function ListSkeleton({
           <Skeleton key={i} data-skeleton="admin-row" className={cn("w-full rounded-xl", rowClassName)} />
         ))}
       </div>
-      {pager && <PagerSkeleton />}
+      {pager && <PagerSkeleton buttons={false} />}
     </div>
   );
 }
