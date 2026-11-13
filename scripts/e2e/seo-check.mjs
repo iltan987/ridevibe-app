@@ -12,8 +12,13 @@ const decode = (s) => s
 const norm = (u) => { try { return new URL(u).href; } catch { return u; } };
 
 async function get(path, headers = {}) {
-  const res = await fetch(BASE + path, { redirect: "manual", headers });
-  return { res, status: res.status, body: await res.text() };
+  try {
+    const res = await fetch(BASE + path, { redirect: "manual", headers, signal: AbortSignal.timeout(15000) });
+    return { res, status: res.status, body: await res.text() };
+  } catch (e) {
+    check(`GET ${path}`, false, String(e?.cause?.code ?? e?.message ?? e));
+    return { res: new Response(null, { status: 599 }), status: 599, body: "" };
+  }
 }
 function tags(html, name) {
   return [...html.matchAll(new RegExp(`<${name}\\b[^>]*>`, "gi"))].map((m) => {
@@ -49,7 +54,7 @@ const pages = [
 ];
 const heads = {};
 for (const p of pages) {
-  const { status, body: h } = await get(p.path);
+  const { res, status, body: h } = await get(p.path);
   heads[p.path] = h;
   const n = p.path;
   check(`${n} 200`, status === 200);
@@ -66,7 +71,8 @@ for (const p of pages) {
   check(`${n} twitter:card summary_large_image`, one(h, "twitter:card") === "summary_large_image");
   check(`${n} twitter:title = og:title`, !!one(h, "twitter:title") && one(h, "twitter:title") === one(h, "og:title"));
   check(`${n} twitter:image`, !!one(h, "twitter:image"));
-  check(`${n} no noindex`, !/noindex/i.test(one(h, "robots") ?? ""));
+  check(`${n} no noindex (meta + x-robots-tag)`,
+    !/noindex/i.test(one(h, "robots") ?? "") && !/noindex/i.test(res.headers.get("x-robots-tag") ?? ""));
 }
 check("/ and /en titles differ", title(heads["/"]) !== title(heads["/en"]));
 check("/ and /en descriptions differ", one(heads["/"], "description") !== one(heads["/en"], "description"));
@@ -84,7 +90,8 @@ check("/apply and /en/apply descriptions differ", one(heads["/apply"], "descript
 for (const path of ["/privacy", "/en/privacy", "/events", "/en/events", "/gallery", "/en/gallery", "/members", "/account", "/sign-in"]) {
   const { res, body } = await get(path);
   const robots = one(body, "robots") ?? "";
-  check(`${path} noindex`, /noindex/i.test(robots) || /noindex/i.test(res.headers.get("x-robots-tag") ?? ""), `status ${res.status}`);
+  check(`${path} 200 + noindex`, res.status === 200
+    && (/noindex/i.test(robots) || /noindex/i.test(res.headers.get("x-robots-tag") ?? "")), `status ${res.status}`);
 }
 
 // JSON-LD on the home pages
@@ -123,6 +130,25 @@ for (const path of ["/", "/en"]) {
   const icons = tags(heads["/"], "link").filter((l) => /(^|\s)icon(\s|$)/.test(l.rel ?? ""));
   const png = icons.find((l) => /png/.test(l.type ?? "") && parseInt(l.sizes ?? "0", 10) >= 48);
   check("home head has a PNG icon >= 48px", !!png, icons.map((l) => `${l.type}/${l.sizes}`).join(" "));
+}
+
+// share image: the og:image URL has the production origin even locally, so fetch its path from BASE
+{
+  const src = one(heads["/"], "og:image");
+  let ok = false, extra = String(src);
+  if (src) {
+    const u = new URL(src, SITE);
+    const path = u.pathname + u.search;
+    try {
+      const res = await fetch(BASE + path, { redirect: "manual", signal: AbortSignal.timeout(15000) });
+      const buf = await res.arrayBuffer();
+      const type = res.headers.get("content-type") ?? "";
+      const size = Number(res.headers.get("content-length")) || buf.byteLength;
+      ok = res.status === 200 && type.startsWith("image/") && size < 600000;
+      extra = `${path} ${res.status} ${type} ${size} bytes`;
+    } catch (e) { extra = `${path} ${e?.message ?? e}`; }
+  }
+  check("og:image of / is 200, image/*, < 600000 bytes", ok, extra);
 }
 
 console.log(fails ? `\n${fails} check(s) FAILED` : "\nall checks passed");

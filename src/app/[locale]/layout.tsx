@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Saira } from "next/font/google";
-import { NextIntlClientProvider } from "next-intl";
-import { getLocale, getTranslations } from "next-intl/server";
+import { hasLocale, NextIntlClientProvider } from "next-intl";
+import { getTranslations } from "next-intl/server";
 import { locale } from "next/root-params";
 import { Suspense } from "react";
 import { NavigationProgress } from "@/components/layout/navigation-progress";
@@ -30,12 +30,13 @@ export function generateStaticParams() {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const [t, locale] = await Promise.all([getTranslations("Metadata"), getLocale()]);
+  const [t, param] = await Promise.all([getTranslations("Metadata"), locale()]);
+  const currentLocale = hasLocale(routing.locales, param) ? param : routing.defaultLocale;
   return {
     metadataBase: new URL(SITE_URL),
     title: { default: t("title"), template: `%s · ${t("title")}` },
     description: t("description"),
-    openGraph: sharedOpenGraph(locale),
+    openGraph: sharedOpenGraph(currentLocale),
   };
 }
 

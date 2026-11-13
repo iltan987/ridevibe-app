@@ -99,7 +99,8 @@ Run against a **local** stack only (local Supabase + a server on port 3123); nev
 - `seo-check.mjs` — SEO checks with plain `fetch` (no puppeteer, no fixtures; PASS/FAIL lines, exit code != 0 on
   failure): robots.txt and sitemap.xml, `<head>` of `/`, `/en`, `/apply`, `/en/apply` (title/description differ per
   language, canonical = og:url = production URL, Open Graph, Twitter card, no noindex), canonical without query
-  strings, noindex on privacy/events/gallery and the private pages, one JSON-LD graph on `/` and `/en`, the locale
+  strings, 200 + noindex on privacy/events/gallery and the private pages (meta or `x-robots-tag`), the `og:image`
+  of `/` (200, `image/*`, under 600 KB), one JSON-LD graph on `/` and `/en`, the locale
   rules (`Accept-Language` ignored, `NEXT_LOCALE=en` redirects, 1-year cookie on `/en`), the hreflang `link` header
   and the PNG icon. Local: `pnpm build && pnpm start -p 3123`, then `node scripts/e2e/seo-check.mjs`; production:
   `BASE=https://ridevibe.com.tr node scripts/e2e/seo-check.mjs` (read-only GETs). Canonical/og:url are compared with

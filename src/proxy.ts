@@ -12,8 +12,10 @@ export default async function proxy(request: NextRequest) {
   }
 
   // next-intl falls back to Accept-Language when there is no cookie, which redirects first-time visitors (and
-  // crawlers) away from "/". Pin the header to the default locale for next-intl only: without a header it sets the
-  // cookie on every first visit. updateSession keeps the original request (it mutates request.cookies).
+  // crawlers) away from "/". Pin the header to the default locale: without a header it sets the cookie on every first
+  // visit. next-intl forwards its request headers (rewrite/next with { request: { headers } }), so every localized
+  // page, layout and Server Action sees accept-language "tr", not the visitor's. updateSession keeps the original
+  // request (it mutates request.cookies).
   const headers = new Headers(request.headers);
   headers.set("accept-language", routing.defaultLocale);
   const response = handleI18nRouting(new NextRequest(request, { headers }));
