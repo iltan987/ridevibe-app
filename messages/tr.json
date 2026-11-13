@@ -45,14 +45,13 @@
       "alt": "Gece Üsküdar sahilinde kulüp üyeleri, arkada Kız Kulesi"
     },
     "who": {
-      "eyebrow": "Kimler katılabilir",
-      "title": "18 yaşını geçen herkes",
-      "body": "50cc'den 1000cc'ye her motor, her ehliyet. Yeni başlayanlar, kadın sürücüler ve motoru olmayan artçılar da aramızda.",
+      "title": "Her yaştan, her motordan",
+      "body": "Aramızda yirmili yaşlarında olan da var, kırklı yaşlarında olan da. Her motor, her ehliyet; yeni başlayanlar, kadın sürücüler ve motoru olmayan artçılar da aramızda.",
+      "rulerLabel": "50cc'den 1000cc'ye",
       "conditions": "Bazı etkinliklerde motor sınıfı gibi katılım koşulları olabilir.",
       "alt": "Bir sürüş molasında kafe terasında toplu fotoğraf"
     },
     "join": {
-      "eyebrow": "Nasıl katılırım",
       "title": "Başvurudan ana gruba",
       "step1Title": "Başvur",
       "step1Body": "Birkaç dakikalık formu doldur.",
@@ -64,9 +63,8 @@
       "step4Body": "Artık ailedensin."
     },
     "rules": {
-      "title": "Sürüş kurallarımız",
-      "body": "Kask zorunlu; mont, eldiven ve bot öneriyoruz. Konvoy düzenini koruyoruz: güvenli mesafe, izinsiz sollama yok. Trafik kurallarına uyuyor, birbirimize saygıyla davranıyoruz.",
-      "motto": "Amacımız hızlı gitmek değil; hep birlikte gidip hep birlikte dönmek."
+      "body": "Amacımız hızlı gitmek değil. Kask zorunlu; mont, eldiven ve bot öneriyoruz. Konvoy düzenini koruyoruz: güvenli mesafe, izinsiz sollama yok. Trafik kurallarına uyuyor, birbirimize saygıyla davranıyoruz.",
+      "motto": "Hep birlikte gidip, hep birlikte dönmek."
     },
     "faq": {
       "title": "Sık sorulanlar",

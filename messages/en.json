@@ -45,14 +45,13 @@
       "alt": "Club members at night on the Üsküdar shore, the Maiden's Tower behind them"
     },
     "who": {
-      "eyebrow": "Who can join",
-      "title": "Anyone over 18",
-      "body": "Any bike from 50cc to 1000cc, any licence. New riders, women riders and pillion passengers without a bike of their own ride with us too.",
+      "title": "Every age, every bike",
+      "body": "Some of us are in our twenties, some in our forties. Any bike, any licence; new riders, women riders and pillion passengers without a bike of their own ride with us too.",
+      "rulerLabel": "From 50cc to 1000cc",
       "conditions": "Some events may have conditions, such as a bike class.",
       "alt": "Group photo on a café terrace during a ride break"
     },
     "join": {
-      "eyebrow": "How to join",
       "title": "From application to the main group",
       "step1Title": "Apply",
       "step1Body": "Fill in the form; it takes a few minutes.",
@@ -64,9 +63,8 @@
       "step4Body": "You're family now."
     },
     "rules": {
-      "title": "Our riding rules",
-      "body": "Helmets are mandatory; we recommend a jacket, gloves and boots. We keep the convoy in order: a safe distance and no overtaking without the go-ahead. We follow the traffic rules and treat each other with respect.",
-      "motto": "We're not here to go fast: we leave together and we come back together."
+      "body": "We're not here to go fast. Helmets are mandatory; we recommend a jacket, gloves and boots. We keep the convoy in order: a safe distance and no overtaking without the go-ahead. We follow the traffic rules and treat each other with respect.",
+      "motto": "We leave together and we come back together."
     },
     "faq": {
       "title": "Frequently asked questions",

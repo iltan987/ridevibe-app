@@ -52,7 +52,8 @@ function frameLogger() {
     const hero = [...document.querySelectorAll("main [data-home-hero]")].find(vis);
     const closing = [...document.querySelectorAll("main [data-home-closing]")].find(vis);
     // (the closing section is the page's last: once parsed, the hero and both buttons' guesses are in the document)
-    if (nav && hero && closing) {
+    // (a tab bar with nothing after it yet is still being parsed: its hint script follows in the next chunk)
+    if (nav && hero && closing && (!bottom || bottom.nextElementSibling)) {
       const tabs = bottom ? [...bottom.querySelectorAll("a")].filter(vis) : [];
       const f = {
         tabs: tabs.length,
