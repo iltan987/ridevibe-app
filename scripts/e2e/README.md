@@ -96,6 +96,14 @@ Run against a **local** stack only (local Supabase + a server on port 3123); nev
   pages are derived from the DB counts, and the activated row must be one of its fixtures (it fails otherwise);
   plants its own pending/inactive profiles and applications (`lx…@fixture.invalid`, recipe in the header) through
   `docker exec … psql` (`DB_CONTAINER`, local only) and deletes them before and after. Totals are read from the DB.
+- `seo-check.mjs` — SEO checks with plain `fetch` (no puppeteer, no fixtures; PASS/FAIL lines, exit code != 0 on
+  failure): robots.txt and sitemap.xml, `<head>` of `/`, `/en`, `/apply`, `/en/apply` (title/description differ per
+  language, canonical = og:url = production URL, Open Graph, Twitter card, no noindex), canonical without query
+  strings, noindex on privacy/events/gallery and the private pages, one JSON-LD graph on `/` and `/en`, the locale
+  rules (`Accept-Language` ignored, `NEXT_LOCALE=en` redirects, 1-year cookie on `/en`), the hreflang `link` header
+  and the PNG icon. Local: `pnpm build && pnpm start -p 3123`, then `node scripts/e2e/seo-check.mjs`; production:
+  `BASE=https://ridevibe.com.tr node scripts/e2e/seo-check.mjs` (read-only GETs). Canonical/og:url are compared with
+  the production origin even locally; the hreflang header is compared by path.
 - `skeletons.mjs <baseUrl> <out.md> [routes…]` — measures each `data-skeleton` fallback against its
   `data-skeleton-result` (JS off vs on); `SWITCH_BACK=1` also logs the fallbacks shown during a language switch back
   (JS on, throttled); see `docs/learnings/testing.md`.

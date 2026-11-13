@@ -68,6 +68,9 @@
   `suppressHydrationWarning` (the docs' pattern; a server component can't do it, `window` is always undefined
   there). After a remount/client render the work must happen in client code (theme: `ThemeSwitcher`'s
   `useLayoutEffect`). Check: `scripts/e2e/header-e2e.mjs` against dev and prod.
+- **JSON-LD is the exception:** `<script type="application/ld+json">` (home page, `src/lib/seo/json-ld.ts`) is a data
+  block (`isScriptDataBlock`), so React never warns when it creates it on the client: keep a plain `<script>`, no
+  `InlineScript`.
 - **Also:** on every client navigation Next appends a fresh `meta[name=theme-color]` with the `viewport` value (dark)
   after ours; browsers use the first matching one in tree order (still ours), so the bar colour stays right.
 - **Source:** `preventing-flash-before-hydration.md` ("Extracting a reusable component"),
