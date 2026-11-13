@@ -197,5 +197,5 @@ Bundled docs are the source of truth: `node_modules/next/dist/docs/` (grep them 
   write dropped `page`), else a page-clamp effect in that in-between render writes the stale page back; (3) correct a
   bad `?page=` in an effect with `replaceState` only (no `setState`). `useSearchParams` works in SSR here (the client
   list renders inside the page's request-time `<Suspense>`), so a shared `?q=çel&page=2` arrives filtered.
-- **Source:** `src/components/members/directory-list.tsx`; Next source above; `04-linking-and-navigating.md`
-  ("Native History API").
+- **Source:** `src/components/lists/use-list-search.ts` (shared by `/members` and `/admin/members`); Next source
+  above; `04-linking-and-navigating.md` ("Native History API").

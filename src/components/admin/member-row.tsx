@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { type AccessActionResult, setMemberRole, setMemberStatus } from "@/lib/access/actions";
-import type { MemberStatus } from "@/lib/access/queries";
+import type { MemberStatus } from "@/lib/access/members-view";
 import { MemberNameDialog } from "@/components/admin/member-name-dialog";
 import { initials } from "@/lib/initials";
 

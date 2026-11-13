@@ -3,14 +3,15 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   afterCursorFilter,
+  chunks,
   decodeCursor,
   encodeCursor,
-  ilikeContains,
   clampPage,
   pageCount,
   pageItems,
   parsePage,
   readAll,
+  slicePage,
   splitPage,
   toPage,
   uniqueById,
@@ -53,10 +54,6 @@ test("toPage returns a next cursor only when there are more rows", () => {
   assert.equal(page.items.length, 2);
   assert.deepEqual(decodeCursor(page.nextCursor), null, "test rows aren't real timestamps/uuids");
   assert.equal(Buffer.from(page.nextCursor!, "base64url").toString(), "t2|2");
-});
-
-test("ilikeContains escapes wildcards", () => {
-  assert.equal(ilikeContains("50%_a\\b"), "%50\\%\\_a\\\\b%");
 });
 
 test("splitPage cuts the extra row and builds the cursor from the last item", () => {
@@ -124,4 +121,19 @@ test("uniqueById keeps the first row of each id, in order", () => {
     { id: "c", n: 4 },
   ]);
   assert.deepEqual(uniqueById([]), []);
+});
+
+test("slicePage: the clamped page's items and a 1-based range", () => {
+  const items = Array.from({ length: 30 }, (_, i) => i + 1);
+  assert.deepEqual(slicePage(items, 2), { items: [26, 27, 28, 29, 30], page: 2, pageCount: 2, total: 30, from: 26, to: 30 });
+  assert.equal(slicePage(items, 1).items.length, 25);
+  assert.deepEqual(slicePage(items, 99).page, 2);
+  assert.deepEqual(slicePage([], 3), { items: [], page: 1, pageCount: 1, total: 0, from: 0, to: 0 });
+});
+
+test("chunks splits into pieces of at most `size`", () => {
+  assert.deepEqual(chunks([1, 2, 3, 4, 5], 2), [[1, 2], [3, 4], [5]]);
+  assert.deepEqual(chunks([1, 2], 2), [[1, 2]]);
+  assert.deepEqual(chunks([], 2), []);
+  assert.equal(chunks(Array.from({ length: 2001 }, (_, i) => i), 1000).length, 3);
 });

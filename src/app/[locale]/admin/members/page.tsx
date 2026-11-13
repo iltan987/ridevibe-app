@@ -1,56 +1,48 @@
-import { Search } from "lucide-react";
 import type { Metadata } from "next";
 import { useTranslations } from "next-intl";
 import { getFormatter, getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import { ListSkeleton } from "@/components/admin/list-skeleton";
-import { MemberRow } from "@/components/admin/member-row";
-import { Pager } from "@/components/pager";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Link } from "@/i18n/navigation";
-import { countMembersByStatus, getPendingApplicationFlags, listMembers, listRoles, MEMBER_STATUSES, type MemberStatus } from "@/lib/access/queries";
+import { MembersList } from "@/components/admin/members-list";
+import { getPendingApplicationFlags, listAllProfiles, listRoles } from "@/lib/access/queries";
 import { requirePermission } from "@/lib/auth/require-access";
-import { decodeCursor } from "@/lib/pagination";
+import { LIST_CEILING } from "@/lib/pagination";
+import { foldSearch } from "@/lib/search-fold";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("Admin.members");
   return { title: t("title"), robots: { index: false } };
 }
 
-export default function MembersPage({ searchParams }: PageProps<"/[locale]/admin/members">) {
+export default function MembersPage() {
   const t = useTranslations("Admin.members");
 
   return (
     <section className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8">
       <h1 className="heading text-3xl">{t("title")}</h1>
-      <Suspense fallback={<ListSkeleton rows={4} rowClassName="h-36.75 sm:h-26.75" listClassName="gap-2" search hint />}>
-        <MembersList searchParams={searchParams} />
+      <Suspense
+        fallback={<ListSkeleton rows={4} rowClassName="h-36.75 sm:h-26.75" listClassName="gap-2" search hint pager />}
+      >
+        <Members />
       </Suspense>
     </section>
   );
 }
 
-async function MembersList({ searchParams }: { searchParams: PageProps<"/[locale]/admin/members">["searchParams"] }) {
+/** Loads every profile once; tabs, search and pages run in the browser (`MembersList`, state in the URL). */
+async function Members() {
   const me = await requirePermission("members.manage", "/admin/members");
 
-  const params = await searchParams;
-  const status: MemberStatus = MEMBER_STATUSES.includes(params.status as MemberStatus)
-    ? (params.status as MemberStatus)
-    : "pending";
-  const query = typeof params.q === "string" ? params.q.trim().slice(0, 60) : "";
-  const cursor = decodeCursor(params.cursor);
-
-  const [page, counts, roles, t, tAccount, format] = await Promise.all([
-    listMembers({ status, query, cursor }),
-    countMembersByStatus(),
+  const [{ profiles, overCeiling }, roles, t, tAccount, format] = await Promise.all([
+    listAllProfiles(),
     listRoles(),
     getTranslations("Admin.members"),
     getTranslations("Account"),
     getFormatter(),
   ]);
+  if (overCeiling) console.error("admin members over ceiling", { count: `${LIST_CEILING}+` });
 
-  const flags = status === "pending" ? await getPendingApplicationFlags(page.items.map((m) => m.id)) : null;
+  const flags = await getPendingApplicationFlags(profiles.filter((p) => p.status === "pending").map((p) => p.id));
 
   const roleLabel = (roleId: string | null) => {
     const role = roles.find((r) => r.id === roleId);
@@ -60,69 +52,32 @@ async function MembersList({ searchParams }: { searchParams: PageProps<"/[locale
   const roleOptions = roles.map((r) => ({ id: r.id, label: r.isAdmin ? tAccount("roles.admin") : r.name }));
   const adminRoleIds = new Set(roles.filter((r) => r.isAdmin).map((r) => r.id));
 
+  const rows = profiles.map((p) => {
+    // Mirrors set_member_status() and set_member_name(): only admins change an admin's status or name.
+    const editable = me.access.isAdmin || !adminRoleIds.has(p.role_id ?? "");
+    return {
+      id: p.id,
+      name: p.full_name,
+      email: p.email,
+      avatarUrl: p.avatar_url,
+      status: p.status,
+      joinedLabel: t("joined", { date: format.dateTime(new Date(p.created_at), { dateStyle: "medium" }) }),
+      roleId: p.role_id,
+      roleLabel: roleLabel(p.role_id),
+      applied: p.status === "pending" ? (flags.get(p.id) ?? false) : null,
+      canChangeStatus: editable,
+      canRename: editable,
+      search: foldSearch(`${p.full_name} ${p.email ?? ""}`),
+    };
+  });
+
   return (
-    <>
-      <nav data-skeleton-result="admin-chips" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
-        {MEMBER_STATUSES.map((s) => (
-          <Link
-            key={s}
-            href={{ pathname: "/admin/members", query: query ? { status: s, q: query } : { status: s } }}
-            aria-current={s === status ? "page" : undefined}
-            className="flex shrink-0 items-center gap-1.5 rounded-full border border-input px-3.5 py-1.5 text-sm font-medium text-muted-foreground aria-[current=page]:border-primary aria-[current=page]:bg-primary aria-[current=page]:text-primary-foreground"
-          >
-            {t(`statuses.${s}`)}
-            <span className="tabular-nums opacity-70">{counts[s]}</span>
-          </Link>
-        ))}
-      </nav>
-
-      {/* GET form without action: submits to this page with only these fields (drops the cursor). */}
-      <form role="search" data-skeleton-result="admin-search" className="flex gap-2">
-        <input type="hidden" name="status" value={status} />
-        <Input name="q" type="search" defaultValue={query} placeholder={t("search")} aria-label={t("search")} maxLength={60} />
-        <Button type="submit" variant="outline" aria-label={t("searchButton")}>
-          <Search aria-hidden />
-        </Button>
-      </form>
-
-      {status === "pending" && <p className="text-sm text-muted-foreground">{t("pendingHint")}</p>}
-
-      {page.items.length === 0 ? (
-        <p className="py-10 text-center text-muted-foreground">{t("empty")}</p>
-      ) : (
-        <ul className="flex flex-col gap-2">
-          {page.items.map((m) => (
-            <MemberRow
-              key={m.id}
-              member={{
-                id: m.id,
-                name: m.full_name,
-                email: m.member_contacts?.email ?? null,
-                avatarUrl: m.avatar_url,
-                status: m.status,
-                joinedLabel: t("joined", { date: format.dateTime(new Date(m.created_at), { dateStyle: "medium" }) }),
-                roleId: m.role_id,
-                roleLabel: roleLabel(m.role_id),
-                applied: flags ? (flags.get(m.id) ?? false) : null,
-              }}
-              roles={roleOptions}
-              isSelf={m.id === me.id}
-              canAssignRole={me.access.isAdmin}
-              // Mirrors set_member_status(): only admins change an admin's status.
-              canChangeStatus={me.access.isAdmin || !adminRoleIds.has(m.role_id ?? "")}
-              // Mirrors set_member_name(): only admins rename an admin.
-              canRename={me.access.isAdmin || !adminRoleIds.has(m.role_id ?? "")}
-            />
-          ))}
-        </ul>
-      )}
-
-      <Pager
-        pathname="/admin/members"
-        query={{ status, q: query || undefined }}
-        nextCursor={page.nextCursor}
-        onFirstPage={!cursor}
-      />
-    </>
+    <MembersList
+      rows={rows}
+      roles={roleOptions}
+      meId={me.id}
+      canAssignRole={me.access.isAdmin}
+      overCeiling={overCeiling}
+    />
   );
 }

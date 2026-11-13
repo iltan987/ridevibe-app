@@ -444,9 +444,10 @@
         "inactive": "Inactive"
       },
       "pendingHint": "People who signed in with Google but aren't approved yet. Activate the ones you know. Link those with an application from the applications page with “Link to account”; if they have none, ask them to fill in the form.",
-      "search": "Search by name",
-      "searchButton": "Search",
+      "search": "Search by name or email",
       "empty": "Nobody in this list.",
+      "range": "{from}–{to} of {total, plural, one {# person} other {# people}}",
+      "ceiling": "This list is incomplete: there are more than 2,000 people and only the first 2,000 are shown. Please tell the admins.",
       "joined": "Joined {date}",
       "you": "You",
       "role": "Role",

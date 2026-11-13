@@ -45,11 +45,6 @@ export function toPage<T extends { created_at: string; id: string }>(rows: T[], 
   return splitPage(rows, size, (last) => encodeCursor({ createdAt: last.created_at, id: last.id }));
 }
 
-/** Escapes `%`, `_` and `\` for a PostgREST `ilike` contains-search. */
-export function ilikeContains(term: string) {
-  return `%${term.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
-}
-
 /** Parses an untrusted `?page=` value (1-based); anything but a canonical positive integer is page 1. */
 export function parsePage(value: unknown): number {
   return typeof value === "string" && /^[1-9]\d{0,5}$/.test(value) ? Number(value) : 1;
@@ -61,6 +56,28 @@ export function pageCount(total: number, size = PAGE_SIZE): number {
 
 export function clampPage(page: number, total: number, size = PAGE_SIZE): number {
   return Math.min(Math.max(1, page), pageCount(total, size));
+}
+
+/** One page of a list held in the browser: the clamped page's items and its 1-based range (`from` 0 when empty). */
+export function slicePage<T>(items: T[], page: number, size = PAGE_SIZE) {
+  const current = clampPage(page, items.length, size);
+  const start = (current - 1) * size;
+  const slice = items.slice(start, start + size);
+  return {
+    items: slice,
+    page: current,
+    pageCount: pageCount(items.length, size),
+    total: items.length,
+    from: slice.length ? start + 1 : 0,
+    to: start + slice.length,
+  };
+}
+
+/** Splits `items` into arrays of at most `size` (e.g. ids for an RPC whose result is capped at `max_rows`). */
+export function chunks<T>(items: T[], size: number): T[][] {
+  const result: T[][] = [];
+  for (let i = 0; i < items.length; i += size) result.push(items.slice(i, i + size));
+  return result;
 }
 
 /** Numbers for a pager: first, last, current ±1. A gap only replaces 2+ hidden pages. */

@@ -1,7 +1,7 @@
 // What the member directory shows for a search, side and page — computed in the browser from the full list.
 // Dependency-free so `node --test` can run its tests.
 
-import { clampPage, PAGE_SIZE, pageCount } from "../pagination.ts";
+import { slicePage } from "../pagination.ts";
 import { foldSearch, matchesFolded } from "../search-fold.ts";
 
 type Side = "asian" | "european";
@@ -21,16 +21,5 @@ export function directoryView<T extends { side: Side | null }>(
   for (const member of matched) if (member.side) counts[member.side] += 1;
 
   const visible = side ? matched.filter((member) => member.side === side) : matched;
-  const current = clampPage(page, visible.length);
-  const start = (current - 1) * PAGE_SIZE;
-  const items = visible.slice(start, start + PAGE_SIZE);
-  return {
-    counts,
-    items,
-    page: current,
-    pageCount: pageCount(visible.length),
-    total: visible.length,
-    from: items.length ? start + 1 : 0,
-    to: start + items.length,
-  };
+  return { counts, ...slicePage(visible, page) };
 }

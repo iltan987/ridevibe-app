@@ -1,3 +1,4 @@
+import { PagerSkeleton } from "@/components/pager-skeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 
 /**
@@ -24,17 +25,7 @@ export function DirectorySkeleton() {
           <Skeleton key={i} data-skeleton="members-row" className="h-23.5 w-full rounded-xl" />
         ))}
       </div>
-      {/* Pager of a typical club (~6 pages: ‹ 1 2 … 6 ›, 36px buttons) + range line; estimated from the classes. */}
-      <div className="flex flex-col items-center gap-2" data-skeleton="pager">
-        <div className="flex items-center gap-1">
-          {[0, 1, 2, 3, 4, 5].map((i) => (
-            <Skeleton key={i} className="size-9" />
-          ))}
-        </div>
-        <div className="flex h-4 items-center">
-          <Skeleton className="h-3 w-24" />
-        </div>
-      </div>
+      <PagerSkeleton />
     </div>
   );
 }

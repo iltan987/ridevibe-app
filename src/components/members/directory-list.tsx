@@ -1,17 +1,17 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { type ReactNode, useRef } from "react";
 import { useListParams } from "@/components/lists/use-list-params";
+import { scrollToListTop, useListSearch, useUrlFix } from "@/components/lists/use-list-search";
 import { MemberCard } from "@/components/members/member-card";
 import { PagerButtons } from "@/components/pager-buttons";
 import { Input } from "@/components/ui/input";
 import { Link } from "@/i18n/navigation";
-import { listSearch, syncedInput } from "@/lib/list-url";
+import { listSearch } from "@/lib/list-url";
 import { directoryView } from "@/lib/members/directory-view";
 import type { DirectoryMember, IstanbulSide } from "@/lib/members/queries";
-import { parsePage } from "@/lib/pagination";
-import { foldSearch, normalizeQuery, SEARCH_MAX_LENGTH } from "@/lib/search-fold";
+import { foldSearch, SEARCH_MAX_LENGTH } from "@/lib/search-fold";
 
 const SIDES: IstanbulSide[] = ["asian", "european"];
 const DEFAULTS = { page: 1 };
@@ -37,27 +37,17 @@ export function DirectoryList({
 }) {
   const t = useTranslations("Members");
   const params = useListParams();
-  const urlQuery = normalizeQuery(params.get("q"));
+  const search = useListSearch(params);
   const side = SIDES.find((s) => s === params.get("side")) ?? null;
-  const rawPage = params.get("page");
   // Safety filters only exist for members.safety holders: never carry them for anyone else.
   const blood = safety ? params.get("blood") : null;
   const noContact = safety ? params.get("noContact") : null;
 
-  // The box follows the URL on back/forward; typing updates only the text (see syncedInput).
-  const [search, setSearch] = useState({ url: urlQuery, input: urlQuery });
-  const synced = syncedInput(search, urlQuery);
-  if (synced !== search) setSearch(synced);
-  const query = normalizeQuery(synced.input);
-  // A search change writes the URL without `page`, but useSearchParams catches up a render later: until then the
-  // URL still holds the old search and page, so show page 1 of the new search.
-  const settled = query === urlQuery;
-
   const folded = members.map((member) => foldSearch(member.fullName));
-  const view = directoryView(members, folded, { query, side, page: settled ? parsePage(rawPage) : 1 });
+  const view = directoryView(members, folded, { query: search.query, side, page: search.page });
 
   const urlValues = (changes: Record<string, string | number | null>) => ({
-    q: query,
+    q: search.query,
     side,
     page: view.page,
     blood,
@@ -65,19 +55,14 @@ export function DirectoryList({
     ...changes,
   });
 
-  // A malformed or out-of-range ?page= renders the clamped page; correct the URL to match (the router syncs itself).
-  const fixedSearch =
-    settled && rawPage !== (view.page === 1 ? null : String(view.page)) ? listSearch(urlValues({}), DEFAULTS) : null;
-  useEffect(() => {
-    if (fixedSearch !== null) window.history.replaceState(null, "", window.location.pathname + fixedSearch);
-  }, [fixedSearch]);
+  // A malformed or out-of-range ?page= renders the clamped page; correct the URL to match.
+  useUrlFix(search.pageOff(view.page) ? listSearch(urlValues({}), DEFAULTS) : null);
 
   const listTop = useRef<HTMLDivElement>(null);
 
   function onSearch(value: string) {
-    setSearch((prev) => ({ ...prev, input: value }));
-    const next = normalizeQuery(value);
-    if (next !== query) params.replace(urlValues({ q: next, page: null }), DEFAULTS);
+    const next = search.type(value);
+    if (next !== null) params.replace(urlValues({ q: next, page: null }), DEFAULTS);
   }
 
   function onSide(next: IstanbulSide | null) {
@@ -87,8 +72,7 @@ export function DirectoryList({
   function onPage(next: number) {
     if (next === view.page) return;
     params.push(urlValues({ page: next }), DEFAULTS);
-    const top = listTop.current;
-    if (top && top.getBoundingClientRect().top < 0) top.scrollIntoView({ block: "start" });
+    scrollToListTop(listTop.current);
   }
 
   const chips: { side: IstanbulSide | null; label: string; count: number }[] = [
@@ -120,7 +104,7 @@ export function DirectoryList({
         <Input
           name="q"
           type="search"
-          value={synced.input}
+          value={search.input}
           onChange={(e) => onSearch(e.target.value)}
           placeholder={t("search")}
           aria-label={t("searchLabel")}
@@ -148,7 +132,7 @@ export function DirectoryList({
       <div ref={listTop} className="scroll-mt-20">
         {view.items.length === 0 ? (
           <p className="py-10 text-center text-muted-foreground">
-            {members.length === 0 && !query && !filtered ? t("empty") : t("noResults")}
+            {members.length === 0 && !search.query && !filtered ? t("empty") : t("noResults")}
           </p>
         ) : (
           <ul className="flex flex-col gap-2">

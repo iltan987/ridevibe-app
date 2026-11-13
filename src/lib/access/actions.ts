@@ -4,7 +4,7 @@ import { refresh } from "next/cache";
 import { z } from "zod";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
-import { MEMBER_STATUSES } from "./queries";
+import { MEMBER_STATUSES } from "./members-view";
 
 // Server Actions are public endpoints: the database (RLS, grants and the
 // security-definer RPCs) decides what each caller may do. We only validate

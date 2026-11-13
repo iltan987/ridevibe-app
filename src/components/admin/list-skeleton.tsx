@@ -1,14 +1,16 @@
+import { PagerSkeleton } from "@/components/pager-skeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 /**
- * Fallback for the admin lists (applications, members): the filter chip row, an optional search row and `rows`
- * skeleton rows. Mirrors the page layout: sections are `gap-6` apart, rows have their own gap.
+ * Fallback for the admin lists (applications, members): the filter chip row, an optional search row, `rows`
+ * skeleton rows and an optional pager. Mirrors the page layout: sections are `gap-6` apart, rows have their own gap.
  *
  * - `rowClassName`: the row's height class (and breakpoints), measured on the real row.
  * - `listClassName`: gap between rows, same as the real `<ul>`.
- * - `search`: the members search form (input + icon button, `h-8`).
+ * - `search`: the members search form (input only, `h-8`).
  * - `hint`: the members pending-tab helper paragraph (`text-sm`, h-5 lines: four on phones, two from `sm`).
+ * - `pager`: the numbered pager + range line (`PagerSkeleton`, estimated, not measured yet).
  */
 export function ListSkeleton({
   rows,
@@ -16,12 +18,14 @@ export function ListSkeleton({
   listClassName = "gap-3",
   search = false,
   hint = false,
+  pager = false,
 }: {
   rows: number;
   rowClassName: string;
   listClassName?: string;
   search?: boolean;
   hint?: boolean;
+  pager?: boolean;
 }) {
   return (
     <div className="flex flex-col gap-6">
@@ -32,9 +36,8 @@ export function ListSkeleton({
         ))}
       </div>
       {search && (
-        <div className="flex gap-2" data-skeleton="admin-search">
+        <div className="flex" data-skeleton="admin-search">
           <Skeleton className="h-8 flex-1" />
-          <Skeleton className="size-8" />
         </div>
       )}
       {hint && (
@@ -51,6 +54,7 @@ export function ListSkeleton({
           <Skeleton key={i} data-skeleton="admin-row" className={cn("w-full rounded-xl", rowClassName)} />
         ))}
       </div>
+      {pager && <PagerSkeleton />}
     </div>
   );
 }

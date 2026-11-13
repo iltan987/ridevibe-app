@@ -444,9 +444,10 @@
         "inactive": "Pasif"
       },
       "pendingHint": "Google ile giriş yapmış ama henüz onaylanmamış kişiler. Tanıdığın kişileri aktifleştir. Başvurusu olanları başvuru sayfasından “Hesaba bağla” ile bağla; başvurusu yoksa kişiden formu doldurmasını iste.",
-      "search": "İsimle ara",
-      "searchButton": "Ara",
+      "search": "İsim ya da e-postayla ara",
       "empty": "Bu listede kimse yok.",
+      "range": "{from}–{to} / {total} kişi",
+      "ceiling": "Liste eksik: 2.000'den fazla kişi var ve ilk 2.000'i gösteriliyor. Lütfen yöneticilere haber ver.",
       "joined": "Kayıt: {date}",
       "you": "Sen",
       "role": "Rol",
