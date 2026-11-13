@@ -38,6 +38,54 @@
       "ridesLabel": "rides",
       "sidesValue": "Both sides",
       "sidesLabel": "Asia and Europe"
+    },
+    "rides": {
+      "eyebrow": "Rides",
+      "title": "On the road at weekends, together on weekdays",
+      "weekend": "When the weather allows, we ride as a group every weekend: Şile, Ağva, Riva, Polonezköy and the scenic roads around Istanbul. Depending on the route a ride takes half a day or a full day, and now and then we plan tours of several days.",
+      "weekday": "On weekdays, members who live nearby meet at a café to catch up, usually by the sea.",
+      "district1": "Beşiktaş",
+      "district2": "Üsküdar",
+      "district3": "Kadıköy",
+      "district4": "Beykoz",
+      "alt": "Club members at night on the Üsküdar shore, the Maiden's Tower behind them"
+    },
+    "who": {
+      "eyebrow": "Who can join",
+      "title": "Anyone over 18",
+      "body": "Any bike from 50cc to 1000cc, any licence. New riders, women riders and pillion passengers without a bike of their own ride with us too.",
+      "conditions": "Some events may have conditions, such as a bike class.",
+      "alt": "Group photo on a café terrace during a ride break"
+    },
+    "join": {
+      "eyebrow": "How to join",
+      "title": "From application to the main group",
+      "step1Title": "Apply",
+      "step1Body": "Fill in the form; it takes a few minutes.",
+      "step2Title": "Approval",
+      "step2Body": "The club team reviews your application.",
+      "step3Title": "Getting to know each other",
+      "step3Body": "For a few days we get to know each other in a separate group.",
+      "step4Title": "Main group",
+      "step4Body": "You're family now."
+    },
+    "rules": {
+      "title": "Our riding rules",
+      "body": "Helmets are mandatory; we recommend a jacket, gloves and boots. We keep the convoy in order: a safe distance and no overtaking without the go-ahead. We follow the traffic rules and treat each other with respect.",
+      "motto": "We're not here to go fast: we leave together and we come back together."
+    },
+    "faq": {
+      "title": "Frequently asked questions",
+      "q1": "I don't have a motorcycle. Can I join?",
+      "a1": "Yes, as a pillion passenger.",
+      "q2": "I'm a new rider. Is that a problem?",
+      "a2": "No. The convoy rides at a pace that suits everyone; nobody gets left behind.",
+      "q3": "Can I join rides without being a member?",
+      "a3": "Rides are for members. Apply; once you're approved, you can join some rides while you're in the getting-to-know group."
+    },
+    "closing": {
+      "line": "A family of people who share the same road.",
+      "alt": "Club members at a long breakfast table in Kanlıca"
     }
   },
   "Footer": {

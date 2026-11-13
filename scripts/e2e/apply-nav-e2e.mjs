@@ -1,4 +1,4 @@
-// "Başvur" visibility E2E: the desktop nav, the phone tab bar and the home hero offer /apply exactly when /apply would
+// "Başvur" visibility E2E: the desktop nav, the phone tab bar and the home hero and closing section offer /apply exactly when /apply would
 // show the form, and on a second load nothing moves between first paint and the settled page (the static shell guesses
 // from the session cookie + localStorage "rv-apply-hidden", the streamed parts know).
 // Needs a production server on :3123 (pnpm build && pnpm start -p 3123), local email sign-in and the fixture users
@@ -50,13 +50,16 @@ function frameLogger() {
     const desktop = [...document.querySelectorAll("header nav")].find(vis);
     const nav = bottom ?? desktop;
     const hero = [...document.querySelectorAll("main [data-home-hero]")].find(vis);
-    if (nav && hero) {
+    const closing = [...document.querySelectorAll("main [data-home-closing]")].find(vis);
+    // (the closing section is the page's last: once parsed, the hero and both buttons' guesses are in the document)
+    if (nav && hero && closing) {
       const tabs = bottom ? [...bottom.querySelectorAll("a")].filter(vis) : [];
       const f = {
         tabs: tabs.length,
         xs: tabs.map((a) => Math.round(a.getBoundingClientRect().x)),
         tabApply: tabs.some((a) => a.hasAttribute("data-apply-link")),
-        hero: [...document.querySelectorAll("main [data-apply-link]")].some(vis),
+        hero: [...hero.querySelectorAll("[data-apply-link]")].some(vis),
+        closing: [...closing.querySelectorAll("[data-apply-link]")].some(vis),
         desktop: !!desktop && [...desktop.querySelectorAll("[data-apply-link]")].some(vis),
         // (the streamed tab bar is the last element of <body>, followed by Next's own streaming scripts)
         guess: nav.nextElementSibling?.tagName === "SCRIPT" && nav.nextElementSibling.textContent.includes("rv-apply-hidden"),
@@ -68,10 +71,10 @@ function frameLogger() {
   };
   requestAnimationFrame(tick);
 }
-const layoutKey = (f) => JSON.stringify([f.tabs, f.xs, f.tabApply, f.hero, f.desktop]);
+const layoutKey = (f) => JSON.stringify([f.tabs, f.xs, f.tabApply, f.hero, f.closing, f.desktop]);
 const layouts = (frames) => [...new Set(frames.map(layoutKey))];
 const fmt = (frames) => frames.map((f) =>
-  `${f.guess ? "guess" : "real"}:${f.tabs ? `${f.tabs}tabs${f.tabApply ? "+B" : ""}@${f.xs.join("/")}` : "-"} hero=${+f.hero} desk=${+f.desktop}`).join(" → ");
+  `${f.guess ? "guess" : "real"}:${f.tabs ? `${f.tabs}tabs${f.tabApply ? "+B" : ""}@${f.xs.join("/")}` : "-"} hero=${+f.hero} end=${+f.closing} desk=${+f.desktop}`).join(" → ");
 const frames = (page) => page.evaluate(() => window.__frames);
 // Keeps the current frame, so the next log starts from what is on screen now.
 const resetFrames = (page) => page.evaluate(() => { window.__frames = window.__frames.slice(-1); });
@@ -85,7 +88,7 @@ async function load(page, path) {
 function settledOk(viewport, show, f) {
   if (!f) return false;
   const nav = viewport === "phone" ? f.tabs === (show ? 5 : 4) && f.tabApply === show : f.desktop === show;
-  return nav && f.hero === show && !f.guess;
+  return nav && f.hero === show && f.closing === show && !f.guess;
 }
 
 // Next keeps the previous route's tree hidden in the DOM: always pick the visible element.

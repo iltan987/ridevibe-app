@@ -24,7 +24,7 @@ Run against a **local** stack only (local Supabase + a server on port 3123); nev
       SQL
 
   Screenshots go to `OUT_DIR` (default temp).
-- `apply-nav-e2e.mjs` — "Başvur" in the desktop nav, the phone tab bar and the home hero (PASS/FAIL lines, exit code
+- `apply-nav-e2e.mjs` — "Başvur" in the desktop nav, the phone tab bar and the home hero and closing section (PASS/FAIL lines, exit code
   != 0 on failure): settled state per fixture at 390px and 1280px, exactly one layout from first paint to settled on
   a second load (TR and EN) and across a language switch and back, a signed-out visitor with a stale stored `"1"`,
   `localStorage` blocked, and sending an application (signed in: "Başvur" gone without a reload; visitor: it stays;

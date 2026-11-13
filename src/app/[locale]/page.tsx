@@ -1,8 +1,13 @@
 import type { Metadata, ResolvingMetadata } from "next";
 import { useTranslations } from "next-intl";
 import { getLocale, getTranslations } from "next-intl/server";
+import { HomeClosing } from "@/components/home/home-closing";
+import { HomeFaq } from "@/components/home/home-faq";
 import { HomeHero } from "@/components/home/home-hero";
+import { HomeJoin } from "@/components/home/home-join";
+import { HomeRides } from "@/components/home/home-rides";
 import { HomeStats } from "@/components/home/home-stats";
+import { HomeWho } from "@/components/home/home-who";
 import { clubJsonLd, serializeJsonLd } from "@/lib/seo/json-ld";
 import { pageMetadata } from "@/lib/seo/metadata";
 
@@ -29,6 +34,11 @@ export default function HomePage() {
     <>
       <HomeHero />
       <HomeStats />
+      <HomeRides />
+      <HomeWho />
+      <HomeJoin />
+      <HomeFaq />
+      <HomeClosing />
       {/* Data block, not executable code: a plain script (see docs/learnings/ui.md), not InlineScript. */}
       <script
         type="application/ld+json"
