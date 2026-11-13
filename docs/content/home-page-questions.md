@@ -124,3 +124,14 @@ Teşekkürler! 🏍️
 - **Passengers and the form:** no separate passenger path (iltan, 2026-11-13): bike owners sometimes ride as
   passengers too, so it isn't a member type. Passengers without a bike or licence apply with licence "Henüz yok" and
   "no motorcycle"; B-licence riders already have the "B (125 cc yetkili)" option.
+
+## Published (2026-11-13)
+
+- **Photos** (`src/assets/home/`, from WhatsApp images): `hero-road.jpg` (20.58.11 (1)), `rides-kiz-kulesi.jpg`
+  (20.58.12 (3), passers-by soft-blurred), `who-terrace.jpg` (20.58.11, unchanged: iltan decided name patches stay),
+  `closing-breakfast.jpg` (20.58.12, cropped 1200×760 from y=640, other diners soft-blurred). Originals stay outside the
+  repo. Removal on a withdrawal: CLAUDE.md "Removing a website photo".
+- **Consent basis:** written group agreement for the website (2026-11-13); the proof is kept by the club, not in the repo.
+  The privacy notice (draft-5) covers website photos.
+- **Copy rules (iltan):** no "ücretsiz", no "kahve" / "kahvede", no "sohbet", no payment talk.
+- **Member count:** "140+" (`Home.stats.membersValue`) is updated by hand as the club grows.

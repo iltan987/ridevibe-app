@@ -152,6 +152,13 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   (cascades profile, member_contacts, member_details, member_motorcycles, member_emergency_contacts and
   member_health; applications become unlinked, `reviewed_by` → null; `safety_access_log` rows stay with actor/target null). Their access token stays valid up to 1 h; the app shows them signed out because the profile
   row is gone (`getCurrentUser`). Use `getCurrentUser()`, not bare `getClaims()`, wherever "who is signed in" matters.
+- **Removing a website photo** (someone withdraws consent): (1) remove/replace the file in `src/assets/home/` and its
+  use, merge, deploy; (2) purge it from history: `git filter-repo --path src/assets/home/<file> --invert-paths`, force-push
+  `main` (one-off exception to merge-only, iltan approves; other clones re-clone); (3) old Vercel deployments: checked
+  2026-11-13, `*.vercel.app` URLs redirect to Vercel login (Deployment Protection on), so no action; re-check
+  (`curl -sI` an old deployment URL, 302 = protected) before relying on it; (4) Search Console → "Remove outdated
+  content" for the old image URL; (5) originals and unused photos never enter the repo. The consent proof (WhatsApp
+  message) stays with the club, outside the repo.
 - **Auth/config as code:** production overrides live in `[remotes.production]` in `supabase/config.toml`. Always run
   `pnpm exec supabase config diff --remote=igqqicbfejhnsggfuydh` and review before `config push --remote=… --yes`.
   Local defaults must not leak into production — pin hosted values in the remote block when the diff shows them.
