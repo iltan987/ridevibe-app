@@ -15,7 +15,7 @@ mistakes and their root causes, workarounds, environment quirks. Goal: never re-
 | [testing.md](testing.md) | Unit tests with `node --test`, browser E2E without a framework, signed-in sessions |
 | [seo.md](seo.md) | Search, link previews, structured data |
 | [security.md](security.md) | Redirects, input handling, Google sign-in in in-app browsers, other attack-surface lessons |
-| [environment.md](environment.md) | WSL, Docker, pnpm, CLI tools, shell gotchas |
+| [environment.md](environment.md) | WSL, Docker, pnpm, CLI tools, shell gotchas, sharp image edits |
 | [infra.md](infra.md) | Vercel, Marketplace, domain/DNS, costs |
 | [domain.md](domain.md) | Motorcycle/Turkey/KVKK facts that drive product decisions |
 
