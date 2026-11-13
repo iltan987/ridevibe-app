@@ -13,7 +13,8 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 - **SEO round 2: home content** (2026-11-13, SEO round 1 spec "Intent") — real club information on the home page (what
   rides look like, who it is for, how to join): the bigger ranking lever (Google's helpful-content guidance). Needs
   facts from iltan/Samet and a design pass; round 1 (technical) is done. Start from what Search Console reports
-  (indexing, queries) and the spec `docs/superpowers/specs/2026-11-13-seo-technical-design.md`.
+  (indexing, queries) and the spec `docs/superpowers/specs/2026-11-13-seo-technical-design.md`. Questions for Samet
+  (sent 2026-11-13) and their answers: `docs/content/home-page-questions.md`.
 - **Self-service account deletion** (2026-11-12, iltan) — own design round. Decided so far: a confirm step says what
   gets deleted and what may be kept; on confirmation the account is marked for deletion at once (no admin approval, it
   should feel instant); signing in again within a grace period offers recovery; final deletion after the period. Today
