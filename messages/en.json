@@ -2,7 +2,7 @@
   "Metadata": {
     "title": "Ride & Vibe",
     "homeTitle": "Ride & Vibe · Istanbul Motorcycle Club",
-    "description": "Istanbul's motorcycle club. Weekend rides, long tours and new friendships, open to every rider over 18. Apply to join."
+    "description": "Istanbul's motorcycle club. Weekend rides, long tours and new friendships, open to riders of every age. Apply to join."
   },
   "Nav": {
     "home": "Home",
@@ -26,24 +26,18 @@
     "light": "Light"
   },
   "Home": {
-    "eyebrow": "Istanbul Motorcycle Club",
     "title": "Let's ride together.",
     "subtitle": "Weekend rides, long tours and new friendships. Meet riders from every side of Istanbul, from Asia to Europe.",
     "apply": "Apply to join",
     "heroAlt": "Club members taking a break on a coastal road, the sea behind them",
-    "stats": {
-      "membersValue": "140+",
-      "membersLabel": "members",
-      "ridesValue": "Every week",
-      "ridesLabel": "rides",
-      "sidesValue": "Both sides",
-      "sidesLabel": "Asia and Europe"
-    },
     "rides": {
-      "eyebrow": "Rides",
       "title": "On the road at weekends, together on weekdays",
-      "weekend": "When the weather allows, we ride as a group every weekend: Şile, Ağva, Riva, Polonezköy and the scenic roads around Istanbul. Depending on the route a ride takes half a day or a full day, and now and then we plan tours of several days.",
-      "weekday": "On weekdays, members who live nearby meet at a café to catch up, usually by the sea.",
+      "weekend": "When the weather allows, we ride as a group every weekend. A ride takes half a day or a full day depending on the route, and now and then we plan tours of several days.",
+      "place1": "Şile",
+      "place2": "Ağva",
+      "place3": "Riva",
+      "place4": "Polonezköy",
+      "weekday": "On weekdays, members who live nearby meet at a café to catch up, usually by the sea:",
       "district1": "Beşiktaş",
       "district2": "Üsküdar",
       "district3": "Kadıköy",

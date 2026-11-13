@@ -2,7 +2,7 @@
   "Metadata": {
     "title": "Ride & Vibe",
     "homeTitle": "Ride & Vibe · İstanbul Motosiklet Kulübü",
-    "description": "İstanbul'un motosiklet kulübü. Hafta sonu sürüşleri, uzun turlar ve yeni dostluklar; 18 yaşını geçen her motorcuya açık. Kulübe başvur."
+    "description": "İstanbul'un motosiklet kulübü. Hafta sonu sürüşleri, uzun turlar ve yeni dostluklar; her yaştan sürücüye açık. Kulübe başvur."
   },
   "Nav": {
     "home": "Ana Sayfa",
@@ -26,24 +26,18 @@
     "light": "Açık"
   },
   "Home": {
-    "eyebrow": "İstanbul Motosiklet Kulübü",
     "title": "Birlikte sürelim.",
     "subtitle": "Hafta sonu sürüşleri, uzun turlar ve yeni dostluklar. Asya'dan Avrupa'ya, İstanbul'un her yakasından motorcularla tanış.",
     "apply": "Kulübe Başvur",
     "heroAlt": "Deniz kenarındaki bir yolda mola veren kulüp üyeleri",
-    "stats": {
-      "membersValue": "140+",
-      "membersLabel": "üye",
-      "ridesValue": "Her hafta",
-      "ridesLabel": "sürüş",
-      "sidesValue": "İki yaka",
-      "sidesLabel": "Asya ve Avrupa"
-    },
     "rides": {
-      "eyebrow": "Sürüşler",
       "title": "Hafta sonu yolda, hafta içi bir arada",
-      "weekend": "Hava uygunsa her hafta sonu toplu sürüşe çıkıyoruz: Şile, Ağva, Riva, Polonezköy ve İstanbul çevresindeki doğal rotalar. Rotaya göre yarım ya da tam gün sürüyor; ara sıra birkaç günlük turlar da planlıyoruz.",
-      "weekday": "Hafta içi yakın oturanlarla bir kafede buluşup muhabbet ediyoruz, çoğu zaman deniz kenarında.",
+      "weekend": "Hava uygunsa her hafta sonu toplu sürüşe çıkıyoruz. Rotaya göre yarım ya da tam gün sürüyor; ara sıra birkaç günlük turlar da planlıyoruz.",
+      "place1": "Şile",
+      "place2": "Ağva",
+      "place3": "Riva",
+      "place4": "Polonezköy",
+      "weekday": "Hafta içi yakın oturanlarla bir kafede buluşup muhabbet ediyoruz, çoğu zaman deniz kenarında:",
       "district1": "Beşiktaş",
       "district2": "Üsküdar",
       "district3": "Kadıköy",

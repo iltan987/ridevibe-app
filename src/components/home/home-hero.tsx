@@ -1,15 +1,18 @@
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import heroRoad from "@/assets/home/hero-road.jpg";
-import { ClubBadge } from "@/components/brand/club-badge";
 import { HomeApplyButton } from "@/components/home/home-apply-button";
 
 // Always dark: the `dark` class makes the tokens resolve to the night palette inside, so cream text sits on the
-// photo's dark gradient in both themes.
+// photo's dark gradient in both themes and the bottom edge is straight against a cream page. The text is in flow
+// (not absolutely positioned), so the hero grows with large text instead of clipping.
 export function HomeHero() {
   const t = useTranslations("Home");
   return (
-    <section data-home-hero className="dark relative flex min-h-[560px] flex-col justify-end overflow-hidden bg-background md:min-h-[720px]">
+    <section
+      data-home-hero
+      className="dark relative flex min-h-160 flex-col justify-end overflow-hidden bg-background md:min-h-190"
+    >
       <Image
         src={heroRoad}
         alt={t("heroAlt")}
@@ -17,24 +20,28 @@ export function HomeHero() {
         sizes="100vw"
         placeholder="blur"
         preload
-        className="object-cover object-[38%_50%] md:object-[50%_40%]"
+        className="object-cover object-[38%_40%] md:object-[50%_38%]"
       />
       <div
         aria-hidden
-        className="absolute inset-0 bg-linear-to-b from-transparent via-background/55 via-45% to-background/95 md:bg-linear-to-r md:from-background/90 md:via-background/60 md:via-45% md:to-transparent"
+        className="absolute inset-0 bg-linear-to-b from-transparent from-35% via-background/90 via-80% to-background md:hidden"
       />
       <div
         aria-hidden
-        className="absolute inset-x-0 bottom-0 hidden h-40 bg-linear-to-b from-transparent to-background md:block"
+        className="absolute inset-0 hidden bg-linear-to-r from-background/90 via-background/55 via-40% to-transparent to-70% md:block"
       />
-      <div className="relative mx-auto flex w-full max-w-5xl flex-col gap-4 px-4 pb-10 md:pb-16">
-        <ClubBadge sizes="(min-width: 768px) 84px, 64px" className="w-16 md:w-21" />
-        <p className="eyebrow">{t("eyebrow")}</p>
-        <h1 className="heading text-5xl leading-[1.05] text-balance text-foreground sm:text-7xl">
-          {t("title")}
-        </h1>
-        <p className="max-w-xl text-lg text-pretty text-foreground/90">{t("subtitle")}</p>
-        <div>
+      <div
+        aria-hidden
+        className="absolute inset-0 hidden bg-linear-to-b from-transparent from-65% to-background md:block"
+      />
+      <div className="relative mx-auto w-full max-w-5xl px-5 pb-14 md:px-8 md:pb-28">
+        <div className="md:max-w-150">
+          <h1 className="text-[clamp(4rem,23.5vw,5.75rem)] leading-[0.86] font-extrabold tracking-[-0.01em] text-foreground [font-stretch:62%] md:text-[clamp(7rem,13vw,10.5rem)]">
+            {t("title")}
+          </h1>
+          <p className="mt-3.5 mb-4.5 max-w-[30ch] text-pretty text-foreground/90 md:mt-5 md:mb-6 md:max-w-[34ch] md:text-xl">
+            {t("subtitle")}
+          </p>
           <HomeApplyButton />
         </div>
       </div>
