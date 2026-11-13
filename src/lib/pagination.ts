@@ -4,6 +4,10 @@
 // Dependency-free so `node --test` can run its tests.
 
 export const PAGE_SIZE = 25;
+// Lists that filter in the browser read everything up to LIST_CEILING rows, CHUNK_SIZE at a time
+// (CHUNK_SIZE = Supabase `[api] max_rows`).
+export const LIST_CEILING = 2000;
+export const CHUNK_SIZE = 1000;
 
 export type Cursor = { createdAt: string; id: string };
 
@@ -69,4 +73,52 @@ export function toPage<T extends { created_at: string; id: string }>(rows: T[], 
 /** Escapes `%`, `_` and `\` for a PostgREST `ilike` contains-search. */
 export function ilikeContains(term: string) {
   return `%${term.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+}
+
+/** Parses an untrusted `?page=` value (1-based); anything but a canonical positive integer is page 1. */
+export function parsePage(value: unknown): number {
+  return typeof value === "string" && /^[1-9]\d{0,5}$/.test(value) ? Number(value) : 1;
+}
+
+export function pageCount(total: number, size = PAGE_SIZE): number {
+  return Math.max(1, Math.ceil(total / size));
+}
+
+export function clampPage(page: number, total: number, size = PAGE_SIZE): number {
+  return Math.min(Math.max(1, page), pageCount(total, size));
+}
+
+/** Numbers for a pager: first, last, current ±1. A gap only replaces 2+ hidden pages. */
+export function pageItems(current: number, count: number): (number | "gap")[] {
+  const shown = new Set([1, count, current - 1, current, current + 1].filter((n) => n >= 1 && n <= count));
+  const sorted = [...shown].sort((a, b) => a - b);
+  const items: (number | "gap")[] = [];
+  let previous = 0;
+  for (const n of sorted) {
+    if (n - previous === 2) items.push(previous + 1);
+    else if (n - previous > 2) items.push("gap");
+    items.push(n);
+    previous = n;
+  }
+  return items;
+}
+
+/**
+ * Reads a list in chunks until a short chunk or more than `ceiling` rows. Returns at most `ceiling` items;
+ * never requests past index `ceiling` (so at most ceiling + 1 rows are fetched).
+ */
+export async function readAll<T>(
+  fetchRange: (from: number, to: number) => Promise<T[]>,
+  ceiling = LIST_CEILING,
+  chunk = CHUNK_SIZE,
+): Promise<{ items: T[]; overCeiling: boolean }> {
+  const items: T[] = [];
+  while (items.length <= ceiling) {
+    const from = items.length;
+    const to = Math.min(from + chunk - 1, ceiling);
+    const rows = await fetchRange(from, to);
+    items.push(...rows);
+    if (rows.length < to - from + 1) break;
+  }
+  return { items: items.slice(0, ceiling), overCeiling: items.length > ceiling };
 }
