@@ -38,6 +38,9 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   on their own or are removed. The app has no such stage today (approved = `active`). To discuss before Events: a new
   status or a membership stage on active profiles, who sets/ends it (permission), what ön alım members can see, and
   event requirements (e.g. minimum bike cc, membership stage) that organizers set per event. See `docs/PLAN.md` step 3.
+  Facts (iltan, 2026-11-13): ön alım usually lasts only a few days; members ride anything from a 50cc (B licence) to
+  700–1000cc, and some future events will be limited to bike classes (e.g. over 400cc). More in
+  `docs/content/home-page-questions.md`.
 
 - **Dead-code tool?** (2026-11-11, iltan) — which tool, if any, for the dead-code sweep (Tooling). Candidates to
   compare when we talk: `knip` (unused files, exports, dependencies; Next.js plugin), `ts-prune`/`ts-unused-exports`
