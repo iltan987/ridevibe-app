@@ -2,9 +2,10 @@
 
 # Ride & Vibe — club platform
 
-Web app (PWA) for Ride & Vibe, an Istanbul motorcycle club (~150 members): applications, members, events,
-announcements, photo galleries, attendance. Plan and decisions: `docs/PLAN.md`. Application form spec:
-`docs/application-form.md`. Keep both up to date when decisions change.
+Web app (PWA) for Ride & Vibe, an Istanbul motorcycle club (founded 2026-11-01, ~140 members): applications, members,
+events, announcements, photo galleries, attendance. Plan and decisions: `docs/PLAN.md`. Application form spec:
+`docs/application-form.md`. Keep both up to date when decisions change. Club facts for public copy (rides, who can
+join, rules, Samet's answers): `docs/content/home-page-questions.md`.
 
 ## Working agreement
 
@@ -172,6 +173,7 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
 - Deploy status: `vercel ls ridevibe-app --environment production 2>&1` (prints to stderr; top row: Building → Ready).
   To wait, test only the newest row (`… | grep -m1 "●" | grep -qE "Ready|Error|Canceled"`): older rows already say
   Ready.
+- After a deploy that touches metadata, pages or images: `BASE=https://ridevibe.com.tr node scripts/e2e/seo-check.mjs`.
 - Check crons/requests: `vercel --scope <team> logs requests --project ridevibe-app --environment production --json
   --since 45m -q 'requestPath:"/api/keep-alive"'` (Hobby keeps < 1 h; fields under `.data`).
 
@@ -185,12 +187,19 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   Use `Link`, `redirect`, `useRouter`, `usePathname` from `@/i18n/navigation`, not from `next/*` (exception: a stored
   full path such as `?next=` already has its prefix → `redirect` from `next/navigation`, `docs/learnings/next-intl.md`).
   Locale on the server comes from `next/root-params` (see `src/i18n/request.ts`). Time zone: `Europe/Istanbul`.
+  `/` is Turkish on a first visit: `proxy.ts` pins `accept-language` to `tr` for next-intl (so no page or action sees
+  the visitor's real header); an explicit choice lives in `NEXT_LOCALE` (1 year).
   Dev quirk: `pnpm dev` (Turbopack) may keep serving stale `messages/*.json` after edits (`MISSING_MESSAGE`) —
   restart the dev server before assuming a missing key.
   Never CSS-`uppercase` English/brand words on Turkish pages (`i → İ`, "RİDE & VİBE"): use `Wordmark` or write the
   capitals in the source (`docs/learnings/ui.md`).
   Register: UI copy says "sen"; the privacy notice (`privacy/content-*.tsx`) says "siz". Any notice text change bumps
-  `PRIVACY_NOTICE_VERSION` (stored with each consent).
+  `PRIVACY_NOTICE_VERSION` (stored with each consent) — once per release: a version not yet deployed absorbs more edits.
+- **SEO:** public pages build metadata with `pageMetadata()` (`src/lib/seo/`) and pass `(await parent).openGraph?.images`
+  (a page's `openGraph` replaces the layout's share-image file); unfinished pages get `index: false`; a new indexable
+  page goes into `src/app/sitemap.ts`. Verify with `scripts/e2e/seo-check.mjs` (`docs/learnings/seo.md`).
+  One-off image work (resize, JPEG): sharp from Next's own dependency
+  (`require(require.resolve('sharp', { paths: [require.resolve('next')] }))`), never a new package.
 - **UI:** Tailwind CSS 4 + shadcn/ui (`base-nova` style, built on Base UI). Base UI composes with the `render` prop,
   **not** `asChild`. For links that look like buttons use `buttonVariants()` on `Link`. `cn` comes from the `cn`
   package (re-exported in `@/lib/utils`). Add components with `pnpm dlx shadcn@latest add <name>`.
@@ -249,3 +258,5 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
 Personal data is regulated by KVKK. Collect only what a feature needs, keep consents separate and explicit (never
 pre-ticked), treat blood type as special-category data, and never log personal data. See the KVKK section of
 `docs/PLAN.md`.
+No lawyer review (iltan, 2026-11-13): research official sources (law text, KVKK Board decisions) and decide open KVKK
+questions yourself; never park them as "ask the lawyer".
