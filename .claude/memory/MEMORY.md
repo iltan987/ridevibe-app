@@ -9,4 +9,5 @@
 - [Track follow-ups](feedback-track-follow-ups.md) — deferred/parked/out-of-scope items go to docs/follow-ups.md; read it before planning
 - [Missing tools: ask](feedback-missing-tools-ask.md) — never skip a step for a missing tool; ask approval to install or ask iltan
 - [Remove dead code](feedback-remove-dead-code.md) — delete unused code in the same change; periodic sweeps (follow-ups)
+- [No lawyer](project-no-lawyer.md) — KVKK "lawyer questions" are Claude's to research and decide; no lawyer review
 - [Ignore settings.json](feedback-ignore-settings-json.md) — never commit/ask about local .claude/settings.json changes until iltan says otherwise
