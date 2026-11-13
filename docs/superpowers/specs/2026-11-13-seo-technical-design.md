@@ -66,8 +66,9 @@ Link previews (official docs where they exist):
   `og:site_name`, `og:locale`. `og:image` comes from `src/app/[locale]/opengraph-image.png` (1200 × 630 PNG,
   **309 KB**, alt "Ride & Vibe") at `https://ridevibe.com.tr/-/opengraph-image.png?…` (works, 200).
 - hreflang: next-intl's proxy already sends `Link` headers (tr, en, x-default → Turkish URL) on every page.
-- Icons: `src/app/favicon.ico` (16 + 32 px inside, but rendered with `sizes="48x48"`), `src/app/icon.svg` (Google
-  can't use SVG), `src/app/apple-icon.png` (180 px). Brand PNGs in `public/brand/` (192, 512, maskable 512).
+- Icons: `src/app/favicon.ico` (16, 32 and 48 px inside — checked the ICO header; Google accepts ICO),
+  `src/app/icon.svg` (Google can't use SVG), `src/app/apple-icon.png` (180 px). Brand PNGs in `public/brand/` (192,
+  512, maskable 512).
 - Private pages (account, members, admin, sign-in) already set `robots: { index: false }`. `/events` and `/gallery`
   are indexable "Çok yakında" placeholders.
 - **Language redirect:** next-intl's default `localeDetection` sends `/` → `/en` (307) when there is no `NEXT_LOCALE`
@@ -182,8 +183,8 @@ Bump `PRIVACY_NOTICE_VERSION`. This settles the follow-up "Privacy notice: cross
 ### 4. Icons and logo
 - Add a square PNG icon ≥ 48 px (e.g. 192 px from the existing brand icon) through Next's icon file convention so the
   home page `<head>` has a Google-usable `<link rel="icon" type="image/png">`; keep the SVG for browsers that prefer
-  it and the 180 px apple icon. Make `favicon.ico`'s declared size truthful (regenerate with 16/32/48, or let Next
-  declare what's inside). Research the convention's ordering/numbering (bundled `app-icons.md`: numbered files sort
+  it, the 180 px apple icon and `favicon.ico` (already 16/32/48, usable by Google but not "larger than 48").
+  Research the convention's ordering/numbering (bundled `app-icons.md`: numbered files sort
   lexically) so the PNG is emitted.
 - Organization `logo`: `https://ridevibe.com.tr/brand/icon-512.png` (dark rounded tile with the cream R&V; reads
   fine on white, checked).
