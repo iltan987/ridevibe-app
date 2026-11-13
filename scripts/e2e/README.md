@@ -2,13 +2,12 @@
 
 Run against a **local** stack only (local Supabase + a server on port 3123); never against production.
 
-- `e2e-lib.mjs` — helpers: `launch({ scrollbars, args })` (system Chrome, `CHROME_PATH` to override; `scrollbars: true` keeps
-  classic scrollbars, hidden by default in headless; `args` = extra Chrome flags), `newPage()` (390x844, Turkish),
+- `e2e-lib.mjs` — helpers: `launch({ scrollbars, args })` (system Chrome, `CHROME_PATH` to override; `scrollbars: true`
+  keeps classic scrollbars, hidden by default in headless; `args` = extra Chrome flags), `newPage()` (390x844, Turkish),
   `signIn(page, email)` (sets Supabase session cookies via email/password), `throttle()` (CDP network throttling),
   `watchServer(page)` (counts document and RSC requests only; the favicon refetch on URL changes is ignored),
   `pagerFit(page)` (the visible pager's button row: one line, no overflow) and `clearAndType(page, text)` (the visible
-  search box, zero-delay typing).
-  The keys in it are the public local-Supabase demo keys, not secrets.
+  search box, zero-delay typing). The keys in it are the public local-Supabase demo keys, not secrets.
 - `nav-e2e.mjs` — navigation progress bar / pending dim checks (PASS/FAIL lines, exit code != 0 on failure).
   Needs a production build served on 3123: `pnpm build && pnpm start -p 3123`, `admin@test.local` and more than 25
   applications with status `new` (the list's default tab; the pager check needs a second page). Recipe (local only;
@@ -47,22 +46,22 @@ Run against a **local** stack only (local Supabase + a server on port 3123); nev
   removes bikes through `docker exec … psql` (`DB_CONTAINER`, local only). Screenshots go to `OUT_DIR`.
 - `safety-e2e.mjs` — safety data (PASS/FAIL lines, exit code != 0 on failure; each scenario in its own browser context):
   emergency contacts on `/account` (prompt card, add, limit of two, delete, re-add becomes the main contact, landline
-  error), blood type with its own consent (save disabled until ticked, set, change, withdraw), plates (tidied to
-  `34 ABC 123`, shown in `/members`, hidden by "Plakalarımı göster"), a plain member (no safety controls, filter params
-  ignored, no access-log rows), a `members.safety` holder (blood-type and "no contact" filters — no request while
-  typing or tapping a chip; after an in-browser search the blood filter keeps `q`/`side` and logs one
-  `filter_blood_type` row per navigation —, safety card with `tel:` and `api.whatsapp.com` links, blood type, plate
-  even when hidden, `view_card`/`filter_blood_type` log rows) and an inactive member (delete and withdraw only). Needs `admin@test.local` (admin role), `member@test.local`,
-  `second@test.local` (all active) and `inactive@test.local`; recipe in the script header. It plants and deletes
-  contacts, blood types, bikes and access-log rows of these four users through `docker exec … psql`
-  (`DB_CONTAINER`, local only), before and after the run. Works on a DB with other active members. Screenshots go to
-  `OUT_DIR`.
+  error), blood type with its own consent (save disabled until ticked, set, change, withdraw), plates (tidied to `34 ABC
+  123`, shown in `/members`, hidden by "Plakalarımı göster"), a plain member (no safety controls, filter params ignored,
+  no access-log rows), a `members.safety` holder (blood-type and "no contact" filters — no request while typing or
+  tapping a chip; after an in-browser search the blood filter keeps `q`/`side` and logs one `filter_blood_type` row per
+  navigation —, safety card with `tel:` and `api.whatsapp.com` links, blood type, plate even when hidden,
+  `view_card`/`filter_blood_type` log rows) and an inactive member (delete and withdraw only). Needs `admin@test.local`
+  (admin role), `member@test.local`, `second@test.local` (all active) and `inactive@test.local`; recipe in the script
+  header. It plants and deletes contacts, blood types, bikes and access-log rows of these four users through `docker
+  exec … psql` (`DB_CONTAINER`, local only), before and after the run. Works on a DB with other active members.
+  Screenshots go to `OUT_DIR`.
 - `header-e2e.mjs` — `<head>` theme script across a language switch and an unknown path (theme kept, client-created
-  script inert, no React "script tag" warning), theme sync to other tabs, no colour transitions on a theme switch,
-  the user-menu skeleton (signed out: button; signed in: the avatar, photo kept on a language switch; language
-  button doesn't jump), and no sideways header shift on `/apply` as a member (real scrollbars). Needs
-  `member@test.local` (active, `avatar_url` = `<BASE_URL>/apple-icon.png`) for the signed-in part. Run against `pnpm dev -p 3123` (the warning is dev-only) and
-  `pnpm start -p 3123`. `BASE_URL` overrides the server.
+  script inert, no React "script tag" warning), theme sync to other tabs, no colour transitions on a theme switch, the
+  user-menu skeleton (signed out: button; signed in: the avatar, photo kept on a language switch; language button
+  doesn't jump), and no sideways header shift on `/apply` as a member (real scrollbars). Needs `member@test.local`
+  (active, `avatar_url` = `<BASE_URL>/apple-icon.png`) for the signed-in part. Run against `pnpm dev -p 3123` (the
+  warning is dev-only) and `pnpm start -p 3123`. `BASE_URL` overrides the server.
 - `apply-e2e.mjs` — the stepped `/apply` form: step-1 errors only, Enter acts as "Devam" (no POST), browser back, draft
   restore (conditional answers, steps 1-3 only, no contact data in `localStorage`), language switch and "Baştan başla",
   deep link `?step=4` jumping to step 1, writing minimum (15 characters), draft gone after a successful submit, and the
@@ -79,16 +78,16 @@ Run against a **local** stack only (local Supabase + a server on port 3123); nev
   `pending-noapp@test.local` (pending) and `inactive@test.local` (status `inactive`; create it like the others, then
   `update profiles set status = 'inactive'`). `BASE_URL` overrides the server.
 - `cross-tab-e2e.mjs` — cross-tab sync (PASS/FAIL lines, exit code != 0 on failure): sign-out in one tab sends a
-  background tab on `/members` to `/sign-in?next=…` (and makes no more than two RSC requests there), sign-in takes a
-  tab on `/sign-in?next=/members` to `/members`, an account switch shows the new user, a frozen tab
+  background tab on `/members` to `/sign-in?next=…` (and makes no more than two RSC requests there), sign-in takes a tab
+  on `/sign-in?next=/members` to `/members`, an account switch shows the new user, a frozen tab
   (`Page.setWebLifecycleState`) catches up, signed-in `?next=/sign-in` lands on `/account`, a tab loaded in the
-  background and shown after a sign-out refreshes (doesn't store its outdated user) and still follows the next
-  sign-in, and a language switch moves other tabs (query kept; also when the store already holds that language; a
-  tab loaded in the background catches up when shown) except `/apply` and `/account`. Needs `pnpm start -p 3123`, local email sign-in and
-  two active users `member@test.local` and `second@test.local` whose names have different initials and no
+  background and shown after a sign-out refreshes (doesn't store its outdated user) and still follows the next sign-in,
+  and a language switch moves other tabs (query kept; also when the store already holds that language; a tab loaded in
+  the background catches up when shown) except `/apply` and `/account`. Needs `pnpm start -p 3123`, local email sign-in
+  and two active users `member@test.local` and `second@test.local` whose names have different initials and no
   `avatar_url` (the check reads the avatar initials, which a loaded photo replaces; `header-e2e.mjs` needs a photo for
-  `member@test.local`, so clear it between the two: `update profiles set avatar_url = null …`). `BASE_URL` overrides
-  the server.
+  `member@test.local`, so clear it between the two: `update profiles set avatar_url = null …`). `BASE_URL` overrides the
+  server.
 - `lists-e2e.mjs` — the admin lists (PASS/FAIL lines, exit code != 0 on failure): `/admin/members` tabs, search by
   name or email (tab counts follow the search) and pages in the browser with no document/RSC request, URL fixes,
   back, the widest pager (7 numbers + arrows) at 390px (360px as INFO), a status change that empties the last page

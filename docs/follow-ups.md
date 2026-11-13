@@ -190,14 +190,17 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   checks `auth.uid()` and a shared cache can't read the session, so a cached fetch would need the secret key and
   bypass RLS. Measured server time of `/members` (production build on WSL, local Docker DB, 29 active members, signed
   in, 20 loads over 4 runs of `members-e2e.mjs`; document timing from the request): first byte (static shell)
-  6–10 ms, streamed directory complete (`responseEnd`) 44–71 ms. Re-measure on production (Vercel `fra1` + Frankfurt DB, Vercel logs) when the club grows
-  past a few hundred members; only if it is slow, design a cache (never safety/health data). **Redis: not now**
+  6–10 ms, streamed directory complete (`responseEnd`) 44–71 ms. Re-measure on production (Vercel `fra1` + Frankfurt
+  DB, Vercel logs) when the club grows past a few hundred members; only if it is slow, design a cache (never
+  safety/health data). **Payload:** each directory member costs ~380 B in the page, so ~0.8–0.9 MB raw at the 2,000
+  ceiling; `/admin/members` also ships `search` (name + email again) and re-sends the whole list on every row action's
+  `refresh()`. Measure the document/RSC size at ~500 members; folding on the client would drop the duplicate field.
+  Deferred: small at today's ~150 members. **Redis: not now**
   (2026-11-12, iltan asked) — functions in `fra1` sit next to the Frankfurt DB (a query is a few ms), ~150 members
   fit in Postgres memory; Redis would add a service, a KVKK processor and RLS-bypass risk in a shared cache. Prefer
   Next's built-in cache; revisit Redis for rate limiting (e.g. form spam).
-- **Safety data pgTAP / SQL minors** (2026-11-13, safety data reviews) — (a) Task 1: the 0606 post-check can't prove
-  row survival. (b) Task 4: `safety_directory.test.sql` creates a temp table as `authenticated` (needs TEMP on the
-  database; watch at the production `test db` run).
+- **Safety data pgTAP / SQL minors** (2026-11-13, safety data reviews) — Task 1: the 0606 post-check can't prove
+  row survival.
 
 ### App logic
 - **List UX review minors** (2026-11-13, list UX reviews) — (a) `readAll` (`src/lib/pagination.ts`) stops silently
@@ -276,6 +279,15 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   `string | null`; `visibility-form.tsx` indentation. All cosmetic or harmless today.
 
 ### UI / accessibility
+- **Pager accessibility** (2026-11-13, list UX final review) — pressing "›" to reach the last page swaps the focused
+  button for a `span`, so focus falls to `<body>`; after a page change the view scrolls to the list top but focus stays
+  on the pager; the disabled end `<span aria-label>` has no role (ARIA forbids `aria-label` on generic elements). Fix:
+  `<button disabled>` for the ends and/or move focus to the list after a page change (`pager-buttons.tsx`,
+  `pager.tsx`). Deferred: found in the final review; keyboard/screen-reader use of the pager is rare on phones.
+- **Language switch drops the list's query** (2026-11-13, list UX final review) — `locale-switcher.tsx` calls
+  `router.replace(pathname)`, so switching TR/EN on `/members?q=ali&page=2` lands on the unfiltered list in the same
+  tab, while the cross-tab follow keeps `location.search`. Predates this branch, but it matters more now that the URL
+  holds the view. Deferred: out of the list-UX scope; fix by passing the current search params.
 - **Widest pager on 360px phones** (2026-11-13, list UX E2E) — from 7 pages the pager shows 7 numbers + 2 arrows
   (36px each, 356px). It fits a 390px screen inside the page padding (spec) and still fits on a 360px screen, but
   there it spills 14px into each side padding (`scripts/e2e/lists-e2e.mjs` prints it as INFO). If it looks cramped:
@@ -353,6 +365,11 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   review"; harmless).
 
 ### Loading states
+- **Empty admin tab: the skeleton's range line shifts the content** (2026-11-13, list UX final review) — `ListSkeleton`
+  reserves the pager's range line, but an empty tab renders no pager (only the "empty" text), so the page ends up
+  shorter by the range line and its gap (16 + 24px) (`src/components/admin/list-skeleton.tsx`,
+  `src/app/[locale]/admin/applications/page.tsx`, `src/components/admin/members-list.tsx`). Deferred: the default tabs
+  (pending, new) usually have rows.
 - **`AccountSkeleton` only mirrors the active-member page** (2026-11-10, members) — pending and inactive accounts see a
   shorter page (no profile sections, or only the photo consent), so their skeleton overshoots. The status is
   request-time data, so the fallback can't know it. (Default-state heights are measured: all Δh 0, 2026-11-10.)
@@ -411,11 +428,12 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 ### Tooling
 - **Dead-code sweep** (2026-11-11, iltan) — iltan wants dead code removed when there is no reason to keep it, and a
   sweep now and then. First sweep: unused exports/files/dependencies (tool still open, see "Dead-code tool?" under
-  Open decisions), unused message keys in `messages/*.json`, stale comments and follow-up items that point at removed code.
+  Open decisions), unused message keys in `messages/*.json`, stale comments and follow-up items that point at removed
+  code.
   Known: `hasStaffAccess` in `src/lib/auth/permissions.ts` has no callers (pre-existing, 2026-11-13).
 - **Supabase CLI 3.1.0 is available** (2026-11-10; installed 3.0.0).
 - **Members E2E looseness** (2026-11-10, members review) — some assertions are loose or vacuous in
-  `scripts/e2e/members-e2e.mjs`: pending "no member cards" (passes if the list simply didn't render), "remaining 4
-  members" accepts 1..4 cards, the English check is a loose regexp; bikes planted for the 10-bike cap stay if a check
+  `scripts/e2e/members-e2e.mjs`: pending "no member cards" (passes if the list simply didn't render), the English
+  label check is a loose regexp; bikes planted for the 10-bike cap stay if a check
   throws mid-run (the next run resets them); the instant-navigation check is evidenced only by the dev log and the
   browser console.

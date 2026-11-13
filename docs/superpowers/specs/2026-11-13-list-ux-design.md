@@ -108,6 +108,9 @@ options, virtualised rendering (25 cards per page needs none), infinite scroll.
 - **Chips** (Tümü / Anadolu / Avrupa) are buttons (or links with `onClick` + `pushState`; builder's call, must stay
   keyboard-accessible and keep `aria-current`) whose counts reflect the search (as today: side counts honour the
   search, ignore the side).
+  *Built (plan decision):* toggle `button`s with `aria-pressed`, not `aria-current` (which suits links); the same on
+  `/admin/members` (`ListChip`). The server-navigated chips (`/admin/applications`, "no contact") stay links with
+  `aria-current`.
 - **Total line** ("N üye") and the empty states (`empty` vs `noResults`) behave as today.
 - Renders the current page's 25 `MemberCard`s and the new `Pager` (§3). `MemberCard` contains `SafetyCardDialog`
   (a client component) and uses `useFormatter`/`useTranslations`: check it renders inside a client tree (next-intl
