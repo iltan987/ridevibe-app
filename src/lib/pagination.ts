@@ -75,6 +75,7 @@ export function slicePage<T>(items: T[], page: number, size = PAGE_SIZE) {
 
 /** Splits `items` into arrays of at most `size` (e.g. ids for an RPC whose result is capped at `max_rows`). */
 export function chunks<T>(items: T[], size: number): T[][] {
+  if (!Number.isInteger(size) || size < 1) throw new RangeError(`chunks: size must be a positive integer, got ${size}`);
   const result: T[][] = [];
   for (let i = 0; i < items.length; i += size) result.push(items.slice(i, i + size));
   return result;

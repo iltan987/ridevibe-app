@@ -3,12 +3,14 @@
 import { useTranslations } from "next-intl";
 import { useRef } from "react";
 import { MemberRow, type MemberRowData } from "@/components/admin/member-row";
+import { CeilingNotice } from "@/components/lists/ceiling-notice";
+import { ListChip } from "@/components/lists/list-chip";
 import { useListParams } from "@/components/lists/use-list-params";
 import { scrollToListTop, useListSearch, useUrlFix } from "@/components/lists/use-list-search";
 import { PagerButtons } from "@/components/pager-buttons";
 import { Input } from "@/components/ui/input";
 import { MEMBER_STATUSES, type MemberStatus, membersView } from "@/lib/access/members-view";
-import { listSearch } from "@/lib/list-url";
+import { listSearch, paramOff } from "@/lib/list-url";
 import { SEARCH_MAX_LENGTH } from "@/lib/search-fold";
 
 const DEFAULTS = { status: "pending", page: 1 };
@@ -48,9 +50,10 @@ export function MembersList({
     ...changes,
   });
 
-  // A malformed or out-of-range ?page= (also a last page emptied by a row action) renders the clamped page; correct
-  // the URL to match.
-  useUrlFix(search.pageOff(view.page) ? listSearch(urlValues({}), DEFAULTS) : null);
+  // A malformed or out-of-range ?page= (also a last page emptied by a row action) renders the clamped page, an
+  // unknown ?status= the pending tab; correct the URL to match.
+  const urlOff = search.pageOff(view.page) || paramOff(params.get("status"), status, DEFAULTS.status);
+  useUrlFix(urlOff ? listSearch(urlValues({}), DEFAULTS) : null);
 
   const listTop = useRef<HTMLDivElement>(null);
 
@@ -73,24 +76,13 @@ export function MembersList({
     <>
       <div data-skeleton-result="admin-chips" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
         {MEMBER_STATUSES.map((s) => (
-          <button
-            key={s}
-            type="button"
-            aria-pressed={s === status}
-            onClick={() => onStatus(s)}
-            className="flex shrink-0 items-center gap-1.5 rounded-full border border-input px-3.5 py-1.5 text-sm font-medium text-muted-foreground aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground"
-          >
+          <ListChip key={s} pressed={s === status} count={view.counts[s]} onClick={() => onStatus(s)}>
             {t(`statuses.${s}`)}
-            <span className="tabular-nums opacity-70">{view.counts[s]}</span>
-          </button>
+          </ListChip>
         ))}
       </div>
 
-      {overCeiling && (
-        <p role="alert" className="rounded-lg border border-destructive/40 p-3 text-sm text-destructive">
-          {t("ceiling")}
-        </p>
-      )}
+      {overCeiling && <CeilingNotice>{t("ceiling")}</CeilingNotice>}
 
       {/* Filters as you type; the GET fields only matter without JavaScript. */}
       <form role="search" data-skeleton-result="admin-search" className="flex" onSubmit={(e) => e.preventDefault()}>

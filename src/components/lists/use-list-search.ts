@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { syncedInput } from "@/lib/list-url";
+import { paramOff, syncedInput } from "@/lib/list-url";
 import { parsePage } from "@/lib/pagination";
 import { normalizeQuery } from "@/lib/search-fold";
 
@@ -36,7 +36,7 @@ export function useListSearch(params: { get: (key: string) => string | null }) {
       return next === query ? null : next;
     },
     /** True when the URL's `page` differs from the (clamped) page shown: malformed or out of range. */
-    pageOff: (shown: number) => settled && rawPage !== (shown === 1 ? null : String(shown)),
+    pageOff: (shown: number) => settled && paramOff(rawPage, shown, 1),
   };
 }
 

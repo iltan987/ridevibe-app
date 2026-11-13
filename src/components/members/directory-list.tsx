@@ -2,13 +2,15 @@
 
 import { useTranslations } from "next-intl";
 import { type ReactNode, useRef } from "react";
+import { CeilingNotice } from "@/components/lists/ceiling-notice";
+import { ListChip } from "@/components/lists/list-chip";
 import { useListParams } from "@/components/lists/use-list-params";
 import { scrollToListTop, useListSearch, useUrlFix } from "@/components/lists/use-list-search";
 import { MemberCard } from "@/components/members/member-card";
 import { PagerButtons } from "@/components/pager-buttons";
 import { Input } from "@/components/ui/input";
 import { Link } from "@/i18n/navigation";
-import { listSearch } from "@/lib/list-url";
+import { listSearch, paramOff } from "@/lib/list-url";
 import { directoryView } from "@/lib/members/directory-view";
 import type { DirectoryMember, IstanbulSide } from "@/lib/members/queries";
 import { foldSearch, SEARCH_MAX_LENGTH } from "@/lib/search-fold";
@@ -55,8 +57,9 @@ export function DirectoryList({
     ...changes,
   });
 
-  // A malformed or out-of-range ?page= renders the clamped page; correct the URL to match.
-  useUrlFix(search.pageOff(view.page) ? listSearch(urlValues({}), DEFAULTS) : null);
+  // A malformed or out-of-range ?page= renders the clamped page, an unknown ?side= all sides; correct the URL to match.
+  const urlOff = search.pageOff(view.page) || paramOff(params.get("side"), side);
+  useUrlFix(urlOff ? listSearch(urlValues({}), DEFAULTS) : null);
 
   const listTop = useRef<HTMLDivElement>(null);
 
@@ -90,11 +93,7 @@ export function DirectoryList({
         </Link>
       </div>
 
-      {overCeiling && (
-        <p role="alert" className="rounded-lg border border-destructive/40 p-3 text-sm text-destructive">
-          {t("ceiling")}
-        </p>
-      )}
+      {overCeiling && <CeilingNotice>{t("ceiling")}</CeilingNotice>}
 
       {/* Filters as you type; the GET fields only matter without JavaScript. */}
       <form role="search" data-skeleton-result="members-search" className="flex" onSubmit={(e) => e.preventDefault()}>
@@ -114,16 +113,14 @@ export function DirectoryList({
 
       <div data-skeleton-result="members-chips" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
         {chips.map((chip) => (
-          <button
+          <ListChip
             key={chip.side ?? "all"}
-            type="button"
-            aria-pressed={chip.side === side}
+            pressed={chip.side === side}
+            count={chip.count}
             onClick={() => onSide(chip.side)}
-            className="flex shrink-0 items-center gap-1.5 rounded-full border border-input px-3.5 py-1.5 text-sm font-medium text-muted-foreground aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground"
           >
             {chip.label}
-            <span className="tabular-nums opacity-70">{chip.count}</span>
-          </button>
+          </ListChip>
         ))}
       </div>
 

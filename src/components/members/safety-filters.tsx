@@ -2,6 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { listChipClasses } from "@/components/lists/list-chip";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import type { BloodType } from "@/lib/members/blood-type";
@@ -40,7 +41,7 @@ export function SafetyFilters({ bloodType, noContact }: { bloodType: BloodType |
           },
         }}
         aria-current={noContact ? "page" : undefined}
-        className="flex shrink-0 items-center rounded-full border border-input px-3.5 py-1.5 text-sm font-medium text-muted-foreground aria-[current=page]:border-primary aria-[current=page]:bg-primary aria-[current=page]:text-primary-foreground"
+        className={listChipClasses.current}
       >
         {t("noContactFilter")}
       </Link>

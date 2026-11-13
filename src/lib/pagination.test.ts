@@ -137,3 +137,7 @@ test("chunks splits into pieces of at most `size`", () => {
   assert.deepEqual(chunks([], 2), []);
   assert.equal(chunks(Array.from({ length: 2001 }, (_, i) => i), 1000).length, 3);
 });
+
+test("chunks rejects a size below 1 (would loop forever)", () => {
+  for (const size of [0, -1, 0.5, Number.NaN]) assert.throws(() => chunks([1, 2], size), RangeError, String(size));
+});
