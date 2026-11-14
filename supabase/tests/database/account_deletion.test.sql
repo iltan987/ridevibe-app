@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(61);
+select plan(62);
 
 -- Fixtures (postgres bypasses RLS). Ids 0000…07a1–07a9; every query is scoped to them.
 -- 07a7 active (constraint checks).
@@ -267,6 +267,14 @@ select is((select count(*)::int from public.linkable_accounts(null, null, null, 
   'linkable_accounts never lists a deleting account');
 reset role;
 
+-- A reviewer cannot move a visible application onto a deleting person's email (oracle / indirect delete)
+select pg_temp.apply('00000000-0000-0000-0000-0000000007d5', 'pgtap-del-other@pgtap.invalid', null);
+select pg_temp.login('00000000-0000-0000-0000-0000000007b3');
+select throws_ok(
+  $$ update public.applications set email = 'pgtap-del-hidden@pgtap.invalid' where id = '00000000-0000-0000-0000-0000000007d5' $$,
+  '42501', null, 'a reviewer cannot change an application email to a deleting person''s email');
+reset role;
+
 -- 7b1 reads its own row
 select pg_temp.login('00000000-0000-0000-0000-0000000007b1');
 select is((select count(*)::int from public.profiles where id = '00000000-0000-0000-0000-0000000007b1'), 1,
@@ -277,12 +285,12 @@ reset role;
 select pg_temp.login('00000000-0000-0000-0000-0000000007b4');
 select is((select count(*)::int from public.profiles where id = '00000000-0000-0000-0000-0000000007b1'), 0,
   'an admin cannot read a deleting profile');
-select throws_ok($$ select public.set_member_status('00000000-0000-0000-0000-0000000007b1', 'active') $$, '42501', null,
-  'set_member_status refuses a deleting target');
-select throws_ok($$ select public.set_member_role('00000000-0000-0000-0000-0000000007b1', null) $$, '42501', null,
-  'set_member_role refuses a deleting target');
-select throws_ok($$ select public.set_member_name('00000000-0000-0000-0000-0000000007b1', 'Yeni Ad') $$, '42501', null,
-  'set_member_name refuses a deleting target');
+select throws_ok($$ select public.set_member_status('00000000-0000-0000-0000-0000000007b1', 'active') $$, 'P0002',
+  'profile 00000000-0000-0000-0000-0000000007b1 not found', 'set_member_status answers a deleting target as not found');
+select throws_ok($$ select public.set_member_role('00000000-0000-0000-0000-0000000007b1', null) $$, 'P0002',
+  'profile 00000000-0000-0000-0000-0000000007b1 not found', 'set_member_role answers a deleting target as not found');
+select throws_ok($$ select public.set_member_name('00000000-0000-0000-0000-0000000007b1', 'Yeni Ad') $$, 'P0002',
+  'profile 00000000-0000-0000-0000-0000000007b1 not found', 'set_member_name answers a deleting target as not found');
 select throws_ok($$ select public.set_member_status('00000000-0000-0000-0000-0000000007b2', 'deleting') $$, '42501', null,
   'staff cannot set status deleting');
 select throws_ok($$ select public.link_application('00000000-0000-0000-0000-0000000007d3', '00000000-0000-0000-0000-0000000007b1') $$,

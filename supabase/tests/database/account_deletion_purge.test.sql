@@ -5,7 +5,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(41);
+select plan(43);
 
 -- Fixtures (ids …07d1–…07d5, applications 7b-prefixed).
 --   7d1 deleting 14 days (was active) with approved + rejected linked and a contacted unlinked application (same
@@ -81,6 +81,13 @@ update public.applications set retained_until = now() - interval '1 second'
 update public.applications set retained_until = now() + interval '1 day'
   where id = '00000000-0000-0000-0000-0000000007b6';
 
+-- Auth audit log rows (no FK to auth.users; payload holds the person's id and email)
+insert into auth.audit_log_entries (instance_id, id, payload, ip_address) values
+  ('00000000-0000-0000-0000-000000000000', '00000000-0000-0000-0000-0000000007c1',
+   '{"actor_id": "00000000-0000-0000-0000-0000000007d1", "actor_username": "pgtap-purge-one@pgtap.invalid", "action": "login"}', '203.0.113.7'),
+  ('00000000-0000-0000-0000-000000000000', '00000000-0000-0000-0000-0000000007c2',
+   '{"actor_id": "00000000-0000-0000-0000-0000000007d2", "actor_username": "pgtap-purge-two@pgtap.invalid", "action": "login"}', '203.0.113.8');
+
 -- Grants and schedule
 select ok(
   not has_function_privilege('authenticated', 'private.purge_deleted_accounts(timestamptz)', 'execute'),
@@ -134,7 +141,12 @@ select is((select profile_id from public.applications where id = '00000000-0000-
 select is((select retained_until from public.applications where id = '00000000-0000-0000-0000-0000000007b2'), null,
   'the rejected application gets no deadline');
 
+select is((select count(*)::int from auth.audit_log_entries where id = '00000000-0000-0000-0000-0000000007c1'), 0,
+  'the due account''s auth audit log rows are deleted');
+
 -- 7d2: still in the grace period
+select is((select count(*)::int from auth.audit_log_entries where id = '00000000-0000-0000-0000-0000000007c2'), 1,
+  'an account inside the grace period keeps its audit log rows');
 select is((select count(*)::int from auth.users where id = '00000000-0000-0000-0000-0000000007d2'), 1,
   'an account inside the grace period stays');
 select is((select status::text from public.profiles where id = '00000000-0000-0000-0000-0000000007d2'), 'deleting',

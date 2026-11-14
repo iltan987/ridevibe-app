@@ -7,9 +7,10 @@ create extension if not exists pgtap with schema extensions;
 
 select plan(13);
 
--- Fixtures (ids …07c1–…07c9; applications use 7a-prefixed ids below).
---   7c1 application (kept), 7c2 new sign-up with its email, 7c3 members.manage, 7c4 applications.decide,
---   7c6 account being deleted + 7c5 approved application with its email, 7c7 pending link target
+-- Fixtures: accounts …07c2–…07c4, …07c6–…07c8; applications …07a1–…07a3.
+--   7a1 approved application (kept, unlinked) + 7c2 new sign-up with its email, 7c3 members.manage,
+--   7c4 applications.decide, 7c6 account being deleted + 7a2 approved application with its email,
+--   7c7 pending link target, 7c8 sign-up with 7a3's email (a normal approved application)
 insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-0000000007c3', 'pgtap-ret-manager@pgtap.invalid', '{"full_name": "Mine Manager"}'),
   ('00000000-0000-0000-0000-0000000007c4', 'pgtap-ret-decider@pgtap.invalid', '{"full_name": "Deniz Decider"}'),

@@ -91,14 +91,17 @@ begin
       )
     );
 
-  -- (c) the accounts (cascades to profile and member rows)
+  -- (c) the people's Auth audit log rows (no FK to auth.users; payload holds actor_id + email, row has the IP)
+  delete from auth.audit_log_entries e where e.payload->>'actor_id' = any(due::text[]);
+
+  -- (d) the accounts (cascades to profile and member rows)
   delete from auth.users u where u.id = any(due);
 
-  -- (d) kept applications past their deadline
+  -- (e) kept applications past their deadline
   delete from public.applications a
   where a.retained_until <= as_of;
 
-  -- (e) job history keeps no more than 30 days
+  -- (f) job history keeps no more than 30 days
   delete from cron.job_run_details where end_time < as_of - interval '30 days';
 end;
 $$;

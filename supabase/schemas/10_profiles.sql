@@ -285,9 +285,9 @@ begin
     raise exception 'you cannot change your own role' using errcode = '42501';
   end if;
 
-  -- An account being deleted is hidden from staff: treat it as untouchable.
+  -- An account being deleted is hidden from staff: answer exactly as for an unknown id.
   if exists (select 1 from public.profiles p where p.id = target_id and p.status = 'deleting') then
-    raise exception 'the account is being deleted' using errcode = '42501';
+    raise exception 'profile % not found', target_id using errcode = 'P0002';
   end if;
 
   update public.profiles set role_id = new_role_id where id = target_id;
@@ -328,12 +328,9 @@ begin
   left join public.roles r on r.id = p.role_id
   where p.id = target_id;
 
-  if not found then
+  -- A deleting target is hidden from staff: same answer as an unknown id.
+  if not found or target_status = 'deleting' then
     raise exception 'profile % not found', target_id using errcode = 'P0002';
-  end if;
-
-  if target_status = 'deleting' then
-    raise exception 'the account is being deleted' using errcode = '42501';
   end if;
 
   if target_is_admin and not private.is_admin() then
@@ -371,12 +368,9 @@ begin
   left join public.roles r on r.id = p.role_id
   where p.id = target_id;
 
-  if not found then
+  -- A deleting target is hidden from staff: same answer as an unknown id.
+  if not found or target_status = 'deleting' then
     raise exception 'profile % not found', target_id using errcode = 'P0002';
-  end if;
-
-  if target_status = 'deleting' then
-    raise exception 'the account is being deleted' using errcode = '42501';
   end if;
 
   if target_is_admin and not private.is_admin() then

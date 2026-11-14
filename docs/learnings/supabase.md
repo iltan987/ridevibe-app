@@ -252,6 +252,15 @@
   (`docs/follow-ups.md`).
 - **Source:** `node_modules/@supabase/auth-js/dist/main/GoTrueClient.js` (`signOut`, `_signOut`).
 
+### Auth audit log rows outlive the deleted user (2026-11-14)
+- **Symptom (found in review):** after `delete from auth.users`, `auth.audit_log_entries` still held the person's
+  email (`payload->>'actor_username'`), id (`actor_id`) and `ip_address`.
+- **Cause:** that table has no FK to `auth.users`, so no cascade reaches it.
+- **Do:** purge (and any manual deletion) also runs `delete from auth.audit_log_entries where payload->>'actor_id'
+  = any(ids::text[])` first; `postgres` may delete from it locally (hosted: check at rollout, `docs/follow-ups.md`).
+  pgTAP can insert fixture rows (`instance_id`, `id`, `payload`, `ip_address`).
+- **Source:** final review of account deletion; `private.purge_deleted_accounts`.
+
 ### Deleting users with SQL is supported; Storage owners block it (2026-11-14)
 - **Need:** delete accounts from a pg_cron job, without the Auth admin API and a secret key in the app.
 - **Cause/fact:** `delete from auth.users where id = …` as `postgres` is supported (Supabase's own anonymous-user

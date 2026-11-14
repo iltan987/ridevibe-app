@@ -733,8 +733,11 @@ using (
   and not private.application_hidden_for_deletion(profile_id, email, status)
 )
 with check (
-  (select private.has_permission('applications.review'))
-  or (select private.has_permission('applications.decide'))
+  (
+    (select private.has_permission('applications.review'))
+    or (select private.has_permission('applications.decide'))
+  )
+  and not private.application_hidden_for_deletion(profile_id, email, status)
 );
 
 create policy "applications: deletable with applications.delete"
