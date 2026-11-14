@@ -612,6 +612,39 @@ grant execute on function public.application_account(uuid) to authenticated;
 grant execute on function public.my_application_status() to authenticated;
 grant execute on function public.pending_application_flags(uuid[]) to authenticated;
 
+-- Staff must not see the data of someone who asked to delete their account: true for a non-rejected
+-- application linked to a `deleting` profile, or unlinked with the email of a `deleting` profile. Used by the
+-- applications select/update policies (runs as the caller, hence security definer).
+create or replace function private.application_hidden_for_deletion(
+  app_profile_id uuid,
+  app_email text,
+  app_status public.application_status
+)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select app_status <> 'rejected' and (
+    case
+      when app_profile_id is not null then
+        exists (select 1 from public.profiles p where p.id = app_profile_id and p.status = 'deleting')
+      else
+        exists (
+          select 1
+          from public.profiles p
+          join public.member_contacts c on c.profile_id = p.id
+          where p.status = 'deleting'
+            and private.normalize_email(c.email) = private.normalize_email(app_email)
+        )
+    end
+  );
+$$;
+
+revoke all on function private.application_hidden_for_deletion(uuid, text, public.application_status) from public, anon;
+grant execute on function private.application_hidden_for_deletion(uuid, text, public.application_status) to authenticated;
+
 revoke all on function private.applications_before_insert() from public, anon, authenticated;
 revoke all on function private.applications_normalize_contact() from public, anon, authenticated;
 revoke all on function private.applications_track_review() from public, anon, authenticated;
@@ -658,7 +691,10 @@ create policy "applications: readable with applications.view"
 on public.applications
 for select
 to authenticated
-using ((select private.has_permission('applications.view')));
+using (
+  (select private.has_permission('applications.view'))
+  and not private.application_hidden_for_deletion(profile_id, email, status)
+);
 
 -- applications.decide implies review; approve/reject itself is checked by the
 -- applications_check_decision trigger above.
@@ -667,8 +703,11 @@ on public.applications
 for update
 to authenticated
 using (
-  (select private.has_permission('applications.review'))
-  or (select private.has_permission('applications.decide'))
+  (
+    (select private.has_permission('applications.review'))
+    or (select private.has_permission('applications.decide'))
+  )
+  and not private.application_hidden_for_deletion(profile_id, email, status)
 )
 with check (
   (select private.has_permission('applications.review'))

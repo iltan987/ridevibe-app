@@ -151,7 +151,7 @@ for select
 to authenticated
 using (
   id = (select auth.uid())
-  or (select private.has_permission('members.manage'))
+  or ((select private.has_permission('members.manage')) and status <> 'deleting')
   or (status = 'active' and (select private.is_active_member()))
 );
 
@@ -191,7 +191,10 @@ for select
 to authenticated
 using (
   profile_id = (select auth.uid())
-  or (select private.has_permission('members.manage'))
+  or (
+    (select private.has_permission('members.manage'))
+    and exists (select 1 from public.profiles p where p.id = profile_id and p.status <> 'deleting')
+  )
 );
 
 -- ---------------------------------------------------------------------------
@@ -282,6 +285,11 @@ begin
     raise exception 'you cannot change your own role' using errcode = '42501';
   end if;
 
+  -- An account being deleted is hidden from staff: treat it as untouchable.
+  if exists (select 1 from public.profiles p where p.id = target_id and p.status = 'deleting') then
+    raise exception 'the account is being deleted' using errcode = '42501';
+  end if;
+
   update public.profiles set role_id = new_role_id where id = target_id;
 
   if not found then
@@ -300,6 +308,7 @@ set search_path = ''
 as $$
 declare
   target_is_admin boolean;
+  target_status public.member_status;
 begin
   if not private.has_permission('members.manage') then
     raise exception 'missing permission members.manage' using errcode = '42501';
@@ -309,13 +318,22 @@ begin
     raise exception 'you cannot change your own status' using errcode = '42501';
   end if;
 
-  select coalesce(r.is_admin, false) into target_is_admin
+  -- Deleting is the member's own decision (request_my_account_deletion), never staff's.
+  if new_status = 'deleting' then
+    raise exception 'staff cannot set the deleting status' using errcode = '42501';
+  end if;
+
+  select coalesce(r.is_admin, false), p.status into target_is_admin, target_status
   from public.profiles p
   left join public.roles r on r.id = p.role_id
   where p.id = target_id;
 
   if not found then
     raise exception 'profile % not found', target_id using errcode = 'P0002';
+  end if;
+
+  if target_status = 'deleting' then
+    raise exception 'the account is being deleted' using errcode = '42501';
   end if;
 
   if target_is_admin and not private.is_admin() then
@@ -338,6 +356,7 @@ as $$
 declare
   clean_name text := btrim(new_name);
   target_is_admin boolean;
+  target_status public.member_status;
 begin
   if not private.has_permission('members.manage') then
     raise exception 'missing permission members.manage' using errcode = '42501';
@@ -347,13 +366,17 @@ begin
     raise exception 'a name must be 2 to 120 characters' using errcode = '23514';
   end if;
 
-  select coalesce(r.is_admin, false) into target_is_admin
+  select coalesce(r.is_admin, false), p.status into target_is_admin, target_status
   from public.profiles p
   left join public.roles r on r.id = p.role_id
   where p.id = target_id;
 
   if not found then
     raise exception 'profile % not found', target_id using errcode = 'P0002';
+  end if;
+
+  if target_status = 'deleting' then
+    raise exception 'the account is being deleted' using errcode = '42501';
   end if;
 
   if target_is_admin and not private.is_admin() then
