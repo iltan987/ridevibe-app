@@ -364,6 +364,89 @@ begin
 end;
 $$;
 
+-- Self-service account deletion (any status): the member starts a 14-day grace period, during which the account
+-- is `deleting` (no rights, signed in only to cancel). The purge job (a later migration) removes it afterwards.
+-- The last active admin cannot request it (the club would lose all role management).
+create or replace function public.request_my_account_deletion()
+returns timestamptz
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  me uuid := (select auth.uid());
+  current_status public.member_status;
+  requested timestamptz;
+begin
+  if me is null then
+    raise exception 'not signed in' using errcode = '42501';
+  end if;
+
+  select p.status into current_status from public.profiles p where p.id = me for update;
+  if not found then
+    raise exception 'profile not found' using errcode = 'P0002';
+  end if;
+  if current_status = 'deleting' then
+    raise exception 'account deletion is already requested' using errcode = '55000';
+  end if;
+
+  if current_status = 'active' and exists (
+    select 1 from public.profiles p join public.roles r on r.id = p.role_id
+    where p.id = me and r.is_admin
+  ) then
+    -- Lock every active admin (same order for all callers: no deadlock), then require another one.
+    perform 1 from public.profiles p join public.roles r on r.id = p.role_id
+    where r.is_admin and p.status = 'active'
+    order by p.id
+    for update of p;
+    if not exists (
+      select 1 from public.profiles p join public.roles r on r.id = p.role_id
+      where r.is_admin and p.status = 'active' and p.id <> me
+    ) then
+      raise exception 'you are the only active admin' using errcode = '42501', hint = 'last_admin';
+    end if;
+  end if;
+
+  update public.profiles
+  set status = 'deleting', deletion_requested_at = now(), status_before_deletion = current_status
+  where id = me
+  returning deletion_requested_at into requested;
+
+  return requested + interval '14 days';
+end;
+$$;
+
+create or replace function public.cancel_my_account_deletion()
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  me uuid := (select auth.uid());
+  previous public.member_status;
+begin
+  if me is null then
+    raise exception 'not signed in' using errcode = '42501';
+  end if;
+
+  select p.status_before_deletion into previous
+  from public.profiles p where p.id = me and p.status = 'deleting' for update;
+  if not found then
+    raise exception 'no account deletion to cancel' using errcode = '55000';
+  end if;
+
+  update public.profiles
+  set status = previous, deletion_requested_at = null, status_before_deletion = null
+  where id = me;
+end;
+$$;
+
+revoke all on function public.request_my_account_deletion() from public, anon;
+revoke all on function public.cancel_my_account_deletion() from public, anon;
+grant execute on function public.request_my_account_deletion() to authenticated;
+grant execute on function public.cancel_my_account_deletion() to authenticated;
+
 revoke all on function public.set_member_role(uuid, uuid) from public, anon;
 revoke all on function public.set_member_status(uuid, public.member_status) from public, anon;
 revoke all on function public.set_member_name(uuid, text) from public, anon;

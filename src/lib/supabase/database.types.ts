@@ -222,6 +222,9 @@ isOneToOne: false
               "email": string,"full_name": string,"id": string,"status": Database["public"]['Enums']["member_status"]
             }[]
                            },
+"cancel_my_account_deletion":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
 "keep_alive":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
@@ -250,6 +253,9 @@ isOneToOne: false
 { Args: { "profile_ids": (string)[] }; Returns: {
               "has_application": boolean,"profile_id": string
             }[]
+                           },
+"request_my_account_deletion":
+{ Args: Record<PropertyKey, never>; Returns: string
                            },
 "set_member_name":
 { Args: { "new_name": string,"target_id": string }; Returns: undefined
