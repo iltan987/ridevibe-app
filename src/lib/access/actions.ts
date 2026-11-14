@@ -59,6 +59,7 @@ export async function setMemberRole(targetId: string, roleId: string | null): Pr
   const { error } = await supabase.rpc("set_member_role", {
     target_id: input.data.targetId,
     // Generated types say `string`; SQL accepts null (= no role).
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- supabase gen types can't mark an RPC argument nullable
     new_role_id: input.data.roleId as string,
   });
   return done(error, "setMemberRole");

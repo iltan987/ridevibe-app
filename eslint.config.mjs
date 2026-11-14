@@ -1,6 +1,7 @@
 import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
+import eslintComments from "@eslint-community/eslint-plugin-eslint-comments";
 import tseslint from "typescript-eslint";
 
 const eslintConfig = defineConfig([
@@ -8,6 +9,13 @@ const eslintConfig = defineConfig([
   ...nextTs,
   {
     linterOptions: { reportUnusedDisableDirectives: "error" },
+    plugins: { "@eslint-community/eslint-comments": eslintComments },
+    rules: {
+      // Every disable says why; no blanket or unpaired disables. Unused disables: `reportUnusedDisableDirectives`.
+      "@eslint-community/eslint-comments/require-description": ["error", { ignore: [] }],
+      "@eslint-community/eslint-comments/no-unlimited-disable": "error",
+      "@eslint-community/eslint-comments/disable-enable-pair": "error",
+    },
   },
   // TypeScript: type-aware rules.
   {
@@ -30,14 +38,15 @@ const eslintConfig = defineConfig([
       "@typescript-eslint/restrict-template-expressions": ["error", { allowNumber: true }],
       // Stylistic: flags `() => setX(…)` shorthand arrows (~90 hits), no bugs found.
       "@typescript-eslint/no-confusing-void-expression": "off",
-      // Casts and `!` are banned in Task 3.
-      "@typescript-eslint/consistent-type-assertions": "off",
-      "@typescript-eslint/no-non-null-assertion": "off",
+      // No casts (`as const` stays allowed) and no `!`: narrow with guards, parse with Zod or fix the source type.
+      "@typescript-eslint/consistent-type-assertions": ["error", { assertionStyle: "never" }],
+      "@typescript-eslint/no-non-null-assertion": "error",
       // Stylistic rules that `pnpm lint:fix` fixes unaided (the rest of stylisticTypeChecked stays off).
       "@typescript-eslint/array-type": "error",
       "@typescript-eslint/ban-tslint-comment": "error",
       "@typescript-eslint/consistent-generic-constructors": "error",
       "@typescript-eslint/consistent-indexed-object-style": "error",
+      // Off for its type-aware extension `@typescript-eslint/dot-notation` below (the base rule can misreport TS code).
       "dot-notation": "off",
       "@typescript-eslint/dot-notation": "error",
       "@typescript-eslint/no-inferrable-types": "error",

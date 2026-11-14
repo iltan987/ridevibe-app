@@ -47,7 +47,15 @@ function fakeDoc(initialDark = true) {
     body: {},
     defaultView: { getComputedStyle: () => ({ getPropertyValue: () => "1" }) },
   };
-  return { doc: doc as unknown as Document, classes, meta, second, styles, toggledWithStyle };
+  return {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- test fake with only the parts of Document theme.ts touches; lib.dom's Document can't be built in node
+    doc: doc as unknown as Document,
+    classes,
+    meta,
+    second,
+    styles,
+    toggledWithStyle,
+  };
 }
 
 const media = (matches: boolean) => () => ({ matches });
