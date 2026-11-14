@@ -136,7 +136,8 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   the `deleting` status is `42501`.
 - **Purge:** `private.purge_deleted_accounts(as_of)` (pg_cron job `purge-deleted-accounts`, `0 2 * * *` UTC) deletes
   accounts 14 days after the request from `auth.users`, with their non-rejected applications (linked or same sign-in
-  email) and the person's `auth.audit_log_entries` rows (no FK; `payload->>'actor_id'` holds id + email, plus the IP).
+  email) and the person's `auth.audit_log_entries` rows (no FK; matched on `payload->>'actor_id'`; rows also hold the
+  email in `actor_username` and the IP in `ip_address`).
   Approved applications of accounts that were `inactive` are kept unlinked with `applications.retained_until`
   (request + 1 year) and then deleted; a kept row never matches, links or activates anyone (every email-matching path
   skips `retained_until is not null`); `/admin/members` flags a returning pending account as `former_member`. The
@@ -167,11 +168,11 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   path below is for staff-requested deletions only: only on iltan's explicit OK; first check status/role/linked
   application and `applications.reviewed_by`, then delete the person's non-rejected applications first (an inactive
   person's approved application: keep it with `retained_until` = now + 1 year instead), or ask them to use the
-  self-service flow: a kept approved unlinked application would otherwise re-activate them on their next sign-in.
+  self-service flow: a remaining approved unlinked application would otherwise re-activate them on their next sign-in.
   Then `DELETE {SUPABASE_URL}/auth/v1/admin/users/<id>` with `SUPABASE_SECRET_KEY`
   (cascades profile, member_contacts, member_details, member_motorcycles, member_emergency_contacts and
   member_health; applications become unlinked, `reviewed_by` → null; `safety_access_log` rows stay with actor/target
-  null) and also delete the person's `auth.audit_log_entries` rows (no FK; payload `actor_id` / email, IP address).
+  null) and also delete the person's `auth.audit_log_entries` rows (no FK; match `payload->>'actor_id'`).
   Their access token stays valid up to 1 h; the app shows them signed out because the profile
   row is gone (`getCurrentUser`). Use `getCurrentUser()`, not bare `getClaims()`, wherever "who is signed in" matters.
 - **Removing or replacing a website photo** (consent withdrawn, or replaced for editorial reasons): (1) remove/replace

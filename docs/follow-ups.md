@@ -524,7 +524,12 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   the stricter ESLint item.
 - **Purge audit rows on hosted** (2026-11-14, account deletion) — `delete from auth.audit_log_entries` inside the purge
   was verified on the local stack only; after the rollout `db push`, confirm the first real run (or a read-only
-  privilege check: `has_table_privilege('postgres', 'auth.audit_log_entries', 'delete')`) on production.
+  privilege check: `has_table_privilege('postgres', 'auth.audit_log_entries', 'delete')`, and `'insert'` too: the
+  purge pgTAP inserts fixture rows there and also runs on production) on production.
+- **Audit rows where the person isn't the actor** (2026-11-14, account deletion) — the purge deletes
+  `auth.audit_log_entries` by `payload->>'actor_id'`; rows where the person appears only in `payload->'traits'` (an
+  admin/service action on them, may carry `user_email`) stay. Rare with Google-only sign-in; extend the match if
+  such rows show up.
 - **`deletion-e2e.mjs` double-click check** (2026-11-14, account deletion) — it doesn't prove both requests were sent.
 - **Unlinked-tab filter duplicated** (2026-11-14, account deletion) — in `listApplications` and
   `countApplicationsByStatus` (`src/lib/applications/queries.ts`); extract a helper.
