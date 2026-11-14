@@ -162,7 +162,7 @@ export function ApplicationReviewPanel({
                 </Button>
               </>
             )}
-            {decided && canDecide && (
+            {decided && canDecide && !retainedLabel && (
               <Button variant="outline" disabled={isPending} onClick={() => setConfirm({ kind: "reopen" })}>
                 {t("review.reopen")}
               </Button>
