@@ -27,14 +27,10 @@ import {
 } from "@/lib/applications/options";
 import { isGoogleMailAddress } from "@/lib/applications/contact";
 import { type ApplyDraft, browserStorage, clearDraft, createDraftSaver, readDraft } from "@/lib/applications/draft";
-import {
-  type ApplicationFieldErrors,
-  type ApplyErrorKey,
-  isEmailAddress,
-  validateApplication,
-} from "@/lib/applications/schema";
+import { type ApplicationFieldErrors, isEmailAddress, validateApplication } from "@/lib/applications/schema";
 import { errorsOfStep, firstStepWithError, isLastStep, parseStep, stepOfField } from "@/lib/applications/steps";
 import { istanbulDistrictNames } from "@/lib/istanbul-districts";
+import { noSubscribe } from "@/lib/no-subscribe";
 import { ChoiceChips, ChoiceRadios, ConsentCheckbox, TextAreaField, TextField } from "./apply-fields";
 import { PhoneField } from "./phone-field";
 import { StepHeader } from "./step-header";
@@ -49,7 +45,6 @@ type Defaults = { fullName: string; email: string };
 
 const YES_NO = ["yes", "no"] as const;
 
-const noSubscribe = () => () => {};
 const getUserAgent = () => navigator.userAgent;
 const getServerUserAgent = () => null;
 
@@ -70,7 +65,7 @@ export function ApplyForm({ defaults }: { defaults?: Defaults }) {
   const [resetCount, setResetCount] = useState(0);
   return (
     <ApplyFormSteps
-      key={`${hydrated}-${resetCount}`}
+      key={`${String(hydrated)}-${resetCount}`}
       defaults={defaults}
       hydrated={hydrated}
       startedOver={resetCount > 0}
@@ -237,7 +232,7 @@ function ApplyFormSteps({
     scheduleSave();
     // Focus left the form (e.g. to the language switcher): write now. A language switch renders the new form, which
     // reads the draft, before this one unmounts, so the flush on unmount would come too late.
-    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) saver.flush();
+    if (!event.currentTarget.contains(event.relatedTarget)) saver.flush();
   }
 
   // Base UI checkboxes/radios update their hidden inputs after the click handler; the save reads the form later.
@@ -247,7 +242,7 @@ function ApplyFormSteps({
   }
 
   // Also fired by Enter in a text input: on steps 1–3 that means "Next", never an early submit.
-  function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+  function onSubmit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const check = validateApplication(formData);
@@ -325,7 +320,7 @@ function ApplyFormSteps({
     const fieldStep = stepOfField(name);
     const shown = submitted || touched.has(name) || (fieldStep !== null && checkedSteps.has(fieldStep));
     const key = shown ? errors[name] : undefined;
-    return key ? t(`errors.${key as ApplyErrorKey}`) : undefined;
+    return key ? t(`errors.${key}`) : undefined;
   };
 
   // "Fix the highlighted fields" only while there is something left to fix.

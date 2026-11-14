@@ -44,7 +44,7 @@ export function PhoneField({
   defaultValue?: string;
 }) {
   const locale = useLocale();
-  const [value, setValue] = useState<Value | undefined>(defaultValue as Value | undefined);
+  const [value, setValue] = useState<Value | undefined>(defaultValue);
   // Re-mounting the input re-formats the displayed text from the clean value.
   const [formatKey, setFormatKey] = useState(0);
 
@@ -63,13 +63,13 @@ export function PhoneField({
           key={formatKey}
           id={name}
           value={value}
-          onChange={(v) => setValue(fixTurkishNumber(v) as Value | undefined)}
+          onChange={(v) => setValue(fixTurkishNumber(v))}
           defaultCountry="TR"
           international
           withCountryCallingCode
           countryCallingCodeEditable={false}
           flags={flags}
-          labels={LABELS[locale as keyof typeof LABELS] ?? en}
+          labels={LABELS[locale]}
           inputComponent={Input}
           autoComplete="tel"
           aria-invalid={!!error}

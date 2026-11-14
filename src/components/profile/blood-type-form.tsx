@@ -44,7 +44,7 @@ export function BloodTypeForm({ bloodType, consent, withdrawOnly }: Props) {
   const typeError = fieldError("blood_type");
   const consentError = fieldError("consent");
 
-  function onSubmit(event: React.FormEvent) {
+  function onSubmit(event: React.SubmitEvent) {
     event.preventDefault();
     // Changing an already consented type: the consent stands, the server records it again with this save.
     // The checkbox is never pre-ticked for a first consent.

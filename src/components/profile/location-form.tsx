@@ -8,6 +8,7 @@ import { Field, FieldError, FieldLabel, FieldTitle } from "@/components/ui/field
 import { Input } from "@/components/ui/input";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { formDataText } from "@/lib/form-data";
 import { ISTANBUL, istanbulDistrictNames } from "@/lib/istanbul-districts";
 import { updateLocation } from "@/lib/members/actions";
 import { ActionStatus, useProfileAction } from "./use-profile-action";
@@ -20,14 +21,14 @@ export function LocationForm({ city, district }: { city: string; district: strin
   const { isPending, result, setResult, run, fieldError } = useProfileAction();
   const [choice, setChoice] = useState<CityChoice>(city === ISTANBUL ? "istanbul" : "other");
 
-  function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+  function onSubmit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     run(() =>
       updateLocation({
         city_choice: choice,
-        city: String(data.get("city") ?? ""),
-        district: String(data.get("district") ?? ""),
+        city: formDataText(data, "city"),
+        district: formDataText(data, "district"),
       }),
     );
   }

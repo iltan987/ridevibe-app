@@ -6,7 +6,7 @@ import type { AccessActionResult } from "@/lib/access/actions";
 import { decodeCursor, toPage } from "@/lib/pagination";
 import { createClient } from "@/lib/supabase/server";
 import { APPLICATION_STATUSES } from "./queries";
-import { type ApplyErrorKey, type ContactValues, validateContactChanges } from "./schema";
+import { type ApplicationFieldErrors, type ContactValues, validateContactChanges } from "./schema";
 
 // Public endpoints: RLS (applications.review / .delete), the
 // applications_check_decision trigger (approve/reject and the email of an
@@ -58,8 +58,7 @@ export async function deleteApplication(id: string): Promise<AccessActionResult>
   return { status: "ok" };
 }
 
-export type ApplicationContactResult =
-  AccessActionResult | { status: "invalid"; fieldErrors: Record<string, ApplyErrorKey> };
+export type ApplicationContactResult = AccessActionResult | { status: "invalid"; fieldErrors: ApplicationFieldErrors };
 
 const rawText = z.string().max(1000);
 

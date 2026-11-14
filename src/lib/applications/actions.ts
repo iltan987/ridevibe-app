@@ -13,7 +13,8 @@ export type SubmitApplicationResult =
 
 export async function submitApplication(formData: FormData): Promise<SubmitApplicationResult> {
   // Honeypot: invisible to people, bots fill it in. Pretend success.
-  if (String(formData.get("website") ?? "") !== "") return { status: "success", linked: false };
+  const honeypot = formData.get("website");
+  if (honeypot !== null && honeypot !== "") return { status: "success", linked: false };
 
   const result = validateApplication(formData);
   if (!result.ok) return { status: "invalid", fieldErrors: result.fieldErrors };

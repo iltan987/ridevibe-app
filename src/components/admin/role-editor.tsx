@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { type FormEvent, useState, useTransition } from "react";
+import { type SubmitEvent, useState, useTransition } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,6 +27,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { type AccessActionResult, createRole, deleteRole, updateRole } from "@/lib/access/actions";
 import { PERMISSIONS, type Permission } from "@/lib/auth/permissions";
+import { formDataText } from "@/lib/form-data";
 
 type Status = AccessActionResult["status"] | null;
 
@@ -64,10 +65,10 @@ export function RoleEditor({
   const { isPending, status, run } = useAction();
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  function onSubmit(event: FormEvent<HTMLFormElement>) {
+  function onSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    const name = String(formData.get("name") ?? "");
+    const name = formDataText(formData, "name");
     const permissions = formData.getAll("permissions").map(String);
     run(() => updateRole(role.id, name, permissions));
   }
@@ -161,10 +162,10 @@ export function CreateRoleForm() {
   const t = useTranslations("Admin");
   const { isPending, status, run } = useAction();
 
-  function onSubmit(event: FormEvent<HTMLFormElement>) {
+  function onSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
-    const name = String(new FormData(form).get("name") ?? "");
+    const name = formDataText(new FormData(form), "name");
     run(
       () => createRole(name),
       () => form.reset(),

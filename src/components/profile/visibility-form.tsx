@@ -37,7 +37,7 @@ export function VisibilityForm({ instagram, showInstagram, showBirthday, showPla
   const [platesOn, setPlatesOn] = useState(showPlates);
   const birthDateEntry = useBirthDateEntry(birthdayOn);
 
-  function onSubmit(event: React.FormEvent) {
+  function onSubmit(event: React.SubmitEvent) {
     event.preventDefault();
     const submitted = handle;
     run(
@@ -141,7 +141,7 @@ function useBirthDateEntry(showBirthday: boolean) {
   const { isPending, result, run, fieldError } = useProfileAction();
   const [value, setValue] = useState("");
 
-  function onSubmit(event: React.FormEvent) {
+  function onSubmit(event: React.SubmitEvent) {
     event.preventDefault();
     run(() => setBirthDate({ birth_date: value, show_birthday: showBirthday }));
   }

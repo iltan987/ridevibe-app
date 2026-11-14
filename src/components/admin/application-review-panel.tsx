@@ -2,7 +2,7 @@
 
 import { MessageCircle, TriangleAlert, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { type FormEvent, useState, useTransition } from "react";
+import { type SubmitEvent, useState, useTransition } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,6 +24,7 @@ import type { AccessActionResult } from "@/lib/access/actions";
 import { sameEmail } from "@/lib/applications/contact";
 import type { ApplicationAccount, ApplicationStatus } from "@/lib/applications/queries";
 import { deleteApplication, saveApplicationNotes, setApplicationStatus } from "@/lib/applications/review-actions";
+import { formDataText } from "@/lib/form-data";
 
 const STATUS_BADGE: Partial<Record<ApplicationStatus, "default" | "status">> = {
   new: "default",
@@ -98,9 +99,9 @@ export function ApplicationReviewPanel({
     }
   }
 
-  function onSaveNotes(event: FormEvent<HTMLFormElement>) {
+  function onSaveNotes(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
-    const notes = String(new FormData(event.currentTarget).get("notes") ?? "");
+    const notes = formDataText(new FormData(event.currentTarget), "notes");
     run("notes", () => saveApplicationNotes(id, notes));
   }
 
@@ -187,7 +188,7 @@ export function ApplicationReviewPanel({
               </Button>
             )}
           </div>
-          {!canEditNotes && !canDecide && <p className="text-sm text-muted-foreground">{t("review.noPermission")}</p>}
+          {!canEditNotes && <p className="text-sm text-muted-foreground">{t("review.noPermission")}</p>}
           {message("status")}
         </div>
 

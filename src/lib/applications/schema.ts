@@ -1,6 +1,7 @@
 import { isPossiblePhoneNumber } from "libphonenumber-js";
 import { z } from "zod";
 import { EARLIEST_BIRTH_DATE_EXCLUSIVE, isAtLeast18 } from "../birth-date.ts";
+import { formDataText } from "../form-data.ts";
 import { ISTANBUL, isIstanbulDistrict, sideOfDistrict } from "../istanbul-districts.ts";
 import type { TablesInsert } from "../supabase/database.types.ts";
 import { isTurkishMobileOrForeign } from "./contact.ts";
@@ -250,20 +251,20 @@ export function formDataToObject(formData: FormData) {
       out[key] = formData.getAll(key).map(String);
       continue;
     }
-    const value = String(formData.get(key) ?? "").trim();
+    const value = formDataText(formData, key).trim();
     if (value !== "") out[key] = value;
   }
   for (const key of ARRAY_FIELDS) out[key] ??= [];
-  for (const key of UTM_KEYS) if (typeof out[key] === "string") out[key] = (out[key] as string).slice(0, 200);
+  for (const key of UTM_KEYS) if (typeof out[key] === "string") out[key] = out[key].slice(0, 200);
   return out;
 }
 
 /** Zod issues → the first error key per top-level field. */
 function firstErrorPerField(issues: readonly { path: readonly PropertyKey[]; message: string }[]) {
-  const fieldErrors: Record<string, ApplyErrorKey> = {};
+  const fieldErrors: ApplicationFieldErrors = {};
   for (const issue of issues) {
     const field = String(issue.path[0] ?? "_form");
-    fieldErrors[field] ??= (issue.message as ApplyErrorKey) || "invalidOption";
+    fieldErrors[field] ??= (issue.message || "invalidOption") as ApplyErrorKey;
   }
   return fieldErrors;
 }
