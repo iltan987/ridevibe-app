@@ -37,7 +37,7 @@ export function DeleteAccountCard({ inactive }: { inactive: boolean }) {
   }
 
   return (
-    <Card>
+    <Card data-skeleton-result="account-delete">
       <CardHeader>
         <CardTitle>{t("title")}</CardTitle>
         <CardDescription>{t("body")}</CardDescription>

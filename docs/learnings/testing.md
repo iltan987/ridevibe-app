@@ -258,3 +258,17 @@
   `cross-tab-e2e.mjs` reads avatar initials, so it failed ("?") while `member@test.local` had the photo
   `header-e2e.mjs` needs: a loaded photo replaces the initials. Clear `avatar_url` between the two.
 - **Source:** found while writing the list-UX E2E.
+
+### Signing in through the real `/auth/callback` locally: a PKCE magic link from Mailpit (2026-11-14)
+- **Need:** test what the callback does after sign-in (a `deleting` account lands on `/account` whatever `next` says);
+  the password cookie trick (`signIn`) skips the callback, and Google can't be automated.
+- **Do:** `signInViaCallback(page, email, next)` in `scripts/e2e/e2e-lib.mjs`: `POST /auth/v1/otp?redirect_to=…`
+  with our own `code_challenge` (S256) and `create_user: false`, read the link from Mailpit
+  (`http://127.0.0.1:54324/api/v1/messages`, then `/api/v1/message/<ID>` → `Text`), fetch it with
+  `redirect: "manual"` → `Location` carries `?code=`, set the cookie `sb-127-auth-token-code-verifier` =
+  `"base64-" + base64url(JSON.stringify(verifier))` (what auth-js stores and `exchangeCodeForSession` reads), then open
+  `/auth/callback?next=…&code=…`. Needs local email sign-in (`SUPABASE_AUTH_EMAIL_ENABLED=true`); the local
+  `redirect_to` for port 3123 was accepted although the allow-list names `localhost:3000/**`.
+- **Gotcha:** "X is not in the page" checks must load the page without `?q=X`: the search box echoes the query into
+  the HTML (`scripts/e2e/deletion-e2e.mjs` checks `/admin/members` without `q`).
+- **Source:** found while writing `scripts/e2e/deletion-e2e.mjs`; auth-js `getCodeChallengeAndMethod`.

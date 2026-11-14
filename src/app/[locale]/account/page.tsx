@@ -218,6 +218,9 @@ function AccountSkeleton() {
         <Skeleton className="h-5 w-40" />
         <Skeleton className="h-8 w-20" />
       </SectionSkeleton>
+      <SectionSkeleton id="account-delete" description>
+        <Skeleton className="h-8 w-32" />
+      </SectionSkeleton>
     </>
   );
 }

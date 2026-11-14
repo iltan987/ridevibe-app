@@ -1,4 +1,5 @@
 // Shared helpers for local browser E2E (see docs/learnings/testing.md). Local demo keys only.
+import crypto from "node:crypto";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -16,6 +17,7 @@ const { stringToBase64URL } = repoRequire("@supabase/ssr/dist/main/utils/base64u
 
 const API = "http://127.0.0.1:54321";
 const PUBLISHABLE = "sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH";
+const MAILPIT = "http://127.0.0.1:54324";
 
 /** `scrollbars: true` keeps classic (space-taking) scrollbars; puppeteer hides them by default in headless mode.
  *  `args` are extra Chrome command-line flags (e.g. `--bypass-app-banner-engagement-checks`). */
@@ -47,6 +49,39 @@ export async function signIn(page, email, baseUrl = "http://localhost:3123") {
   const chunks = createChunks("sb-127-auth-token", "base64-" + stringToBase64URL(JSON.stringify(session)));
   const { hostname } = new URL(baseUrl);
   await page.setCookie(...chunks.map((c) => ({ name: c.name, value: c.value, domain: hostname, path: "/" })));
+}
+
+/** Signs in through the app's real `/auth/callback?code=…&next=…` (like Google sign-in, PKCE): requests a magic link
+ *  with our own code challenge, reads it from the local Mailpit, follows it to get the one-time `code`, plants the
+ *  code-verifier cookie that `exchangeCodeForSession` reads, then opens the callback. Clears Mailpit's inbox.
+ *  Returns the page's final URL. Needs local email sign-in (docs/learnings/testing.md). */
+export async function signInViaCallback(page, email, next, baseUrl = "http://localhost:3123") {
+  const verifier = crypto.randomBytes(48).toString("base64url");
+  const challenge = crypto.createHash("sha256").update(verifier).digest("base64url");
+  await fetch(`${MAILPIT}/api/v1/messages`, { method: "DELETE" });
+  const redirectTo = `${baseUrl}/auth/callback?next=${encodeURIComponent(next)}`;
+  const otp = await fetch(`${API}/auth/v1/otp?redirect_to=${encodeURIComponent(redirectTo)}`, {
+    method: "POST",
+    headers: { apikey: PUBLISHABLE, "Content-Type": "application/json" },
+    body: JSON.stringify({ email, create_user: false, code_challenge: challenge, code_challenge_method: "s256" }),
+  });
+  if (!otp.ok) throw new Error(`magic link failed for ${email}: ${otp.status}`);
+  let link = null;
+  for (let i = 0; i < 50 && !link; i++) {
+    await new Promise((r) => setTimeout(r, 100));
+    const { messages = [] } = await (await fetch(`${MAILPIT}/api/v1/messages`)).json();
+    const m = messages.find((x) => x.To?.some((t) => t.Address === email));
+    if (m) link = (await (await fetch(`${MAILPIT}/api/v1/message/${m.ID}`)).json()).Text.match(/https?:\/\/\S+\/verify\?\S+/)?.[0];
+  }
+  if (!link) throw new Error(`no magic link mail for ${email}`);
+  const verify = await fetch(link, { redirect: "manual" });
+  const code = new URL(verify.headers.get("location") ?? "", baseUrl).searchParams.get("code");
+  if (!code) throw new Error(`magic link gave no code: ${verify.status}`);
+  const { hostname } = new URL(baseUrl);
+  const value = "base64-" + stringToBase64URL(JSON.stringify(verifier));
+  await page.setCookie({ name: "sb-127-auth-token-code-verifier", value, domain: hostname, path: "/" });
+  await page.goto(`${redirectTo}&code=${encodeURIComponent(code)}`, { waitUntil: "networkidle0" });
+  return page.url();
 }
 
 /** Slow mobile network via CDP. */
