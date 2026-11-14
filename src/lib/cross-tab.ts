@@ -88,7 +88,14 @@ export type TabChannel = {
   subscribe(onChange: (value: string) => void): () => void;
 };
 
-export function createTabChannel(key: string, win: Window): TabChannel {
+type Listeners = Pick<EventTarget, "addEventListener" | "removeEventListener">;
+/** What a channel uses of `window` (tests pass a fake). */
+type TabWindow = Listeners & {
+  localStorage: Pick<Storage, "getItem" | "setItem">;
+  document: Listeners & Pick<Document, "visibilityState">;
+};
+
+export function createTabChannel(key: string, win: TabWindow): TabChannel {
   const listeners = new Set<(value: string) => void>();
   // The value this tab last published or was told about; read lazily on first use.
   let known: string | null = null;
@@ -115,7 +122,7 @@ export function createTabChannel(key: string, win: Window): TabChannel {
   }
 
   const onStorage = (event: Event) => {
-    const changed = (event as StorageEvent).key;
+    const changed = "key" in event ? event.key : undefined; // a StorageEvent's key
     if (changed === null || changed === key) check(); // null key = storage cleared
   };
   const onVisible = () => {

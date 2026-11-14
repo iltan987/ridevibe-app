@@ -17,7 +17,8 @@ import {
 function fakeTab(initial: Record<string, string> = {}, { throwing = false } = {}) {
   const data = new Map(Object.entries(initial));
   let writes = 0;
-  const document = Object.assign(new EventTarget(), { visibilityState: "visible" });
+  const state: { visibilityState: DocumentVisibilityState } = { visibilityState: "visible" };
+  const document = Object.assign(new EventTarget(), state);
   const storage = {
     getItem(key: string) {
       if (throwing) throw new Error("blocked");
@@ -31,7 +32,7 @@ function fakeTab(initial: Record<string, string> = {}, { throwing = false } = {}
   };
   const win = Object.assign(new EventTarget(), { localStorage: storage, document });
   return {
-    win: win as unknown as Window,
+    win,
     data,
     writes: () => writes,
     // Another tab wrote `value` (null = removed / storage cleared): the browser updates storage, then fires `storage`.

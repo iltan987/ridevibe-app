@@ -83,7 +83,12 @@ function LocaleSwitcherMenu() {
       <DropdownMenuContent align="end">
         <DropdownMenuGroup>
           <DropdownMenuLabel>{t("label")}</DropdownMenuLabel>
-          <DropdownMenuRadioGroup value={locale} onValueChange={(value) => onChange(value as Locale)}>
+          <DropdownMenuRadioGroup
+            value={locale}
+            onValueChange={(value) => {
+              if (hasLocale(routing.locales, value)) onChange(value); // only our own locales can be checked
+            }}
+          >
             {routing.locales.map((l) => (
               <DropdownMenuRadioItem key={l} value={l}>
                 {t(l)}

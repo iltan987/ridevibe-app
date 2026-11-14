@@ -48,9 +48,9 @@ export type IstanbulDistrict = keyof typeof ISTANBUL_DISTRICTS;
 
 export const ISTANBUL = "İstanbul";
 
-export const istanbulDistrictNames = (Object.keys(ISTANBUL_DISTRICTS) as IstanbulDistrict[]).sort((a, b) =>
-  a.localeCompare(b, "tr"),
-);
+export const istanbulDistrictNames = Object.keys(ISTANBUL_DISTRICTS)
+  .filter(isIstanbulDistrict)
+  .sort((a, b) => a.localeCompare(b, "tr"));
 
 export function isIstanbulDistrict(value: string): value is IstanbulDistrict {
   return Object.hasOwn(ISTANBUL_DISTRICTS, value);

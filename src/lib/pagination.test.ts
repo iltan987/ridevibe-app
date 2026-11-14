@@ -47,7 +47,8 @@ test("toPage returns a next cursor only when there are more rows", () => {
   const page = toPage(rows, 2);
   assert.equal(page.items.length, 2);
   assert.deepEqual(decodeCursor(page.nextCursor), null, "test rows aren't real timestamps/uuids");
-  assert.equal(Buffer.from(page.nextCursor!, "base64url").toString(), "t2|2");
+  assert.ok(page.nextCursor);
+  assert.equal(Buffer.from(page.nextCursor, "base64url").toString(), "t2|2");
 });
 
 test("parsePage accepts canonical positive integers only", () => {
