@@ -73,8 +73,11 @@ test("writeApplyHint: writes '1' / '0' and swallows errors", () => {
   );
 });
 
-/** Runs the inline script in node:vm (proves it is self-contained); returns the attributes set on the script's parent element. */
-function runScript(cookie: string, stored: string | null | "throw", hasParent = true) {
+/**
+ * Runs the inline script in node:vm (proves it is self-contained); returns the attributes set on the script's parent
+ * element. `stored` "throw": reading localStorage throws.
+ */
+function runScript(cookie: string, stored: string | null, hasParent = true) {
   const attrs = new Map<string, string>();
   const el = { setAttribute: (k: string, v: string) => attrs.set(k, v) };
   const view =
@@ -97,7 +100,7 @@ test("applyHintScript sets data-apply-hidden exactly when guessApplyHidden says 
     const hasSession = SIGNED_IN.includes(c);
     for (const s of STORED) {
       const attrs = runScript(c, s);
-      assert.equal(attrs.has("data-apply-hidden"), guessApplyHidden(hasSession, s), `${c} / ${s}`);
+      assert.equal(attrs.has("data-apply-hidden"), guessApplyHidden(hasSession, s), `${c} / ${String(s)}`);
       if (attrs.has("data-apply-hidden")) assert.equal(attrs.get("data-apply-hidden"), "");
     }
   }

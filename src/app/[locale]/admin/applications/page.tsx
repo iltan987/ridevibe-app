@@ -111,7 +111,9 @@ async function ApplicationsList({
                       </Badge>
                       <Badge variant="outline">{tApply(`options.license_class.${a.license_class}`)}</Badge>
                       <Badge variant="outline">
-                        {a.owns_motorcycle ? `${a.motorcycle_brand} ${a.motorcycle_model}` : t("noBike")}
+                        {a.owns_motorcycle
+                          ? [a.motorcycle_brand, a.motorcycle_model].filter(Boolean).join(" ")
+                          : t("noBike")}
                       </Badge>
                     </div>
                     {a.retained_until && (

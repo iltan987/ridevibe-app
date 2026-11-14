@@ -102,8 +102,8 @@ test("visibilitySchema normalizes instagram and reports an invalid handle", () =
     show_plates: true,
   });
   assert.equal(bad.success, false);
-  assert.equal(bad.error?.issues[0].message, "invalidInstagram");
-  assert.deepEqual(bad.error?.issues[0].path, ["instagram"]);
+  assert.equal(bad.error.issues[0].message, "invalidInstagram");
+  assert.deepEqual(bad.error.issues[0].path, ["instagram"]);
 });
 
 test("emergencyContactSchema normalises the phone and validates the relationship", () => {

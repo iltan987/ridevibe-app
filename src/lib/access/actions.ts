@@ -23,7 +23,7 @@ function fail(code: string | undefined, where: string): AccessActionResult {
   return { status: "error" };
 }
 
-async function done(error: { code?: string } | null, where: string): Promise<AccessActionResult> {
+function done(error: { code?: string } | null, where: string): AccessActionResult {
   if (error) return fail(error.code, where);
   refresh();
   return { status: "ok" };

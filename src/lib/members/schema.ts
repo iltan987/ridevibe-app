@@ -30,7 +30,7 @@ const INSTAGRAM_URL_PREFIX = /^(?:https?:\/\/)?(?:www\.)?instagram\.com\//i;
  * Accepts `handle`, `@handle` or an instagram.com profile URL (trailing `/` and
  * query string allowed). Empty → null; anything else that isn't a handle → "invalid".
  */
-export function normalizeInstagram(raw: string): string | null | "invalid" {
+export function normalizeInstagram(raw: string): string | null {
   let value = raw.trim();
   if (!value) return null;
   if (INSTAGRAM_URL_PREFIX.test(value)) {

@@ -45,7 +45,7 @@ function fakeDoc(initialDark = true) {
     createTextNode: (text: string) => ({ text }),
     head: { appendChild: (el: { text: string }) => void styles.push(el) },
     body: {},
-    defaultView: { getComputedStyle: () => ({ opacity: "1" }) },
+    defaultView: { getComputedStyle: () => ({ getPropertyValue: () => "1" }) },
   };
   return { doc: doc as unknown as Document, classes, meta, second, styles, toggledWithStyle };
 }
@@ -179,7 +179,7 @@ function withGlobals(globals: Record<string, unknown>, fn: () => void) {
   } finally {
     for (const [k, d] of saved) {
       if (d) Object.defineProperty(g, k, d);
-      else delete g[k];
+      else Reflect.deleteProperty(g, k);
     }
   }
 }

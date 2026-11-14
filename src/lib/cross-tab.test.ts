@@ -17,7 +17,7 @@ import {
 function fakeTab(initial: Record<string, string> = {}, { throwing = false } = {}) {
   const data = new Map(Object.entries(initial));
   let writes = 0;
-  const document = Object.assign(new EventTarget(), { visibilityState: "visible" as DocumentVisibilityState });
+  const document = Object.assign(new EventTarget(), { visibilityState: "visible" });
   const storage = {
     getItem(key: string) {
       if (throwing) throw new Error("blocked");

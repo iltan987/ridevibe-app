@@ -92,9 +92,9 @@ test("readAll reads chunks until a short one and flags the ceiling", async () =>
     const calls: [number, number][] = [];
     return {
       calls,
-      fetch: async (from: number, to: number) => {
+      fetch: (from: number, to: number) => {
         calls.push([from, to]);
-        return Array.from({ length: Math.max(0, Math.min(to, n - 1) - from + 1) }, (_, i) => from + i);
+        return Promise.resolve(Array.from({ length: Math.max(0, Math.min(to, n - 1) - from + 1) }, (_, i) => from + i));
       },
     };
   };

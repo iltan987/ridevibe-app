@@ -318,7 +318,7 @@ async function whatsAppInvite(a: { full_name: string; email: string; phone: stri
   const [t, h] = await Promise.all([getTranslations({ locale, namespace: "Admin.invite" }), headers()]);
   const host = h.get("x-forwarded-host") ?? h.get("host");
   const proto = h.get("x-forwarded-proto") ?? (host?.startsWith("localhost") ? "http" : "https");
-  const url = `${proto}://${host}${getPathname({ href: "/sign-in", locale })}`;
+  const url = `${proto}://${host ?? ""}${getPathname({ href: "/sign-in", locale })}`;
   const text = t("message", { name: a.full_name.split(" ")[0], email: a.email, url });
   return whatsAppUrl(a.phone, text);
 }

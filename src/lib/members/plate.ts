@@ -9,7 +9,7 @@ const TURKISH_PARTS = /^(\d{2})([A-Z]{1,3})(\d{2,4})$/;
  * Canonical plate text. Empty → null; anything that isn't a valid plate → "invalid".
  * Turkish: "34abc123" / "34-ABC-123" → "34 ABC 123". Foreign: upper-cased, spaces collapsed.
  */
-export function normalizePlate(raw: string, foreign: boolean): string | null | "invalid" {
+export function normalizePlate(raw: string, foreign: boolean): string | null {
   if (!raw.trim()) return null;
   if (foreign) {
     const value = raw.trim().replace(/\s+/g, " ").toUpperCase();
