@@ -253,3 +253,13 @@
 - **Do:** give the section `className="dark …"`: the `.dark` scope makes the tokens resolve to the night palette inside
   it, in both themes (`src/components/home/home-hero.tsx`).
 - **Source:** found by testing (home hero).
+
+### A `font-stretch` display heading reflows at the font swap: use fixed lines (2026-11-14)
+- **Symptom:** first visit on a slow network: the home hero h1 ("Let's ride together.") wrapped to 3 lines, then
+  shrank to 2 when Saira arrived, and the bottom-anchored hero text jumped (CLS 0.08-0.095 on /en at 1.6 Mbps).
+- **Cause:** next/font's size-adjusted fallback (Arial) can't be condensed, so `font-stretch: 62%` only applies after
+  the swap; the fallback text is ~1.6x wider and wraps differently.
+- **Do:** make the heading fixed lines that never wrap (`t.rich` with `<line>` tags rendering
+  `<span className="block whitespace-nowrap">`; the accessible text keeps its space) and size it by viewport only
+  (`text-[min(23.5vw,5.75rem)]`), checked in the final font at 320-1280 px. Code: `src/components/home/home-hero.tsx`.
+- **Source:** whole-branch review of `feat/home-redesign`; CLS measured with a throttled puppeteer run.

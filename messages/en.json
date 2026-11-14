@@ -26,7 +26,7 @@
     "light": "Light"
   },
   "Home": {
-    "title": "Let's ride together.",
+    "title": "<line>Let's ride</line> <line>together.</line>",
     "subtitle": "Weekend rides, long tours and new friendships. Meet riders from every side of Istanbul, from Asia to Europe.",
     "apply": "Apply to join",
     "heroAlt": "Club members taking a break on a coastal road, the sea behind them",

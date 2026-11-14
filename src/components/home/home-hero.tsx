@@ -5,7 +5,8 @@ import { HomeApplyButton } from "@/components/home/home-apply-button";
 
 // Always dark: the `dark` class makes the tokens resolve to the night palette inside, so cream text sits on the
 // photo's dark gradient in both themes and the bottom edge is straight against a cream page. The text is in flow
-// (not absolutely positioned), so the hero grows with large text instead of clipping.
+// (not absolutely positioned), so the hero grows with large text instead of clipping. The h1 is two fixed lines sized
+// by viewport only: next/font's fallback is never condensed, so wrapping text would reflow at the Saira swap.
 export function HomeHero() {
   const t = useTranslations("Home");
   return (
@@ -36,8 +37,8 @@ export function HomeHero() {
       />
       <div className="relative mx-auto w-full max-w-5xl px-5 pb-14 md:px-8 md:pb-28">
         <div className="md:max-w-150">
-          <h1 className="text-[clamp(4rem,23.5vw,5.75rem)] leading-[0.86] font-extrabold tracking-[-0.01em] text-foreground [font-stretch:62%] md:text-[clamp(7rem,13vw,10.5rem)]">
-            {t("title")}
+          <h1 className="text-[min(23.5vw,5.75rem)] leading-[0.86] font-extrabold tracking-[-0.01em] text-foreground [font-stretch:62%] md:text-[min(13vw,10.5rem)]">
+            {t.rich("title", { line: (chunks) => <span className="block whitespace-nowrap">{chunks}</span> })}
           </h1>
           <p className="mt-3.5 mb-4.5 max-w-[30ch] text-pretty text-foreground/90 md:mt-5 md:mb-6 md:max-w-[34ch] md:text-xl">
             {t("subtitle")}
