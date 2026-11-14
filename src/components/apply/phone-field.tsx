@@ -73,7 +73,7 @@ export function PhoneField({
           inputComponent={Input}
           autoComplete="tel"
           aria-invalid={!!error}
-          className="phone-field flex items-center gap-2 [&_input]:h-10 md:[&_input]:h-9"
+          className="flex items-center gap-2 [&_input]:h-10 md:[&_input]:h-9"
         />
       </div>
       {hint && <FieldDescription>{hint}</FieldDescription>}

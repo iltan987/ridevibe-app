@@ -10,7 +10,7 @@ import { DesktopNavForUser } from "./nav-for-user";
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur supports-backdrop-filter:bg-background/60">
+    <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur-sm supports-backdrop-filter:bg-background/60">
       <div className="mx-auto flex h-14 w-full max-w-5xl items-center gap-4 px-4">
         <Link href="/" className="text-foreground">
           <Wordmark className="h-7" />
