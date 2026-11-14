@@ -104,6 +104,8 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
 - Conditional self-service writes (only once, only while null, only when active) need a `public` security-definer
   RPC with no target id: it writes `where profile_id = (select auth.uid())`, locks the row (`for update`), and is
   granted to `authenticated` only (example: `set_my_birth_date`).
+- A function that checks rows and then acts on them in later statements (purges, last-admin guards) locks the set
+  first (`select … order by id for update` into an array, then filter by it); lock in one global order (by id).
 - **Member data:** `profiles` is readable by every active member (no private columns there); `member_details`
   (birth date, Instagram, visibility flags, photo consent) and `member_motorcycles` are own row + `members.manage` only;
   other members' data only via the `public.member_directory` RPC. Birth date is read-only; members without one enter it
@@ -142,11 +144,13 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   (request + 1 year) and then deleted; a kept row never matches, links or activates anyone (every email-matching path
   skips `retained_until is not null`); `/admin/members` flags a returning pending account as `former_member`. The
   schedule is DML: a hand-written idempotent migration (`docs/learnings/supabase.md`).
+  Generated migrations touching `90_ops.sql` may emit `cron.unschedule(...)`: delete that line.
 - Anything that decides which account becomes active (approve, `link_application`, editing the email of an approved
   application) requires `applications.decide`; `applications.profile_id` = the account an application belongs to.
   Linking targets pending accounts; approved applications may also go to an active account without one (attach only).
 - Every permission rule gets a pgTAP test, including the "must fail" cases. pgTAP also runs against production at
   rollout: scope every assertion to fixture ids/tokens, never to real rows.
+  Never update real rows either (not even inside the rolled-back test): if real data makes a case untestable, `skip()`.
 - Generated migrations may DROP a replaced column before its data is copied: move the DROP to the end and add the
   hand-written data step in between. Seed rows the app relies on (e.g. built-in roles) go in the migration.
 - Never put a `private.*` function in an index/default on a table that anon/authenticated write (it runs with the
@@ -290,6 +294,8 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
 - Server Actions: validate with Zod, let RLS decide, map error codes to results, call `refresh()` (`next/cache`)
   after a successful mutation (exception: `submitApplication`, whose success card a refresh would replace). They and
   Route Handlers can't read the locale root param — derive it from data.
+  Any cookie write in an action (e.g. `auth.signOut()`) re-renders the page like `refresh()`: to keep a result
+  screen, revoke via `auth.admin.signOut(jwt)` and clear cookies on a later navigation (`docs/learnings/nextjs.md`).
 - `Date.now()` in an async Server Component after a session read (request-time) trips `react-hooks/purity`: use
   `// eslint-disable-line react-hooks/purity -- <reason>`, never move it into a helper to dodge the rule.
 - **Every list paginates and shows its total; never a silent cap** like `.limit(200)` (the club grew to ~130 members
