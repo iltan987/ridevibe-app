@@ -38,7 +38,7 @@ export function HomeRides() {
             sizes="(min-width: 1024px) 400px, (min-width: 768px) 45vw, 100vw"
           />
         </div>
-        <p className="mt-4 text-pretty text-muted-foreground md:col-start-1 md:row-start-2 md:mt-0">
+        <p className="text-pretty text-muted-foreground md:col-start-1 md:row-start-2">
           {t("weekday")} {districts}.
         </p>
       </RouteStop>
