@@ -13,8 +13,27 @@ import { detectInstallPlatform, installVariant, isDismissed, showsBanner, type I
 export type InstallSnapshot = { variant: InstallVariant; banner: boolean };
 export const NO_INSTALL: InstallSnapshot = { variant: "none", banner: false };
 
+export type InstallPromptEvent = { prompt(): Promise<void>; userChoice: Promise<{ outcome: string }> };
+// lib.dom declares maxTouchPoints and userActivation, but older browsers lack them: kept optional.
+type InstallNavigator = {
+  userAgent: string;
+  maxTouchPoints?: number;
+  standalone?: boolean;
+  userActivation?: { hasBeenActive: boolean };
+  getInstalledRelatedApps?: () => Promise<unknown[]>;
+};
+
+/** What the store uses of `window`, plus the prompt property the capture script sets (tests pass a fake). */
+export type InstallWindow = {
+  navigator: InstallNavigator;
+  localStorage: Pick<Storage, "getItem" | "setItem">;
+  matchMedia(query: string): { matches: boolean; addEventListener(type: "change", listener: () => void): void };
+  addEventListener(type: string, listener: () => void): void;
+  [INSTALL_PROMPT_PROP]?: InstallPromptEvent | null;
+};
+
 export type InstallEnv = {
-  window: Window;
+  window: InstallWindow;
   now: () => number;
   setTimeout: (callback: () => void, ms: number) => number;
   clearTimeout: (id: number) => void;
@@ -28,22 +47,13 @@ export type InstallStore = {
   dismiss: () => void;
 };
 
-type InstallPromptEvent = { prompt(): Promise<void>; userChoice: Promise<{ outcome: string }> };
-// lib.dom declares maxTouchPoints and userActivation, but older browsers lack them: kept optional.
-type Nav = Omit<Navigator, "maxTouchPoints" | "userActivation"> & {
-  maxTouchPoints?: number;
-  standalone?: boolean;
-  userActivation?: { hasBeenActive: boolean };
-  getInstalledRelatedApps?: () => Promise<unknown[]>;
-};
-
 const STANDALONE_QUERY = "(display-mode: standalone)";
 const POLL_MS = 1_000;
 const FALLBACK_AFTER_ACTIVATION_MS = 30_000;
 
 export function createInstallStore(env: InstallEnv): InstallStore {
   const win = env.window;
-  const nav = win.navigator as Nav;
+  const nav = win.navigator;
   const listeners = new Set<() => void>();
   let snapshot: InstallSnapshot | null = null;
   let started = false;
@@ -54,7 +64,7 @@ export function createInstallStore(env: InstallEnv): InstallStore {
   let androidFallback = false;
   let watchTimer: number | undefined;
 
-  const heldPrompt = () => (win as unknown as Record<string, InstallPromptEvent | null>)[INSTALL_PROMPT_PROP];
+  const heldPrompt = () => win[INSTALL_PROMPT_PROP];
 
   function readStorage(key: string): string | null {
     try {
@@ -183,7 +193,7 @@ export function createInstallStore(env: InstallEnv): InstallStore {
       const event = heldPrompt();
       if (!event) return;
       // A BeforeInstallPromptEvent works once: drop it before using it.
-      (win as unknown as Record<string, unknown>)[INSTALL_PROMPT_PROP] = null;
+      win[INSTALL_PROMPT_PROP] = null;
       try {
         await event.prompt();
         const { outcome } = await event.userChoice;

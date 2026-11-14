@@ -7,7 +7,13 @@ import {
   INSTALL_INSTALLED_KEY,
   INSTALL_PROMPT_PROP,
 } from "./install-script.ts";
-import { createInstallStore, NO_INSTALL, type InstallEnv } from "./install-store.ts";
+import {
+  createInstallStore,
+  NO_INSTALL,
+  type InstallEnv,
+  type InstallPromptEvent,
+  type InstallWindow,
+} from "./install-store.ts";
 import { DISMISS_MS } from "./platform.ts";
 
 const ANDROID_UA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 Chrome/126.0 Mobile Safari/537.36";
@@ -35,37 +41,54 @@ function fakePrompt(outcome: "accepted" | "dismissed" | "throws") {
   return { ev, calls };
 }
 
+// A window with only what the store reads; `localStorage` is a getter so a test can make the access itself throw.
+class FakeWindow extends EventTarget implements InstallWindow {
+  [INSTALL_PROMPT_PROP]: InstallPromptEvent | null = null;
+  declare BeforeInstallPromptEvent?: typeof Event; // `declare`: absent unless a test sets it (the store checks `in`)
+  readonly navigator: InstallWindow["navigator"];
+  readonly #mql: ReturnType<InstallWindow["matchMedia"]>;
+  readonly #storage: () => InstallWindow["localStorage"];
+  constructor(
+    navigator: InstallWindow["navigator"],
+    mql: ReturnType<InstallWindow["matchMedia"]>,
+    storage: () => InstallWindow["localStorage"],
+  ) {
+    super();
+    this.navigator = navigator;
+    this.#mql = mql;
+    this.#storage = storage;
+  }
+  get localStorage() {
+    return this.#storage();
+  }
+  matchMedia() {
+    return this.#mql;
+  }
+}
+
 function makeEnv(o: Opts) {
-  const target = new EventTarget();
   const data = new Map<string, string>();
   const mqTarget = new EventTarget();
   const mql = Object.assign(mqTarget, { matches: o.standalone === true });
   let clock = 1_000_000;
   let timers: { at: number; fn: () => void; id: number }[] = [];
   let nextId = 1;
-  const navigator: Record<string, unknown> = {
+  const navigator: InstallWindow["navigator"] & { userActivation: { hasBeenActive: boolean } } = {
     userAgent: o.ua,
     maxTouchPoints: 0,
     userActivation: { hasBeenActive: o.activation === true },
   };
   if (o.related) navigator.getInstalledRelatedApps = o.related;
-  const win = Object.assign(target, {
-    navigator,
-    matchMedia: () => mql,
-    [INSTALL_PROMPT_PROP]: null,
-  }) as unknown as Record<string, unknown> & EventTarget;
-  Object.defineProperty(win, "localStorage", {
-    get() {
-      if (o.storageThrows) throw new Error("denied");
-      return {
-        getItem: (k: string) => data.get(k) ?? null,
-        setItem: (k: string, v: string) => void data.set(k, v),
-      };
-    },
+  const win = new FakeWindow(navigator, mql, () => {
+    if (o.storageThrows) throw new Error("denied");
+    return {
+      getItem: (k: string) => data.get(k) ?? null,
+      setItem: (k: string, v: string) => void data.set(k, v),
+    };
   });
   if (o.bipEvent) win.BeforeInstallPromptEvent = Event; // only its presence is checked
   const env: InstallEnv = {
-    window: win as unknown as Window,
+    window: win,
     now: () => clock,
     setTimeout: (fn, ms) => {
       const id = nextId++;
@@ -96,12 +119,12 @@ function makeEnv(o: Opts) {
     data,
     navigator,
     advance,
-    hold: (ev: unknown) => {
+    hold: (ev: InstallPromptEvent) => {
       win[INSTALL_PROMPT_PROP] = ev;
     },
     emit: (type: string) => win.dispatchEvent(new Event(type)),
     setActivation: () => {
-      (navigator.userActivation as { hasBeenActive: boolean }).hasBeenActive = true;
+      navigator.userActivation.hasBeenActive = true;
     },
     mql,
   };
