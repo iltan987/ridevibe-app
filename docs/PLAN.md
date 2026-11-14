@@ -90,6 +90,8 @@ SEO round 1 (technical) done (2026-11-13): canonical URLs (hreflang stays in nex
 Graph, robots.txt, sitemap.xml, icons, structured data (spec
 `docs/superpowers/specs/2026-11-13-seo-technical-design.md`); round 2 (home content) shipped 2026-11-13 (`docs/content/home-page-questions.md`, spec
 `docs/superpowers/specs/2026-11-13-home-content-design.md`).
+The home page was redesigned 2026-11-14 ("Rota + 34": route line, 34 plate, new hero; spec
+`docs/superpowers/specs/2026-11-14-home-redesign-design.md`).
 
 ## MVP for Samet (agreed 2026-11-08)
 

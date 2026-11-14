@@ -226,7 +226,7 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   utilities; orange text uses `text-accent-text`, not `text-primary`. Brand: `Wordmark` / `ClubBadge`
   (`src/components/brand/`). Theme: dark default via `src/lib/theme.ts` + inline head script, switcher in the header
   only; never read cookies for theme (keeps routes static).
-  A section that must stay dark in both themes (home hero) carries the `dark` class: tokens and `dark:` re-resolve.
+  A section that must stay dark in both themes (home hero, closing) carries the `dark` class: tokens and `dark:` re-resolve.
 - **Loading states:** a new page's skeleton copies the structure of what replaces it (`data-skeleton` /
   `data-skeleton-result` attributes, measured with JS off: `docs/learnings/testing.md`, `scripts/e2e/`); links from
   `@/i18n/navigation` already show pending feedback (progress bar + dim, or the page's skeleton when its shell is

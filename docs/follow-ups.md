@@ -170,8 +170,6 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 - **Home photos are 1600 px** (2026-11-13, home content) — soft on very wide screens; ask for the originals if it
   bothers (originals never enter the repo, see CLAUDE.md "Removing a website photo").
-- **Hero gradient classes are long** (2026-11-13, home content review) — `src/components/home/home-hero.tsx`; extract
-  if it grows. (The stats template-literal keys are gone with `home-stats.tsx`.)
 - **Guard test for forbidden words** (2026-11-13, home content review) — optional: fail if kahve/ücretsiz/sohbet
   appear in the `Home` / `Metadata` messages (iltan's copy rules, `docs/content/home-page-questions.md`).
 - **Apply-form option `coffee_meetups`** (2026-11-13, home content review) — still reads "Kahvaltı / kahve buluşmaları"
@@ -452,6 +450,9 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 - **Members skeleton card height varies** (2026-11-10, members E2E) — the card skeleton is 94px (name, location, one
   bike, measured); real cards are 74px (no bike) to 114px+ (bike + birthday + Instagram, more bikes), so the list can
   jump a little on load. Accepted: card content varies per member.
+- **Session hint script has the same chunk-boundary risk** (2026-11-14) — `sessionHintScript` (user-menu skeleton)
+  still follows its element and marks `previousElementSibling`; the apply hint moved to first-child/`parentElement`
+  (`docs/learnings/ui.md`). Move it too if `header-e2e` ever shows an unmarked frame.
 
 ### Tooling
 - **Dead-code sweep** (2026-11-11, iltan) — iltan wants dead code removed when there is no reason to keep it, and a
@@ -459,9 +460,6 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   Open decisions), unused message keys in `messages/*.json`, stale comments and follow-up items that point at removed
   code.
   Known: `hasStaffAccess` in `src/lib/auth/permissions.ts` has no callers (pre-existing, 2026-11-13).
-- **Session hint script has the same chunk-boundary risk** (2026-11-14) — `sessionHintScript` (user-menu skeleton)
-  still follows its element and marks `previousElementSibling`; the apply hint moved to first-child/`parentElement`
-  (`docs/learnings/ui.md`). Move it too if `header-e2e` ever shows an unmarked frame.
 - **Supabase CLI 3.1.0 is available** (2026-11-10; installed 3.0.0).
 - **Members E2E looseness** (2026-11-10, members review) — some assertions are loose or vacuous in
   `scripts/e2e/members-e2e.mjs`: pending "no member cards" (passes if the list simply didn't render), the English
@@ -476,3 +474,5 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   - `home-who.tsx`: ruler labels laid out with `justify-between` drift off the even-percentage ticks; redundant
     `aria-hidden` inside `role="img"`.
   - `home-closing.tsx`: fixed `md:h-155` could clip text at large font scales.
+  - Display sizes are fixed px (`text-[40px]`, `text-[72px]`, …) and don't follow the browser's default font size (zoom
+    still works; WCAG 1.4.4 met).
