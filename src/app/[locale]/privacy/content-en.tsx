@@ -47,7 +47,7 @@ export function PrivacyEn() {
       <h2>4. Legal bases</h2>
       <ul>
         <li>Necessity for establishing and performing the membership relationship (KVKK art. 5/2-c),</li>
-        <li>The club&apos;s legitimate interest, provided it does not harm your fundamental rights (KVKK art. 5/2-f): running the club, event safety, measuring promotion channels,</li>
+        <li>The club&apos;s legitimate interest, provided it does not harm your fundamental rights (KVKK art. 5/2-f): running the club, event and club safety, measuring promotion channels,</li>
         <li>Your explicit consent for sharing photos in the gallery (KVKK art. 5/1). You can give or withdraw it at any time on your account page, without affecting your membership.</li>
         <li>Your separate explicit consent for publishing your photos on our public website (KVKK art. 5/1). You can withdraw this consent at any time by writing to us using the method in section 9 or by telling the club management (e.g. on WhatsApp); the photo is then removed from the site.</li>
         <li>Your explicit consent for your blood type (KVKK art. 6). This consent is separate from the photo consents; you can withdraw it at any time on your account page. When you withdraw it, your blood type is deleted; your membership is not affected.</li>
@@ -96,6 +96,7 @@ export function PrivacyEn() {
         <li>Photos: gallery photos are removed from the gallery when you withdraw your consent; photos on our website are removed from the site when you withdraw that consent.</li>
         <li>Safety logs (who viewed or changed blood-type data, and when): kept for the same period as other member data.</li>
         <li>Emergency contacts, blood type and plates: kept for the same period as other member data. You can delete your emergency contacts on your account page at any time, and your plates while your membership is active; your blood type is deleted when you withdraw your consent.</li>
+        <li>If you delete your account: you can request deletion on your account page at any time; your account is hidden from other members and the club management at once. You can restore it by signing in again within 14 days. After that, your account, your member data and your application are permanently deleted. A rejected application is kept until the period above ends. For members whose membership has ended (who left or were suspended), the approved application is kept for 1 year from the deletion request for the club&apos;s safety, based on the club&apos;s legitimate interest (KVKK art. 5/2-f), and then deleted. Safety logs remain with the details that identify you removed.</li>
       </ul>
 
       <h2>7. How we collect it</h2>
@@ -116,7 +117,7 @@ export function PrivacyEn() {
         <li>object to a result against you arising solely from automated analysis,</li>
         <li>claim compensation for damages arising from unlawful processing.</li>
       </ul>
-      <p>You can also withdraw your blood type consent and your gallery photo consent yourself on your account page at any time; you can withdraw your consent for photos on our website by writing to us using the method in section 9 or by telling the club management (e.g. on WhatsApp).</p>
+      <p>You can also withdraw your blood type consent and your gallery photo consent yourself on your account page at any time; you can withdraw your consent for photos on our website by writing to us using the method in section 9 or by telling the club management (e.g. on WhatsApp). You can also delete your account and your data in this app yourself on your account page (details in section 6); this does not affect your club membership.</p>
 
       <h2>9. How to exercise your rights</h2>
       <p>

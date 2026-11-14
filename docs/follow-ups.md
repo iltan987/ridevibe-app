@@ -10,10 +10,6 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ## Next up (iltan asked for these; in priority order; start in a new session)
 
-- **Self-service account deletion** (2026-11-12, iltan) — own design round. Decided so far: a confirm step says what
-  gets deleted and what may be kept; on confirmation the account is marked for deletion at once (no admin approval, it
-  should feel instant); signing in again within a grace period offers recovery; final deletion after the period. Today
-  deletion is by hand (CLAUDE.md "Deleting an account"); KVKK art. 11/13 (answer within 30 days).
 - **Stricter ESLint rules** (2026-11-13, iltan) — own session. Goals: (1) stop `any`, `unknown`, casts (`as`),
   non-null `!` and `eslint-disable` / `@ts-expect-error` being used to bypass problems instead of fixing them;
   (2) let ESLint catch real bugs earlier (e.g. type-aware rules: floating/misused promises, unsafe `any` flows,
@@ -25,6 +21,11 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ## Open decisions (need iltan)
 
+- **Header sign-out ends every device** (2026-11-14, account deletion) — `signOut()` (`src/lib/auth/actions.ts`) calls
+  `supabase.auth.signOut()` without a scope, and auth-js defaults to `global`: "Çıkış Yap" on the phone also signs
+  out the laptop. Claude's recommendation: `{ scope: "local" }` for the header button (what people expect), global
+  stays for account deletion (it uses `admin.signOut(jwt, "global")`, not this action). Note the deletion done
+  state and the recovery card's "Silmeye devam et" reuse this action after the sessions are already revoked.
 - **No lawyer** (iltan, 2026-11-13) — the "lawyer" questions below are Claude's to research and decide; iltan
   confirms the outcome. Reword them as they are settled.
 
@@ -76,10 +77,12 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   foreign plate (covered in `plate.test.ts`); Acil durum and account skeleton heights not measured in English;
   `/members` blood select: a choice made before hydration has no `name`, so it does not filter;
   `scripts/e2e/safety-e2e.mjs` blood-filter check assumes exactly one consented A+ member locally; stray double blank
-  lines in `safety-e2e.mjs` and `members-e2e.mjs`. Low risk: test-only or cosmetic.
+  lines in `safety-e2e.mjs` and `members-e2e.mjs`. Low risk: test-only or cosmetic. The blood-filter check failed
+  once in three runs (2026-11-14: total `undefined`, then passed twice), likely `page.select` before hydration.
 - **Safety data: retention** (2026-11-13, safety data) — how long safety data (contacts, blood type, plates) of
   inactive or departed members is kept, and how long `safety_access_log` rows live; no deletion job exists, the notice
-  says "same period as other member data". Decide with the member-data retention rule.
+  says "same period as other member data". Decide with the member-data retention rule. Rows about a deleted account
+  stay with actor/target null (decided in the account-deletion spec); admins see a `deleting` target's id meanwhile.
 - **Safety data: KVKK club processes** (2026-11-13, safety data; spec §6) — not app features, for iltan/Samet: review
   the holders of `members.safety` periodically; ask holders to turn on Google 2-Step Verification (the app can't
   enforce it, sign-in is Google only); training and confidentiality undertaking for holders; never copy safety data
@@ -87,6 +90,14 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ## Features
 
+- **Data download (KVKK m.11)** (2026-11-14, account deletion) — members can delete their account in the app but not download their data
+  (PLAN.md KVKK "download and delete"). Today an access request is answered by hand within 30 days (notice §9). An
+  export of own profile, contacts, bikes, safety data and application (JSON or a printable page) on `/account`.
+- **General retention jobs** (2026-11-14, account deletion; spec non-goal) — the notice promises rejected applications deleted 6 months after
+  the decision and member data deleted/anonymised 1 year after membership ends, but no job does it yet (the
+  account-deletion purge only covers self-deleted accounts and their kept applications). Natural home: another step
+  in `private.purge_deleted_accounts`'s nightly job (or a sibling job), with "membership ended" needing a date
+  (`inactive` has none today). Also the retention of pending accounts that never apply (item below).
 - **"Etkinlikleri Gör" back in the hero** (2026-11-13, home content) — removed while Events has no content; restore the
   secondary hero button when Events ships.
 - **Gallery candidates** (2026-11-13, home content) — Glob Coffee and small-café photos, not committed; the small-café
@@ -143,6 +154,21 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ## Parked edge cases (known, judged harmless for now)
 
+- **Purge is one transaction for all due accounts** (2026-11-14, account deletion) — `private.purge_deleted_accounts` deletes every due account
+  in one statement set: one account that can't be deleted (a future Storage object owner blocks `auth.users` deletes)
+  fails the whole run, so nobody is purged and the `cron.job_run_details` pruning doesn't run either. Split per
+  account (loop with an exception block, log the failing id) when Storage arrives; then also delete the user's
+  objects first (spec "Future").
+- **Purge: one kept application matching two due inactive accounts** (2026-11-14, account deletion) — the `retained_until` step
+  (`update … from profiles`) picks an arbitrary `deletion_requested_at` if one unlinked application's email matches two
+  due inactive accounts. Sign-in emails are unique in practice; out of scope.
+- **Last-admin check races a concurrent role change** (2026-11-14, account deletion) — `request_my_account_deletion` peeks at other active
+  admins; a role change committing in between could leave no admin (documented in the function; needs two admins
+  acting within milliseconds).
+- **Backups on a paid plan would keep deleted data** (2026-11-14, account deletion) — the Supabase Free plan has no automatic backups (docs
+  checked 2026-11-14: daily backups only for Pro, 7 days; Team 14; Enterprise up to 30), so the notice and the delete
+  dialog say nothing about backups. If the project moves to a paid plan, add "deleted data may remain in backups for
+  up to N days" to notice §6 and `Account.delete.removed`.
 - **Install prompt: iOS in-app webviews look like Safari** (2026-11-12, install-prompt final review) — Instagram /
   Facebook in-app browsers on iOS classify as `ios-safari` (`src/lib/pwa/platform.ts`), so they'd get Safari steps
   that don't work there. Signed-in users can't be in those webviews today (Google blocks OAuth there; `/sign-in` shows
@@ -168,6 +194,14 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ## Polish and tech debt
 
+- **`profiles.test.sql` with real admins** (2026-11-14, account deletion) — assertions 7 and 16 failed locally while an extra non-fixture
+  active admin existed (seen during the account-deletion build; production runs passed before). Check that the file
+  is robust to real admins (it also runs against production), like the last-admin case in
+  `account_deletion.test.sql` that skips when non-fixture admins exist.
+- **Done-state "Ana sayfaya dön" has no pending feedback** (2026-11-14, account deletion) — the account-deletion done dialog's button is a plain
+  `<form action={signOut}>` submit: nothing shows while the sign-out and redirect run (`delete-account-card.tsx`).
+- **Generated grant noise in migrations** (2026-11-14, account deletion) — the CLI adds `grant … to postgres/service_role` lines to generated
+  migrations; harmless, left in.
 - **Home photos are 1600 px** (2026-11-13, home content) — soft on very wide screens; ask for the originals if it
   bothers (originals never enter the repo, see CLAUDE.md "Removing a website photo").
 - **Guard test for forbidden words** (2026-11-13, home content review) — optional: fail if kahve/ücretsiz/sohbet
@@ -403,7 +437,9 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   Members without an emergency contact (2026-11-13, safety data) also get the prompt card (~146px at 390px) above the
   account card, which the skeleton doesn't have: the page below jumps down once when it streams in. The Acil durum
   skeleton mirrors the default state "no contact, no blood-type consent" (Δh 0 at 390 and 1280, dark and light);
-  members with contacts or a stored blood type see a different height. Inactive members' section is shorter.
+  members with contacts or a stored blood type see a different height. Inactive members' section is shorter. The "Hesabı sil" card at
+  the bottom (2026-11-14, account deletion) is mirrored (Δh 0 at 390/1280, dark/light, TR/EN); accounts being deleted
+  see only the recovery card, much shorter than the skeleton.
 - **Locale switcher shows no pending feedback** (2026-11-10, loading-states) — it uses `router.replace` in a
   transition, not a `Link`, so neither the progress bar nor the dim appears (it still switches and re-enables its
   button). Could drive the pending store from `useTransition`.
