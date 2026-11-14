@@ -34,10 +34,11 @@ export async function requestAccountDeletion(): Promise<RequestDeletionResult> {
     return { status: "error" };
   }
 
-  // Revoke every session on the server (this device included) WITHOUT touching our cookies. A cookie write in a
-  // Server Action (what supabase.auth.signOut() does) marks the path revalidated, so the response would re-render
-  // the page: no session -> redirect to /sign-in, and the dialog's done state never shows. The access token is
-  // revoked server-side; the done state's button runs `signOut`, which clears the cookies and goes home.
+  // Revoke every session and refresh token on the server (this device included) WITHOUT touching our cookies. A
+  // cookie write in a Server Action (what supabase.auth.signOut() does) marks the path revalidated, so the response
+  // would re-render the page: no session -> redirect to /sign-in, and the dialog's done state never shows. The
+  // access token (JWT) itself stays valid until it expires (<= 1 h); the done state's button runs `signOut`, which
+  // clears the cookies and goes home.
   // getSession() is only used to get the token: the RPC above already proved who the user is.
   const { data: session } = await supabase.auth.getSession();
   const accessToken = session.session?.access_token;

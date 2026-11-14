@@ -8,7 +8,7 @@ import { foldSearch, matchesFolded } from "../search-fold.ts";
 export type MemberStatus = Enums<"member_status">;
 /** A status staff can see and set: `deleting` accounts are hidden from staff and never settable. */
 export type StaffStatus = Exclude<MemberStatus, "deleting">;
-export const MEMBER_STATUSES: readonly StaffStatus[] = ["pending", "active", "inactive"];
+export const MEMBER_STATUSES = ["pending", "active", "inactive"] as const satisfies readonly StaffStatus[];
 
 /**
  * `search` on each row is `foldSearch(name + " " + email)` (folded once on the server); `query` is normalized.

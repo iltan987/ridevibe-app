@@ -131,10 +131,13 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   (refuses the last active admin, `hint = 'last_admin'`) saves `status_before_deletion` + `deletion_requested_at` and
   sets `deleting`: no rights, hidden from members **and staff** (every `members.manage` / `applications.view` path
   filters it; rejected applications stay visible); `cancel_my_account_deletion()` restores it. A new staff read path
-  must exclude `deleting` profiles too (pgTAP). Staff RPCs refuse `deleting` targets and never set that status.
+  must exclude `deleting` profiles too (pgTAP). Staff RPCs (`set_member_status` / `_role` / `_name`) answer a
+  `deleting` target as `P0002` "not found" (staff must not learn the state, the action maps it to `invalid`); setting
+  the `deleting` status is `42501`.
 - **Purge:** `private.purge_deleted_accounts(as_of)` (pg_cron job `purge-deleted-accounts`, `0 2 * * *` UTC) deletes
   accounts 14 days after the request from `auth.users`, with their non-rejected applications (linked or same sign-in
-  email). Approved applications of accounts that were `inactive` are kept unlinked with `applications.retained_until`
+  email) and the person's `auth.audit_log_entries` rows (no FK; `payload->>'actor_id'` holds id + email, plus the IP).
+  Approved applications of accounts that were `inactive` are kept unlinked with `applications.retained_until`
   (request + 1 year) and then deleted; a kept row never matches, links or activates anyone (every email-matching path
   skips `retained_until is not null`); `/admin/members` flags a returning pending account as `former_member`. The
   schedule is DML: a hand-written idempotent migration (`docs/learnings/supabase.md`).
@@ -161,10 +164,15 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
 - **Investigating production data:** read-only psql only (`set default_transaction_read_only = on`, see below), select
   the fewest columns (mask emails), never write personal data into the repo or logs.
 - **Deleting an account:** members delete their own account on `/account` (14-day grace, purge job above). The manual
-  path below is for staff-requested deletions only: only on iltan's explicit OK; first check status/role/linked application
-  and `applications.reviewed_by`, then `DELETE {SUPABASE_URL}/auth/v1/admin/users/<id>` with `SUPABASE_SECRET_KEY`
+  path below is for staff-requested deletions only: only on iltan's explicit OK; first check status/role/linked
+  application and `applications.reviewed_by`, then delete the person's non-rejected applications first (an inactive
+  person's approved application: keep it with `retained_until` = now + 1 year instead), or ask them to use the
+  self-service flow: a kept approved unlinked application would otherwise re-activate them on their next sign-in.
+  Then `DELETE {SUPABASE_URL}/auth/v1/admin/users/<id>` with `SUPABASE_SECRET_KEY`
   (cascades profile, member_contacts, member_details, member_motorcycles, member_emergency_contacts and
-  member_health; applications become unlinked, `reviewed_by` → null; `safety_access_log` rows stay with actor/target null). Their access token stays valid up to 1 h; the app shows them signed out because the profile
+  member_health; applications become unlinked, `reviewed_by` → null; `safety_access_log` rows stay with actor/target
+  null) and also delete the person's `auth.audit_log_entries` rows (no FK; payload `actor_id` / email, IP address).
+  Their access token stays valid up to 1 h; the app shows them signed out because the profile
   row is gone (`getCurrentUser`). Use `getCurrentUser()`, not bare `getClaims()`, wherever "who is signed in" matters.
 - **Removing or replacing a website photo** (consent withdrawn, or replaced for editorial reasons): (1) remove/replace
   the file in `src/assets/home/` and its use, merge, deploy; a replacement always gets a NEW file name; (2) purge the
@@ -186,8 +194,9 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
 - Rollout: merge → `db push` (dry-run first) → `test db --remote --yes` → push `main` (Vercel deploys). If the
   migration removes something old code uses, push `main` immediately after. Don't push branches with schema changes
   for a preview first: previews use the production DB.
-  Changing an RPC's return columns (drop/recreate, e.g. `pending_application_flags` gaining `former_member`) breaks
-  the old deployment's callers (`/admin/members`) until the deploy is Ready: push `main` right after `db push`.
+  Adding a column to an RPC's return type doesn't break old callers (PostgREST returns it, old JS ignores the key,
+  e.g. `pending_application_flags` gaining `former_member`); removing, renaming or retyping one does, until the deploy
+  is Ready. Pushing `main` right after `db push` is fine either way.
   Changing an RPC's arguments: the old overload can't stay beside the new one when both accept the same named args
   (PostgREST can't choose), so pages calling it error until the deploy is Ready: tell iltan, pick a quiet hour.
 - **pg_cron on production** (read-only checks): `select jobname, schedule, active from cron.job` (expect

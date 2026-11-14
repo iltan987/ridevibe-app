@@ -21,8 +21,9 @@ export async function listApplications(filter: ApplicationFilter, page: number) 
   const supabase = await createClient();
   let request = supabase.from("applications").select(LIST_COLUMNS);
   request =
-    filter === "unlinked" ? request.eq("status", "approved").is("profile_id", null).is("retained_until", null)
-        : request.eq("status", filter);
+    filter === "unlinked"
+      ? request.eq("status", "approved").is("profile_id", null).is("retained_until", null)
+      : request.eq("status", filter);
   const from = (page - 1) * PAGE_SIZE;
   const { data, error } = await request
     .order("created_at", { ascending: false })
@@ -38,8 +39,9 @@ export async function countApplicationsByStatus() {
     APPLICATION_FILTERS.map(async (filter) => {
       let request = supabase.from("applications").select("id", { count: "exact", head: true });
       request =
-        filter === "unlinked" ? request.eq("status", "approved").is("profile_id", null).is("retained_until", null)
-        : request.eq("status", filter);
+        filter === "unlinked"
+          ? request.eq("status", "approved").is("profile_id", null).is("retained_until", null)
+          : request.eq("status", filter);
       const { count, error } = await request;
       if (error) throw new Error(`countApplicationsByStatus failed: ${error.code}`);
       return [filter, count ?? 0] as const;

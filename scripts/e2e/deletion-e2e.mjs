@@ -210,8 +210,11 @@ try {
 } catch (e) {
   check("finished without an exception", false, e.stack ?? e.message);
 } finally {
-  restore();
-  await browser.close();
+  try {
+    restore();
+  } finally {
+    await browser.close();
+  }
 }
 check("fixtures end active", memberRow() === "active||" && sql(`select status from profiles where id = '${ID.admin}'`) === "active");
 console.log(fails ? `${fails} FAILED` : "ALL PASSED");

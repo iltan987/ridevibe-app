@@ -140,7 +140,7 @@
       "dialogTitle": "Hesabın silinsin mi?",
       "removed": "Silinecekler: profilin, iletişim bilgilerin, motosikletlerin, acil durum kişilerin, kan grubun, tercihlerin ve başvurun.",
       "kept": "Kalanlar: reddedilmiş bir başvurun varsa 6 ay dolana kadar saklanır; seni tanıtmayan erişim kayıtları kalır.",
-      "keptInactive": "Üyeliğin sona erdiği için başvurun silme talebinden itibaren 1 yıl saklanır.",
+      "keptInactive": "Onaylanmış bir başvurun varsa, üyeliğin sona erdiği için silme talebinden itibaren 1 yıl saklanır.",
       "grace": "14 gün içinde tekrar giriş yaparsan hesabını geri alabilirsin; sonra kalıcı olarak silinir.",
       "club": "Kulüp üyeliğin ve WhatsApp grupları bundan etkilenmez.",
       "doneTitle": "Hesabın silinecek",
