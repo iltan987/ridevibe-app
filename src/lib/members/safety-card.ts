@@ -33,7 +33,7 @@ export async function getSafetyCard(profileId: string): Promise<SafetyCardResult
     console.error("getSafetyCard failed", { code: error.code });
     return { status: "error" };
   }
-  const row = data[0];
+  const row = data.at(0);
   if (!row) return { status: "error" };
 
   return {
@@ -41,7 +41,7 @@ export async function getSafetyCard(profileId: string): Promise<SafetyCardResult
     card: {
       fullName: row.full_name,
       contacts: Array.isArray(row.contacts) ? (row.contacts as SafetyCard["contacts"]) : [],
-      bloodType: (row.blood_type as BloodType | null) ?? null,
+      bloodType: row.blood_type,
       motorcycles: Array.isArray(row.motorcycles) ? (row.motorcycles as Motorcycle[]) : [],
     },
   };

@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
 
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("keep_alive");
-  if (error || data !== true) {
+  if (error || !data) {
     console.error("keep-alive failed", { code: error?.code });
     return Response.json({ ok: false }, { status: 503 });
   }

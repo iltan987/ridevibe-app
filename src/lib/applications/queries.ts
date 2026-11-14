@@ -88,8 +88,8 @@ export async function getApplicationAccount(applicationId: string): Promise<Appl
   const { data, error } = await supabase.rpc("application_account", { application_id: applicationId }).maybeSingle();
   if (error) throw new Error(`getApplicationAccount failed: ${error.code}`);
   if (!data) return null;
-  // Generated types say non-null; email is null without a member_contacts row.
-  return { id: data.id, fullName: data.full_name, email: (data.email as string | null) ?? null, status: data.status };
+  // Generated types say non-null; email is null without a member_contacts row (ApplicationAccount allows it).
+  return { id: data.id, fullName: data.full_name, email: data.email, status: data.status };
 }
 
 /** Status of the signed-in user's latest application (linked, or unlinked with their sign-in email), or null. Signed-in only. */
@@ -97,6 +97,6 @@ export async function getMyApplicationStatus(): Promise<ApplicationStatus | null
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("my_application_status");
   if (error) throw new Error(`getMyApplicationStatus failed: ${error.code}`);
-  // The generated type says non-null, but the function returns null without an application.
-  return (data as ApplicationStatus | null) ?? null;
+  // The generated type says non-null, but the function returns null without an application (the return type allows it).
+  return data;
 }

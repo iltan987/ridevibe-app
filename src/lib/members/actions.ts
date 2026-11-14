@@ -103,7 +103,7 @@ export async function setBirthDate(input: BirthDateInput): Promise<ProfileAction
     .update({ show_birthday: parsed.data.show_birthday })
     .eq("profile_id", userId)
     .select("profile_id");
-  if (flagError || !data?.length) return finish(flagError, data, "setBirthDate");
+  if (flagError || !data.length) return finish(flagError, data, "setBirthDate");
 
   const { error } = await supabase.rpc("set_my_birth_date", { new_date: parsed.data.birth_date });
   if (error) return fail(error, "setBirthDate");
@@ -124,7 +124,7 @@ export async function updatePhotoConsent(consent: boolean): Promise<ProfileActio
     .eq("profile_id", userId)
     .neq("consent_photos", parsed.data)
     .select("profile_id");
-  if (error || data?.length) return finish(error, data, "updatePhotoConsent");
+  if (error || data.length) return finish(error, data, "updatePhotoConsent");
 
   // Nothing changed: either the value was already saved (ok) or the row is hidden/missing.
   const { data: current, error: readError } = await supabase
