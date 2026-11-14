@@ -95,16 +95,17 @@
 - **Source:** found by testing (`scripts/e2e/header-e2e.mjs` logs the skeleton box per animation frame).
 
 ### A guessing fallback inside a pathname `<Suspense>` appears several times in the HTML (2026-11-11)
-- **Symptom (risk):** the "Başvur" nav guess (`applyHintScript`, then marking its previous sibling) could miss copies of the
+- **Symptom (risk):** the "Başvur" nav guess (`applyHintScript`, marking the element that holds it) could miss copies of the
   nav: the server HTML of `/` holds the guessing `DesktopNav`/`BottomNav` twice each (the pathname boundary's fallback
   and its content), plus the streamed final nav.
 - **Cause:** the outer session boundary (`DesktopNavForUser`/`BottomNavForUser`) falls back to the nav, which has its
   own pathname `<Suspense>`; both of its sides render the same `*NavLinks`. Content streamed later sits in a hidden
   `<div>` and is moved in by `$RC`; its inline script still runs while parsing, so the attribute is set before the move.
-- **Do:** render the `<nav>` + `InlineScript` pair inside the shared `*NavLinks` (every copy carries its own script),
+- **Do:** render the `<nav>` with its `InlineScript` as first child inside the shared `*NavLinks` (every copy carries
+  its own script; see the next entry for why first child),
   never once outside the inner boundary. Check by sampling the visible tab count every animation frame on a hard load
   (member: 4 in every frame, visitor: 5, stale `"0"` as member: 5 → 4).
-- **Source:** `curl` of the production build HTML (local `pnpm start`; `</nav><script>` pairs), puppeteer frame
+- **Source:** `curl` of the production build HTML (local `pnpm start`; one script per `<nav>` copy), puppeteer frame
   sampling.
 
 ### A hint script placed after its element can lose to a stream chunk boundary (2026-11-14)

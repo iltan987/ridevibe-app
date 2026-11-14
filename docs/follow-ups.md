@@ -87,8 +87,6 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ## Features
 
-- **Update "140+" by hand** (2026-11-13, home content) — `Home.stats.membersValue` in both message files; bump as the
-  club grows. A wrong number on the home page is the risk if forgotten.
 - **"Etkinlikleri Gör" back in the hero** (2026-11-13, home content) — removed while Events has no content; restore the
   secondary hero button when Events ships.
 - **Gallery candidates** (2026-11-13, home content) — Glob Coffee and small-café photos, not committed; the small-café
@@ -173,11 +171,9 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 - **Home photos are 1600 px** (2026-11-13, home content) — soft on very wide screens; ask for the originals if it
   bothers (originals never enter the repo, see CLAUDE.md "Removing a website photo").
 - **Hero gradient classes are long** (2026-11-13, home content review) — `src/components/home/home-hero.tsx`; extract
-  if it grows. `home-stats.tsx` builds message keys with a template literal (typed-key friction).
+  if it grows. (The stats template-literal keys are gone with `home-stats.tsx`.)
 - **Guard test for forbidden words** (2026-11-13, home content review) — optional: fail if kahve/ücretsiz/sohbet
   appear in the `Home` / `Metadata` messages (iltan's copy rules, `docs/content/home-page-questions.md`).
-- **Terrace photo is tall on desktop** (2026-11-13, home content review) — the portrait `who-terrace.jpg` renders ~580px
-  tall at half width; `md:max-h-[480px]` would crop the group. iltan to decide.
 - **Apply-form option `coffee_meetups`** (2026-11-13, home content review) — still reads "Kahvaltı / kahve buluşmaları"
   (`messages/tr.json`); iltan rejected "kahvede" for the home page. Ask iltan whether the form wording should change too.
 
@@ -472,3 +468,11 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   label check is a loose regexp; bikes planted for the 10-bike cap stay if a check
   throws mid-run (the next run resets them); the instant-navigation check is evidenced only by the dev log and the
   browser console.
+- **Home redesign review minors** (2026-11-14, home redesign review) — polish, none urgent:
+  - `src/components/home/route.tsx`: `-mr-5` mirrors `Route`'s `pr-5` (expose a `--route-pr` custom property); the
+    line colour pair is repeated in `DOT.place` and `RoutePhoto` instead of reusing `LINE`; `RouteStop`'s `as` is typed
+    `ElementType`; `RoutePhoto`'s fixed `md:h-130` can leave space under the photo; its `lg` size says 400px vs a ~420px
+    column.
+  - `home-who.tsx`: ruler labels laid out with `justify-between` drift off the even-percentage ticks; redundant
+    `aria-hidden` inside `role="img"`.
+  - `home-closing.tsx`: fixed `md:h-155` could clip text at large font scales.

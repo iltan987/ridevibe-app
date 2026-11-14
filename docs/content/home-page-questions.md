@@ -136,4 +136,13 @@ Teşekkürler! 🏍️
 - **After deploy (iltan):** post the `/privacy` link in the club WhatsApp group ("if you no longer want to appear on
   the site, tell us"). Done: _not yet_ (note the date here).
 - **Copy rules (iltan):** no "ücretsiz", no "kahve" / "kahvede", no "sohbet", no payment talk.
-- **Member count:** "140+" (`Home.stats.membersValue`) is updated by hand as the club grows.
+- **Member count:** the "140+" stats row is gone (see Redesign below); no member count is on the page.
+
+## Redesign "Rota + 34" (2026-11-14)
+
+Spec: `docs/superpowers/specs/2026-11-14-home-redesign-design.md`; mockups `docs/design/mockups/home-rota-34*.html`.
+
+- **No age on the page** (iltan, 2026-11-14): the who-can-join heading is now "Her yaştan, her motordan".
+- **Dropped:** the stats row (and with it the hand-updated member count) and the hero eyebrow/badge line.
+- **Design:** a route line growing from a "34 RV 2026" plate runs down the page (rides, who can join, joining steps,
+  rules, FAQ, dark closing).
