@@ -111,6 +111,11 @@ async function ApplicationsList({
                         {a.owns_motorcycle ? `${a.motorcycle_brand} ${a.motorcycle_model}` : t("noBike")}
                       </Badge>
                     </div>
+                    {a.retained_until && (
+                      <p className="text-xs font-medium text-accent-text">
+                        {t("retained", { date: format.dateTime(new Date(a.retained_until), { dateStyle: "medium" }) })}
+                      </p>
+                    )}
                     <p className="text-xs text-muted-foreground">
                       {tApply(`options.heard_from.${a.heard_from}`)}
                       {a.utm_campaign && ` · ${t("campaign", { campaign: a.utm_campaign })}`}

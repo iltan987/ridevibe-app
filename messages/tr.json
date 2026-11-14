@@ -490,6 +490,7 @@
       "unlinked": "Giriş yapmadı"
     },
     "empty": "Bu durumda başvuru yok.",
+    "retained": "Hesabını silmiş eski üye · {date} tarihine kadar saklanır",
     "range": "{from}–{to} / {total} başvuru",
     "back": "Başvurulara dön",
     "submittedAt": "Başvuru tarihi",
@@ -539,6 +540,7 @@
       "noEmail": "E-posta yok",
       "applied": "Başvurdu",
       "notApplied": "Başvurusu yok",
+      "formerMember": "Eski üye: hesabını silmiş",
       "editName": "Adı düzenle",
       "nameDialog": {
         "title": "Üye adını düzenle",

@@ -163,7 +163,12 @@ async function ApplicationDetail({ params }: { params: PageProps<"/[locale]/admi
   // Linked = profile_id. The account details come from an RPC: profiles RLS
   // hides pending accounts from staff without members.manage.
   const linked = !!a.profile_id;
-  const inviteHref = a.status === "approved" && !linked ? await whatsAppInvite(a) : null;
+  // Kept = a former member's application the nightly purge unlinked: nothing to invite or link (the DB refuses too).
+  const retainedLabel =
+    a.retained_until && !linked
+      ? t("retained", { date: format.dateTime(new Date(a.retained_until), { dateStyle: "medium" }) })
+      : null;
+  const inviteHref = a.status === "approved" && !linked && !retainedLabel ? await whatsAppInvite(a) : null;
   const canReview = can(me.access, "applications.review");
   const canDecide = can(me.access, "applications.decide");
 
@@ -203,9 +208,10 @@ async function ApplicationDetail({ params }: { params: PageProps<"/[locale]/admi
         canDelete={can(me.access, "applications.delete")}
         decidedLabel={decidedLabel}
         linked={linked}
+        retainedLabel={retainedLabel}
         account={account}
         inviteHref={inviteHref}
-        canLink={canDecide && !linked && a.status !== "rejected"}
+        canLink={canDecide && !linked && !retainedLabel && a.status !== "rejected"}
       />
 
       <Section

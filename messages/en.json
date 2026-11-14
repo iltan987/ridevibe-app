@@ -490,6 +490,7 @@
       "unlinked": "Not signed in"
     },
     "empty": "No applications with this status.",
+    "retained": "Former member who deleted their account · kept until {date}",
     "range": "{from}–{to} of {total, plural, one {# application} other {# applications}}",
     "back": "Back to applications",
     "submittedAt": "Submitted",
@@ -538,6 +539,7 @@
       "reactivate": "Reactivate",
       "noEmail": "No email",
       "applied": "Applied",
+      "formerMember": "Former member: deleted their account",
       "notApplied": "No application",
       "editName": "Edit name",
       "nameDialog": {

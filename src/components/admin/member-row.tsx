@@ -75,6 +75,11 @@ export function MemberRow({
           </p>
           <p className="truncate text-xs text-muted-foreground">{member.email ?? t("members.noEmail")}</p>
           <p className="text-xs text-muted-foreground">{member.joinedLabel}</p>
+          {member.formerMember && (
+            <Badge variant="outline" className="mt-1 border-sun/40 bg-sun/10">
+              {t("members.formerMember")}
+            </Badge>
+          )}
           {member.applied != null && (
             <Badge variant={member.applied ? "status" : "outline"} className="mt-1">
               {t(member.applied ? "members.applied" : "members.notApplied")}
