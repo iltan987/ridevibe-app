@@ -5,9 +5,9 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(35);
+select plan(41);
 
--- Fixtures (ids …07d1–…07d4, applications 7b-prefixed).
+-- Fixtures (ids …07d1–…07d5, applications 7b-prefixed).
 --   7d1 deleting 14 days (was active) with approved + rejected linked and a contacted unlinked application (same
 --   email), details, bike, emergency contact, blood type; 7d2 deleting 13 days with a linked approved and an
 --   unlinked same-email application; 7d3 deleting 14 days (was inactive) with a linked approved and an unlinked
@@ -191,6 +191,27 @@ reset role;
 select private.purge_deleted_accounts(now() + interval '2 days');
 select is((select status::text from public.profiles where id = '00000000-0000-0000-0000-0000000007d2'), 'active',
   'a cancelled deletion is not purged later');
+select is((select count(*)::int from public.applications where id in
+  ('00000000-0000-0000-0000-0000000007b7', '00000000-0000-0000-0000-0000000007b8')), 2,
+  'a cancelled account keeps its applications');
+select is((select profile_id from public.applications where id = '00000000-0000-0000-0000-0000000007b7'),
+  '00000000-0000-0000-0000-0000000007d2'::uuid, 'still linked');
+select is((select count(*)::int from public.profiles where id = '00000000-0000-0000-0000-0000000007d5'), 1,
+  'the account still inside the grace period stays after the second run');
+select is((select count(*)::int from public.applications where id in
+  ('00000000-0000-0000-0000-0000000007b9', '00000000-0000-0000-0000-0000000007ba')), 2,
+  'and so do the other applications');
+
+-- Retention deadline of the kept rows (last: these runs treat the grace-period accounts as due).
+-- 7d3 and 7bb were requested at now() - 14 days.
+select private.purge_deleted_accounts((now() - interval '14 days') + interval '1 year' - interval '1 day');
+select is((select count(*)::int from public.applications where id in
+  ('00000000-0000-0000-0000-0000000007b4', '00000000-0000-0000-0000-0000000007bb')), 2,
+  'kept applications stay until one year after the request');
+select private.purge_deleted_accounts((now() - interval '14 days') + interval '1 year');
+select is((select count(*)::int from public.applications where id in
+  ('00000000-0000-0000-0000-0000000007b4', '00000000-0000-0000-0000-0000000007bb')), 0,
+  'and are deleted one year after the request');
 
 select * from finish();
 rollback;
