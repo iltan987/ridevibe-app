@@ -43,10 +43,11 @@ export async function listAllProfiles(): Promise<{ profiles: AdminProfile[]; ove
 }
 
 /**
- * Which of these profiles have an open (new/contacted/approved) application? Needs members.manage. One call per
+ * Per profile: `applied` = an open (new/contacted/approved) application, `formerMember` = its email matches a kept
+ * application of a deleted inactive account. Needs members.manage. One call per
  * CHUNK_SIZE ids: `max_rows` caps the RPC's result (one row per id) too.
  */
-export async function getPendingApplicationFlags(ids: string[]): Promise<Map<string, boolean>> {
+export async function getPendingApplicationFlags(ids: string[]): Promise<Map<string, { applied: boolean; formerMember: boolean }>> {
   if (!ids.length) return new Map();
   const supabase = await createClient();
   const results = await Promise.all(
@@ -56,7 +57,7 @@ export async function getPendingApplicationFlags(ids: string[]): Promise<Map<str
       return data;
     }),
   );
-  return new Map(results.flat().map((row) => [row.profile_id, row.has_application]));
+  return new Map(results.flat().map((row) => [row.profile_id, { applied: row.has_application, formerMember: row.former_member }]));
 }
 
 /**

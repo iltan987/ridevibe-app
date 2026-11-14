@@ -23,6 +23,7 @@ export type MemberRowData = {
   roleLabel: string;
   /** Pending tab only: has an open application. null/undefined = not shown. */
   applied?: boolean | null;
+  formerMember?: boolean;
 };
 
 const NEXT_STATUS = {

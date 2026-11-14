@@ -262,6 +262,7 @@ begin
   select a.id, a.full_name, a.city, a.district, a.side, a.profile_id into app
   from public.applications a
   where a.status = 'approved'
+    and a.retained_until is null
     and a.profile_id = target_profile
   order by a.reviewed_at desc nulls last, a.created_at desc
   limit 1;
@@ -270,6 +271,7 @@ begin
     from public.applications a
     join public.member_contacts c on c.profile_id = target_profile
     where a.status = 'approved'
+      and a.retained_until is null
       and a.profile_id is null
       and private.normalize_email(a.email) = private.normalize_email(c.email)
     order by a.reviewed_at desc nulls last, a.created_at desc
@@ -421,6 +423,8 @@ begin
   select a.status into app_status
   from public.applications a
   where a.id = application_id and a.profile_id is null and a.status <> 'rejected'
+    and a.retained_until is null
+    and not private.application_hidden_for_deletion(a.profile_id, a.email, a.status)
   for update;
   if not found then
     raise exception 'application % not found or not linkable', application_id using errcode = 'P0002';
@@ -435,6 +439,7 @@ begin
     or exists (
       select 1 from public.applications a
       where a.profile_id = target_id and a.status in ('new', 'contacted', 'approved')
+        and a.retained_until is null
     )
     or exists (
       select 1
@@ -442,6 +447,7 @@ begin
       join public.member_contacts c on c.profile_id = target_id
       where a.id <> application_id
         and a.profile_id is null
+        and a.retained_until is null
         and a.status in ('new', 'contacted', 'approved')
         and private.normalize_email(a.email) = private.normalize_email(c.email)
     )
@@ -502,10 +508,12 @@ begin
     and not exists (
       select 1 from public.applications a
       where a.profile_id = p.id and a.status in ('new', 'contacted', 'approved')
+        and a.retained_until is null
     )
     and not exists (
       select 1 from public.applications a
       where a.profile_id is null
+        and a.retained_until is null
         and a.status in ('new', 'contacted', 'approved')
         and private.normalize_email(a.email) = private.normalize_email(c.email)
     )
@@ -558,13 +566,16 @@ set search_path = ''
 as $$
   select a.status
   from public.applications a
-  where a.profile_id = (select auth.uid())
-    or (
-      a.profile_id is null
-      and private.normalize_email(a.email) = (
-        select private.normalize_email(c.email)
-        from public.member_contacts c
-        where c.profile_id = (select auth.uid())
+  where a.retained_until is null
+    and (
+      a.profile_id = (select auth.uid())
+      or (
+        a.profile_id is null
+        and private.normalize_email(a.email) = (
+          select private.normalize_email(c.email)
+          from public.member_contacts c
+          where c.profile_id = (select auth.uid())
+        )
       )
     )
   order by a.created_at desc, a.id desc
@@ -574,10 +585,12 @@ $$;
 -- ---------------------------------------------------------------------------
 -- "Applied?" for a page of the members list (members.manage): whether an
 -- open or approved application is linked to the profile, or is unlinked and
--- has its sign-in email. Booleans only — no application data.
+-- has its sign-in email (a kept application, retained_until set, never counts).
+-- former_member: the sign-in email matches a kept application, i.e. this person
+-- deleted an inactive account before. Booleans only — no application data.
 -- ---------------------------------------------------------------------------
 create or replace function public.pending_application_flags(profile_ids uuid[])
-returns table (profile_id uuid, has_application boolean)
+returns table (profile_id uuid, has_application boolean, former_member boolean)
 language plpgsql
 stable
 security definer
@@ -589,14 +602,22 @@ begin
   end if;
 
   return query
-  select ids.pid, exists (
-    select 1 from public.applications a
-    where a.status in ('new', 'contacted', 'approved')
-      and (
-        a.profile_id = ids.pid
-        or (a.profile_id is null and private.normalize_email(a.email) = private.normalize_email(c.email))
-      )
-  )
+  select ids.pid,
+    exists (
+      select 1 from public.applications a
+      where a.status in ('new', 'contacted', 'approved')
+        and a.retained_until is null
+        and (
+          a.profile_id = ids.pid
+          or (a.profile_id is null and private.normalize_email(a.email) = private.normalize_email(c.email))
+        )
+    ),
+    exists (
+      select 1 from public.applications a
+      where a.retained_until is not null
+        and a.profile_id is null
+        and private.normalize_email(a.email) = private.normalize_email(c.email)
+    )
   from unnest(profile_ids) as ids (pid)
   left join public.member_contacts c on c.profile_id = ids.pid
   where not exists (select 1 from public.profiles p where p.id = ids.pid and p.status = 'deleting');

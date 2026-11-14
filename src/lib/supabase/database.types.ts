@@ -251,7 +251,7 @@ isOneToOne: false
                            },
 "pending_application_flags":
 { Args: { "profile_ids": (string)[] }; Returns: {
-              "has_application": boolean,"profile_id": string
+              "former_member": boolean,"has_application": boolean,"profile_id": string
             }[]
                            },
 "request_my_account_deletion":
