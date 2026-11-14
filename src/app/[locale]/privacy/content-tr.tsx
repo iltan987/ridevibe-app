@@ -43,7 +43,7 @@ export function PrivacyTr() {
       <h2>4. Hukuki sebepler</h2>
       <ul>
         <li>Üyelik ilişkisinin kurulması ve yürütülmesi için gerekli olması (KVKK m.5/2-c),</li>
-        <li>Temel hak ve özgürlüklerinize zarar vermemek kaydıyla kulübün meşru menfaati (KVKK m.5/2-f): kulüp yönetimi, etkinlik güvenliği, tanıtım kanallarının ölçümü,</li>
+        <li>Temel hak ve özgürlüklerinize zarar vermemek kaydıyla kulübün meşru menfaati (KVKK m.5/2-f): kulüp yönetimi, etkinlik ve kulüp güvenliği, tanıtım kanallarının ölçümü,</li>
         <li>Fotoğraflarınızın galeride paylaşılması için açık rızanız (KVKK m.5/1). Bu rızayı istediğiniz zaman hesap sayfanızdan verebilir veya geri alabilirsiniz; geri almak üyeliğinizi etkilemez.</li>
         <li>Fotoğraflarınızın herkese açık internet sitemizde yayınlanması için ayrıca verdiğiniz açık rıza (KVKK m.5/1). Bu rızayı istediğiniz zaman 9. bölümdeki yöntemle bize yazarak veya kulüp yönetimine (ör. WhatsApp üzerinden) ileterek geri alabilirsiniz; fotoğraf siteden kaldırılır.</li>
         <li>Kan grubunuz için açık rızanız (KVKK m.6). Bu rıza fotoğraf rızalarından ayrıdır; istediğiniz zaman hesap sayfanızdan geri alabilirsiniz. Geri aldığınızda kan grubunuz silinir; üyeliğiniz etkilenmez.</li>
@@ -92,6 +92,7 @@ export function PrivacyTr() {
         <li>Fotoğraflar: galerideki fotoğraflar açık rızanızı geri aldığınızda galeriden, internet sitemizdeki fotoğraflar bu rızayı geri aldığınızda siteden kaldırılır.</li>
         <li>Güvenlik kayıtları (kan grubu verisini kimin ne zaman görüntülediği veya değiştirdiği): diğer üye bilgileriyle aynı süre saklanır.</li>
         <li>Acil durum kişileri, kan grubu ve plakalar: diğer üye bilgileriyle aynı süre saklanır. Acil durum kişilerinizi hesap sayfanızdan istediğiniz zaman, plakalarınızı üyeliğiniz aktif olduğu sürece hesap sayfanızdan silebilirsiniz; kan grubunuz rızanızı geri aldığınızda silinir.</li>
+        <li>Hesap silme: hesap sayfanızdan istediğiniz zaman hesabınızın silinmesini talep edebilirsiniz; hesabınız diğer üyelerden ve kulüp yönetiminden hemen gizlenir. 14 gün içinde tekrar giriş yaparak hesabınızı geri alabilirsiniz. Bu süre dolduğunda hesabınız, üye bilgileriniz ve başvurunuz kalıcı olarak silinir. Reddedilmiş bir başvurunuz varsa yukarıdaki süre dolana kadar saklanır. Üyeliği sona ermiş (ayrılmış veya askıya alınmış) üyelerin onaylanmış başvurusu ise kulüp güvenliği amacıyla, kulübün meşru menfaatine (KVKK m.5/2-f) dayanılarak silme talebinden itibaren 1 yıl saklanır, ardından silinir. Güvenlik kayıtları, kimliğinizi belirleyen bilgiler çıkarılarak saklanır.</li>
       </ul>
 
       <h2>7. Verileri nasıl topluyoruz?</h2>
@@ -112,7 +113,7 @@ export function PrivacyTr() {
         <li>münhasıran otomatik sistemlerle analiz edilmesi sonucu aleyhinize bir sonuç çıkmasına itiraz etme,</li>
         <li>kanuna aykırı işlenmesi sebebiyle zarara uğramanız halinde zararın giderilmesini talep etme</li>
       </ul>
-      <p>haklarına sahipsiniz. Kan grubu rızanızı ve galeri fotoğrafları için verdiğiniz rızayı ayrıca hesap sayfanızdan istediğiniz zaman geri alabilirsiniz; internet sitemizdeki fotoğraflar için verdiğiniz rızayı 9. bölümdeki yöntemle bize yazarak veya kulüp yönetimine (ör. WhatsApp üzerinden) ileterek geri alabilirsiniz.</p>
+      <p>haklarına sahipsiniz. Kan grubu rızanızı ve galeri fotoğrafları için verdiğiniz rızayı ayrıca hesap sayfanızdan istediğiniz zaman geri alabilirsiniz; internet sitemizdeki fotoğraflar için verdiğiniz rızayı 9. bölümdeki yöntemle bize yazarak veya kulüp yönetimine (ör. WhatsApp üzerinden) ileterek geri alabilirsiniz. Hesabınızı ve bu uygulamadaki verilerinizi de hesap sayfanızdan kendiniz silebilirsiniz (ayrıntılar 6. bölümde); bu, kulüp üyeliğinizi etkilemez.</p>
 
       <h2>9. Başvuru yöntemi</h2>
       <p>

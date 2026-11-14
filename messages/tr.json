@@ -117,7 +117,8 @@
     "statuses": {
       "pending": "Onay bekliyor",
       "active": "Aktif üye",
-      "inactive": "Pasif"
+      "inactive": "Pasif",
+      "deleting": "Silinecek"
     },
     "roles": {
       "member": "Üye",
@@ -129,7 +130,32 @@
     "notAppliedBody": "Üye olmak için başvuru formunu doldur. Bilgilerin hazır gelecek. Başka bir e-postayla başvurduysan tekrar başvurma; bize WhatsApp'tan yaz, hesabını bağlayalım.",
     "applyNow": "Başvur",
     "underReviewTitle": "Başvurun inceleniyor",
-    "underReviewBody": "Onaylandığında hesabın otomatik olarak aktif olur."
+    "underReviewBody": "Onaylandığında hesabın otomatik olarak aktif olur.",
+    "delete": {
+      "title": "Hesabı sil",
+      "body": "Hesabını ve bu uygulamadaki bilgilerini silebilirsin.",
+      "open": "Hesabımı sil",
+      "confirm": "Hesabımı sil",
+      "cancel": "Vazgeç",
+      "dialogTitle": "Hesabın silinsin mi?",
+      "removed": "Silinecekler: profilin, iletişim bilgilerin, motosikletlerin, acil durum kişilerin, kan grubun, tercihlerin ve başvurun.",
+      "kept": "Kalanlar: reddedilmiş bir başvurun varsa 6 ay dolana kadar saklanır; seni tanıtmayan erişim kayıtları kalır.",
+      "keptInactive": "Onaylanmış bir başvurun varsa, üyeliğin sona erdiği için silme talebinden itibaren 1 yıl saklanır.",
+      "grace": "14 gün içinde tekrar giriş yaparsan hesabını geri alabilirsin; sonra kalıcı olarak silinir.",
+      "club": "Kulüp üyeliğin ve WhatsApp grupları bundan etkilenmez.",
+      "doneTitle": "Hesabın silinecek",
+      "doneBody": "{date} tarihinden sonra kalıcı olarak silinecek. Fikrini değiştirirsen o zamana kadar tekrar giriş yapman yeterli.",
+      "home": "Ana sayfaya dön",
+      "lastAdmin": "Kulübün tek yöneticisisin. Önce yönetici rolünü başka birine ver.",
+      "error": "Bir şeyler ters gitti. Lütfen biraz sonra tekrar dene."
+    },
+    "recovery": {
+      "title": "Hesabın silinecek",
+      "body": "{date} tarihinden sonra kalıcı olarak silinecek. Geri alırsan her şey eskisi gibi olur.",
+      "restore": "Hesabımı geri al",
+      "continue": "Silmeye devam et",
+      "error": "Bir şeyler ters gitti. Lütfen biraz sonra tekrar dene."
+    }
   },
   "Members": {
     "title": "Üyeler",
@@ -426,6 +452,10 @@
       "title": "Üyeliğin şu an pasif",
       "body": "Tekrar katılmak istiyorsan bize WhatsApp'tan yaz."
     },
+    "deleting": {
+      "title": "Hesabın silinecek",
+      "body": "Geri almak istersen Hesabım sayfasını aç."
+    },
     "errors": {
       "required": "Bu alan zorunlu.",
       "tooShort": "Biraz daha detay yazar mısın?",
@@ -460,6 +490,7 @@
       "unlinked": "Giriş yapmadı"
     },
     "empty": "Bu durumda başvuru yok.",
+    "retained": "Hesabını silmiş eski üye · {date} tarihine kadar saklanır",
     "range": "{from}–{to} / {total} başvuru",
     "back": "Başvurulara dön",
     "submittedAt": "Başvuru tarihi",
@@ -509,6 +540,7 @@
       "noEmail": "E-posta yok",
       "applied": "Başvurdu",
       "notApplied": "Başvurusu yok",
+      "formerMember": "Eski üye: hesabını silmiş",
       "editName": "Adı düzenle",
       "nameDialog": {
         "title": "Üye adını düzenle",

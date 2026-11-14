@@ -12,8 +12,15 @@ export async function GET(request: NextRequest) {
 
   if (code) {
     const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
+      // Signing in again within the grace period lands on the recovery card, whatever page was asked for.
+      const { data: profile } = await supabase.from("profiles").select("status").eq("id", data.user.id).maybeSingle();
+      if (profile?.status === "deleting") {
+        const { pathname } = new URL(next, origin);
+        const path = pathname === "/en" || pathname.startsWith("/en/") ? "/en/account" : "/account";
+        return NextResponse.redirect(new URL(path, origin));
+      }
       return NextResponse.redirect(new URL(next, origin));
     }
   }

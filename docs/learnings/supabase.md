@@ -218,3 +218,56 @@
   flags the URL; no need to wait for the count first.
 - **Source:** `postgrest-js` `range()` in `node_modules/@supabase/postgrest-js/dist/index.mjs`; curl against local
   PostgREST.
+
+### pg_cron with declarative schemas: extension in the schema, schedule in a hand-written migration (2026-11-14)
+- **Symptom:** the declarative diff handles `create extension if not exists pg_cron with schema pg_catalog;` but
+  emits `CREATE EXTENSION "pg_cron";` (schema clause and `if not exists` dropped); the job itself is not in any schema.
+- **Cause:** a schedule is a row in `cron.job` (DML), which declarative schemas don't track; the diff tool normalizes
+  extension statements. Supabase documents `pg_catalog` as pg_cron's schema (the `cron` tables still live in schema `cron`).
+- **Do:** keep the `create extension` line in `supabase/schemas/90_ops.sql`, then edit the generated migration back to
+  `create extension if not exists pg_cron with schema pg_catalog;`. Schedule in a separate hand-written migration:
+  `create extension if not exists …`, `select cron.unschedule(jobid) from cron.job where jobname = '…'`, then
+  `cron.schedule(name, cron, command)`. Run it after the migration that creates the function. pgTAP can read
+  `cron.job` (jobname, schedule, command). The job runs as the scheduling role (postgres); the purge function is
+  security definer with no grants to anon/authenticated. Plain `pg_cron` needs no `shared_preload_libraries` change locally.
+- **Source:** `supabase/migrations/*_purge_deleted_accounts.sql`, `*_schedule_purge_deleted_accounts.sql`.
+
+### The declarative diff plans to unschedule pg_cron jobs, and a multi-statement job must lock first (2026-11-14)
+- **Symptom:** the next generated migration contained `SELECT cron.unschedule('purge-deleted-accounts');` (and a
+  `COMMENT ON EXTENSION` line): the diff sees the job in the local DB but not in the schema files.
+- **Cause:** `cron.job` rows are data the schema doesn't declare. Separately, a job that runs several statements
+  under READ COMMITTED lets a concurrent cancel commit between them.
+- **Do:** delete any generated `cron.unschedule` line (and extension comment noise) from migrations. For purge-like
+  jobs, `select … for update` the due rows into an array first and filter every statement by `= any(due)`.
+- **Source:** `private.purge_deleted_accounts`, `*_purge_lock_due_accounts.sql`.
+
+### `supabase.auth.signOut()` signs out every device by default (2026-11-14)
+- **Symptom:** none visible at first: signing out in one browser also ends the sessions on the member's other devices.
+- **Cause:** auth-js `signOut(options = { scope: 'global' })` revokes all refresh tokens of the user; `'local'` ends
+  only this session, `'others'` all but this one. The access token (JWT) itself stays valid until it expires (≤ 1 h):
+  `getClaims()` checks it locally, so a revoked user still reads as signed in until then (the app treats a deleted
+  profile as signed out in `getCurrentUser`).
+- **Do:** pass the scope explicitly. Account deletion wants `global` (`admin.signOut(jwt, "global")`, see
+  `docs/learnings/nextjs.md`); the header's sign-out (`src/lib/auth/actions.ts`) uses the default, i.e. global
+  (`docs/follow-ups.md`).
+- **Source:** `node_modules/@supabase/auth-js/dist/main/GoTrueClient.js` (`signOut`, `_signOut`).
+
+### Auth audit log rows outlive the deleted user (2026-11-14)
+- **Symptom (found in review):** after `delete from auth.users`, `auth.audit_log_entries` still held the person's
+  email (`payload->>'actor_username'`), id (`actor_id`) and `ip_address`.
+- **Cause:** that table has no FK to `auth.users`, so no cascade reaches it.
+- **Do:** purge (and any manual deletion) also runs `delete from auth.audit_log_entries where payload->>'actor_id'
+  = any(ids::text[])` first; `postgres` may delete from it locally (hosted: check at rollout, `docs/follow-ups.md`).
+  pgTAP can insert fixture rows (`instance_id`, `id`, `payload`, `ip_address`).
+- **Source:** final review of account deletion; `private.purge_deleted_accounts`.
+
+### Deleting users with SQL is supported; Storage owners block it (2026-11-14)
+- **Need:** delete accounts from a pg_cron job, without the Auth admin API and a secret key in the app.
+- **Cause/fact:** `delete from auth.users where id = …` as `postgres` is supported (Supabase's own anonymous-user
+  cleanup example does it) and cascades through our `on delete cascade` FKs (profile, contacts, details, bikes,
+  safety rows) and `set null` FKs (`applications.reviewed_by`, `safety_access_log`). A user who owns Storage objects
+  can't be deleted that way: delete their objects first.
+- **Do:** purge in `private.purge_deleted_accounts` (security definer, no grants); when Storage arrives, delete the
+  user's objects in the same job, per account (`docs/follow-ups.md`, "Purge is one transaction").
+- **Source:** supabase.com/docs/guides/auth/managing-user-data (deleting users), supabase.com/docs/guides/auth/auth-anonymous
+  (cleanup with SQL); pgTAP `account_deletion_purge*.test.sql`.

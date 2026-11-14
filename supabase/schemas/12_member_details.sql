@@ -64,7 +64,10 @@ for select
 to authenticated
 using (
   profile_id = (select auth.uid())
-  or (select private.has_permission('members.manage'))
+  or (
+    (select private.has_permission('members.manage'))
+    and exists (select 1 from public.profiles p where p.id = profile_id and p.status <> 'deleting')
+  )
 );
 
 -- Members activated without an application have no birth date. They may enter it once

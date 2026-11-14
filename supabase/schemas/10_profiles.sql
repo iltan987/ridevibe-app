@@ -4,7 +4,7 @@
 -- (later: automatically when it matches an approved application).
 -- ---------------------------------------------------------------------------
 
-create type public.member_status as enum ('pending', 'active', 'inactive');
+create type public.member_status as enum ('pending', 'active', 'inactive', 'deleting');
 create type public.istanbul_side as enum ('asian', 'european');
 
 create table public.profiles (
@@ -19,12 +19,21 @@ create table public.profiles (
   district text check (char_length(district) <= 80),
   -- Only meaningful for Istanbul; derived from the district by the app.
   side public.istanbul_side,
+  deletion_requested_at timestamptz,
+  status_before_deletion public.member_status,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  constraint profiles_deletion_state check (
+    (status = 'deleting') = (deletion_requested_at is not null)
+    and (status = 'deleting') = (status_before_deletion is not null)
+    and status_before_deletion is distinct from 'deleting'
+  )
 );
 
 comment on table public.profiles is 'Club member profiles, one per auth user.';
-comment on column public.profiles.status is 'pending = signed in but not yet approved; active = club member; inactive = left or suspended.';
+comment on column public.profiles.status is 'pending = signed in but not yet approved; active = club member; inactive = left or suspended; deleting = asked to delete the account (hidden, no rights, purged after 14 days).';
+comment on column public.profiles.deletion_requested_at is 'When the member asked to delete the account; set only while status = deleting.';
+comment on column public.profiles.status_before_deletion is 'The status to restore if the member cancels the deletion; set only while status = deleting.';
 
 -- Member/access lists: filter by status, newest first, keyset-paginated by (created_at, id).
 create index profiles_status_created_idx on public.profiles (status, created_at desc, id desc);
@@ -142,7 +151,7 @@ for select
 to authenticated
 using (
   id = (select auth.uid())
-  or (select private.has_permission('members.manage'))
+  or ((select private.has_permission('members.manage')) and status <> 'deleting')
   or (status = 'active' and (select private.is_active_member()))
 );
 
@@ -182,7 +191,10 @@ for select
 to authenticated
 using (
   profile_id = (select auth.uid())
-  or (select private.has_permission('members.manage'))
+  or (
+    (select private.has_permission('members.manage'))
+    and exists (select 1 from public.profiles p where p.id = profile_id and p.status <> 'deleting')
+  )
 );
 
 -- ---------------------------------------------------------------------------
@@ -273,6 +285,11 @@ begin
     raise exception 'you cannot change your own role' using errcode = '42501';
   end if;
 
+  -- An account being deleted is hidden from staff: answer exactly as for an unknown id.
+  if exists (select 1 from public.profiles p where p.id = target_id and p.status = 'deleting') then
+    raise exception 'profile % not found', target_id using errcode = 'P0002';
+  end if;
+
   update public.profiles set role_id = new_role_id where id = target_id;
 
   if not found then
@@ -291,6 +308,7 @@ set search_path = ''
 as $$
 declare
   target_is_admin boolean;
+  target_status public.member_status;
 begin
   if not private.has_permission('members.manage') then
     raise exception 'missing permission members.manage' using errcode = '42501';
@@ -300,12 +318,18 @@ begin
     raise exception 'you cannot change your own status' using errcode = '42501';
   end if;
 
-  select coalesce(r.is_admin, false) into target_is_admin
+  -- Deleting is the member's own decision (request_my_account_deletion), never staff's.
+  if new_status = 'deleting' then
+    raise exception 'staff cannot set the deleting status' using errcode = '42501';
+  end if;
+
+  select coalesce(r.is_admin, false), p.status into target_is_admin, target_status
   from public.profiles p
   left join public.roles r on r.id = p.role_id
   where p.id = target_id;
 
-  if not found then
+  -- A deleting target is hidden from staff: same answer as an unknown id.
+  if not found or target_status = 'deleting' then
     raise exception 'profile % not found', target_id using errcode = 'P0002';
   end if;
 
@@ -329,6 +353,7 @@ as $$
 declare
   clean_name text := btrim(new_name);
   target_is_admin boolean;
+  target_status public.member_status;
 begin
   if not private.has_permission('members.manage') then
     raise exception 'missing permission members.manage' using errcode = '42501';
@@ -338,12 +363,13 @@ begin
     raise exception 'a name must be 2 to 120 characters' using errcode = '23514';
   end if;
 
-  select coalesce(r.is_admin, false) into target_is_admin
+  select coalesce(r.is_admin, false), p.status into target_is_admin, target_status
   from public.profiles p
   left join public.roles r on r.id = p.role_id
   where p.id = target_id;
 
-  if not found then
+  -- A deleting target is hidden from staff: same answer as an unknown id.
+  if not found or target_status = 'deleting' then
     raise exception 'profile % not found', target_id using errcode = 'P0002';
   end if;
 
@@ -354,6 +380,95 @@ begin
   update public.profiles set full_name = clean_name where id = target_id;
 end;
 $$;
+
+-- Self-service account deletion (any status): the member starts a 14-day grace period, during which the account
+-- is `deleting` (no rights, signed in only to cancel). The purge job (a later migration) removes it afterwards.
+-- The last active admin cannot request it (the club would lose all role management).
+create or replace function public.request_my_account_deletion()
+returns timestamptz
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  me uuid := (select auth.uid());
+  current_status public.member_status;
+  is_active_admin boolean;
+  requested timestamptz;
+begin
+  if me is null then
+    raise exception 'not signed in' using errcode = '42501';
+  end if;
+
+  -- Unlocked peek: is the caller an active admin? Admins take the ordered lock on every active admin
+  -- (own row included) before anything else, so two admins requesting at once cannot deadlock
+  -- (40P01). A role change between this peek and the lock is harmless: a stale answer at worst
+  -- locks too much, or skips the last-admin check for a caller who became an admin a moment ago.
+  select coalesce(r.is_admin, false) and p.status = 'active' into is_active_admin
+  from public.profiles p left join public.roles r on r.id = p.role_id
+  where p.id = me;
+  if not found then
+    raise exception 'profile not found' using errcode = 'P0002';
+  end if;
+
+  if is_active_admin then
+    perform 1 from public.profiles p join public.roles r on r.id = p.role_id
+    where r.is_admin and p.status = 'active'
+    order by p.id
+    for update of p;
+  end if;
+
+  select p.status into current_status from public.profiles p where p.id = me for update;
+  if current_status = 'deleting' then
+    raise exception 'account deletion is already requested' using errcode = '55000';
+  end if;
+
+  if is_active_admin and current_status = 'active' and not exists (
+    select 1 from public.profiles p join public.roles r on r.id = p.role_id
+    where r.is_admin and p.status = 'active' and p.id <> me
+  ) then
+    raise exception 'you are the only active admin' using errcode = '42501', hint = 'last_admin';
+  end if;
+
+  update public.profiles
+  set status = 'deleting', deletion_requested_at = now(), status_before_deletion = current_status
+  where id = me
+  returning deletion_requested_at into requested;
+
+  return requested + interval '14 days';
+end;
+$$;
+
+create or replace function public.cancel_my_account_deletion()
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  me uuid := (select auth.uid());
+  previous public.member_status;
+begin
+  if me is null then
+    raise exception 'not signed in' using errcode = '42501';
+  end if;
+
+  select p.status_before_deletion into previous
+  from public.profiles p where p.id = me and p.status = 'deleting' for update;
+  if not found then
+    raise exception 'no account deletion to cancel' using errcode = '55000';
+  end if;
+
+  update public.profiles
+  set status = previous, deletion_requested_at = null, status_before_deletion = null
+  where id = me;
+end;
+$$;
+
+revoke all on function public.request_my_account_deletion() from public, anon;
+revoke all on function public.cancel_my_account_deletion() from public, anon;
+grant execute on function public.request_my_account_deletion() to authenticated;
+grant execute on function public.cancel_my_account_deletion() to authenticated;
 
 revoke all on function public.set_member_role(uuid, uuid) from public, anon;
 revoke all on function public.set_member_status(uuid, public.member_status) from public, anon;

@@ -2,10 +2,10 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { foldSearch } from "../search-fold.ts";
-import { membersView, type MemberStatus } from "./members-view.ts";
+import { membersView, type StaffStatus } from "./members-view.ts";
 
-type Row = { name: string; status: MemberStatus; search: string };
-const row = (name: string, status: MemberStatus, email: string | null = null): Row => ({
+type Row = { name: string; status: StaffStatus; search: string };
+const row = (name: string, status: StaffStatus, email: string | null = null): Row => ({
   name,
   status,
   search: foldSearch(`${name} ${email ?? ""}`),

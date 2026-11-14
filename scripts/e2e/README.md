@@ -4,7 +4,9 @@ Run against a **local** stack only (local Supabase + a server on port 3123); nev
 
 - `e2e-lib.mjs` — helpers: `launch({ scrollbars, args })` (system Chrome, `CHROME_PATH` to override; `scrollbars: true`
   keeps classic scrollbars, hidden by default in headless; `args` = extra Chrome flags), `newPage()` (390x844, Turkish),
-  `signIn(page, email)` (sets Supabase session cookies via email/password), `throttle()` (CDP network throttling),
+  `signIn(page, email)` (sets Supabase session cookies via email/password), `signInViaCallback(page, email, next)`
+  (signs in through the app's real `/auth/callback` with a PKCE magic link read from the local Mailpit; returns the
+  final URL), `throttle()` (CDP network throttling),
   `watchServer(page)` (counts document and RSC requests only; the favicon refetch on URL changes is ignored),
   `pagerFit(page)` (the visible pager's button row: one line, no overflow) and `clearAndType(page, text)` (the visible
   search box, zero-delay typing). The keys in it are the public local-Supabase demo keys, not secrets.
@@ -96,6 +98,16 @@ Run against a **local** stack only (local Supabase + a server on port 3123); nev
   pages are derived from the DB counts, and the activated row must be one of its fixtures (it fails otherwise);
   plants its own pending/inactive profiles and applications (`lx…@fixture.invalid`, recipe in the header) through
   `docker exec … psql` (`DB_CONTAINER`, local only) and deletes them before and after. Totals are read from the DB.
+- `deletion-e2e.mjs` — self-service account deletion (PASS/FAIL lines, exit code != 0 on failure): the last-admin
+  guard (only when `admin@test.local` is the only active admin), the member deletes on `/account` (double click on
+  confirm; the dialog lists what is deleted and kept), the done dialog shows the purge date and is **still visible
+  ~2 s later** on `/account` (guards the cookie-write re-render, `docs/learnings/nextjs.md`), "Ana sayfaya dön" lands
+  on `/` signed out and a second tab follows to `/sign-in`; the admin's `/admin/members` (payload) and `/members` no
+  longer list the member; signing in again through `/auth/callback` with `next=/en/members` lands on the English
+  recovery card on `/en/account`, Restore shows "Active member" and the admin sees the member again. Needs
+  `pnpm start -p 3123`, local email sign-in (+ Mailpit, part of the local stack), `admin@test.local` (admin role) and
+  `member@test.local` ("Test Üye"), both active (recipe in `safety-e2e.mjs`). Restores both fixtures through
+  `docker exec … psql` (`DB_CONTAINER`, local only) before the run and in `finally`. Screenshots go to `OUT_DIR`.
 - `seo-check.mjs` — SEO checks with plain `fetch` (no puppeteer, no fixtures; PASS/FAIL lines, exit code != 0 on
   failure): robots.txt and sitemap.xml, `<head>` of `/`, `/en`, `/apply`, `/en/apply` (title/description differ per
   language, canonical = og:url = production URL, Open Graph, Twitter card, no noindex), canonical without query

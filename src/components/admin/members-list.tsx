@@ -9,7 +9,7 @@ import { useListParams } from "@/components/lists/use-list-params";
 import { scrollToListTop, useListSearch, useUrlFix } from "@/components/lists/use-list-search";
 import { PagerButtons } from "@/components/pager-buttons";
 import { Input } from "@/components/ui/input";
-import { MEMBER_STATUSES, type MemberStatus, membersView } from "@/lib/access/members-view";
+import { MEMBER_STATUSES, type StaffStatus, membersView } from "@/lib/access/members-view";
 import { listSearch, paramOff } from "@/lib/list-url";
 import { SEARCH_MAX_LENGTH } from "@/lib/search-fold";
 
@@ -39,7 +39,7 @@ export function MembersList({
   const t = useTranslations("Admin.members");
   const params = useListParams();
   const search = useListSearch(params);
-  const status: MemberStatus = MEMBER_STATUSES.find((s) => s === params.get("status")) ?? "pending";
+  const status: StaffStatus = MEMBER_STATUSES.find((s) => s === params.get("status")) ?? "pending";
 
   const view = membersView(rows, { query: search.query, status, page: search.page });
 
@@ -65,7 +65,7 @@ export function MembersList({
     if (next !== null) params.replace(urlValues({ q: next, page: null }), DEFAULTS);
   }
 
-  function onStatus(next: MemberStatus) {
+  function onStatus(next: StaffStatus) {
     if (next !== status) params.push(urlValues({ status: next, page: null }), DEFAULTS);
   }
 

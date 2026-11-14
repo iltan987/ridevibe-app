@@ -3,7 +3,9 @@ import { useTranslations } from "next-intl";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import { InstallBanner } from "@/components/pwa/install-banner";
+import { DeleteAccountCard } from "@/components/account/delete-account-card";
 import { PendingCard } from "@/components/account/pending-card";
+import { RecoveryCard } from "@/components/account/recovery-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +17,7 @@ import { MotorcyclesSection } from "@/components/profile/motorcycles-section";
 import { PhotoConsentForm } from "@/components/profile/photo-consent-form";
 import { VisibilityForm } from "@/components/profile/visibility-form";
 import { getPathname, redirect } from "@/i18n/navigation";
+import { deletionDate } from "@/lib/account/deletion-result";
 import { getCurrentUser } from "@/lib/auth/user";
 import { initials } from "@/lib/initials";
 import { getMyProfile } from "@/lib/members/queries";
@@ -51,6 +54,9 @@ async function AccountDetails() {
   }
 
   const profile = user.profile;
+  if (profile?.status === "deleting" && profile.deletion_requested_at) {
+    return <RecoveryCard deletesOn={deletionDate(profile.deletion_requested_at).toISOString()} />;
+  }
   const name = profile?.full_name || user.email || "";
   // Active members edit everything; inactive ones only keep the photo consent
   // (withdrawal must stay possible). Pending accounts have no profile data yet.
@@ -121,6 +127,9 @@ async function AccountDetails() {
           )}
           <PhotoConsentForm consent={myProfile.consentPhotos} consentAt={myProfile.consentPhotosAt} />
         </>
+      )}
+      {(profile?.status === "pending" || profile?.status === "active" || profile?.status === "inactive") && (
+        <DeleteAccountCard inactive={profile.status === "inactive"} />
       )}
       {(profile?.status === "active" || profile?.status === "pending") && <InstallBanner />}
     </>
@@ -208,6 +217,9 @@ function AccountSkeleton() {
         <Skeleton className="h-15 w-full sm:h-10" />
         <Skeleton className="h-5 w-40" />
         <Skeleton className="h-8 w-20" />
+      </SectionSkeleton>
+      <SectionSkeleton id="account-delete" description>
+        <Skeleton className="h-8 w-32" />
       </SectionSkeleton>
     </>
   );

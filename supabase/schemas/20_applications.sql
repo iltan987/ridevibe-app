@@ -73,6 +73,8 @@ create table public.applications (
   reviewed_at timestamptz,
   -- The account this application belongs to (see the column comment below).
   profile_id uuid references public.profiles (id) on delete set null,
+  -- Retention deadline set when the owner deletes their account (see the column comment below).
+  retained_until timestamptz,
 
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -93,6 +95,7 @@ create table public.applications (
 
 comment on table public.applications is 'Membership applications from the public form.';
 comment on column public.applications.profile_id is 'The account this application belongs to: set when submitted while signed in, when staff link it, or when an approved application is matched by email.';
+comment on column public.applications.retained_until is 'Set when the owner deletes their account: the application is kept (inactive members: 1 year from the deletion request) and purged after this time. Null = no deadline.';
 
 create index applications_status_created_idx on public.applications (status, created_at desc);
 
@@ -259,6 +262,7 @@ begin
   select a.id, a.full_name, a.city, a.district, a.side, a.profile_id into app
   from public.applications a
   where a.status = 'approved'
+    and a.retained_until is null
     and a.profile_id = target_profile
   order by a.reviewed_at desc nulls last, a.created_at desc
   limit 1;
@@ -267,6 +271,7 @@ begin
     from public.applications a
     join public.member_contacts c on c.profile_id = target_profile
     where a.status = 'approved'
+      and a.retained_until is null
       and a.profile_id is null
       and private.normalize_email(a.email) = private.normalize_email(c.email)
     order by a.reviewed_at desc nulls last, a.created_at desc
@@ -418,6 +423,8 @@ begin
   select a.status into app_status
   from public.applications a
   where a.id = application_id and a.profile_id is null and a.status <> 'rejected'
+    and a.retained_until is null
+    and not private.application_hidden_for_deletion(a.profile_id, a.email, a.status)
   for update;
   if not found then
     raise exception 'application % not found or not linkable', application_id using errcode = 'P0002';
@@ -432,6 +439,7 @@ begin
     or exists (
       select 1 from public.applications a
       where a.profile_id = target_id and a.status in ('new', 'contacted', 'approved')
+        and a.retained_until is null
     )
     or exists (
       select 1
@@ -439,6 +447,7 @@ begin
       join public.member_contacts c on c.profile_id = target_id
       where a.id <> application_id
         and a.profile_id is null
+        and a.retained_until is null
         and a.status in ('new', 'contacted', 'approved')
         and private.normalize_email(a.email) = private.normalize_email(c.email)
     )
@@ -499,10 +508,12 @@ begin
     and not exists (
       select 1 from public.applications a
       where a.profile_id = p.id and a.status in ('new', 'contacted', 'approved')
+        and a.retained_until is null
     )
     and not exists (
       select 1 from public.applications a
       where a.profile_id is null
+        and a.retained_until is null
         and a.status in ('new', 'contacted', 'approved')
         and private.normalize_email(a.email) = private.normalize_email(c.email)
     )
@@ -516,7 +527,7 @@ $$;
 -- The account an application is linked to (applications.view): id, name,
 -- sign-in email and status, so staff can check *which* account an approval
 -- activates (anyone signed in can submit someone else's name and phone). Zero
--- rows when the application is unlinked or doesn't exist. Security definer:
+-- rows when the application is unlinked, doesn't exist or its account is being deleted. Security definer:
 -- profiles RLS hides pending/inactive accounts and member_contacts from staff
 -- without members.manage.
 create or replace function public.application_account(application_id uuid)
@@ -536,7 +547,8 @@ begin
   from public.applications a
   join public.profiles p on p.id = a.profile_id
   left join public.member_contacts c on c.profile_id = p.id
-  where a.id = application_account.application_id;
+  where a.id = application_account.application_id
+    and p.status <> 'deleting';
 end;
 $$;
 
@@ -554,13 +566,16 @@ set search_path = ''
 as $$
   select a.status
   from public.applications a
-  where a.profile_id = (select auth.uid())
-    or (
-      a.profile_id is null
-      and private.normalize_email(a.email) = (
-        select private.normalize_email(c.email)
-        from public.member_contacts c
-        where c.profile_id = (select auth.uid())
+  where a.retained_until is null
+    and (
+      a.profile_id = (select auth.uid())
+      or (
+        a.profile_id is null
+        and private.normalize_email(a.email) = (
+          select private.normalize_email(c.email)
+          from public.member_contacts c
+          where c.profile_id = (select auth.uid())
+        )
       )
     )
   order by a.created_at desc, a.id desc
@@ -570,10 +585,12 @@ $$;
 -- ---------------------------------------------------------------------------
 -- "Applied?" for a page of the members list (members.manage): whether an
 -- open or approved application is linked to the profile, or is unlinked and
--- has its sign-in email. Booleans only — no application data.
+-- has its sign-in email (a kept application, retained_until set, never counts).
+-- former_member: the sign-in email matches a kept application, i.e. this person
+-- deleted an inactive account before. Booleans only — no application data.
 -- ---------------------------------------------------------------------------
 create or replace function public.pending_application_flags(profile_ids uuid[])
-returns table (profile_id uuid, has_application boolean)
+returns table (profile_id uuid, has_application boolean, former_member boolean)
 language plpgsql
 stable
 security definer
@@ -585,16 +602,25 @@ begin
   end if;
 
   return query
-  select ids.pid, exists (
-    select 1 from public.applications a
-    where a.status in ('new', 'contacted', 'approved')
-      and (
-        a.profile_id = ids.pid
-        or (a.profile_id is null and private.normalize_email(a.email) = private.normalize_email(c.email))
-      )
-  )
+  select ids.pid,
+    exists (
+      select 1 from public.applications a
+      where a.status in ('new', 'contacted', 'approved')
+        and a.retained_until is null
+        and (
+          a.profile_id = ids.pid
+          or (a.profile_id is null and private.normalize_email(a.email) = private.normalize_email(c.email))
+        )
+    ),
+    exists (
+      select 1 from public.applications a
+      where a.retained_until is not null
+        and a.profile_id is null
+        and private.normalize_email(a.email) = private.normalize_email(c.email)
+    )
   from unnest(profile_ids) as ids (pid)
-  left join public.member_contacts c on c.profile_id = ids.pid;
+  left join public.member_contacts c on c.profile_id = ids.pid
+  where not exists (select 1 from public.profiles p where p.id = ids.pid and p.status = 'deleting');
 end;
 $$;
 
@@ -608,6 +634,39 @@ grant execute on function public.linkable_accounts(text, timestamptz, uuid, bool
 grant execute on function public.application_account(uuid) to authenticated;
 grant execute on function public.my_application_status() to authenticated;
 grant execute on function public.pending_application_flags(uuid[]) to authenticated;
+
+-- Staff must not see the data of someone who asked to delete their account: true for a non-rejected
+-- application linked to a `deleting` profile, or unlinked with the email of a `deleting` profile. Used by the
+-- applications select/update policies (runs as the caller, hence security definer).
+create or replace function private.application_hidden_for_deletion(
+  app_profile_id uuid,
+  app_email text,
+  app_status public.application_status
+)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select app_status <> 'rejected' and (
+    case
+      when app_profile_id is not null then
+        exists (select 1 from public.profiles p where p.id = app_profile_id and p.status = 'deleting')
+      else
+        exists (
+          select 1
+          from public.profiles p
+          join public.member_contacts c on c.profile_id = p.id
+          where p.status = 'deleting'
+            and private.normalize_email(c.email) = private.normalize_email(app_email)
+        )
+    end
+  );
+$$;
+
+revoke all on function private.application_hidden_for_deletion(uuid, text, public.application_status) from public, anon;
+grant execute on function private.application_hidden_for_deletion(uuid, text, public.application_status) to authenticated;
 
 revoke all on function private.applications_before_insert() from public, anon, authenticated;
 revoke all on function private.applications_normalize_contact() from public, anon, authenticated;
@@ -655,7 +714,10 @@ create policy "applications: readable with applications.view"
 on public.applications
 for select
 to authenticated
-using ((select private.has_permission('applications.view')));
+using (
+  (select private.has_permission('applications.view'))
+  and not private.application_hidden_for_deletion(profile_id, email, status)
+);
 
 -- applications.decide implies review; approve/reject itself is checked by the
 -- applications_check_decision trigger above.
@@ -664,12 +726,18 @@ on public.applications
 for update
 to authenticated
 using (
-  (select private.has_permission('applications.review'))
-  or (select private.has_permission('applications.decide'))
+  (
+    (select private.has_permission('applications.review'))
+    or (select private.has_permission('applications.decide'))
+  )
+  and not private.application_hidden_for_deletion(profile_id, email, status)
 )
 with check (
-  (select private.has_permission('applications.review'))
-  or (select private.has_permission('applications.decide'))
+  (
+    (select private.has_permission('applications.review'))
+    or (select private.has_permission('applications.decide'))
+  )
+  and not private.application_hidden_for_deletion(profile_id, email, status)
 );
 
 create policy "applications: deletable with applications.delete"

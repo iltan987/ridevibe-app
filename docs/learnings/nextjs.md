@@ -217,3 +217,17 @@ Bundled docs are the source of truth: `node_modules/next/dist/docs/` (grep them 
 - **Do:** pass the parent's images on: `generateMetadata(_props, parent: ResolvingMetadata)` and
   `images: (await parent).openGraph?.images` into `openGraph` (`pageMetadata` in `src/lib/seo/metadata.ts`).
 - **Source:** found by curl-testing the built site; `generate-metadata.md` ("Extending or overwriting parent images").
+
+### A cookie write in a Server Action re-renders the page, even without `refresh()` (2026-11-14)
+- **Symptom:** the account-deletion dialog's done state never showed: right after the action the page redirected to
+  `/sign-in?next=/account`.
+- **Cause:** the action called `supabase.auth.signOut()`, which deletes the auth cookies via `cookies().set`. In this
+  Next version any cookie write in a Server Action marks the path revalidated (`request-cookies.js`,
+  `action-handler.js`), so the action response carries a fresh render of the page, like `refresh()`. With no session
+  `AccountDetails` redirected, and the client followed it.
+- **Do:** when the UI must stay on its client-side result, revoke the sessions server-side without touching cookies:
+  `supabase.auth.admin.signOut(accessToken, "global")` (plain `POST /logout?scope=global` with the user's own JWT, no
+  secret key; the token comes from `getSession()`, fine because the user is already proven). Clear the cookies on a
+  later navigation (a form action that calls `signOut()` and redirects). auth-js clears the local session even when
+  the logout answers 401/403/404 for an already-revoked session.
+- **Source:** `auth-js` `GoTrueClient._signOut`, `GoTrueAdminApi.signOut`; `src/lib/account/deletion-actions.ts`.

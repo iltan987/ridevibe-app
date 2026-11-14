@@ -39,6 +39,7 @@ export function ApplicationReviewPanel({
   canDelete,
   decidedLabel,
   linked,
+  retainedLabel,
   account,
   inviteHref,
   canLink,
@@ -51,7 +52,9 @@ export function ApplicationReviewPanel({
   decidedLabel: string | null;
   /** The application is linked to an account (profile_id, any status). */
   linked: boolean;
-  /** The linked account (application_account RPC); null when unlinked (or gone meanwhile). */
+  /** Kept application of a former member (unlinked by the nightly purge): shown instead of the account block. */
+  retainedLabel: string | null;
+  /** The linked account (application_account RPC); null when unlinked, or linked to an account staff can't see (being deleted). */
   account: ApplicationAccount | null;
   /** WhatsApp link with the invite text (approved applications only). */
   inviteHref: string | null;
@@ -159,7 +162,7 @@ export function ApplicationReviewPanel({
                 </Button>
               </>
             )}
-            {decided && canDecide && (
+            {decided && canDecide && !retainedLabel && (
               <Button variant="outline" disabled={isPending} onClick={() => setConfirm({ kind: "reopen" })}>
                 {t("review.reopen")}
               </Button>
@@ -170,7 +173,7 @@ export function ApplicationReviewPanel({
         </div>
 
         {/* Account: linked state, or invite (approved) and "Link to account" */}
-        {(linkedLabel || status === "approved" || canLink) && (
+        {!retainedLabel && (linkedLabel || status === "approved" || canLink) && (
           <div className="flex flex-col gap-2 rounded-lg border bg-muted/30 p-3">
             {linkedLabel ? (
               <>
@@ -204,6 +207,10 @@ export function ApplicationReviewPanel({
               </div>
             )}
           </div>
+        )}
+
+        {retainedLabel && (
+          <p className="rounded-lg border bg-muted/30 p-3 text-sm font-medium wrap-anywhere">{retainedLabel}</p>
         )}
 
         {/* Notes */}

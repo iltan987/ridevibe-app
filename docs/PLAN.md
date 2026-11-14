@@ -231,7 +231,11 @@ file and in `docs/follow-ups.md` are such questions.
   Encryption relies on the hosted database's disk encryption (no app-level encryption); see `docs/follow-ups.md`.
 - Data stored outside Turkey (Frankfurt) = cross-border transfer under KVKK art. 9 (amended 2024): standard contract
   with the processor and notification to the Authority within 5 business days.
-- Members can download and delete their data; rejected applications are deleted after a retention period.
+- Members delete their own account on `/account` (done 2026-11-14: hidden at once, 14 days to restore by signing in,
+  then purged by a nightly pg_cron job; rejected applications keep their 6 months, approved applications of inactive
+  accounts are kept 1 year from the request; spec `docs/superpowers/specs/2026-11-14-account-deletion-design.md`).
+  **Data download** (art. 11) is still open (`docs/follow-ups.md`). Deleting rejected applications after their
+  retention period is **not built yet** (follow-ups, "General retention jobs").
 - Retention: instead of keeping expired records "archived" (still personal data → not allowed past the purpose),
   **anonymise** them: strip name/contact/birth date/free text, keep counts, district/side, source, dates for stats.
 

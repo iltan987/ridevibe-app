@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { type AccessActionResult, setMemberRole, setMemberStatus } from "@/lib/access/actions";
-import type { MemberStatus } from "@/lib/access/members-view";
+import type { StaffStatus } from "@/lib/access/members-view";
 import { MemberNameDialog } from "@/components/admin/member-name-dialog";
 import { initials } from "@/lib/initials";
 
@@ -17,12 +17,13 @@ export type MemberRowData = {
   /** Sign-in email (helps recognise who a pending sign-up is). */
   email: string | null;
   avatarUrl: string | null;
-  status: MemberStatus;
+  status: StaffStatus;
   joinedLabel: string;
   roleId: string | null;
   roleLabel: string;
   /** Pending tab only: has an open application. null/undefined = not shown. */
   applied?: boolean | null;
+  formerMember?: boolean;
 };
 
 const NEXT_STATUS = {
@@ -74,6 +75,11 @@ export function MemberRow({
           </p>
           <p className="truncate text-xs text-muted-foreground">{member.email ?? t("members.noEmail")}</p>
           <p className="text-xs text-muted-foreground">{member.joinedLabel}</p>
+          {member.formerMember && (
+            <Badge variant="outline" className="mt-1 border-sun/40 bg-sun/10">
+              {t("members.formerMember")}
+            </Badge>
+          )}
           {member.applied != null && (
             <Badge variant={member.applied ? "status" : "outline"} className="mt-1">
               {t(member.applied ? "members.applied" : "members.notApplied")}

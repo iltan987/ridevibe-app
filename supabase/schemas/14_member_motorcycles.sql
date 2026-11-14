@@ -71,7 +71,10 @@ for select
 to authenticated
 using (
   profile_id = (select auth.uid())
-  or (select private.has_permission('members.manage'))
+  or (
+    (select private.has_permission('members.manage'))
+    and exists (select 1 from public.profiles p where p.id = profile_id and p.status <> 'deleting')
+  )
 );
 
 create policy "member_motorcycles: insert own while active"

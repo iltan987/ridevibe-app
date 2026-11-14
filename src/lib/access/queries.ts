@@ -1,20 +1,20 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { CHUNK_SIZE, chunks, readAll, uniqueById } from "@/lib/pagination";
-import type { MemberStatus } from "./members-view";
+import type { StaffStatus } from "./members-view";
 
 export type AdminProfile = {
   id: string;
   full_name: string;
   avatar_url: string | null;
-  status: MemberStatus;
+  status: StaffStatus;
   created_at: string;
   role_id: string | null;
   email: string | null;
 };
 
 /**
- * Every profile (all statuses) for the admin members list, newest first, read in CHUNK_SIZE pages up to
+ * Every profile (all staff-visible statuses) for the admin members list, newest first, read in CHUNK_SIZE pages up to
  * LIST_CEILING; the browser filters and pages. RLS returns other people's pending/inactive profiles and emails only
  * to members.manage.
  */
@@ -24,6 +24,7 @@ export async function listAllProfiles(): Promise<{ profiles: AdminProfile[]; ove
     const { data, error } = await supabase
       .from("profiles")
       .select("id, full_name, avatar_url, status, created_at, role_id, member_contacts(email)")
+      .neq("status", "deleting")
       .order("created_at", { ascending: false })
       .order("id", { ascending: false })
       .range(from, to);
@@ -31,16 +32,22 @@ export async function listAllProfiles(): Promise<{ profiles: AdminProfile[]; ove
     return data;
   });
   const profiles = uniqueById(items).map(
-    ({ member_contacts, ...profile }): AdminProfile => ({ ...profile, email: member_contacts?.email ?? null }),
+    ({ member_contacts, status, ...profile }): AdminProfile => ({
+      ...profile,
+      // The query above excludes deleting accounts; the cast narrows the type to match.
+      status: status as StaffStatus,
+      email: member_contacts?.email ?? null,
+    }),
   );
   return { profiles, overCeiling };
 }
 
 /**
- * Which of these profiles have an open (new/contacted/approved) application? Needs members.manage. One call per
+ * Per profile: `applied` = an open (new/contacted/approved) application, `formerMember` = its email matches a kept
+ * application of a deleted inactive account. Needs members.manage. One call per
  * CHUNK_SIZE ids: `max_rows` caps the RPC's result (one row per id) too.
  */
-export async function getPendingApplicationFlags(ids: string[]): Promise<Map<string, boolean>> {
+export async function getPendingApplicationFlags(ids: string[]): Promise<Map<string, { applied: boolean; formerMember: boolean }>> {
   if (!ids.length) return new Map();
   const supabase = await createClient();
   const results = await Promise.all(
@@ -50,7 +57,7 @@ export async function getPendingApplicationFlags(ids: string[]): Promise<Map<str
       return data;
     }),
   );
-  return new Map(results.flat().map((row) => [row.profile_id, row.has_application]));
+  return new Map(results.flat().map((row) => [row.profile_id, { applied: row.has_application, formerMember: row.former_member }]));
 }
 
 /**
