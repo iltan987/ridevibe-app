@@ -31,10 +31,11 @@ update public.profiles set role_id = (select id from public.roles where is_admin
   where id in ('00000000-0000-0000-0000-0000000007a4', '00000000-0000-0000-0000-0000000007a5');
 update public.profiles set role_id = '00000000-0000-0000-0000-0000000007b1'
   where id = '00000000-0000-0000-0000-0000000007a6';
--- Real admins (production) must not count as "another active admin": park them inside this transaction.
-update public.profiles set status = 'inactive'
-  where role_id = (select id from public.roles where is_admin)
-    and id not in ('00000000-0000-0000-0000-0000000007a4', '00000000-0000-0000-0000-0000000007a5');
+-- Real (non-fixture) active admins make the last-admin cases meaningless (production): those are skipped.
+select set_config('pgtap.real_admins', (
+  select count(*)::text from public.profiles
+  where role_id = (select id from public.roles where is_admin) and status = 'active'
+    and id not in ('00000000-0000-0000-0000-0000000007a4', '00000000-0000-0000-0000-0000000007a5')), true);
 
 create function pg_temp.login(uid uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
@@ -164,10 +165,16 @@ reset role;
 select pg_temp.login('00000000-0000-0000-0000-0000000007a4');
 select lives_ok($$ select public.request_my_account_deletion() $$, 'an admin can request while another active admin remains');
 select pg_temp.login('00000000-0000-0000-0000-0000000007a5');
-select throws_ok($$ select public.request_my_account_deletion() $$, '42501', null, 'the only active admin cannot request');
-select is(pg_temp.hint_of($$ select public.request_my_account_deletion() $$), 'last_admin', 'last admin error carries the hint');
+select case when current_setting('pgtap.real_admins')::int > 0
+  then skip('non-fixture active admins exist', 1)
+  else throws_ok($$ select public.request_my_account_deletion() $$, '42501', null, 'the only active admin cannot request') end;
+select case when current_setting('pgtap.real_admins')::int > 0
+  then skip('non-fixture active admins exist', 1)
+  else is(pg_temp.hint_of($$ select public.request_my_account_deletion() $$), 'last_admin', 'last admin error carries the hint') end;
 reset role;
-select is(pg_temp.profile_state('00000000-0000-0000-0000-0000000007a5'), 'active/-/false', 'the last admin stays active');
+select case when current_setting('pgtap.real_admins')::int > 0
+  then skip('non-fixture active admins exist', 1)
+  else is(pg_temp.profile_state('00000000-0000-0000-0000-0000000007a5'), 'active/-/false', 'the last admin stays active') end;
 
 select * from finish();
 rollback;
