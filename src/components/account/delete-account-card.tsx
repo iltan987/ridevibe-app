@@ -14,16 +14,15 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useRouter } from "@/i18n/navigation";
-import { requestAccountDeletion } from "@/lib/account/deletion-actions";
+import { signOut } from "@/lib/auth/actions";
+import { type RequestDeletionResult, requestAccountDeletion } from "@/lib/account/deletion-actions";
 
-type Outcome = { status: "ok"; deletesOn: string } | { status: "lastAdmin" | "error" } | null;
+type Outcome = RequestDeletionResult | null;
 
 /** Bottom of /account: delete the account (confirmation dialog, then a done state; the user is signed out by then). */
 export function DeleteAccountCard({ inactive }: { inactive: boolean }) {
   const t = useTranslations("Account.delete");
   const format = useFormatter();
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [outcome, setOutcome] = useState<Outcome>(null);
   const [isPending, startTransition] = useTransition();
@@ -67,7 +66,12 @@ export function DeleteAccountCard({ inactive }: { inactive: boolean }) {
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <Button onClick={() => router.replace("/")}>{t("home")}</Button>
+                {/* Clears the (already revoked) cookies, then goes home. */}
+                <form action={signOut}>
+                  <Button type="submit" className="w-full sm:w-auto">
+                    {t("home")}
+                  </Button>
+                </form>
               </AlertDialogFooter>
             </>
           ) : (
