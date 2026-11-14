@@ -1,7 +1,7 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { CHUNK_SIZE, chunks, readAll, uniqueById } from "@/lib/pagination";
-import type { StaffStatus } from "./members-view";
+import { isStaffStatus, type StaffStatus } from "./members-view";
 
 export type AdminProfile = {
   id: string;
@@ -31,12 +31,10 @@ export async function listAllProfiles(): Promise<{ profiles: AdminProfile[]; ove
     if (error) throw new Error(`listAllProfiles failed: ${error.code}`);
     return data;
   });
-  const profiles = uniqueById(items).map(({ member_contacts, status, ...profile }): AdminProfile => ({
-    ...profile,
-    // The query above excludes deleting accounts; the cast narrows the type to match.
-    status: status as StaffStatus,
-    email: member_contacts?.email ?? null,
-  }));
+  // The query above excludes deleting accounts; the guard narrows the type to match.
+  const profiles = uniqueById(items).flatMap(({ member_contacts, status, ...profile }): AdminProfile[] =>
+    isStaffStatus(status) ? [{ ...profile, status, email: member_contacts?.email ?? null }] : [],
+  );
   return { profiles, overCeiling };
 }
 

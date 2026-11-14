@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { Database, Enums } from "@/lib/supabase/database.types";
 import type { BloodType } from "./blood-type";
 import type { Motorcycle } from "./format";
+import { parseMotorcycles } from "./rpc-json";
 
 export type { Motorcycle };
 export type IstanbulSide = Enums<"istanbul_side">;
@@ -71,6 +72,7 @@ export async function loadDirectory({
   const supabase = await createClient();
   // Generated arg types are non-nullable: omit absent args instead of passing null.
   const args = { ...(bloodType ? { blood_filter: bloodType } : {}), ...(noContact ? { no_contact: true } : {}) };
+  // The return type annotation is what widens the generated rows to DirectoryRow (nullable columns): keep it.
   const { items, overCeiling } = await readAll(async (from, to): Promise<DirectoryRow[]> => {
     const { data, error } = await supabase.rpc("member_directory", args).range(from, to);
     if (error) throw new Error(`loadDirectory failed: ${error.code}`);
@@ -85,7 +87,7 @@ export async function loadDirectory({
     side: row.side,
     birthday: row.birth_month != null && row.birth_day != null ? { month: row.birth_month, day: row.birth_day } : null,
     instagram: row.instagram,
-    motorcycles: Array.isArray(row.motorcycles) ? (row.motorcycles as Motorcycle[]) : [],
+    motorcycles: parseMotorcycles(row.motorcycles),
     hasEmergencyContact: row.has_emergency_contact,
   }));
   return { members, overCeiling };

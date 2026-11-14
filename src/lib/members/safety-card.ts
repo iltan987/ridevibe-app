@@ -2,16 +2,21 @@
 
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import type { Database } from "@/lib/supabase/database.types";
 import type { BloodType } from "./blood-type";
 import type { Motorcycle } from "./format";
-import type { EmergencyRelationship } from "./queries";
+import { parseMotorcycles, parseSafetyContacts, type SafetyContact } from "./rpc-json";
 
 export type SafetyCard = {
   fullName: string;
-  contacts: { position: number; name: string; relationship: EmergencyRelationship; phone: string }[];
+  contacts: SafetyContact[];
   bloodType: BloodType | null;
   motorcycles: Motorcycle[];
 };
+
+type GeneratedSafetyCardRow = Database["public"]["Functions"]["member_safety_card"]["Returns"][number];
+/** A member_safety_card row: the generated types call every column non-null; blood_type is null when not given. */
+type SafetyCardRow = Omit<GeneratedSafetyCardRow, "blood_type"> & { blood_type: BloodType | null };
 
 export type SafetyCardResult = { status: "ok"; card: SafetyCard } | { status: "forbidden" | "notActive" | "error" };
 
@@ -33,16 +38,16 @@ export async function getSafetyCard(profileId: string): Promise<SafetyCardResult
     console.error("getSafetyCard failed", { code: error.code });
     return { status: "error" };
   }
-  const row = data.at(0);
+  const row: SafetyCardRow | undefined = data.at(0);
   if (!row) return { status: "error" };
 
   return {
     status: "ok",
     card: {
       fullName: row.full_name,
-      contacts: Array.isArray(row.contacts) ? (row.contacts as SafetyCard["contacts"]) : [],
+      contacts: parseSafetyContacts(row.contacts),
       bloodType: row.blood_type,
-      motorcycles: Array.isArray(row.motorcycles) ? (row.motorcycles as Motorcycle[]) : [],
+      motorcycles: parseMotorcycles(row.motorcycles),
     },
   };
 }

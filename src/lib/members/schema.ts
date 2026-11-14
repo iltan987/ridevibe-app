@@ -8,18 +8,20 @@ import { normalizePlate } from "./plate.ts";
 
 // Shared by the profile forms (instant feedback) and the server actions (the
 // real check). Error messages are translation keys under Profile.errors.*.
-export type ProfileErrorKey =
-  | "required"
-  | "tooLong"
-  | "invalidNumber"
-  | "invalidInstagram"
-  | "invalidDistrict"
-  | "invalidDate"
-  | "tooYoung"
-  | "invalidPhone"
-  | "notTurkishMobile"
-  | "invalidPlate"
-  | "consentRequired";
+const PROFILE_ERROR_KEYS = [
+  "required",
+  "tooLong",
+  "invalidNumber",
+  "invalidInstagram",
+  "invalidDistrict",
+  "invalidDate",
+  "tooYoung",
+  "invalidPhone",
+  "notTurkishMobile",
+  "invalidPlate",
+  "consentRequired",
+] as const;
+export type ProfileErrorKey = (typeof PROFILE_ERROR_KEYS)[number];
 
 const err = (key: ProfileErrorKey) => ({ error: key });
 
@@ -62,11 +64,16 @@ export const locationSchema = z
     error: "required" satisfies ProfileErrorKey,
     when: (payload) => payload.issues.every((i) => !["city_choice", "city"].includes(String(i.path?.[0]))),
   })
-  .transform((v) => ({
-    city: v.city_choice === "istanbul" ? ISTANBUL : v.city!.trim(),
-    district: v.district,
-    side: v.city_choice === "istanbul" ? sideOfDistrict(v.district) : null,
-  }));
+  .transform((v, ctx) => {
+    if (v.city_choice === "istanbul") return { city: ISTANBUL, district: v.district, side: sideOfDistrict(v.district) };
+    // The rule above guarantees a city; should it ever be missing, the field reports "required".
+    const city = v.city?.trim();
+    if (!city) {
+      ctx.issues.push({ code: "custom", message: "required" satisfies ProfileErrorKey, input: v.city, path: ["city"] });
+      return z.NEVER;
+    }
+    return { city, district: v.district, side: null };
+  });
 
 export type LocationInput = z.input<typeof locationSchema>;
 
@@ -138,7 +145,8 @@ export type MotorcycleInput = z.input<typeof motorcycleSchema>;
 
 export const emergencyContactSchema = z.object({
   name: z.string(err("required")).trim().min(1, err("required")).max(80, err("tooLong")),
-  relationship: z.enum(Constants.public.Enums.emergency_relationship, err("required")),
+  // A string in (the form's select sends "" until one is chosen), the enum out.
+  relationship: z.string(err("required")).pipe(z.enum(Constants.public.Enums.emergency_relationship, err("required"))),
   phone: phoneField,
 });
 
@@ -158,7 +166,9 @@ export type BloodTypeInput = z.input<typeof bloodTypeSchema>;
 export function firstErrorPerField(issues: readonly { path: readonly PropertyKey[]; message: string }[]) {
   const fieldErrors: Record<string, ProfileErrorKey> = {};
   for (const issue of issues) {
-    fieldErrors[String(issue.path[0] ?? "_form")] ??= issue.message as ProfileErrorKey;
+    // Every rule here sets a key; anything else (e.g. zod's default English message) shows as "required".
+    fieldErrors[String(issue.path[0] ?? "_form")] ??=
+      PROFILE_ERROR_KEYS.find((key) => key === issue.message) ?? "required";
   }
   return fieldErrors;
 }

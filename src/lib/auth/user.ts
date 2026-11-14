@@ -41,7 +41,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   if (accountDeleted(lookup)) return null;
   const row = lookup.data;
 
-  const { role: roleRow, ...profile } = row ?? { role: null };
+  const roleRow = row?.role ?? null;
   const role = roleRow ? { id: roleRow.id, name: roleRow.name, isAdmin: roleRow.is_admin } : null;
   // Same rule as private.has_permission(): only active members have rights.
   const access: Access =
@@ -55,7 +55,15 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   return {
     id,
     email: typeof data.claims.email === "string" ? data.claims.email : null,
-    profile: row ? (profile as CurrentUser["profile"]) : null,
+    profile: row
+      ? {
+          full_name: row.full_name,
+          avatar_url: row.avatar_url,
+          status: row.status,
+          preferred_locale: row.preferred_locale,
+          deletion_requested_at: row.deletion_requested_at,
+        }
+      : null,
     role,
     access,
   };

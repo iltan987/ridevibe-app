@@ -13,7 +13,8 @@ import { ISTANBUL, istanbulDistrictNames } from "@/lib/istanbul-districts";
 import { updateLocation } from "@/lib/members/actions";
 import { ActionStatus, useProfileAction } from "./use-profile-action";
 
-type CityChoice = "istanbul" | "other";
+const CITY_CHOICES = ["istanbul", "other"] as const;
+type CityChoice = (typeof CITY_CHOICES)[number];
 
 /** City and district; the side of the Bosphorus is derived on the server. */
 export function LocationForm({ city, district }: { city: string; district: string | null }) {
@@ -49,12 +50,14 @@ export function LocationForm({ city, district }: { city: string; district: strin
               aria-labelledby="profile-city-choice"
               value={choice}
               onValueChange={(v) => {
-                setChoice(v as CityChoice);
+                const next = CITY_CHOICES.find((c) => c === v);
+                if (next === undefined) return; // only our own options can be checked
+                setChoice(next);
                 setResult(null);
               }}
               className="flex flex-wrap gap-2"
             >
-              {(["istanbul", "other"] as const).map((value) => (
+              {CITY_CHOICES.map((value) => (
                 <label
                   key={value}
                   className="flex min-h-10 cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2 text-sm has-data-checked:border-primary has-data-checked:bg-primary/5"

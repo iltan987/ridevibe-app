@@ -6,6 +6,7 @@ import {
   birthDateSchema,
   bloodTypeSchema,
   emergencyContactSchema,
+  firstErrorPerField,
   locationSchema,
   motorcycleSchema,
   normalizeInstagram,
@@ -120,6 +121,23 @@ test("emergencyContactSchema normalises the phone and validates the relationship
   assert.equal(
     emergencyContactSchema.safeParse({ ...base, relationship: "boss", phone: "0532 123 45 67" }).success,
     false,
+  );
+});
+
+test("emergencyContactSchema: an unchosen relationship (empty select) is required", () => {
+  const empty = emergencyContactSchema.safeParse({ name: "Ayşe", relationship: "", phone: "0532 123 45 67" });
+  assert.deepEqual(firstErrorPerField(empty.error?.issues ?? []), { relationship: "required" });
+});
+
+test("firstErrorPerField keeps the first key per field and maps unknown messages to required", () => {
+  assert.deepEqual(
+    firstErrorPerField([
+      { path: ["city"], message: "Invalid input: expected string, received number" },
+      { path: ["district"], message: "invalidDistrict" },
+      { path: ["district"], message: "tooLong" },
+      { path: [], message: "consentRequired" },
+    ]),
+    { city: "required", district: "invalidDistrict", _form: "consentRequired" },
   );
 });
 

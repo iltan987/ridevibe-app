@@ -8,7 +8,7 @@ export function bloodTypeLabel(type: BloodType) {
   return `${type.slice(0, -1)} Rh${type.endsWith("-") ? "−" : "+"}`;
 }
 
-/** Search-param value → enum value (exact match only), else null. */
+/** Search-param or select value → enum value (exact match only), else null. */
 export function parseBloodTypeParam(value: unknown): BloodType | null {
   return BLOOD_TYPES.find((type) => type === value) ?? null;
 }

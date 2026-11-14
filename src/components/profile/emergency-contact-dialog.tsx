@@ -39,7 +39,7 @@ export function EmergencyContactDialog({ trigger, contact }: Props) {
     const data = new FormData(event.currentTarget);
     const input = {
       name: formDataText(data, "name"),
-      relationship: formDataText(data, "relationship") as EmergencyContact["relationship"],
+      relationship: formDataText(data, "relationship"),
       phone: formDataText(data, "phone"),
     };
     run(

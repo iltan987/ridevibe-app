@@ -10,6 +10,10 @@ export type MemberStatus = Enums<"member_status">;
 export type StaffStatus = Exclude<MemberStatus, "deleting">;
 export const MEMBER_STATUSES = ["pending", "active", "inactive"] as const satisfies readonly StaffStatus[];
 
+export function isStaffStatus(status: string): status is StaffStatus {
+  return MEMBER_STATUSES.some((s) => s === status);
+}
+
 /**
  * `search` on each row is `foldSearch(name + " " + email)` (folded once on the server); `query` is normalized.
  * Tab counts honour the search; rows keep their order; out-of-range pages are clamped.

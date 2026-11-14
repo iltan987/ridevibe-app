@@ -18,7 +18,7 @@ import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Link } from "@/i18n/navigation";
 import { setBloodType, withdrawBloodTypeConsent } from "@/lib/members/actions";
-import { BLOOD_TYPES, type BloodType, bloodTypeLabel } from "@/lib/members/blood-type";
+import { BLOOD_TYPES, type BloodType, bloodTypeLabel, parseBloodTypeParam } from "@/lib/members/blood-type";
 import { ActionStatus, useProfileAction } from "./use-profile-action";
 
 type Props = {
@@ -133,7 +133,7 @@ export function BloodTypeForm({ bloodType, consent, withdrawOnly }: Props) {
         <NativeSelect
           id="profile-blood-type"
           value={selected}
-          onChange={(event) => setSelected(event.target.value as BloodType | "")}
+          onChange={(event) => setSelected(parseBloodTypeParam(event.target.value) ?? "")}
           aria-invalid={!!typeError}
         >
           <NativeSelectOption value="">{t("placeholder")}</NativeSelectOption>
