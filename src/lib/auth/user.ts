@@ -8,7 +8,7 @@ import { type Access, NO_ACCESS, PERMISSIONS } from "./permissions";
 export type CurrentUser = {
   id: string;
   email: string | null;
-  profile: Pick<Tables<"profiles">, "full_name" | "avatar_url" | "status" | "preferred_locale"> | null;
+  profile: Pick<Tables<"profiles">, "full_name" | "avatar_url" | "status" | "preferred_locale" | "deletion_requested_at"> | null;
   /** Null = regular member without a staff role. */
   role: { id: string; name: string; isAdmin: boolean } | null;
   access: Access;
@@ -29,7 +29,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   const id = data.claims.sub;
   const lookup = await supabase
     .from("profiles")
-    .select("full_name, avatar_url, status, preferred_locale, role:roles(id, name, is_admin, role_permissions(permission))")
+    .select("full_name, avatar_url, status, preferred_locale, deletion_requested_at, role:roles(id, name, is_admin, role_permissions(permission))")
     .eq("id", id)
     .maybeSingle();
   // A deleted account's token stays valid until it expires: treat it as signed out.

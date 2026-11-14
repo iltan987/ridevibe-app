@@ -130,7 +130,32 @@
     "notAppliedBody": "Fill in the application form to become a member. Your details are filled in for you. If you already applied with another email, don't apply again; message us on WhatsApp and we'll link your account.",
     "applyNow": "Apply",
     "underReviewTitle": "Your application is under review",
-    "underReviewBody": "Once it's approved, your account becomes active automatically."
+    "underReviewBody": "Once it's approved, your account becomes active automatically.",
+    "delete": {
+      "title": "Delete account",
+      "body": "You can delete your account and your data in this app.",
+      "open": "Delete my account",
+      "confirm": "Delete my account",
+      "cancel": "Cancel",
+      "dialogTitle": "Delete your account?",
+      "removed": "What gets deleted: your profile, contact details, motorcycles, emergency contacts, blood type, preferences and application.",
+      "kept": "What stays: a rejected application is kept until its 6 months are up; access records that don't identify you remain.",
+      "keptInactive": "Because your membership has ended, your application is kept for 1 year from this request.",
+      "grace": "Sign in again within 14 days to get your account back; after that it's deleted for good.",
+      "club": "Your club membership and the WhatsApp groups aren't affected.",
+      "doneTitle": "Your account will be deleted",
+      "doneBody": "It will be deleted for good after {date}. Changed your mind? Just sign in again before then.",
+      "home": "Back to home",
+      "lastAdmin": "You're the club's only admin. Give the admin role to someone else first.",
+      "error": "Something went wrong. Please try again later."
+    },
+    "recovery": {
+      "title": "Your account will be deleted",
+      "body": "It will be deleted for good after {date}. Restore it and everything stays as it was.",
+      "restore": "Restore my account",
+      "continue": "Continue deleting",
+      "error": "Something went wrong. Please try again later."
+    }
   },
   "Members": {
     "title": "Members",
