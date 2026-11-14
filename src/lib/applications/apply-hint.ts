@@ -29,12 +29,13 @@ export function writeApplyHint(getStorage: () => Pick<Storage, "setItem">, hidde
 }
 
 /**
- * Runs as an inline script directly after the nav list, before first paint. Stringified with `toString()`, so it
- * must be self-contained: the regex and key come in as arguments, and the guess is repeated here (`guessApplyHidden`
- * can't be referenced); the parity test in `apply-hint.test.ts` guards against drift.
+ * Runs as an inline script that is the first child of the element it marks (nav, button link), so it executes
+ * before any of that element's content is parsed, whatever the stream's chunk boundaries. Stringified with
+ * `toString()`, so it must be self-contained: the regex and key come in as arguments, and the guess is repeated
+ * here (`guessApplyHidden` can't be referenced); the parity test in `apply-hint.test.ts` guards against drift.
  */
 function markApplyHint(doc: Document, sessionCookie: RegExp, key: string): void {
-  const el = doc.currentScript && doc.currentScript.previousElementSibling;
+  const el = doc.currentScript && doc.currentScript.parentElement;
   if (!el || !sessionCookie.test(doc.cookie)) return;
   let stored: string | null = null;
   try {

@@ -25,6 +25,9 @@ actions, teal for positive/status states, cream text, Saira type.
   `topluluk-gece.jpg` for the community (rounded square, in use); `topluluk-krem.jpg` / `topluluk-gunbatimi.jpg` are
   the unused options.
 
+The home page's route line (turquoise, `status` / `status-foreground`) and the "34 RV 2026" plate are part of the
+brand vocabulary; mockups: `docs/design/mockups/home-rota-34*.html`.
+
 ## Fallback directions
 
 - **1 · Gece** (orange only, no teal): values in `mockups/chosen-gece-turkuaz.html` (`.night` without `.teal`).

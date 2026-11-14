@@ -47,6 +47,8 @@ function BottomNavLinks({ pathname, showApply }: Props & { pathname?: string }) 
         suppressHydrationWarning={guess}
         className="group fixed inset-x-0 bottom-0 z-40 border-t bg-card pb-[env(safe-area-inset-bottom)] md:hidden"
       >
+        {/* First child: the script marks its parent <nav> before any tab is parsed. */}
+        {guess && <InlineScript html={applyHintScript} />}
         <ul
           className={cn(
             "mx-auto grid max-w-md",
@@ -68,8 +70,6 @@ function BottomNavLinks({ pathname, showApply }: Props & { pathname?: string }) 
           ))}
         </ul>
       </nav>
-      {/* Must directly follow the <nav>: the script marks its previous element sibling. */}
-      {guess && <InlineScript html={applyHintScript} />}
     </>
   );
 }

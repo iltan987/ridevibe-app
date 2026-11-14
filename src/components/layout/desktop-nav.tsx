@@ -47,6 +47,8 @@ function DesktopNavLinks({ pathname, showApply }: Props & { pathname?: string })
         suppressHydrationWarning={guess}
         className="group hidden items-center gap-1 md:flex"
       >
+        {/* First child: the script marks its parent <nav> before any link is parsed. */}
+        {guess && <InlineScript html={applyHintScript} />}
         {items.map(({ href, labelKey }) => (
           <Link
             key={href}
@@ -63,8 +65,6 @@ function DesktopNavLinks({ pathname, showApply }: Props & { pathname?: string })
           </Link>
         ))}
       </nav>
-      {/* Must directly follow the <nav>: the script marks its previous element sibling. */}
-      {guess && <InlineScript html={applyHintScript} />}
     </>
   );
 }

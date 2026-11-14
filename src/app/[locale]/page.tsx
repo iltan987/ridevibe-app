@@ -6,8 +6,9 @@ import { HomeFaq } from "@/components/home/home-faq";
 import { HomeHero } from "@/components/home/home-hero";
 import { HomeJoin } from "@/components/home/home-join";
 import { HomeRides } from "@/components/home/home-rides";
-import { HomeStats } from "@/components/home/home-stats";
 import { HomeWho } from "@/components/home/home-who";
+import { LicensePlate } from "@/components/home/license-plate";
+import { Route } from "@/components/home/route";
 import { clubJsonLd, serializeJsonLd } from "@/lib/seo/json-ld";
 import { pageMetadata } from "@/lib/seo/metadata";
 
@@ -33,11 +34,13 @@ export default function HomePage() {
   return (
     <>
       <HomeHero />
-      <HomeStats />
-      <HomeRides />
-      <HomeWho />
-      <HomeJoin />
-      <HomeFaq />
+      <LicensePlate />
+      <Route>
+        <HomeRides />
+        <HomeWho />
+        <HomeJoin />
+        <HomeFaq />
+      </Route>
       <HomeClosing />
       {/* Data block, not executable code: a plain script (see docs/learnings/ui.md), not InlineScript. */}
       <script

@@ -1,37 +1,39 @@
 import { useTranslations } from "next-intl";
+import { RouteStop } from "@/components/home/route";
 
 const STEPS = [1, 2, 3, 4] as const;
 
+// The steps are stops on the line, the last ("Ana grup") the larger orange one. Rules follow on phones and sit
+// beside the steps on md+.
 export function HomeJoin() {
   const t = useTranslations("Home");
   return (
-    <section className="mx-auto w-full max-w-5xl px-4 pt-7 md:pt-18">
-      <div className="flex flex-col gap-4">
-        <p className="eyebrow">{t("join.eyebrow")}</p>
-        <h2 className="heading text-3xl text-balance md:text-4xl">{t("join.title")}</h2>
-      </div>
-      <div className="mt-5 flex flex-col gap-6 md:flex-row md:items-start md:gap-12">
-        <ol className="flex flex-col gap-4 md:w-1/2">
+    <section className="pt-13 md:grid md:grid-cols-2 md:gap-x-16 md:pt-28">
+      <div>
+        <h2 className="mb-5 text-[40px] leading-[0.95] font-extrabold text-balance [font-stretch:70%] md:mb-7 md:text-[72px]">
+          {t("join.title")}
+        </h2>
+        <ol>
           {STEPS.map((n) => (
-            <li key={n} className="flex items-start gap-4">
-              <span
-                aria-hidden
-                className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground"
-              >
-                {n}
-              </span>
-              <div>
-                <h3 className="font-bold">{t(`join.step${n}Title`)}</h3>
-                <p className="text-muted-foreground">{t(`join.step${n}Body`)}</p>
-              </div>
-            </li>
+            <RouteStop
+              key={n}
+              as="li"
+              kind={n === STEPS.length ? "last" : "step"}
+              className="pb-4.5 [--dot-top:0.35rem] md:pb-6.5 md:[--dot-top:0.6rem]"
+            >
+              <h3 className="text-[22px] leading-tight font-bold [font-stretch:80%] md:text-3xl">
+                {t(`join.step${n}Title`)}
+              </h3>
+              <p className="text-muted-foreground">{t(`join.step${n}Body`)}</p>
+            </RouteStop>
           ))}
         </ol>
-        <div className="rounded-xl border bg-card p-5 md:w-1/2">
-          <h2 className="eyebrow">{t("rules.title")}</h2>
-          <p className="mt-3 text-pretty text-foreground/90">{t("rules.body")}</p>
-          <p className="mt-3 font-bold text-pretty">{t("rules.motto")}</p>
-        </div>
+      </div>
+      <div className="mt-8 md:mt-0 md:pt-24">
+        <h2 className="mb-3.5 text-[44px] leading-[0.95] font-extrabold text-balance text-accent-text [font-stretch:70%] md:mb-5 md:text-[76px]">
+          {t("rules.motto")}
+        </h2>
+        <p className="text-pretty text-muted-foreground">{t("rules.body")}</p>
       </div>
     </section>
   );

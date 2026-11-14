@@ -39,7 +39,7 @@ async function fresh(who, viewport, { before } = {}) {
 
 // Logs, on every animation frame where it changes, what is visible: the bottom-nav tabs (count, x of each, whether
 // "Başvur" is among them), the hero's "Başvur" and the desktop "Başvur". Frames before the nav and the hero are parsed
-// are skipped. `guess` = the visible nav is the static-shell guess (followed by its apply-hint script), not the
+// are skipped. `guess` = the visible nav is the static-shell guess (starting with its apply-hint script), not the
 // streamed nav.
 function frameLogger() {
   window.__frames = [];
@@ -61,8 +61,8 @@ function frameLogger() {
         hero: [...hero.querySelectorAll("[data-apply-link]")].some(vis),
         closing: [...closing.querySelectorAll("[data-apply-link]")].some(vis),
         desktop: !!desktop && [...desktop.querySelectorAll("[data-apply-link]")].some(vis),
-        // (the streamed tab bar is the last element of <body>, followed by Next's own streaming scripts)
-        guess: nav.nextElementSibling?.tagName === "SCRIPT" && nav.nextElementSibling.textContent.includes("rv-apply-hidden"),
+        // (the guessing nav starts with its hint script; the streamed one doesn't)
+        guess: nav.firstElementChild?.tagName === "SCRIPT" && nav.firstElementChild.textContent.includes("rv-apply-hidden"),
       };
       const k = JSON.stringify(f);
       if (k !== last) { window.__frames.push(f); last = k; }

@@ -95,17 +95,32 @@
 - **Source:** found by testing (`scripts/e2e/header-e2e.mjs` logs the skeleton box per animation frame).
 
 ### A guessing fallback inside a pathname `<Suspense>` appears several times in the HTML (2026-11-11)
-- **Symptom (risk):** the "Başvur" nav guess (`applyHintScript`, marks its previous sibling) could miss copies of the
+- **Symptom (risk):** the "Başvur" nav guess (`applyHintScript`, marking the element that holds it) could miss copies of the
   nav: the server HTML of `/` holds the guessing `DesktopNav`/`BottomNav` twice each (the pathname boundary's fallback
   and its content), plus the streamed final nav.
 - **Cause:** the outer session boundary (`DesktopNavForUser`/`BottomNavForUser`) falls back to the nav, which has its
   own pathname `<Suspense>`; both of its sides render the same `*NavLinks`. Content streamed later sits in a hidden
   `<div>` and is moved in by `$RC`; its inline script still runs while parsing, so the attribute is set before the move.
-- **Do:** render the `<nav>` + `InlineScript` pair inside the shared `*NavLinks` (every copy carries its own script),
+- **Do:** render the `<nav>` with its `InlineScript` as first child inside the shared `*NavLinks` (every copy carries
+  its own script; see the next entry for why first child),
   never once outside the inner boundary. Check by sampling the visible tab count every animation frame on a hard load
   (member: 4 in every frame, visitor: 5, stale `"0"` as member: 5 → 4).
-- **Source:** `curl` of the production build HTML (local `pnpm start`; `</nav><script>` pairs), puppeteer frame
+- **Source:** `curl` of the production build HTML (local `pnpm start`; one script per `<nav>` copy), puppeteer frame
   sampling.
+
+### A hint script placed after its element can lose to a stream chunk boundary (2026-11-14)
+- **Symptom:** after the home redesign, `apply-nav-e2e` failed on phone TR second loads: a member's tab bar showed
+  5 tabs including "Başvur" for one frame, then the 4-tab guess. Visitors' "second load showed the guess first" check
+  failed too (the first frame was not a guess).
+- **Cause:** the script followed the `<nav>` and marked `previousElementSibling`. The parser can yield between the
+  nav and the script when the stream splits there, and the browser may paint the unmarked bar in between (a frame the
+  logger sees in `requestAnimationFrame` is a frame that can be painted). A bigger closing section moved the split.
+  Muting the test (skipping frames without a following sibling) would have hidden a real flash.
+- **Do:** make the script the first child of the element it marks and use `currentScript.parentElement`
+  (`applyHintScript`: both navs and the home "Başvur" links): it runs before any tab or label of that element is
+  parsed, wherever chunks split. Never filter frames in the logger to make such a failure disappear. The session hint
+  (`sessionHintScript`, user-menu skeleton) still uses the sibling pattern (`docs/follow-ups.md`).
+- **Source:** found by `scripts/e2e/apply-nav-e2e.mjs` (frame logger), reproduced 3 of 3 runs.
 
 ### Brand assets: tracing the wordmark and building the R&V icon (2026-11-09)
 - **Wordmark SVG:** potrace (pure-JS `potrace` npm) on the **half-resolution** alpha bitmap (1794×572, `turdSize` 10,
@@ -238,3 +253,13 @@
 - **Do:** give the section `className="dark …"`: the `.dark` scope makes the tokens resolve to the night palette inside
   it, in both themes (`src/components/home/home-hero.tsx`).
 - **Source:** found by testing (home hero).
+
+### A `font-stretch` display heading reflows at the font swap: use fixed lines (2026-11-14)
+- **Symptom:** first visit on a slow network: the home hero h1 ("Let's ride together.") wrapped to 3 lines, then
+  shrank to 2 when Saira arrived, and the bottom-anchored hero text jumped (CLS 0.08-0.095 on /en at 1.6 Mbps).
+- **Cause:** next/font's size-adjusted fallback (Arial) can't be condensed, so `font-stretch: 62%` only applies after
+  the swap; the fallback text is ~1.6x wider and wraps differently.
+- **Do:** make the heading fixed lines that never wrap (`t.rich` with `<line>` tags rendering
+  `<span className="block whitespace-nowrap">`; the accessible text keeps its space) and size it by viewport only
+  (`text-[min(23.5vw,5.75rem)]`), checked in the final font at 320-1280 px. Code: `src/components/home/home-hero.tsx`.
+- **Source:** whole-branch review of `feat/home-redesign`; CLS measured with a throttled puppeteer run.

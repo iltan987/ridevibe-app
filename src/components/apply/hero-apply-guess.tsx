@@ -11,18 +11,16 @@ import { applyHintScript } from "@/lib/applications/apply-hint";
 export function HeroApplyGuess({ className, children }: { className?: string; children: ReactNode }) {
   const hidden = useApplyHiddenGuess();
   return (
-    <>
-      <Link
-        href="/apply"
-        data-apply-link=""
-        data-apply-hidden={hidden ? "" : undefined}
-        suppressHydrationWarning
-        className={`${className ?? ""} data-[apply-hidden]:hidden`}
-      >
-        {children}
-      </Link>
-      {/* Must directly follow the <Link>: the script marks its previous element sibling. */}
+    <Link
+      href="/apply"
+      data-apply-link=""
+      data-apply-hidden={hidden ? "" : undefined}
+      suppressHydrationWarning
+      className={`${className ?? ""} data-[apply-hidden]:hidden`}
+    >
+      {/* First child: the script marks its parent link before the label is parsed. */}
       <InlineScript html={applyHintScript} />
-    </>
+      {children}
+    </Link>
   );
 }
