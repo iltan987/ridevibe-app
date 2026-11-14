@@ -73,6 +73,8 @@ create table public.applications (
   reviewed_at timestamptz,
   -- The account this application belongs to (see the column comment below).
   profile_id uuid references public.profiles (id) on delete set null,
+  -- Retention deadline set when the owner deletes their account (see the column comment below).
+  retained_until timestamptz,
 
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -93,6 +95,7 @@ create table public.applications (
 
 comment on table public.applications is 'Membership applications from the public form.';
 comment on column public.applications.profile_id is 'The account this application belongs to: set when submitted while signed in, when staff link it, or when an approved application is matched by email.';
+comment on column public.applications.retained_until is 'Set when the owner deletes their account: the application is kept (inactive members: 1 year from the deletion request) and purged after this time. Null = no deadline.';
 
 create index applications_status_created_idx on public.applications (status, created_at desc);
 

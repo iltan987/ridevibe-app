@@ -26,3 +26,7 @@ test("applyView: active members are already members, whatever the application", 
 test("applyView: inactive members get the inactive notice, whatever the application", () => {
   for (const a of APPLICATION_STATUSES) assert.equal(applyView("inactive", a), "inactive", String(a));
 });
+
+test("applyView: accounts being deleted get the deleting notice, whatever the application", () => {
+  for (const a of APPLICATION_STATUSES) assert.equal(applyView("deleting", a), "deleting", String(a));
+});

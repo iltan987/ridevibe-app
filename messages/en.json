@@ -117,7 +117,8 @@
     "statuses": {
       "pending": "Awaiting approval",
       "active": "Active member",
-      "inactive": "Inactive"
+      "inactive": "Inactive",
+      "deleting": "To be deleted"
     },
     "roles": {
       "member": "Member",
@@ -425,6 +426,10 @@
     "inactive": {
       "title": "Your membership is currently inactive",
       "body": "If you'd like to rejoin, message us on WhatsApp."
+    },
+    "deleting": {
+      "title": "Your account will be deleted",
+      "body": "To keep it, open your account page."
     },
     "errors": {
       "required": "This field is required.",

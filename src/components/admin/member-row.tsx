@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { type AccessActionResult, setMemberRole, setMemberStatus } from "@/lib/access/actions";
-import type { MemberStatus } from "@/lib/access/members-view";
+import type { StaffStatus } from "@/lib/access/members-view";
 import { MemberNameDialog } from "@/components/admin/member-name-dialog";
 import { initials } from "@/lib/initials";
 
@@ -17,7 +17,7 @@ export type MemberRowData = {
   /** Sign-in email (helps recognise who a pending sign-up is). */
   email: string | null;
   avatarUrl: string | null;
-  status: MemberStatus;
+  status: StaffStatus;
   joinedLabel: string;
   roleId: string | null;
   roleLabel: string;

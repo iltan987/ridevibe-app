@@ -117,7 +117,8 @@
     "statuses": {
       "pending": "Onay bekliyor",
       "active": "Aktif üye",
-      "inactive": "Pasif"
+      "inactive": "Pasif",
+      "deleting": "Silinecek"
     },
     "roles": {
       "member": "Üye",
@@ -425,6 +426,10 @@
     "inactive": {
       "title": "Üyeliğin şu an pasif",
       "body": "Tekrar katılmak istiyorsan bize WhatsApp'tan yaz."
+    },
+    "deleting": {
+      "title": "Hesabın silinecek",
+      "body": "Geri almak istersen Hesabım sayfasını aç."
     },
     "errors": {
       "required": "Bu alan zorunlu.",

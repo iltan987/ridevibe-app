@@ -1,7 +1,7 @@
 import type { Enums } from "../supabase/database.types.ts";
 
 /** What /apply shows: the form, or one of the notices that replace it. */
-export type ApplyView = "form" | "alreadyMember" | "underReview" | "inactive";
+export type ApplyView = "form" | "alreadyMember" | "underReview" | "inactive" | "deleting";
 
 /**
  * The one rule for what /apply shows. A visitor, a signed-in user without a
@@ -13,6 +13,7 @@ export function applyView(
   profileStatus: Enums<"member_status"> | null | undefined,
   applicationStatus: Enums<"application_status"> | null,
 ): ApplyView {
+  if (profileStatus === "deleting") return "deleting";
   if (profileStatus === "active") return "alreadyMember";
   if (profileStatus === "inactive") return "inactive";
   if (profileStatus === "pending" && (applicationStatus === "new" || applicationStatus === "contacted")) {

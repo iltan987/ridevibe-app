@@ -4,7 +4,7 @@
 -- (later: automatically when it matches an approved application).
 -- ---------------------------------------------------------------------------
 
-create type public.member_status as enum ('pending', 'active', 'inactive');
+create type public.member_status as enum ('pending', 'active', 'inactive', 'deleting');
 create type public.istanbul_side as enum ('asian', 'european');
 
 create table public.profiles (
@@ -19,12 +19,21 @@ create table public.profiles (
   district text check (char_length(district) <= 80),
   -- Only meaningful for Istanbul; derived from the district by the app.
   side public.istanbul_side,
+  deletion_requested_at timestamptz,
+  status_before_deletion public.member_status,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  constraint profiles_deletion_state check (
+    (status = 'deleting') = (deletion_requested_at is not null)
+    and (status = 'deleting') = (status_before_deletion is not null)
+    and status_before_deletion is distinct from 'deleting'
+  )
 );
 
 comment on table public.profiles is 'Club member profiles, one per auth user.';
-comment on column public.profiles.status is 'pending = signed in but not yet approved; active = club member; inactive = left or suspended.';
+comment on column public.profiles.status is 'pending = signed in but not yet approved; active = club member; inactive = left or suspended; deleting = asked to delete the account (hidden, no rights, purged after 14 days).';
+comment on column public.profiles.deletion_requested_at is 'When the member asked to delete the account; set only while status = deleting.';
+comment on column public.profiles.status_before_deletion is 'The status to restore if the member cancels the deletion; set only while status = deleting.';
 
 -- Member/access lists: filter by status, newest first, keyset-paginated by (created_at, id).
 create index profiles_status_created_idx on public.profiles (status, created_at desc, id desc);
