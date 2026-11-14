@@ -218,3 +218,16 @@
   flags the URL; no need to wait for the count first.
 - **Source:** `postgrest-js` `range()` in `node_modules/@supabase/postgrest-js/dist/index.mjs`; curl against local
   PostgREST.
+
+### pg_cron with declarative schemas: extension in the schema, schedule in a hand-written migration (2026-11-14)
+- **Symptom:** the declarative diff handles `create extension if not exists pg_cron with schema pg_catalog;` but
+  emits `CREATE EXTENSION "pg_cron";` (schema clause and `if not exists` dropped); the job itself is not in any schema.
+- **Cause:** a schedule is a row in `cron.job` (DML), which declarative schemas don't track; the diff tool normalizes
+  extension statements. Supabase documents `pg_catalog` as pg_cron's schema (the `cron` tables still live in schema `cron`).
+- **Do:** keep the `create extension` line in `supabase/schemas/90_ops.sql`, then edit the generated migration back to
+  `create extension if not exists pg_cron with schema pg_catalog;`. Schedule in a separate hand-written migration:
+  `create extension if not exists …`, `select cron.unschedule(jobid) from cron.job where jobname = '…'`, then
+  `cron.schedule(name, cron, command)`. Run it after the migration that creates the function. pgTAP can read
+  `cron.job` (jobname, schedule, command). The job runs as the scheduling role (postgres); the purge function is
+  security definer with no grants to anon/authenticated. Plain `pg_cron` needs no `shared_preload_libraries` change locally.
+- **Source:** `supabase/migrations/*_purge_deleted_accounts.sql`, `*_schedule_purge_deleted_accounts.sql`.
