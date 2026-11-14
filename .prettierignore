@@ -1,0 +1,9 @@
+*.md
+*.sql
+src/lib/supabase/database.types.ts
+.next/
+pnpm-lock.yaml
+supabase/.temp/
+.superpowers/
+docs/design/mockups/
+pnpm-workspace.yaml
