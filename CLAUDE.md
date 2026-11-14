@@ -48,6 +48,9 @@ join, rules, Samet's answers): `docs/content/home-page-questions.md`.
   then merge into `main` with `--no-ff`. Small doc/config tweaks may go straight to `main`.
 - Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`).
 - Stage files by path; never `git commit -a` / `git add -A`: iltan's local `.claude/settings.json` change stays unstaged.
+- Never discard working-tree changes you didn't make: no `git checkout -- .`, `git restore .`, `git reset --hard`,
+  `git stash` or `git clean`; undo your own edits file by file (a tree-wide checkout wiped iltan's local settings once).
+  Subagent briefs repeat this rule.
 
 ## Commands
 
