@@ -231,3 +231,12 @@
   `cron.job` (jobname, schedule, command). The job runs as the scheduling role (postgres); the purge function is
   security definer with no grants to anon/authenticated. Plain `pg_cron` needs no `shared_preload_libraries` change locally.
 - **Source:** `supabase/migrations/*_purge_deleted_accounts.sql`, `*_schedule_purge_deleted_accounts.sql`.
+
+### The declarative diff plans to unschedule pg_cron jobs, and a multi-statement job must lock first (2026-11-14)
+- **Symptom:** the next generated migration contained `SELECT cron.unschedule('purge-deleted-accounts');` (and a
+  `COMMENT ON EXTENSION` line): the diff sees the job in the local DB but not in the schema files.
+- **Cause:** `cron.job` rows are data the schema doesn't declare. Separately, a job that runs several statements
+  under READ COMMITTED lets a concurrent cancel commit between them.
+- **Do:** delete any generated `cron.unschedule` line (and extension comment noise) from migrations. For purge-like
+  jobs, `select … for update` the due rows into an array first and filter every statement by `= any(due)`.
+- **Source:** `private.purge_deleted_accounts`, `*_purge_lock_due_accounts.sql`.

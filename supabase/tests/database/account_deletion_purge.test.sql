@@ -5,17 +5,20 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(27);
+select plan(35);
 
 -- Fixtures (ids …07d1–…07d4, applications 7b-prefixed).
 --   7d1 deleting 14 days (was active) with approved + rejected linked and a contacted unlinked application (same
---   email), details, bike, emergency contact, blood type; 7d2 deleting 13 days; 7d3 deleting 14 days (was inactive)
---   with a linked approved application; 7d4 active.
+--   email), details, bike, emergency contact, blood type; 7d2 deleting 13 days with a linked approved and an
+--   unlinked same-email application; 7d3 deleting 14 days (was inactive) with a linked approved and an unlinked
+--   same-email approved application; 7d4 active with an unlinked same-email application; 7d5 deleting 10 days
+--   (was inactive) with a linked approved application.
 insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-0000000007d1', 'pgtap-purge-one@pgtap.invalid',   '{"full_name": "Pınar Bir"}'),
   ('00000000-0000-0000-0000-0000000007d2', 'pgtap-purge-two@pgtap.invalid',   '{"full_name": "Pelin Iki"}'),
   ('00000000-0000-0000-0000-0000000007d3', 'pgtap-purge-three@pgtap.invalid', '{"full_name": "Pamir Uc"}'),
-  ('00000000-0000-0000-0000-0000000007d4', 'pgtap-purge-four@pgtap.invalid',  '{"full_name": "Pusat Dort"}');
+  ('00000000-0000-0000-0000-0000000007d4', 'pgtap-purge-four@pgtap.invalid',  '{"full_name": "Pusat Dort"}'),
+  ('00000000-0000-0000-0000-0000000007d5', 'pgtap-purge-five@pgtap.invalid',  '{"full_name": "Pınar Bes"}');
 
 update public.profiles set status = 'active' where id = '00000000-0000-0000-0000-0000000007d4';
 update public.profiles
@@ -27,6 +30,10 @@ update public.profiles
 update public.profiles
   set status = 'deleting', deletion_requested_at = now() - interval '14 days', status_before_deletion = 'inactive'
   where id = '00000000-0000-0000-0000-0000000007d3';
+
+update public.profiles
+  set status = 'deleting', deletion_requested_at = now() - interval '10 days', status_before_deletion = 'inactive'
+  where id = '00000000-0000-0000-0000-0000000007d5';
 
 insert into public.member_motorcycles (profile_id, brand, model, cc)
   values ('00000000-0000-0000-0000-0000000007d1', 'Honda', 'CB650R', 650);
@@ -62,6 +69,13 @@ select pg_temp.apply('00000000-0000-0000-0000-0000000007b4', 'pgtap-purge-three@
   '00000000-0000-0000-0000-0000000007d3');
 select pg_temp.apply('00000000-0000-0000-0000-0000000007b5', 'pgtap-purge-expired@pgtap.invalid', 'approved', null);
 select pg_temp.apply('00000000-0000-0000-0000-0000000007b6', 'pgtap-purge-future@pgtap.invalid', 'approved', null);
+select pg_temp.apply('00000000-0000-0000-0000-0000000007b7', 'pgtap-purge-two@pgtap.invalid', 'approved',
+  '00000000-0000-0000-0000-0000000007d2');
+select pg_temp.apply('00000000-0000-0000-0000-0000000007b8', 'pgtap-purge-two@pgtap.invalid', 'contacted', null);
+select pg_temp.apply('00000000-0000-0000-0000-0000000007b9', 'pgtap-purge-five@pgtap.invalid', 'approved',
+  '00000000-0000-0000-0000-0000000007d5');
+select pg_temp.apply('00000000-0000-0000-0000-0000000007ba', 'pgtap-purge-four@pgtap.invalid', 'contacted', null);
+select pg_temp.apply('00000000-0000-0000-0000-0000000007bb', 'pgtap-purge-three@pgtap.invalid', 'approved', null);
 update public.applications set retained_until = now() - interval '1 second'
   where id = '00000000-0000-0000-0000-0000000007b5';
 update public.applications set retained_until = now() + interval '1 day'
@@ -139,9 +153,32 @@ select is(
   'and kept one year from the deletion request'
 );
 
+select is((select count(*)::int from public.applications where id = '00000000-0000-0000-0000-0000000007bb'), 1,
+  'the unlinked approved application with the inactive account''s email is kept too');
+select is(
+  (select retained_until from public.applications where id = '00000000-0000-0000-0000-0000000007bb'),
+  (now() - interval '14 days') + interval '1 year',
+  'and kept one year from the deletion request'
+);
+
+-- Not due: nothing of 7d2 / 7d5 is touched
+select is((select count(*)::int from public.applications where id in
+  ('00000000-0000-0000-0000-0000000007b7', '00000000-0000-0000-0000-0000000007b8')), 2,
+  'applications of an account inside the grace period stay');
+select is((select profile_id from public.applications where id = '00000000-0000-0000-0000-0000000007b7'),
+  '00000000-0000-0000-0000-0000000007d2'::uuid, 'and stay linked');
+select is((select count(*)::int from public.profiles where id = '00000000-0000-0000-0000-0000000007d5'), 1,
+  'an inactive account inside the grace period stays');
+select is((select profile_id from public.applications where id = '00000000-0000-0000-0000-0000000007b9'),
+  '00000000-0000-0000-0000-0000000007d5'::uuid, 'with its approved application still linked');
+select is((select retained_until from public.applications where id = '00000000-0000-0000-0000-0000000007b9'), null,
+  'and not yet kept');
+
 -- 7d4 and kept applications
 select is((select status::text from public.profiles where id = '00000000-0000-0000-0000-0000000007d4'), 'active',
   'an active account is untouched');
+select is((select count(*)::int from public.applications where id = '00000000-0000-0000-0000-0000000007ba'), 1,
+  'an unlinked application with the email of an account that is not deleting survives');
 select is((select count(*)::int from public.applications where id = '00000000-0000-0000-0000-0000000007b5'), 0,
   'an expired kept application is deleted');
 select is((select count(*)::int from public.applications where id = '00000000-0000-0000-0000-0000000007b6'), 1,

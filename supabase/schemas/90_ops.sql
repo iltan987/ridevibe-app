@@ -25,61 +25,74 @@ grant execute on function public.keep_alive() to anon;
 
 create extension if not exists pg_cron with schema pg_catalog;
 
--- Set-based; every statement re-checks the due condition. Cascades remove the
--- profile and its member rows; applications.profile_id / reviewed_by and the
--- safety_access_log actor/target are set to null by their foreign keys.
+-- Locks the due profiles first (FOR UPDATE re-checks the condition after a wait, so an account whose
+-- deletion was cancelled a moment ago is skipped; a cancel arriving later blocks until we commit, then
+-- finds no 'deleting' row), and only then touches them: a restored account is never purged. Cascades
+-- remove the profile and its member rows; applications.profile_id / reviewed_by and the
+-- safety_access_log actor/target are set to null by their foreign keys. Only accounts still 'deleting'
+-- are locked here, never the active admins the request RPC locks, so the two cannot deadlock.
 create or replace function private.purge_deleted_accounts(as_of timestamptz default now())
 returns void
 language plpgsql
 security definer
 set search_path = ''
 as $$
+declare
+  due uuid[];
 begin
-  -- (a) the approved application of a deleted inactive account is kept for a
-  -- year from the request, unlinked (rejected ones simply lose their link below)
+  select coalesce(array_agg(s.id), '{}') into due
+  from (
+    select p.id
+    from public.profiles p
+    where p.status = 'deleting'
+      and p.deletion_requested_at <= as_of - interval '14 days'
+    order by p.id
+    for update
+  ) s;
+
+  -- (a) the approved application of a deleted inactive account (linked, or unlinked with its sign-in
+  -- email) is kept for a year from the request, unlinked
   update public.applications a
   set retained_until = p.deletion_requested_at + interval '1 year',
       profile_id = null
   from public.profiles p
-  where a.profile_id = p.id
+  where p.id = any(due)
+    and p.status_before_deletion = 'inactive'
     and a.status = 'approved'
     and a.retained_until is null
-    and p.status = 'deleting'
-    and p.status_before_deletion = 'inactive'
-    and p.deletion_requested_at <= as_of - interval '14 days';
+    and (
+      a.profile_id = p.id
+      or (
+        a.profile_id is null
+        and exists (
+          select 1
+          from public.member_contacts c
+          where c.profile_id = p.id
+            and private.normalize_email(c.email) = private.normalize_email(a.email)
+        )
+      )
+    );
 
   -- (b) every other application except rejected ones: linked to the account,
   -- or unlinked with the same sign-in email
   delete from public.applications a
   where a.status <> 'rejected'
     and a.retained_until is null
-    and exists (
-      select 1
-      from public.profiles p
-      where p.status = 'deleting'
-        and p.deletion_requested_at <= as_of - interval '14 days'
-        and (
-          a.profile_id = p.id
-          or (
-            a.profile_id is null
-            and exists (
-              select 1
-              from public.member_contacts c
-              where c.profile_id = p.id
-                and private.normalize_email(c.email) = private.normalize_email(a.email)
-            )
-          )
+    and (
+      a.profile_id = any(due)
+      or (
+        a.profile_id is null
+        and exists (
+          select 1
+          from public.member_contacts c
+          where c.profile_id = any(due)
+            and private.normalize_email(c.email) = private.normalize_email(a.email)
         )
+      )
     );
 
   -- (c) the accounts (cascades to profile and member rows)
-  delete from auth.users u
-  where u.id in (
-    select p.id
-    from public.profiles p
-    where p.status = 'deleting'
-      and p.deletion_requested_at <= as_of - interval '14 days'
-  );
+  delete from auth.users u where u.id = any(due);
 
   -- (d) kept applications past their deadline
   delete from public.applications a

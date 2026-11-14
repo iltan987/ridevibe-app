@@ -66,6 +66,5 @@ begin
 end;
 $function$;
 
-COMMENT ON EXTENSION "pg_cron" IS 'Job scheduler for PostgreSQL';
 
 REVOKE ALL ON FUNCTION "private"."purge_deleted_accounts"(timestamp WITH time zone) FROM PUBLIC;
