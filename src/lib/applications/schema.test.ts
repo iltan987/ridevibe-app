@@ -54,3 +54,8 @@ test("writing questions need at least 15 characters", () => {
 test("formDataToObject always returns the multi-select fields", () => {
   assert.deepEqual(formDataToObject(new FormData()).languages, []);
 });
+
+test("an issue without an error key reports invalidOption (never zod's English message)", () => {
+  // `locale` has no custom error: zod's default message is not an Apply.errors key.
+  assert.equal(validateField("locale", "de"), "invalidOption");
+});

@@ -39,7 +39,8 @@ function markApplyHint(doc: Document, sessionCookie: RegExp, key: string): void 
   if (!el || !sessionCookie.test(doc.cookie)) return;
   let stored: string | null = null;
   try {
-    stored = doc.defaultView!.localStorage.getItem(key);
+    const view = doc.defaultView;
+    stored = view && view.localStorage.getItem(key);
   } catch {
     // storage unavailable: guess hidden
   }

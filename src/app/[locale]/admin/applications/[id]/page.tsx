@@ -14,6 +14,7 @@ import { getPathname, Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { can } from "@/lib/auth/permissions";
 import { whatsAppUrl } from "@/lib/applications/contact";
+import { EVENT_INTERESTS, LANGUAGES, RIDING_STYLES } from "@/lib/applications/options";
 import { getApplication, getApplicationAccount } from "@/lib/applications/queries";
 import { requirePermission } from "@/lib/auth/require-access";
 
@@ -151,8 +152,14 @@ async function ApplicationDetail({ params }: { params: PageProps<"/[locale]/admi
   ]);
   if (!a) notFound();
 
-  const list = (values: string[], key: "languages" | "riding_styles" | "event_interests") =>
-    values.map((v) => tApply(`options.${key}.${v}` as Parameters<typeof tApply>[0])).join(", ");
+  // Stored choices → labels; a value that isn't (or no longer is) an option shows as stored.
+  const list = <T extends string>(values: string[], options: readonly T[], label: (option: T) => string) =>
+    values
+      .map((v) => {
+        const option = options.find((o) => o === v);
+        return option === undefined ? v : label(option);
+      })
+      .join(", ");
   const yesNo = (v: boolean) => tApply(v ? "options.yes" : "options.no");
 
   const decidedLabel = a.reviewed_at
@@ -256,7 +263,7 @@ async function ApplicationDetail({ params }: { params: PageProps<"/[locale]/admi
           </Row>
         )}
         <Row label={tApply("fields.languages")}>
-          {list(a.languages, "languages")}
+          {list(a.languages, LANGUAGES, (v) => tApply(`options.languages.${v}`))}
           {a.other_languages && ` (${a.other_languages})`}
         </Row>
       </Section>
@@ -271,7 +278,9 @@ async function ApplicationDetail({ params }: { params: PageProps<"/[locale]/admi
                 .join(" · ")
             : yesNo(false)}
         </Row>
-        <Row label={tApply("fields.riding_styles")}>{list(a.riding_styles, "riding_styles")}</Row>
+        <Row label={tApply("fields.riding_styles")}>
+          {list(a.riding_styles, RIDING_STYLES, (v) => tApply(`options.riding_styles.${v}`))}
+        </Row>
         <Row label={tApply("fields.group_experience")}>{tApply(`options.group_experience.${a.group_experience}`)}</Row>
       </Section>
 
@@ -287,7 +296,7 @@ async function ApplicationDetail({ params }: { params: PageProps<"/[locale]/admi
           </Row>
         )}
         <Row label={tApply("fields.event_interests")}>
-          {list(a.event_interests, "event_interests")}
+          {list(a.event_interests, EVENT_INTERESTS, (v) => tApply(`options.event_interests.${v}`))}
           {a.other_event_interests && ` (${a.other_event_interests})`}
         </Row>
         <Row label={tApply("fields.expectations")} block>

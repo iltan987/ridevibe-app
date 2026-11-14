@@ -195,8 +195,7 @@ function saverSetup() {
     fd.set("expectations", expectations);
     return fd;
   };
-  const stored = () =>
-    storage.value === null ? null : (JSON.parse(storage.value) as { step: number; fields: object });
+  const stored = () => (storage.value === null ? null : parseDraft(storage.value, NOW));
   return { storage, saver, form, stored };
 }
 

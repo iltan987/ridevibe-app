@@ -93,7 +93,7 @@ export function ChoiceRadios<T extends string>({
   options: readonly T[];
   optionLabel: (value: T) => string;
   defaultValue?: T;
-  onChange?: (value: string) => void;
+  onChange?: (value: T) => void;
   error?: string;
   horizontal?: boolean;
 }) {
@@ -104,7 +104,11 @@ export function ChoiceRadios<T extends string>({
         name={name}
         aria-labelledby={`${name}-label`}
         defaultValue={defaultValue}
-        onValueChange={(v) => onChange?.(String(v))}
+        onValueChange={(v) => {
+          // Only our own options can be checked; anything else is ignored.
+          const option = options.find((o) => o === v);
+          if (option !== undefined) onChange?.(option);
+        }}
         className={horizontal ? "flex flex-wrap gap-2" : "grid gap-2"}
       >
         {options.map((value) => (

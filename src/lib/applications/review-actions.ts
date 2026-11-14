@@ -5,6 +5,7 @@ import { z } from "zod";
 import type { AccessActionResult } from "@/lib/access/actions";
 import { decodeCursor, toPage } from "@/lib/pagination";
 import { createClient } from "@/lib/supabase/server";
+import type { Database } from "@/lib/supabase/database.types";
 import { APPLICATION_STATUSES } from "./queries";
 import { type ApplicationFieldErrors, type ContactValues, validateContactChanges } from "./schema";
 
@@ -112,6 +113,12 @@ export type LinkableAccount = {
   status: "pending" | "active";
 };
 
+type GeneratedLinkableRow = Database["public"]["Functions"]["linkable_accounts"]["Returns"][number];
+type LinkableAccountRow = Omit<GeneratedLinkableRow, "avatar_url" | "email"> & {
+  avatar_url: string | null;
+  email: string | null;
+};
+
 /**
  * Pending accounts an application can be linked to, newest first, one page (applications.decide). With
  * `includeActive` (approved applications only) also active accounts that have no application yet.
@@ -145,7 +152,11 @@ export async function findLinkableAccounts(input: {
     return { status: "error" };
   }
   // Generated types claim avatar_url/email are non-null; they can be null.
-  return toPage(data as LinkableAccount[]);
+  const rows: LinkableAccountRow[] = data;
+  // The RPC returns pending accounts, plus active ones only when requested.
+  return toPage(
+    rows.map((row): LinkableAccount => ({ ...row, status: row.status === "active" ? "active" : "pending" })),
+  );
 }
 
 /** Links an unlinked, non-rejected application to a pending account (applications.decide). */

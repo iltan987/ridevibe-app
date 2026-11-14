@@ -225,8 +225,9 @@ function ApplyFormSteps({
   // handler, so re-validate on the next frame.
   const revalidateSoon = () => requestAnimationFrame(revalidate);
 
-  function onFieldBlur(event: React.FocusEvent<HTMLFormElement>) {
-    const field = (event.target as HTMLElement).closest("[data-field]")?.getAttribute("data-field");
+  // Typed by the blurred element (blur bubbles up from the field), not by the form the handler sits on.
+  function onFieldBlur(event: React.FocusEvent) {
+    const field = event.target.closest("[data-field]")?.getAttribute("data-field");
     if (field && !touched.has(field)) setTouched(new Set(touched).add(field));
     revalidate();
     scheduleSave();
@@ -598,7 +599,7 @@ function ApplyFormSteps({
             options={["istanbul", "other"] as const}
             optionLabel={(v) => t(`options.city.${v}`)}
             defaultValue="istanbul"
-            onChange={(v) => setCityChoice(v as "istanbul" | "other")}
+            onChange={setCityChoice}
             error={error("city_choice")}
             horizontal
           />
