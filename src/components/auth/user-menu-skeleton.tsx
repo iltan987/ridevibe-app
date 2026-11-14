@@ -6,9 +6,8 @@ import { lastShownUser, UserAvatar } from "@/components/auth/user-avatar";
 import { InlineScript } from "@/components/inline-script";
 import { Skeleton } from "@/components/ui/skeleton";
 import { hasSessionCookie, sessionHintScript } from "@/lib/auth/session-hint";
+import { noSubscribe } from "@/lib/no-subscribe";
 import { cn } from "@/lib/utils";
-
-const noSubscribe = () => () => {};
 
 // Fallback for <UserMenu />. The static shell can't know the session, so the shape comes from the auth cookie:
 // signed out → the outline `sm` "Giriş Yap" button box with the real (invisible) label, so the width matches in every

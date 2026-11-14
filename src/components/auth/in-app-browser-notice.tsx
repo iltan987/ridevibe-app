@@ -5,15 +5,15 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { chromeIntentUrl, detectInAppBrowser, isAndroid } from "@/lib/auth/in-app-browser";
+import { noSubscribe } from "@/lib/no-subscribe";
 
-const subscribe = () => () => {};
 const getUserAgent = () => navigator.userAgent;
 const getServerUserAgent = () => "";
 
 /** Google blocks OAuth in social apps' embedded browsers; tell the visitor how to leave before they hit the 403. */
 export function InAppBrowserNotice() {
   const t = useTranslations("Auth.inApp");
-  const userAgent = useSyncExternalStore(subscribe, getUserAgent, getServerUserAgent);
+  const userAgent = useSyncExternalStore(noSubscribe, getUserAgent, getServerUserAgent);
   const [copied, setCopied] = useState(false);
   const [copyFailed, setCopyFailed] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -44,7 +44,7 @@ export function InAppBrowserNotice() {
       <p className="font-medium">{t("title", { app })}</p>
       <p className="text-muted-foreground">{t("body")}</p>
       <div className="flex flex-wrap gap-2">
-        <Button type="button" variant="outline" size="sm" onClick={copy}>
+        <Button type="button" variant="outline" size="sm" onClick={() => void copy()}>
           {copied ? t("copied") : t("copy")}
         </Button>
         {isAndroid(userAgent) && (
