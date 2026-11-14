@@ -35,7 +35,9 @@ function fakePromptEvent(type: string) {
   return { e, calls };
 }
 
-const run = (win: unknown) => vm.runInNewContext(installCaptureScript, { window: win });
+const run = (win: unknown): void => {
+  vm.runInNewContext(installCaptureScript, { window: win });
+};
 
 test("constants", () => {
   assert.equal(INSTALL_DISMISSED_KEY, "rv-install-dismissed");

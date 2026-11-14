@@ -24,7 +24,7 @@ export function InstallGuideDialog({
 }: {
   variant: GuideVariant;
   open: boolean;
-  onOpenChange(open: boolean): void;
+  onOpenChange: (open: boolean) => void;
 }) {
   const t = useTranslations("Install");
   const icons = ICONS[variant];

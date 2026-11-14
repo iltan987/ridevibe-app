@@ -15,20 +15,23 @@ export const NO_INSTALL: InstallSnapshot = { variant: "none", banner: false };
 
 export type InstallEnv = {
   window: Window;
-  now(): number;
-  setTimeout: typeof setTimeout;
-  clearTimeout: typeof clearTimeout;
+  now: () => number;
+  setTimeout: (callback: () => void, ms: number) => number;
+  clearTimeout: (id: number) => void;
 };
 
+// Arrow-function properties: callers may pass them on unbound (none of them uses `this`).
 export type InstallStore = {
-  subscribe(listener: () => void): () => void;
-  getSnapshot(): InstallSnapshot;
-  install(): Promise<void>;
-  dismiss(): void;
+  subscribe: (listener: () => void) => () => void;
+  getSnapshot: () => InstallSnapshot;
+  install: () => Promise<void>;
+  dismiss: () => void;
 };
 
 type InstallPromptEvent = { prompt(): Promise<void>; userChoice: Promise<{ outcome: string }> };
-type Nav = Navigator & {
+// lib.dom declares maxTouchPoints and userActivation, but older browsers lack them: kept optional.
+type Nav = Omit<Navigator, "maxTouchPoints" | "userActivation"> & {
+  maxTouchPoints?: number;
   standalone?: boolean;
   userActivation?: { hasBeenActive: boolean };
   getInstalledRelatedApps?: () => Promise<unknown[]>;
@@ -49,7 +52,7 @@ export function createInstallStore(env: InstallEnv): InstallStore {
   // still fail; `appinstalled` stores the flag once it really happened.
   let accepted = false;
   let androidFallback = false;
-  let watchTimer: ReturnType<typeof setTimeout> | undefined;
+  let watchTimer: number | undefined;
 
   const heldPrompt = () => (win as unknown as Record<string, InstallPromptEvent | null>)[INSTALL_PROMPT_PROP];
 
@@ -204,9 +207,9 @@ export function installStore(): InstallStore {
   singleton ??= createInstallStore({
     window,
     now: () => Date.now(),
-    // bound: browsers throw "Illegal invocation" when setTimeout is called with another `this`
-    setTimeout: window.setTimeout.bind(window) as typeof setTimeout,
-    clearTimeout: window.clearTimeout.bind(window) as typeof clearTimeout,
+    // called on `window`: browsers throw "Illegal invocation" when setTimeout is called with another `this`
+    setTimeout: (callback, ms) => window.setTimeout(callback, ms),
+    clearTimeout: (id) => window.clearTimeout(id),
   });
   return singleton;
 }

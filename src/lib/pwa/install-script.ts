@@ -9,16 +9,17 @@ export const INSTALL_INSTALLED_KEY = "rv-install-installed";
 export const INSTALL_CHANGE_EVENT = "rv-install-change";
 export const INSTALL_PROMPT_PROP = "__rvInstallPrompt";
 
-/**
- * Stringified with `toString()`, so it must be fully self-contained (arguments only; the vm test enforces this).
- * The `win` parameter is loosely typed on purpose: it carries a dynamic property and a guard flag.
- */
-function captureInstall(
-  win: Record<string, any>, // eslint-disable-line @typescript-eslint/no-explicit-any
-  promptProp: string,
-  installedKey: string,
-  changeEvent: string,
-): void {
+/** What `captureInstall` uses of `window`, plus the dynamic prompt property and a guard flag. */
+type CaptureWindow = Record<string, unknown> & {
+  __rvInstallCaptured?: boolean;
+  addEventListener(type: string, listener: (e: Event) => void): void;
+  dispatchEvent(event: Event): boolean;
+  localStorage: Pick<Storage, "removeItem" | "setItem">;
+  Event: typeof Event;
+};
+
+/** Stringified with `toString()`, so it must be fully self-contained (arguments only; the vm test enforces this). */
+function captureInstall(win: CaptureWindow, promptProp: string, installedKey: string, changeEvent: string): void {
   if (win.__rvInstallCaptured) return;
   win.__rvInstallCaptured = true;
   win.addEventListener("beforeinstallprompt", (e: Event) => {

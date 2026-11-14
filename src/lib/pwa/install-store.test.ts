@@ -26,9 +26,9 @@ type Opts = {
 function fakePrompt(outcome: "accepted" | "dismissed" | "throws") {
   const calls = { prompt: 0 };
   const ev = {
-    prompt: async () => {
+    prompt: () => {
       calls.prompt++;
-      if (outcome === "throws") throw new Error("already used");
+      return outcome === "throws" ? Promise.reject(new Error("already used")) : Promise.resolve();
     },
     userChoice: Promise.resolve({ outcome }),
   };
@@ -52,7 +52,7 @@ function makeEnv(o: Opts) {
   const win = Object.assign(target, {
     navigator,
     matchMedia: () => mql,
-    [INSTALL_PROMPT_PROP]: null as unknown,
+    [INSTALL_PROMPT_PROP]: null,
   }) as unknown as Record<string, unknown> & EventTarget;
   Object.defineProperty(win, "localStorage", {
     get() {
@@ -63,23 +63,26 @@ function makeEnv(o: Opts) {
       };
     },
   });
-  if (o.bipEvent) win.BeforeInstallPromptEvent = class {};
+  if (o.bipEvent) win.BeforeInstallPromptEvent = Event; // only its presence is checked
   const env: InstallEnv = {
     window: win as unknown as Window,
     now: () => clock,
-    setTimeout: ((fn: () => void, ms: number) => {
+    setTimeout: (fn, ms) => {
       const id = nextId++;
       timers.push({ at: clock + ms, fn, id });
       return id;
-    }) as unknown as typeof setTimeout,
-    clearTimeout: ((id: number) => {
+    },
+    clearTimeout: (id) => {
       timers = timers.filter((t) => t.id !== id);
-    }) as unknown as typeof clearTimeout,
+    },
   };
   function advance(ms: number) {
     const end = clock + ms;
     for (;;) {
-      const due = timers.filter((t) => t.at <= end).sort((a, b) => a.at - b.at)[0];
+      const due = timers
+        .filter((t) => t.at <= end)
+        .sort((a, b) => a.at - b.at)
+        .at(0);
       if (!due) break;
       timers = timers.filter((t) => t !== due);
       clock = due.at;
@@ -221,7 +224,7 @@ test("navigator.standalone === true counts as installed", () => {
 });
 
 test("getInstalledRelatedApps non-empty marks installed; rejection is ignored", async () => {
-  const a = makeEnv({ ua: IPHONE_UA, related: async () => [{ platform: "webapp" }] });
+  const a = makeEnv({ ua: IPHONE_UA, related: () => Promise.resolve([{ platform: "webapp" }]) });
   const storeA = createInstallStore(a.env);
   let calls = 0;
   storeA.subscribe(() => calls++);
@@ -230,7 +233,7 @@ test("getInstalledRelatedApps non-empty marks installed; rejection is ignored", 
   assert.equal(storeA.getSnapshot().variant, "none");
   assert.equal(calls, 1);
 
-  const b = makeEnv({ ua: IPHONE_UA, related: async () => Promise.reject(new Error("nope")) });
+  const b = makeEnv({ ua: IPHONE_UA, related: () => Promise.reject(new Error("nope")) });
   const storeB = createInstallStore(b.env);
   storeB.subscribe(() => {});
   await flush();

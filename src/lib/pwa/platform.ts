@@ -10,14 +10,14 @@ export const DISMISS_MS = 2_592_000_000; // 30 days
 export function detectInstallPlatform(env: { userAgent: string; maxTouchPoints: number }): InstallPlatform {
   const ua = env.userAgent;
   // iPadOS 13+ reports a Mac user agent; a Mac never has a touch screen, so touch points tell them apart.
-  const ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && env.maxTouchPoints > 2);
+  const ios = /iPhone|iPad|iPod/.test(ua) || (ua.includes("Macintosh") && env.maxTouchPoints > 2);
   if (ios) {
     return /CriOS|EdgiOS|FxiOS|OPT|YaBrowser|Ddg|Brave/.test(ua) ? "ios-other" : "ios-safari";
   }
   if (/Android/i.test(ua)) return "android";
   const version = /Version\/(\d+)/.exec(ua);
   if (
-    /Macintosh/.test(ua) &&
+    ua.includes("Macintosh") &&
     env.maxTouchPoints === 0 &&
     version !== null &&
     Number(version[1]) >= 17 &&

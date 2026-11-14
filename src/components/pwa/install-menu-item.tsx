@@ -6,7 +6,7 @@ import { useInstall } from "@/components/pwa/use-install";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 /** "Install the app" entry for the avatar menu; renders nothing when installing isn't possible or is already done. */
-export function InstallMenuItem({ onGuide }: { onGuide(): void }) {
+export function InstallMenuItem({ onGuide }: { onGuide: () => void }) {
   const { variant, install } = useInstall();
   const t = useTranslations("Install");
 
