@@ -263,3 +263,14 @@
   `<span className="block whitespace-nowrap">`; the accessible text keeps its space) and size it by viewport only
   (`text-[min(23.5vw,5.75rem)]`), checked in the final font at 320-1280 px. Code: `src/components/home/home-hero.tsx`.
 - **Source:** whole-branch review of `feat/home-redesign`; CLS measured with a throttled puppeteer run.
+
+### A decorative line over full-bleed photos: stacking and SVG alignment (2026-11-14)
+- **Symptom:** the home page's route line (an `absolute` span) was drawn across edge-to-edge photos on phones and
+  cut faces; a first mockup of a bend around the photo met the straight line ~1px off.
+- **Cause:** absolutely positioned elements paint above non-positioned blocks, so a plain `<Image>` can't cover the
+  line; an SVG stretched with `preserveAspectRatio="none"` to a width other than its viewBox scales its x coordinates.
+- **Do:** wrap the photo (and the bend strips) in a `relative z-10` element with an opaque background where the line
+  must be hidden; draw the bend in a fixed-size SVG (`viewBox` = CSS size, `overflow-visible`) and position it with the
+  same CSS variable as the line (`left: calc(var(--route-x) + 1.5px - 30px)`), so the ends meet exactly. Verify by
+  reading `getScreenCTM()` of the path ends against the line's centre.
+- **Source:** iltan's review of the live redesign; measured with puppeteer (`src/components/home/route.tsx`).

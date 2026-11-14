@@ -26,7 +26,9 @@ actions, teal for positive/status states, cream text, Saira type.
   the unused options.
 
 The home page's route line (turquoise, `status` / `status-foreground`) and the "34 RV 2026" plate are part of the
-brand vocabulary; mockups: `docs/design/mockups/home-rota-34*.html`.
+brand vocabulary; mockups: `docs/design/mockups/home-rota-34*.html`. The line never crosses a photo: on phones it
+bends off the left edge above each edge-to-edge photo and back in below it (iltan, 2026-11-14; `RouteBend` in
+`src/components/home/route.tsx`).
 
 ## Fallback directions
 

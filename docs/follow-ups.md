@@ -468,9 +468,9 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   browser console.
 - **Home redesign review minors** (2026-11-14, home redesign review) — polish, none urgent:
   - `src/components/home/route.tsx`: `-mr-5` mirrors `Route`'s `pr-5` (expose a `--route-pr` custom property); the
-    line colour pair is repeated in `DOT.place` and `RoutePhoto` instead of reusing `LINE`; `RouteStop`'s `as` is typed
-    `ElementType`; `RoutePhoto`'s fixed `md:h-130` can leave space under the photo; its `lg` size says 400px vs a ~420px
-    column.
+    line colour pair is repeated in `DOT.place` and the bend's `text-*` classes instead of one shared constant;
+    `RouteStop`'s `as` is typed `ElementType`; `RoutePhoto`'s fixed `md:h-130` can leave space under the photo; its
+    `lg` size says 400px vs a ~420px column.
   - `home-who.tsx`: ruler labels laid out with `justify-between` drift off the even-percentage ticks; redundant
     `aria-hidden` inside `role="img"`.
   - `home-closing.tsx`: fixed `md:h-155` could clip text at large font scales.

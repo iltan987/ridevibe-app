@@ -53,7 +53,30 @@ export function RouteStop({
   );
 }
 
-// Phone: full-bleed photo with the line drawn over it. md+: an ordinary column image.
+// The line's bend around a phone photo: "out" leaves the screen to the left just above the photo, "in" comes back
+// just below it. Local coordinates put the line's centre at x=30; the SVG is shifted so that x=30 sits on
+// `--route-x` + 1.5px (half the 3px line), so both ends meet the straight line exactly. The strip's background hides
+// the straight line behind it.
+const BEND = {
+  out: "M30 0 C30 30 1.5 26 -4.5 56",
+  in: "M-4.5 0 C1.5 30 30 26 30 56",
+} as const;
+
+function RouteBend({ direction }: { direction: keyof typeof BEND }) {
+  return (
+    <div aria-hidden className="relative h-14 bg-background md:hidden">
+      <svg
+        viewBox="0 0 60 56"
+        className="absolute top-0 left-[calc(var(--route-x)+1.5px-30px)] h-14 w-15 overflow-visible text-status-foreground dark:text-status"
+      >
+        <path d={BEND[direction]} fill="none" stroke="currentColor" strokeWidth={3} />
+      </svg>
+    </div>
+  );
+}
+
+// Phone: full-bleed photo; the line bends off-screen above it and back in below it, so it never crosses a face.
+// md+: an ordinary column image beside the line. `z-10` lifts the photo and the bends above the straight line.
 export function RoutePhoto({
   src,
   alt,
@@ -66,12 +89,8 @@ export function RoutePhoto({
   sizes: string;
 }) {
   return (
-    <div
-      className={cn(
-        "relative -mr-5 -ml-(--route-pad) before:absolute before:inset-y-0 before:left-(--route-x) before:z-10 before:w-[3px] before:content-[''] md:mr-0 md:ml-0 md:before:hidden",
-        "before:bg-status-foreground dark:before:bg-status",
-      )}
-    >
+    <div className="relative z-10 -mr-5 -ml-(--route-pad) md:mr-0 md:ml-0">
+      <RouteBend direction="out" />
       <Image
         src={src}
         alt={alt}
@@ -79,6 +98,7 @@ export function RoutePhoto({
         placeholder="blur"
         className={cn("h-75 w-full object-cover md:h-130 md:rounded-sm", className)}
       />
+      <RouteBend direction="in" />
     </div>
   );
 }
