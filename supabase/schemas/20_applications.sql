@@ -519,7 +519,7 @@ $$;
 -- The account an application is linked to (applications.view): id, name,
 -- sign-in email and status, so staff can check *which* account an approval
 -- activates (anyone signed in can submit someone else's name and phone). Zero
--- rows when the application is unlinked or doesn't exist. Security definer:
+-- rows when the application is unlinked, doesn't exist or its account is being deleted. Security definer:
 -- profiles RLS hides pending/inactive accounts and member_contacts from staff
 -- without members.manage.
 create or replace function public.application_account(application_id uuid)
@@ -539,7 +539,8 @@ begin
   from public.applications a
   join public.profiles p on p.id = a.profile_id
   left join public.member_contacts c on c.profile_id = p.id
-  where a.id = application_account.application_id;
+  where a.id = application_account.application_id
+    and p.status <> 'deleting';
 end;
 $$;
 
@@ -597,7 +598,8 @@ begin
       )
   )
   from unnest(profile_ids) as ids (pid)
-  left join public.member_contacts c on c.profile_id = ids.pid;
+  left join public.member_contacts c on c.profile_id = ids.pid
+  where not exists (select 1 from public.profiles p where p.id = ids.pid and p.status = 'deleting');
 end;
 $$;
 

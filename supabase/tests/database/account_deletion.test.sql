@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(57);
+select plan(61);
 
 -- Fixtures (postgres bypasses RLS). Ids 0000…07a1–07a9; every query is scoped to them.
 -- 07a7 active (constraint checks).
@@ -249,6 +249,22 @@ select is((select count(*)::int from public.applications where id = '00000000-00
   'the linked rejected application stays visible');
 with u as (update public.applications set admin_notes = 'x' where id = '00000000-0000-0000-0000-0000000007d1' returning 1)
 select is((select count(*)::int from u), 0, 'staff cannot update a hidden application');
+reset role;
+
+-- Staff RPCs skip the deleting account
+select pg_temp.login('00000000-0000-0000-0000-0000000007b3');
+select is((select count(*)::int from public.application_account('00000000-0000-0000-0000-0000000007d1')), 0,
+  'application_account returns nothing for an application linked to a deleting account');
+select is((select count(*)::int from public.application_account('00000000-0000-0000-0000-0000000007d2')), 0,
+  'application_account returns nothing for a rejected application of a deleting account either');
+select is(
+  (select array_agg(profile_id order by profile_id) from public.pending_application_flags(array[
+    '00000000-0000-0000-0000-0000000007b1', '00000000-0000-0000-0000-0000000007b2']::uuid[])),
+  array['00000000-0000-0000-0000-0000000007b2']::uuid[],
+  'pending_application_flags returns no row for a deleting account');
+select is((select count(*)::int from public.linkable_accounts(null, null, null, true)
+           where id = '00000000-0000-0000-0000-0000000007b1'), 0,
+  'linkable_accounts never lists a deleting account');
 reset role;
 
 -- 7b1 reads its own row
