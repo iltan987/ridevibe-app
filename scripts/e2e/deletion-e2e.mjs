@@ -27,9 +27,14 @@ const check = (name, ok, extra = "") => {
   if (!ok) fails++;
   console.log(`${ok ? "PASS" : "FAIL"} ${name}${extra ? " — " + extra : ""}`);
 };
-const sql = (q) => execFileSync("docker", ["exec", DB, "psql", "-U", "postgres", "-v", "ON_ERROR_STOP=1", "-tA", "-c", q], { encoding: "utf8" }).trim();
+const sql = (q) =>
+  execFileSync("docker", ["exec", DB, "psql", "-U", "postgres", "-v", "ON_ERROR_STOP=1", "-tA", "-c", q], {
+    encoding: "utf8",
+  }).trim();
 
-const ID = Object.fromEntries(["admin", "member"].map((n) => [n, sql(`select id from auth.users where email = '${n}@test.local'`)]));
+const ID = Object.fromEntries(
+  ["admin", "member"].map((n) => [n, sql(`select id from auth.users where email = '${n}@test.local'`)]),
+);
 if (!ID.admin || !ID.member) throw new Error("fixtures admin@test.local / member@test.local missing (see the header)");
 const MEMBER_EMAIL = "member@test.local";
 const MEMBER_NAME = "Test Üye";
@@ -39,7 +44,8 @@ function restore() {
   sql(`update profiles set status = status_before_deletion, deletion_requested_at = null, status_before_deletion = null
        where id in ('${ID.admin}', '${ID.member}') and status = 'deleting'`);
 }
-const memberRow = () => sql(`select status || '|' || coalesce(status_before_deletion::text, '') || '|' ||
+const memberRow = () =>
+  sql(`select status || '|' || coalesce(status_before_deletion::text, '') || '|' ||
   coalesce(to_char(deletion_requested_at, 'YYYY-MM-DD'), '') from profiles where id = '${ID.member}'`);
 
 async function go(page, p) {
@@ -62,11 +68,17 @@ const hasText = (page, re, ms = 8000) =>
   until(page, ([src, flags]) => new RegExp(src, flags).test(document.body.innerText), [re.source, re.flags], ms);
 /** Inner text of the visible alert dialog, or null. */
 const dialogText = (page) =>
-  page.evaluate(() => [...document.querySelectorAll("[role=alertdialog]")].find((e) => e.getBoundingClientRect().width > 0)?.innerText ?? null);
+  page.evaluate(
+    () =>
+      [...document.querySelectorAll("[role=alertdialog]")].find((e) => e.getBoundingClientRect().width > 0)
+        ?.innerText ?? null,
+  );
 async function find(page, selector, text) {
   const h = await page.evaluateHandle(
     (selector, text) =>
-      [...document.querySelectorAll(selector)].find((e) => e.getBoundingClientRect().width > 0 && e.textContent.trim() === text) ?? null,
+      [...document.querySelectorAll(selector)].find(
+        (e) => e.getBoundingClientRect().width > 0 && e.textContent.trim() === text,
+      ) ?? null,
     selector,
     text,
   );
@@ -86,7 +98,8 @@ const purgeDate = (locale) => {
   const date = new Date(Number(requested) * 1000 + 14 * 24 * 60 * 60 * 1000);
   return new Intl.DateTimeFormat(locale, { dateStyle: "long", timeZone: "Europe/Istanbul" }).format(date);
 };
-const authCookies = async (page) => (await page.cookies(BASE)).filter((c) => c.name.startsWith("sb-127-auth-token")).length;
+const authCookies = async (page) =>
+  (await page.cookies(BASE)).filter((c) => c.name.startsWith("sb-127-auth-token")).length;
 
 /** Whether the admin's /admin/members (all tabs are in the payload) and /members show the member. */
 async function adminSees(page) {
@@ -110,21 +123,36 @@ try {
   // 0. Positive control: the admin sees the member everywhere before the deletion.
   {
     const s = await adminSees(admin);
-    check("before: admin sees the member on /admin/members and /members", s.staff && s.staffRow && s.directory, JSON.stringify(s));
+    check(
+      "before: admin sees the member on /admin/members and /members",
+      s.staff && s.staffRow && s.directory,
+      JSON.stringify(s),
+    );
   }
 
   // 1. Last-admin guard (only meaningful when admin@ is the only active admin).
-  const admins = Number(sql("select count(*) from profiles p join roles r on r.id = p.role_id where r.is_admin and p.status = 'active'"));
+  const admins = Number(
+    sql("select count(*) from profiles p join roles r on r.id = p.role_id where r.is_admin and p.status = 'active'"),
+  );
   if (admins === 1) {
     await go(admin, "/account");
     await click(admin, "button", "Hesabımı sil");
-    await until(admin, () => [...document.querySelectorAll("[role=alertdialog]")].some((e) => e.getBoundingClientRect().width > 0));
+    await until(admin, () =>
+      [...document.querySelectorAll("[role=alertdialog]")].some((e) => e.getBoundingClientRect().width > 0),
+    );
     await click(admin, "[role=alertdialog] button", "Hesabımı sil");
     const msg = await hasText(admin, /Kulübün tek yöneticisisin/);
     const status = sql(`select status from profiles where id = '${ID.admin}'`);
-    check("last admin: dialog says to hand over the admin role, status unchanged", Boolean(msg) && status === "active", status);
+    check(
+      "last admin: dialog says to hand over the admin role, status unchanged",
+      Boolean(msg) && status === "active",
+      status,
+    );
     await click(admin, "[role=alertdialog] button", "Vazgeç");
-    const closed = await until(admin, () => ![...document.querySelectorAll("[role=alertdialog]")].some((e) => e.getBoundingClientRect().width > 0));
+    const closed = await until(
+      admin,
+      () => ![...document.querySelectorAll("[role=alertdialog]")].some((e) => e.getBoundingClientRect().width > 0),
+    );
     check("last admin: Vazgeç closes the dialog", Boolean(closed));
   } else {
     console.log(`SKIP last admin: ${admins} active admins`);
@@ -139,11 +167,16 @@ try {
   await go(tabA, "/account");
   await tabA.bringToFront();
   check("member: delete card on /account", await click(tabA, "button", "Hesabımı sil"));
-  await until(tabA, () => [...document.querySelectorAll("[role=alertdialog]")].some((e) => e.getBoundingClientRect().width > 0));
+  await until(tabA, () =>
+    [...document.querySelectorAll("[role=alertdialog]")].some((e) => e.getBoundingClientRect().width > 0),
+  );
   const confirmText = (await dialogText(tabA)) ?? "";
   check(
     "member: dialog lists deleted, kept, grace and club lines (no inactive line)",
-    /Silinecekler:/.test(confirmText) && /Kalanlar:/.test(confirmText) && /14 gün/.test(confirmText) && /WhatsApp/.test(confirmText) &&
+    /Silinecekler:/.test(confirmText) &&
+      /Kalanlar:/.test(confirmText) &&
+      /14 gün/.test(confirmText) &&
+      /WhatsApp/.test(confirmText) &&
       !/Üyeliğin sona erdiği/.test(confirmText),
     confirmText.replace(/\s+/g, " ").slice(0, 120),
   );
@@ -156,7 +189,11 @@ try {
   });
   const done = await hasText(tabA, /Hesabın silinecek/, 10000);
   const row = memberRow();
-  check("member: done dialog after confirm; DB status deleting (was active)", Boolean(done) && row.startsWith("deleting|active|"), row);
+  check(
+    "member: done dialog after confirm; DB status deleting (was active)",
+    Boolean(done) && row.startsWith("deleting|active|"),
+    row,
+  );
   const expected = purgeDate("tr");
   check("member: done dialog shows the purge date", ((await dialogText(tabA)) ?? "").includes(expected), expected);
   await sleep(2000);
@@ -168,8 +205,17 @@ try {
   );
   await shot(tabA, "done");
   await click(tabA, "[role=alertdialog] button", "Ana sayfaya dön");
-  const home = await until(tabA, () => location.pathname === "/" && /Giriş Yap/.test(document.body.innerText), null, 10000);
-  check("member: 'Ana sayfaya dön' lands on / signed out (no auth cookies)", Boolean(home) && (await authCookies(tabA)) === 0, tabA.url());
+  const home = await until(
+    tabA,
+    () => location.pathname === "/" && /Giriş Yap/.test(document.body.innerText),
+    null,
+    10000,
+  );
+  check(
+    "member: 'Ana sayfaya dön' lands on / signed out (no auth cookies)",
+    Boolean(home) && (await authCookies(tabA)) === 0,
+    tabA.url(),
+  );
 
   // 3. The other tab follows (cross-tab AuthSync → refresh → signed out → sign-in page).
   await tabB.bringToFront();
@@ -187,19 +233,30 @@ try {
   await tabB.close();
   const tabC = await newPage(memberCtx);
   const landed = await signInViaCallback(tabC, MEMBER_EMAIL, "/en/members", BASE);
-  check("recovery: callback with next=/en/members lands on /en/account", new URL(landed).pathname === "/en/account", landed);
+  check(
+    "recovery: callback with next=/en/members lands on /en/account",
+    new URL(landed).pathname === "/en/account",
+    landed,
+  );
   await sleep(400);
   const recovery = await hasText(tabC, /Your account will be deleted/);
   const body = await tabC.evaluate(() => document.body.innerText);
   check(
     "recovery: English card with date, Restore and Continue deleting, nothing else of the account page",
-    Boolean(recovery) && body.includes(purgeDate("en")) && /Restore my account/.test(body) && /Continue deleting/.test(body) &&
+    Boolean(recovery) &&
+      body.includes(purgeDate("en")) &&
+      /Restore my account/.test(body) &&
+      /Continue deleting/.test(body) &&
       !/Delete my account/.test(body),
   );
   await shot(tabC, "recovery");
   await click(tabC, "button", "Restore my account");
   const restored = await hasText(tabC, /Active member/, 10000);
-  check("recovery: Restore shows 'Active member'; DB status active, columns cleared", Boolean(restored) && memberRow() === "active||", memberRow());
+  check(
+    "recovery: Restore shows 'Active member'; DB status active, columns cleared",
+    Boolean(restored) && memberRow() === "active||",
+    memberRow(),
+  );
   check("recovery: still on /en/account", new URL(tabC.url()).pathname === "/en/account", tabC.url());
 
   // 6. Visible to the admin again.
@@ -216,6 +273,9 @@ try {
     await browser.close();
   }
 }
-check("fixtures end active", memberRow() === "active||" && sql(`select status from profiles where id = '${ID.admin}'`) === "active");
+check(
+  "fixtures end active",
+  memberRow() === "active||" && sql(`select status from profiles where id = '${ID.admin}'`) === "active",
+);
 console.log(fails ? `${fails} FAILED` : "ALL PASSED");
 process.exit(fails ? 1 : 0);

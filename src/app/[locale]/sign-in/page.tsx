@@ -28,7 +28,7 @@ export default function SignInPage({ searchParams }: PageProps<"/[locale]/sign-i
       <Card>
         <CardHeader>
           <ClubBadge sizes="96px" className="mx-auto mb-2 w-24" />
-          <CardTitle className="heading text-center text-2xl">{t("signInTitle")}</CardTitle>
+          <CardTitle className="text-center heading text-2xl">{t("signInTitle")}</CardTitle>
           <CardDescription className="text-center">{t("signInDescription")}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
@@ -54,11 +54,7 @@ export default function SignInPage({ searchParams }: PageProps<"/[locale]/sign-i
   );
 }
 
-async function SignInForm({
-  searchParams,
-}: {
-  searchParams: PageProps<"/[locale]/sign-in">["searchParams"];
-}) {
+async function SignInForm({ searchParams }: { searchParams: PageProps<"/[locale]/sign-in">["searchParams"] }) {
   const [params, locale, user, t] = await Promise.all([
     searchParams,
     getLocale(),

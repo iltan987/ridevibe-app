@@ -37,7 +37,10 @@ export function InAppBrowserNotice() {
   }
 
   return (
-    <div role="alert" className="flex flex-col gap-3 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm">
+    <div
+      role="alert"
+      className="flex flex-col gap-3 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm"
+    >
       <p className="font-medium">{t("title", { app })}</p>
       <p className="text-muted-foreground">{t("body")}</p>
       <div className="flex flex-wrap gap-2">

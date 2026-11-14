@@ -83,10 +83,18 @@ export function ApplicationReviewPanel({
   function onConfirm() {
     if (!confirm) return;
     if (confirm.kind === "delete") {
-      run("status", () => deleteApplication(id), () => router.replace("/admin/applications"));
+      run(
+        "status",
+        () => deleteApplication(id),
+        () => router.replace("/admin/applications"),
+      );
     } else {
       const next = confirm.kind === "reopen" ? "contacted" : confirm.kind;
-      run("status", () => setApplicationStatus(id, next), () => setConfirm(null));
+      run(
+        "status",
+        () => setApplicationStatus(id, next),
+        () => setConfirm(null),
+      );
     }
   }
 
@@ -99,7 +107,11 @@ export function ApplicationReviewPanel({
   // Which account an approval activates: anyone signed in can submit someone
   // else's name and phone, so show the sign-in email and flag a mismatch.
   const accountName = account ? [account.fullName, account.email].filter(Boolean).join(" · ") : "";
-  const linkedLabel = linked ? (accountName ? t("review.account", { account: accountName }) : t("review.linkedUnknown")) : null;
+  const linkedLabel = linked
+    ? accountName
+      ? t("review.account", { account: accountName })
+      : t("review.linkedUnknown")
+    : null;
   const mismatchedEmail = account?.email && !sameEmail(application.email, account.email) ? account.email : null;
   // In the approve dialog, the email identifies the account best.
   const dialogAccount = account?.email || account?.fullName || "";
@@ -114,21 +126,23 @@ export function ApplicationReviewPanel({
       </p>
     ));
 
-  const dialog = confirm && {
-    approved: {
-      title: t("review.approveTitle"),
-      body: !linked
-        ? t("review.approveBody", { name: application.name, email: application.email })
-        : !dialogAccount
-          ? t("review.approveBodyLinkedUnknown", { name: application.name })
-          : account?.status === "inactive"
-            ? t("review.approveBodyLinkedInactive", { account: dialogAccount })
-            : t("review.approveBodyLinked", { name: application.name, account: dialogAccount }),
-    },
-    rejected: { title: t("review.rejectTitle"), body: t("review.rejectBody", { name: application.name }) },
-    reopen: { title: t("review.reopen"), body: t("review.reopenBody") },
-    delete: { title: t("review.deleteTitle"), body: t("review.deleteBody") },
-  }[confirm.kind];
+  const dialog =
+    confirm &&
+    {
+      approved: {
+        title: t("review.approveTitle"),
+        body: !linked
+          ? t("review.approveBody", { name: application.name, email: application.email })
+          : !dialogAccount
+            ? t("review.approveBodyLinkedUnknown", { name: application.name })
+            : account?.status === "inactive"
+              ? t("review.approveBodyLinkedInactive", { account: dialogAccount })
+              : t("review.approveBodyLinked", { name: application.name, account: dialogAccount }),
+      },
+      rejected: { title: t("review.rejectTitle"), body: t("review.rejectBody", { name: application.name }) },
+      reopen: { title: t("review.reopen"), body: t("review.reopenBody") },
+      delete: { title: t("review.deleteTitle"), body: t("review.deleteBody") },
+    }[confirm.kind];
 
   return (
     <Card aria-busy={isPending} data-skeleton-result="detail-review">
@@ -157,7 +171,12 @@ export function ApplicationReviewPanel({
                 <Button disabled={isPending} onClick={() => setConfirm({ kind: "approved" })}>
                   {t("review.approve")}
                 </Button>
-                <Button variant="outline" className="text-destructive" disabled={isPending} onClick={() => setConfirm({ kind: "rejected" })}>
+                <Button
+                  variant="outline"
+                  className="text-destructive"
+                  disabled={isPending}
+                  onClick={() => setConfirm({ kind: "rejected" })}
+                >
                   {t("review.reject")}
                 </Button>
               </>
@@ -179,7 +198,10 @@ export function ApplicationReviewPanel({
               <>
                 <p className="text-sm font-medium wrap-anywhere">{linkedLabel}</p>
                 {mismatchedEmail && (
-                  <p role="note" className="flex gap-2 rounded-lg border border-sun/40 bg-sun/10 p-3 text-sm wrap-anywhere">
+                  <p
+                    role="note"
+                    className="flex gap-2 rounded-lg border border-sun/40 bg-sun/10 p-3 text-sm wrap-anywhere"
+                  >
                     <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
                     <span>
                       {t(decided ? "review.emailMismatchDecided" : "review.emailMismatch", {
@@ -193,7 +215,9 @@ export function ApplicationReviewPanel({
             ) : (
               <p className="text-sm text-muted-foreground">
                 {/* Only those who can link get pointed to "Link to account". */}
-                {t(status === "approved" ? (canLink ? "review.notLinked" : "review.notLinkedNoLink") : "link.notLinked")}
+                {t(
+                  status === "approved" ? (canLink ? "review.notLinked" : "review.notLinkedNoLink") : "link.notLinked",
+                )}
               </p>
             )}
             {(inviteHref || canLink) && (
@@ -203,7 +227,13 @@ export function ApplicationReviewPanel({
                     <MessageCircle aria-hidden /> {t("review.sendInvite")}
                   </a>
                 )}
-                {canLink && <LinkAccountDialog applicationId={id} applicationName={application.name} approved={status === "approved"} />}
+                {canLink && (
+                  <LinkAccountDialog
+                    applicationId={id}
+                    applicationName={application.name}
+                    approved={status === "approved"}
+                  />
+                )}
               </div>
             )}
           </div>
@@ -218,7 +248,13 @@ export function ApplicationReviewPanel({
           <form onSubmit={onSaveNotes} className="flex flex-col gap-2">
             <Field>
               <FieldLabel htmlFor="admin-notes">{t("review.notes")}</FieldLabel>
-              <Textarea id="admin-notes" name="notes" defaultValue={application.notes ?? ""} maxLength={4000} rows={4} />
+              <Textarea
+                id="admin-notes"
+                name="notes"
+                defaultValue={application.notes ?? ""}
+                maxLength={4000}
+                rows={4}
+              />
               <FieldDescription>{t("review.notesHint")}</FieldDescription>
             </Field>
             <div className="flex flex-wrap items-center gap-3">
@@ -238,7 +274,12 @@ export function ApplicationReviewPanel({
         )}
 
         {canDelete && (
-          <Button variant="ghost" className="self-start text-destructive" disabled={isPending} onClick={() => setConfirm({ kind: "delete" })}>
+          <Button
+            variant="ghost"
+            className="self-start text-destructive"
+            disabled={isPending}
+            onClick={() => setConfirm({ kind: "delete" })}
+          >
             <Trash2 aria-hidden /> {t("review.delete")}
           </Button>
         )}

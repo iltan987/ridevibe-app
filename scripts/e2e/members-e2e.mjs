@@ -45,7 +45,8 @@ const check = (name, ok, extra = "") => {
   if (!ok) fails++;
   console.log(`${ok ? "PASS" : "FAIL"} ${name}${extra ? " — " + extra : ""}`);
 };
-const sql = (q) => execFileSync("docker", ["exec", DB, "psql", "-U", "postgres", "-tA", "-c", q], { encoding: "utf8" }).trim();
+const sql = (q) =>
+  execFileSync("docker", ["exec", DB, "psql", "-U", "postgres", "-tA", "-c", q], { encoding: "utf8" }).trim();
 
 const browser = await launch();
 
@@ -81,7 +82,9 @@ async function find(page, selector, text = "") {
   const h = await page.evaluateHandle(
     (selector, text) =>
       [...document.querySelectorAll(selector)].find(
-        (e) => e.getBoundingClientRect().width > 0 && (!text || new RegExp(text).test(e.textContent + (e.getAttribute("aria-label") ?? ""))),
+        (e) =>
+          e.getBoundingClientRect().width > 0 &&
+          (!text || new RegExp(text).test(e.textContent + (e.getAttribute("aria-label") ?? ""))),
       ) ?? null,
     selector,
     text,
@@ -102,9 +105,14 @@ async function typeInto(el, value) {
   await el.press("Backspace");
   await el.type(value);
 }
-const hasText = (page, re) => until(page, ([src, flags]) => new RegExp(src, flags).test(document.body.innerText), [re.source, re.flags], 8000);
+const hasText = (page, re) =>
+  until(page, ([src, flags]) => new RegExp(src, flags).test(document.body.innerText), [re.source, re.flags], 8000);
 const dialogGone = (page, role = "dialog") =>
-  until(page, (r) => ![...document.querySelectorAll(`[role=${r}]`)].some((e) => e.getBoundingClientRect().width > 0), role);
+  until(
+    page,
+    (r) => ![...document.querySelectorAll(`[role=${r}]`)].some((e) => e.getBoundingClientRect().width > 0),
+    role,
+  );
 const shot = (page, name) => page.screenshot({ path: path.join(DIR, `members-${name}.png`), fullPage: true });
 /** The switch inside the visible label with this text. */
 const switchFor = (page, text) =>
@@ -117,7 +125,9 @@ const switchFor = (page, text) =>
   );
 const memberCard = (page, name) =>
   page.evaluate(
-    (name) => [...document.querySelectorAll("li[data-skeleton-result=members-row]")].find((li) => li.textContent.includes(name))?.innerText ?? null,
+    (name) =>
+      [...document.querySelectorAll("li[data-skeleton-result=members-row]")].find((li) => li.textContent.includes(name))
+        ?.innerText ?? null,
     name,
   );
 /** Clicks the "Kaydet" submit of the visible form holding `inner`: a selector, or "text:<label text>" for a switch. */
@@ -126,9 +136,15 @@ const saveForm = async (page, inner) => {
     await page.evaluateHandle((inner) => {
       const vis = (e) => e.getBoundingClientRect().width > 0;
       const el = inner.startsWith("text:")
-        ? [...document.querySelectorAll("label")].filter((l) => vis(l) && l.textContent.includes(inner.slice(5))).map((l) => l.querySelector("[role=switch]"))[0]
+        ? [...document.querySelectorAll("label")]
+            .filter((l) => vis(l) && l.textContent.includes(inner.slice(5)))
+            .map((l) => l.querySelector("[role=switch]"))[0]
         : [...document.querySelectorAll(inner)].find(vis);
-      return [...(el?.closest("form")?.querySelectorAll("button[type=submit]") ?? [])].find((b) => b.textContent.trim() === "Kaydet") ?? null;
+      return (
+        [...(el?.closest("form")?.querySelectorAll("button[type=submit]") ?? [])].find(
+          (b) => b.textContent.trim() === "Kaydet",
+        ) ?? null
+      );
     }, inner)
   ).asElement();
   if (!handle) return false;
@@ -137,16 +153,30 @@ const saveForm = async (page, inner) => {
   return true;
 };
 
-const total = (page) => page.evaluate(() => [...document.querySelectorAll("[data-skeleton-result=members-total] p")].find((p) => p.getBoundingClientRect().width > 0)?.textContent ?? null);
+const total = (page) =>
+  page.evaluate(
+    () =>
+      [...document.querySelectorAll("[data-skeleton-result=members-total] p")].find(
+        (p) => p.getBoundingClientRect().width > 0,
+      )?.textContent ?? null,
+  );
 /** Names on the visible cards. */
 const names = (page) =>
-  page.evaluate(() => [...document.querySelectorAll("li[data-skeleton-result=members-row] p.font-medium")].filter((p) => p.getBoundingClientRect().width > 0).map((p) => p.textContent));
+  page.evaluate(() =>
+    [...document.querySelectorAll("li[data-skeleton-result=members-row] p.font-medium")]
+      .filter((p) => p.getBoundingClientRect().width > 0)
+      .map((p) => p.textContent),
+  );
 /** Page numbers, current page and range line of the visible pager. */
 const pagerState = (page) =>
   page.evaluate(() => {
-    const nav = [...document.querySelectorAll("nav[data-skeleton-result=pager]")].find((n) => n.getBoundingClientRect().width > 0);
+    const nav = [...document.querySelectorAll("nav[data-skeleton-result=pager]")].find(
+      (n) => n.getBoundingClientRect().width > 0,
+    );
     return {
-      pages: [...(nav?.querySelectorAll("[aria-label^='Sayfa '], [aria-label^='Page ']") ?? [])].map((b) => b.textContent).join(),
+      pages: [...(nav?.querySelectorAll("[aria-label^='Sayfa '], [aria-label^='Page ']") ?? [])]
+        .map((b) => b.textContent)
+        .join(),
       current: nav?.querySelector("[aria-current=page]")?.textContent ?? null,
       range: nav?.querySelector("p")?.textContent ?? null,
     };
@@ -159,8 +189,11 @@ const trackFrames = (page) =>
     const tick = () => {
       const f = window.__frames;
       f.frames++;
-      if ([...document.querySelectorAll("[data-skeleton]")].some((e) => e.getBoundingClientRect().width > 0)) f.skeleton++;
-      const value = [...document.querySelectorAll("input[type=search]")].find((e) => e.getBoundingClientRect().width > 0)?.value;
+      if ([...document.querySelectorAll("[data-skeleton]")].some((e) => e.getBoundingClientRect().width > 0))
+        f.skeleton++;
+      const value = [...document.querySelectorAll("input[type=search]")].find(
+        (e) => e.getBoundingClientRect().width > 0,
+      )?.value;
       if (value !== undefined && value !== f.values.at(-1)) f.values.push(value);
       requestAnimationFrame(tick);
     };
@@ -177,9 +210,14 @@ const nextFrame = (page) =>
           const nav = [...document.querySelectorAll("nav[data-skeleton-result=pager]")].find(vis);
           resolve({
             value: [...document.querySelectorAll("input[type=search]")].find(vis)?.value ?? null,
-            names: [...document.querySelectorAll("li[data-skeleton-result=members-row] p.font-medium")].filter(vis).map((p) => p.textContent),
-            total: [...document.querySelectorAll("[data-skeleton-result=members-total] p")].find(vis)?.textContent ?? null,
-            chip: [...document.querySelectorAll("[data-skeleton-result=members-chips] button[aria-pressed=true]")].find(vis)?.firstChild?.textContent ?? null,
+            names: [...document.querySelectorAll("li[data-skeleton-result=members-row] p.font-medium")]
+              .filter(vis)
+              .map((p) => p.textContent),
+            total:
+              [...document.querySelectorAll("[data-skeleton-result=members-total] p")].find(vis)?.textContent ?? null,
+            chip:
+              [...document.querySelectorAll("[data-skeleton-result=members-chips] button[aria-pressed=true]")].find(vis)
+                ?.firstChild?.textContent ?? null,
             page: nav?.querySelector("[aria-current=page]")?.textContent ?? (nav ? "1" : null),
             range: nav?.querySelector("p")?.textContent ?? null,
           });
@@ -207,7 +245,9 @@ const NOBIRTH_ID = sql("select id from auth.users where email = 'nobirth@test.lo
 // Start from a known state (re-runs).
 sql(`delete from member_motorcycles where profile_id = '${MEMBER_ID}'`);
 sql(`update profiles set district = 'Kadıköy', side = 'asian' where id = '${MEMBER_ID}'`);
-sql(`update member_details set instagram = null, show_instagram = false, show_birthday = false, consent_photos = false, consent_photos_at = null, consent_photos_version = null where profile_id = '${MEMBER_ID}'`);
+sql(
+  `update member_details set instagram = null, show_instagram = false, show_birthday = false, consent_photos = false, consent_photos_at = null, consent_photos_version = null where profile_id = '${MEMBER_ID}'`,
+);
 sql(`update member_details set birth_date = null, show_birthday = true where profile_id = '${NOBIRTH_ID}'`); // the default (opt-out)
 
 // 1 anonymous
@@ -215,7 +255,11 @@ sql(`update member_details set birth_date = null, show_birthday = true where pro
   const { ctx, page } = await fresh();
   await go(page, "/members");
   const url = page.url();
-  check("anonymous /members -> sign-in with next", url.includes("/sign-in") && url.includes("next=%2Fmembers"), url.replace(BASE, ""));
+  check(
+    "anonymous /members -> sign-in with next",
+    url.includes("/sign-in") && url.includes("next=%2Fmembers"),
+    url.replace(BASE, ""),
+  );
   await ctx.close();
 }
 
@@ -238,8 +282,16 @@ sql(`update member_details set birth_date = null, show_birthday = true where pro
   const text = await bodyText(page);
   check("directory: total shown", (await total(page)) === "29 üye", await total(page));
   check("directory: first page has 25 cards", (await names(page)).length === 25, String((await names(page)).length));
-  check("directory: side chips with counts", /Tümü\s*29/.test(text) && /Anadolu\s*1/.test(text) && /Avrupa\s*1/.test(text), text.match(/Tümü[\s\S]{0,40}/)?.[0]);
-  check("directory: pager shows pages 1-2 and the range", (await pagerState(page)).pages === "1,2" && (await pagerState(page)).range === "1–25 / 29 üye", JSON.stringify(await pagerState(page)));
+  check(
+    "directory: side chips with counts",
+    /Tümü\s*29/.test(text) && /Anadolu\s*1/.test(text) && /Avrupa\s*1/.test(text),
+    text.match(/Tümü[\s\S]{0,40}/)?.[0],
+  );
+  check(
+    "directory: pager shows pages 1-2 and the range",
+    (await pagerState(page)).pages === "1,2" && (await pagerState(page)).range === "1–25 / 29 üye",
+    JSON.stringify(await pagerState(page)),
+  );
   const fit = await pagerFit(page);
   check("pager at 390px: one row, no horizontal overflow", fit.oneRow && fit.fits, JSON.stringify(fit));
   await shot(page, "directory");
@@ -251,11 +303,27 @@ sql(`update member_details set birth_date = null, show_birthday = true where pro
   const input = await find(page, "input[type=search]");
   await input.type("çel", { delay: 0 });
   const typed = await nextFrame(page);
-  check("search: 'çel' narrows the list in the next frame", typed.value === "çel" && typed.names.join() === "Çelik Fixture" && typed.total === "1 üye", JSON.stringify(typed));
+  check(
+    "search: 'çel' narrows the list in the next frame",
+    typed.value === "çel" && typed.names.join() === "Çelik Fixture" && typed.total === "1 üye",
+    JSON.stringify(typed),
+  );
   // (b) the URL carries only the search
-  check("search: URL is ?q=%C3%A7el", !!(await until(page, () => location.search === "?q=%C3%A7el", null)), await page.evaluate(() => location.search));
+  check(
+    "search: URL is ?q=%C3%A7el",
+    !!(await until(page, () => location.search === "?q=%C3%A7el", null)),
+    await page.evaluate(() => location.search),
+  );
   const card = await memberCard(page, "Çelik Fixture");
-  check("card shows district, side, bike, birthday and Instagram", !!card && /Beşiktaş · Avrupa/.test(card) && /Honda CB500 · 500 cc/.test(card) && /9 Mart/.test(card) && /@celikfx/.test(card), JSON.stringify(card));
+  check(
+    "card shows district, side, bike, birthday and Instagram",
+    !!card &&
+      /Beşiktaş · Avrupa/.test(card) &&
+      /Honda CB500 · 500 cc/.test(card) &&
+      /9 Mart/.test(card) &&
+      /@celikfx/.test(card),
+    JSON.stringify(card),
+  );
   await shot(page, "search");
   // Folded search: without Turkish letters, and capitals.
   await clearAndType(page, "CELIK");
@@ -265,16 +333,32 @@ sql(`update member_details set birth_date = null, show_birthday = true where pro
   await clearAndType(page, "fixture üye 1");
   const fast = await nextFrame(page);
   const painted = (await framesSeen(page)).values;
-  check("fast typing: the box never flips back (every painted text is a prefix of the next)", painted.every((v, i) => i === 0 || v.startsWith(painted[i - 1])), JSON.stringify(painted));
+  check(
+    "fast typing: the box never flips back (every painted text is a prefix of the next)",
+    painted.every((v, i) => i === 0 || v.startsWith(painted[i - 1])),
+    JSON.stringify(painted),
+  );
   const expected = ["Fixture Üye 1", ...Array.from({ length: 10 }, (_, i) => `Fixture Üye 1${i}`)].sort().join();
-  check("fast typing (no delay): box holds exactly the typed text and the list matches", fast.value === "fixture üye 1" && [...fast.names].sort().join() === expected, JSON.stringify(fast));
+  check(
+    "fast typing (no delay): box holds exactly the typed text and the list matches",
+    fast.value === "fixture üye 1" && [...fast.names].sort().join() === expected,
+    JSON.stringify(fast),
+  );
   const caughtUp = await until(page, () => location.search === "?q=fixture+%C3%BCye+1", null);
   await sleep(300);
   const settled = await nextFrame(page);
-  check("fast typing: after the URL caught up the box still holds the typed text", !!caughtUp && settled.value === "fixture üye 1" && settled.names.length === 11, JSON.stringify(settled));
+  check(
+    "fast typing: after the URL caught up the box still holds the typed text",
+    !!caughtUp && settled.value === "fixture üye 1" && settled.names.length === 11,
+    JSON.stringify(settled),
+  );
   // Clearing leaves no empty q: the URL has no query at all.
   await clearAndType(page, "");
-  check("search cleared: URL has no '?'", !!(await until(page, () => location.href.endsWith("/members"), null)) && (await names(page)).length === 25, page.url().replace(BASE, ""));
+  check(
+    "search cleared: URL has no '?'",
+    !!(await until(page, () => location.href.endsWith("/members"), null)) && (await names(page)).length === 25,
+    page.url().replace(BASE, ""),
+  );
   await sleep(300);
   const frames = await framesSeen(page);
   check("typing: no skeleton in any frame", frames.frames > 0 && frames.skeleton === 0, JSON.stringify(frames));
@@ -286,7 +370,11 @@ sql(`update member_details set birth_date = null, show_birthday = true where pro
   await page.reload({ waitUntil: "networkidle0" });
   await sleep(400);
   const restored = await nextFrame(page);
-  check("reload: ?q=%C3%A7el restores the box and the list", restored.value === "çel" && restored.names.join() === "Çelik Fixture", JSON.stringify(restored));
+  check(
+    "reload: ?q=%C3%A7el restores the box and the list",
+    restored.value === "çel" && restored.names.join() === "Çelik Fixture",
+    JSON.stringify(restored),
+  );
 
   // chips and pages: no request either
   await go(page, "/members");
@@ -294,15 +382,31 @@ sql(`update member_details set birth_date = null, show_birthday = true where pro
   server.reset();
   await clickChip(page, "Avrupa");
   const euro = await nextFrame(page);
-  check("chip 'Avrupa': only European cards, URL ?side=european", euro.names.join() === "Çelik Fixture" && euro.chip === "Avrupa" && !!(await until(page, () => location.search === "?side=european", null)), JSON.stringify(euro));
+  check(
+    "chip 'Avrupa': only European cards, URL ?side=european",
+    euro.names.join() === "Çelik Fixture" &&
+      euro.chip === "Avrupa" &&
+      !!(await until(page, () => location.search === "?side=european", null)),
+    JSON.stringify(euro),
+  );
   await clickChip(page, "Tümü");
   await until(page, () => location.search === "", null);
   await clickPage(page, "2");
   const p2 = await nextFrame(page);
-  check("page 2: the remaining 4 members, URL ?page=2, range 26–29", p2.names.length === 4 && p2.range === "26–29 / 29 üye" && !!(await until(page, () => location.search === "?page=2", null)), JSON.stringify(p2));
+  check(
+    "page 2: the remaining 4 members, URL ?page=2, range 26–29",
+    p2.names.length === 4 &&
+      p2.range === "26–29 / 29 üye" &&
+      !!(await until(page, () => location.search === "?page=2", null)),
+    JSON.stringify(p2),
+  );
   await clickPage(page, "1");
   await until(page, () => location.search === "", null);
-  check("chips and pages: no skeleton in any frame", (await framesSeen(page)).skeleton === 0, JSON.stringify(await framesSeen(page)));
+  check(
+    "chips and pages: no skeleton in any frame",
+    (await framesSeen(page)).skeleton === 0,
+    JSON.stringify(await framesSeen(page)),
+  );
   check("chips and pages: no document or RSC request", server.count() === 0, server.list().join(" | "));
 
   // (d) back / forward walk: box, chip, page and list follow the URL
@@ -320,18 +424,43 @@ sql(`update member_details set birth_date = null, show_birthday = true where pro
   const step = async (label, move) => {
     await move();
     await sleep(300);
-    walk.push({ label, search: await page.evaluate(() => decodeURIComponent(location.search)), ...(await nextFrame(page)) });
+    walk.push({
+      label,
+      search: await page.evaluate(() => decodeURIComponent(location.search)),
+      ...(await nextFrame(page)),
+    });
   };
   await step("back", () => page.goBack());
   await step("back", () => page.goBack());
   await step("forward", () => page.goForward());
   await step("forward", () => page.goForward());
   const [b1, b2, f1, f2] = walk;
-  const fmt = JSON.stringify(walk.map(({ label, search, value, chip, names, page }) => ({ label, search, value, chip, page, n: names.length })));
-  check("back: ?q=çel — box 'çel', chip Tümü, 1 card", b1.search === "?q=çel" && b1.value === "çel" && b1.chip === "Tümü" && b1.names.join() === "Çelik Fixture", fmt);
-  check("back: ?q=fix — box 'fix', page 1 of 2 (25 cards)", b2.search === "?q=fix" && b2.value === "fix" && b2.chip === "Tümü" && b2.names.length === 25 && b2.page === "1", fmt);
-  check("forward: ?q=çel — box 'çel' again", f1.search === "?q=çel" && f1.value === "çel" && f1.names.join() === "Çelik Fixture", fmt);
-  check("forward: ?q=çel&side=european — chip Avrupa", f2.search === "?q=çel&side=european" && f2.value === "çel" && f2.chip === "Avrupa" && f2.names.join() === "Çelik Fixture", fmt);
+  const fmt = JSON.stringify(
+    walk.map(({ label, search, value, chip, names, page }) => ({ label, search, value, chip, page, n: names.length })),
+  );
+  check(
+    "back: ?q=çel — box 'çel', chip Tümü, 1 card",
+    b1.search === "?q=çel" && b1.value === "çel" && b1.chip === "Tümü" && b1.names.join() === "Çelik Fixture",
+    fmt,
+  );
+  check(
+    "back: ?q=fix — box 'fix', page 1 of 2 (25 cards)",
+    b2.search === "?q=fix" && b2.value === "fix" && b2.chip === "Tümü" && b2.names.length === 25 && b2.page === "1",
+    fmt,
+  );
+  check(
+    "forward: ?q=çel — box 'çel' again",
+    f1.search === "?q=çel" && f1.value === "çel" && f1.names.join() === "Çelik Fixture",
+    fmt,
+  );
+  check(
+    "forward: ?q=çel&side=european — chip Avrupa",
+    f2.search === "?q=çel&side=european" &&
+      f2.value === "çel" &&
+      f2.chip === "Avrupa" &&
+      f2.names.join() === "Çelik Fixture",
+    fmt,
+  );
   check("back / forward: no document or RSC request", server.count() === 0, server.list().join(" | "));
 
   // (e) odd URLs are corrected in place (replaceState): clamped page, invalid side, stale keyset cursor
@@ -345,19 +474,30 @@ sql(`update member_details set birth_date = null, show_birthday = true where pro
   ]) {
     await go(page, from);
     const fixed = await until(page, (to) => location.search === to, to);
-    check(`URL fix: ${from} -> ${to || "(no query)"}`, !!fixed && (await names(page)).length === n, `${await page.evaluate(() => location.search)} ${(await names(page)).length} cards`);
+    check(
+      `URL fix: ${from} -> ${to || "(no query)"}`,
+      !!fixed && (await names(page)).length === n,
+      `${await page.evaluate(() => location.search)} ${(await names(page)).length} cards`,
+    );
   }
 
   // (f) server time of /members (document): logged for docs/follow-ups.md
   const times = [];
   for (let i = 0; i < 5; i++) {
     await page.goto(BASE + "/members", { waitUntil: "networkidle0" });
-    times.push(await page.evaluate(() => {
-      const n = performance.getEntriesByType("navigation")[0];
-      return { responseStart: Math.round(n.responseStart - n.requestStart), responseEnd: Math.round(n.responseEnd - n.requestStart) };
-    }));
+    times.push(
+      await page.evaluate(() => {
+        const n = performance.getEntriesByType("navigation")[0];
+        return {
+          responseStart: Math.round(n.responseStart - n.requestStart),
+          responseEnd: Math.round(n.responseEnd - n.requestStart),
+        };
+      }),
+    );
   }
-  console.log(`INFO /members document timing (ms since request; responseEnd = the streamed directory is in): ${JSON.stringify(times)}`);
+  console.log(
+    `INFO /members document timing (ms since request; responseEnd = the streamed directory is in): ${JSON.stringify(times)}`,
+  );
   await ctx.close();
 }
 
@@ -368,9 +508,17 @@ sql(`update member_details set birth_date = null, show_birthday = true where pro
   await shot(page, "account");
 
   // name locked
-  const nameInputs = await page.evaluate(() => [...document.querySelectorAll("input")].filter((i) => i.getBoundingClientRect().width > 0 && (/name/i.test(i.name) || i.value === "Test Üye")).map((i) => i.name || i.id));
+  const nameInputs = await page.evaluate(() =>
+    [...document.querySelectorAll("input")]
+      .filter((i) => i.getBoundingClientRect().width > 0 && (/name/i.test(i.name) || i.value === "Test Üye"))
+      .map((i) => i.name || i.id),
+  );
   const hint = (await bodyText(page)).includes("İsim değişikliği için kulüp ekibine yaz.");
-  check("account: no name input, hint shown", nameInputs.filter((n) => !/city|district|brand|model/.test(n)).length === 0 && hint, JSON.stringify(nameInputs));
+  check(
+    "account: no name input, hint shown",
+    nameInputs.filter((n) => !/city|district|brand|model/.test(n)).length === 0 && hint,
+    JSON.stringify(nameInputs),
+  );
 
   // district
   await page.select("#profile-district", "Beşiktaş");
@@ -386,7 +534,11 @@ sql(`update member_details set birth_date = null, show_birthday = true where pro
   // add bike
   await go(page, "/account");
   await click(page, "button", "Motosiklet ekle");
-  await until(page, () => [...document.querySelectorAll("[role=dialog]")].some((e) => e.getBoundingClientRect().width > 0), null);
+  await until(
+    page,
+    () => [...document.querySelectorAll("[role=dialog]")].some((e) => e.getBoundingClientRect().width > 0),
+    null,
+  );
   await typeInto(await find(page, "[role=dialog] input[name=brand]"), "Yamaha");
   await typeInto(await find(page, "[role=dialog] input[name=model]"), "MT-07");
   await typeInto(await find(page, "[role=dialog] input[name=cc]"), "689");
@@ -400,21 +552,35 @@ sql(`update member_details set birth_date = null, show_birthday = true where pro
   // invalid cc blocked
   await go(page, "/account");
   await click(page, "button", "Yamaha MT-07 · 689 cc motosikletini düzenle");
-  await until(page, () => [...document.querySelectorAll("[role=dialog]")].some((e) => e.getBoundingClientRect().width > 0), null);
+  await until(
+    page,
+    () => [...document.querySelectorAll("[role=dialog]")].some((e) => e.getBoundingClientRect().width > 0),
+    null,
+  );
   await typeInto(await find(page, "[role=dialog] input[name=cc]"), "5");
   await click(page, "[role=dialog] button[type=submit]", "Kaydet");
-  check("bike edit: cc=5 rejected with a message, dialog stays open", !!(await hasText(page, /50 ile 3000 arasında bir sayı gir/)) && !!(await find(page, "[role=dialog]")));
+  check(
+    "bike edit: cc=5 rejected with a message, dialog stays open",
+    !!(await hasText(page, /50 ile 3000 arasında bir sayı gir/)) && !!(await find(page, "[role=dialog]")),
+  );
 
   // edit
   await typeInto(await find(page, "[role=dialog] input[name=model]"), "MT-09");
   await typeInto(await find(page, "[role=dialog] input[name=cc]"), "890");
   await click(page, "[role=dialog] button[type=submit]", "Kaydet");
   check("bike edit: dialog closes", !!(await dialogGone(page)));
-  check("bike edit: new name shown, old gone", !!(await hasText(page, /Yamaha MT-09 · 890 cc/)) && !(await bodyText(page)).includes("MT-07"));
+  check(
+    "bike edit: new name shown, old gone",
+    !!(await hasText(page, /Yamaha MT-09 · 890 cc/)) && !(await bodyText(page)).includes("MT-07"),
+  );
 
   // delete
   await click(page, "button", "Yamaha MT-09 · 890 cc motosikletini sil");
-  await until(page, () => [...document.querySelectorAll("[role=alertdialog]")].some((e) => e.getBoundingClientRect().width > 0), null);
+  await until(
+    page,
+    () => [...document.querySelectorAll("[role=alertdialog]")].some((e) => e.getBoundingClientRect().width > 0),
+    null,
+  );
   await shot(page, "delete-confirm");
   await click(page, "[role=alertdialog] button", "^Sil$");
   check("bike delete: confirm closes", !!(await dialogGone(page, "alertdialog")));
@@ -424,13 +590,20 @@ sql(`update member_details set birth_date = null, show_birthday = true where pro
   check("bike delete: gone from /members", !!c3 && !/Yamaha/.test(c3), JSON.stringify(c3));
 
   // 10-bike cap (planted by SQL: the UI path was exercised above)
-  sql(`insert into member_motorcycles(profile_id, brand, model) select '${MEMBER_ID}', 'Fixture', 'Bike ' || g from generate_series(1, 10) g`);
+  sql(
+    `insert into member_motorcycles(profile_id, brand, model) select '${MEMBER_ID}', 'Fixture', 'Bike ' || g from generate_series(1, 10) g`,
+  );
   await go(page, "/account");
   const addBtn = await find(page, "button", "Motosiklet ekle");
   const disabled = await addBtn.evaluate((b) => b.disabled);
-  check("10 bikes: add button disabled with limit hint", disabled && (await bodyText(page)).includes("En fazla 10 motosiklet ekleyebilirsin."));
+  check(
+    "10 bikes: add button disabled with limit hint",
+    disabled && (await bodyText(page)).includes("En fazla 10 motosiklet ekleyebilirsin."),
+  );
   await shot(page, "bike-cap");
-  const ten = await page.evaluate(() => document.querySelectorAll("[data-skeleton-result=profile-motorcycles] ul li").length);
+  const ten = await page.evaluate(
+    () => document.querySelectorAll("[data-skeleton-result=profile-motorcycles] ul li").length,
+  );
   check("10 bikes: all ten listed", ten === 10, String(ten));
   sql(`delete from member_motorcycles where profile_id = '${MEMBER_ID}'`);
 
@@ -448,7 +621,11 @@ sql(`update member_details set birth_date = null, show_birthday = true where pro
   check("visibility: Instagram URL normalised to handle", ig === "testig", ig);
   await go(page, "/members?q=Test");
   const c4 = await memberCard(page, "Test Üye");
-  check("visibility: directory shows @testig and 17 Mayıs", !!c4 && /@testig/.test(c4) && /17 Mayıs/.test(c4), JSON.stringify(c4));
+  check(
+    "visibility: directory shows @testig and 17 Mayıs",
+    !!c4 && /@testig/.test(c4) && /17 Mayıs/.test(c4),
+    JSON.stringify(c4),
+  );
 
   // switch both off again
   await go(page, "/account");
@@ -458,7 +635,11 @@ sql(`update member_details set birth_date = null, show_birthday = true where pro
   await hasText(page, /Kaydedildi\./);
   await go(page, "/members?q=Test");
   const c5 = await memberCard(page, "Test Üye");
-  check("visibility: switched off -> directory hides Instagram and birthday", !!c5 && !/@testig/.test(c5) && !/Mayıs/.test(c5), JSON.stringify(c5));
+  check(
+    "visibility: switched off -> directory hides Instagram and birthday",
+    !!c5 && !/@testig/.test(c5) && !/Mayıs/.test(c5),
+    JSON.stringify(c5),
+  );
 
   // invalid Instagram
   await go(page, "/account");
@@ -469,22 +650,36 @@ sql(`update member_details set birth_date = null, show_birthday = true where pro
   // photo consent
   await go(page, "/account");
   const before = await bodyText(page);
-  check("consent: neutral 'not given' without a date before any choice", before.includes("İzin verilmedi.") && !before.includes("İzin verdin"));
+  check(
+    "consent: neutral 'not given' without a date before any choice",
+    before.includes("İzin verilmedi.") && !before.includes("İzin verdin"),
+  );
   await (await switchFor(page, "kulüp galerisinde paylaşılmasına")).asElement().click();
   await saveForm(page, "text:kulüp galerisinde paylaşılmasına");
   check("consent: saving shows the date", !!(await hasText(page, /İzin verdin \(\d{1,2} \p{L}+ \d{4}\)\./u)));
   await shot(page, "consent");
   // Saving an unchanged consent is ok but writes nothing (version and timestamp stay together).
-  const consentRow = () => sql(`select consent_photos_at || '|' || coalesce(consent_photos_version, '') from member_details where profile_id = '${MEMBER_ID}'`);
+  const consentRow = () =>
+    sql(
+      `select consent_photos_at || '|' || coalesce(consent_photos_version, '') from member_details where profile_id = '${MEMBER_ID}'`,
+    );
   sql(`update member_details set consent_photos_version = 'stale' where profile_id = '${MEMBER_ID}'`);
   const stamped = consentRow();
   await go(page, "/account");
   await saveForm(page, "text:kulüp galerisinde paylaşılmasına");
-  check("consent: re-saving unchanged consent shows 'Kaydedildi.' and writes nothing", !!(await hasText(page, /Kaydedildi\./)) && consentRow() === stamped, consentRow());
+  check(
+    "consent: re-saving unchanged consent shows 'Kaydedildi.' and writes nothing",
+    !!(await hasText(page, /Kaydedildi\./)) && consentRow() === stamped,
+    consentRow(),
+  );
   // Withdrawing: neutral wording, version written with the change.
   await (await switchFor(page, "kulüp galerisinde paylaşılmasına")).asElement().click();
   await saveForm(page, "text:kulüp galerisinde paylaşılmasına");
-  check("consent: withdrawing shows 'İzin verilmedi.' and stores the notice version", !!(await hasText(page, /İzin verilmedi\./)) && !consentRow().endsWith("|stale"), consentRow());
+  check(
+    "consent: withdrawing shows 'İzin verilmedi.' and stores the notice version",
+    !!(await hasText(page, /İzin verilmedi\./)) && !consentRow().endsWith("|stale"),
+    consentRow(),
+  );
   await ctx.close();
 }
 
@@ -492,16 +687,28 @@ sql(`update member_details set birth_date = null, show_birthday = true where pro
 {
   const switchState = async (page) =>
     (await switchFor(page, "Doğum günümü")).asElement().evaluate((s) => ({
-      enabled: !s.hasAttribute("disabled") && s.getAttribute("aria-disabled") !== "true" && s.dataset.disabled === undefined,
+      enabled:
+        !s.hasAttribute("disabled") && s.getAttribute("aria-disabled") !== "true" && s.dataset.disabled === undefined,
       checked: s.getAttribute("aria-checked"),
     }));
-  const stored = () => sql(`select coalesce(birth_date::text, 'null') || '|' || show_birthday from member_details where profile_id = '${NOBIRTH_ID}'`);
+  const stored = () =>
+    sql(
+      `select coalesce(birth_date::text, 'null') || '|' || show_birthday from member_details where profile_id = '${NOBIRTH_ID}'`,
+    );
   const { ctx, page } = await fresh("nobirth@test.local");
   await go(page, "/account");
   const state = await switchState(page);
-  check("no birth date: birthday switch enabled and shows the stored 'on'", state.enabled && state.checked === "true", JSON.stringify(state));
+  check(
+    "no birth date: birthday switch enabled and shows the stored 'on'",
+    state.enabled && state.checked === "true",
+    JSON.stringify(state),
+  );
   const text = await bodyText(page);
-  check("no birth date: 'shown once saved' and 'once' hints shown", text.includes("Doğum tarihini kaydettiğinde doğum günün (gün ve ay) gösterilir") && text.includes("Doğum tarihini bir kez girebilirsin"));
+  check(
+    "no birth date: 'shown once saved' and 'once' hints shown",
+    text.includes("Doğum tarihini kaydettiğinde doğum günün (gün ve ay) gösterilir") &&
+      text.includes("Doğum tarihini bir kez girebilirsin"),
+  );
   await shot(page, "no-birthdate");
 
   // Saving visibility without touching the switch keeps the stored default (on).
@@ -516,7 +723,11 @@ sql(`update member_details set birth_date = null, show_birthday = true where pro
   check("birth date: empty is rejected", !!(await hasText(page, /Bu alan zorunlu\./)));
   await setInputValue(page, "#profile-birth-date", "2015-01-01");
   await click(page, "button", "^Doğum tarihini kaydet$");
-  check("birth date: under 18 is rejected", !!(await hasText(page, /18 yaşından büyük olmalısın\./)) && stored().startsWith("null|"), stored());
+  check(
+    "birth date: under 18 is rejected",
+    !!(await hasText(page, /18 yaşından büyük olmalısın\./)) && stored().startsWith("null|"),
+    stored(),
+  );
 
   // Turn the birthday off first, then save the date with Enter (its own form): it must never be shown.
   await (await switchFor(page, "Doğum günümü")).asElement().click();
@@ -524,14 +735,25 @@ sql(`update member_details set birth_date = null, show_birthday = true where pro
   await page.focus("#profile-birth-date");
   await page.keyboard.press("Enter");
   const shown = await hasText(page, /Doğum tarihi\s*4 Temmuz 1988/);
-  check("birth date: Enter saves it, shown read-only, field gone", !!shown && !(await find(page, "#profile-birth-date")));
+  check(
+    "birth date: Enter saves it, shown read-only, field gone",
+    !!shown && !(await find(page, "#profile-birth-date")),
+  );
   check("birth date: stored with the switch as shown (off)", stored() === "1988-07-04|false", stored());
   const after = await switchState(page);
-  check("birth date: switch still off after saving, hint gone", after.enabled && after.checked === "false" && !(await bodyText(page)).includes("kaydettiğinde doğum günün"), JSON.stringify(after));
+  check(
+    "birth date: switch still off after saving, hint gone",
+    after.enabled && after.checked === "false" && !(await bodyText(page)).includes("kaydettiğinde doğum günün"),
+    JSON.stringify(after),
+  );
   await shot(page, "birthdate-saved");
   await go(page, "/members?q=Tarihsiz");
   const hidden = await memberCard(page, "Tarihsiz Fixture");
-  check("birth date: directory hides the birthday the member turned off", !!hidden && !/Temmuz/.test(hidden), JSON.stringify(hidden));
+  check(
+    "birth date: directory hides the birthday the member turned off",
+    !!hidden && !/Temmuz/.test(hidden),
+    JSON.stringify(hidden),
+  );
 
   // Switching it on later shows it.
   await go(page, "/account");
@@ -540,7 +762,11 @@ sql(`update member_details set birth_date = null, show_birthday = true where pro
   await hasText(page, /Kaydedildi\./);
   await go(page, "/members?q=Tarihsiz");
   const card = await memberCard(page, "Tarihsiz Fixture");
-  check("birth date: directory shows the birthday once switched on", !!card && /4 Temmuz/.test(card), JSON.stringify(card));
+  check(
+    "birth date: directory shows the birthday once switched on",
+    !!card && /4 Temmuz/.test(card),
+    JSON.stringify(card),
+  );
   await ctx.close();
 }
 
@@ -550,20 +776,46 @@ sql(`update member_details set birth_date = null, show_birthday = true where pro
   const server = watchServer(page, BASE);
   await go(page, "/en/members");
   const t = await bodyText(page);
-  check("English: /en/members renders translated labels", /Members/.test(t) && /Asian side|Anatolian|Asian/.test(t) && !/MISSING_MESSAGE/.test(t));
-  check("English: range line", (await pagerState(page)).range === "1–25 of 29 members", JSON.stringify(await pagerState(page)));
+  check(
+    "English: /en/members renders translated labels",
+    /Members/.test(t) && /Asian side|Anatolian|Asian/.test(t) && !/MISSING_MESSAGE/.test(t),
+  );
+  check(
+    "English: range line",
+    (await pagerState(page)).range === "1–25 of 29 members",
+    JSON.stringify(await pagerState(page)),
+  );
   server.reset();
   await clearAndType(page, "çel");
-  check("English: typing keeps the /en prefix", !!(await until(page, () => location.pathname + location.search === "/en/members?q=%C3%A7el", null)), page.url().replace(BASE, ""));
+  check(
+    "English: typing keeps the /en prefix",
+    !!(await until(page, () => location.pathname + location.search === "/en/members?q=%C3%A7el", null)),
+    page.url().replace(BASE, ""),
+  );
   await click(page, "[data-skeleton-result=members-chips] button", "^European");
-  check("English: chip keeps the /en prefix", !!(await until(page, () => location.pathname + location.search === "/en/members?q=%C3%A7el&side=european", null)), page.url().replace(BASE, ""));
+  check(
+    "English: chip keeps the /en prefix",
+    !!(await until(page, () => location.pathname + location.search === "/en/members?q=%C3%A7el&side=european", null)),
+    page.url().replace(BASE, ""),
+  );
   check("English: no document or RSC request", server.count() === 0, server.list().join(" | "));
   await page.reload({ waitUntil: "networkidle0" });
   await sleep(400);
   const back = await nextFrame(page);
-  check("English: reload restores search and chip", back.value === "çel" && back.chip === "European side" && back.names.join() === "Çelik Fixture" && page.url().endsWith("/en/members?q=%C3%A7el&side=european"), JSON.stringify(back));
+  check(
+    "English: reload restores search and chip",
+    back.value === "çel" &&
+      back.chip === "European side" &&
+      back.names.join() === "Çelik Fixture" &&
+      page.url().endsWith("/en/members?q=%C3%A7el&side=european"),
+    JSON.stringify(back),
+  );
   await go(page, "/en/members?page=2");
-  check("English: page 2 via URL, range 26–29", (await pagerState(page)).range === "26–29 of 29 members" && (await names(page)).length === 4, JSON.stringify(await pagerState(page)));
+  check(
+    "English: page 2 via URL, range 26–29",
+    (await pagerState(page)).range === "26–29 of 29 members" && (await names(page)).length === 4,
+    JSON.stringify(await pagerState(page)),
+  );
   await ctx.close();
 }
 

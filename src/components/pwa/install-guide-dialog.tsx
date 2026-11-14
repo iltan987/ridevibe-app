@@ -28,11 +28,7 @@ export function InstallGuideDialog({
 }) {
   const t = useTranslations("Install");
   const icons = ICONS[variant];
-  const steps = [
-    t(`steps.${variant}.1`),
-    t(`steps.${variant}.2`),
-    t(`steps.${variant}.3`),
-  ];
+  const steps = [t(`steps.${variant}.1`), t(`steps.${variant}.2`), t(`steps.${variant}.3`)];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

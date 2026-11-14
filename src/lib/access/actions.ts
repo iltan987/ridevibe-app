@@ -98,12 +98,10 @@ export async function updateRole(roleId: string, name: string, permissions: stri
   if (removeError) return fail(removeError.code, "updateRole");
 
   if (keep.length) {
-    const { error: addError } = await supabase
-      .from("role_permissions")
-      .upsert(
-        keep.map((permission) => ({ role_id: data.roleId, permission })),
-        { onConflict: "role_id,permission", ignoreDuplicates: true },
-      );
+    const { error: addError } = await supabase.from("role_permissions").upsert(
+      keep.map((permission) => ({ role_id: data.roleId, permission })),
+      { onConflict: "role_id,permission", ignoreDuplicates: true },
+    );
     if (addError) return fail(addError.code, "updateRole");
   }
 

@@ -194,7 +194,7 @@ test("pages with unsaved form input keep their language when another tab switche
   }
 });
 
-test("current() returns the stored value, \"\" for a missing key and null when storage is blocked", () => {
+test('current() returns the stored value, "" for a missing key and null when storage is blocked', () => {
   assert.equal(createTabChannel("k", fakeTab({ k: "a" }).win).current(), "a");
   assert.equal(createTabChannel("k", fakeTab().win).current(), "");
   assert.equal(createTabChannel("k", fakeTab({}, { throwing: true }).win).current(), null);

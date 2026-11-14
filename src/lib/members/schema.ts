@@ -34,7 +34,10 @@ export function normalizeInstagram(raw: string): string | null | "invalid" {
   let value = raw.trim();
   if (!value) return null;
   if (INSTAGRAM_URL_PREFIX.test(value)) {
-    value = value.replace(INSTAGRAM_URL_PREFIX, "").replace(/[?#].*$/, "").replace(/\/+$/, "");
+    value = value
+      .replace(INSTAGRAM_URL_PREFIX, "")
+      .replace(/[?#].*$/, "")
+      .replace(/\/+$/, "");
   } else {
     value = value.replace(/^@/, "");
   }
@@ -106,22 +109,22 @@ const motorcycleText = z.string(err("required")).trim().min(1, err("required")).
 
 export const motorcycleSchema = z
   .object({
-  brand: motorcycleText,
-  model: motorcycleText,
-  // Empty string = "don't know" → undefined.
-  cc: z.preprocess(
-    (v) => (v === "" || v === null ? undefined : v),
-    z.coerce
-      .number(err("invalidNumber"))
-      .int(err("invalidNumber"))
-      .min(50, err("invalidNumber"))
-      .max(3000, err("invalidNumber"))
-      .optional(),
-  ),
-  // Empty = no plate shown. `plate_foreign` picks the format rules.
-  plate: z.string(err("invalidPlate")).max(20, err("invalidPlate")).optional(),
-  plate_foreign: z.boolean(err("required")).default(false),
-})
+    brand: motorcycleText,
+    model: motorcycleText,
+    // Empty string = "don't know" → undefined.
+    cc: z.preprocess(
+      (v) => (v === "" || v === null ? undefined : v),
+      z.coerce
+        .number(err("invalidNumber"))
+        .int(err("invalidNumber"))
+        .min(50, err("invalidNumber"))
+        .max(3000, err("invalidNumber"))
+        .optional(),
+    ),
+    // Empty = no plate shown. `plate_foreign` picks the format rules.
+    plate: z.string(err("invalidPlate")).max(20, err("invalidPlate")).optional(),
+    plate_foreign: z.boolean(err("required")).default(false),
+  })
   .transform((v, ctx) => {
     const plate = normalizePlate(v.plate ?? "", v.plate_foreign);
     if (plate === "invalid") {

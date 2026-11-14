@@ -3,7 +3,14 @@
 import { useTranslations } from "next-intl";
 import { useRef, useState, useTransition } from "react";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { whatsAppUrl } from "@/lib/applications/contact";
 import { bloodTypeLabel } from "@/lib/members/blood-type";
 import { formatMotorcycle } from "@/lib/members/format";
@@ -45,18 +52,24 @@ export function SafetyCardDialog({ memberId, memberName }: { memberId: string; m
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger
-        render={<Button variant="outline" size="sm" aria-label={t("openLabel", { name: memberName })} />}
-      >
+      <DialogTrigger render={<Button variant="outline" size="sm" aria-label={t("openLabel", { name: memberName })} />}>
         {t("open")}
       </DialogTrigger>
-      <DialogContent showCloseButton={false} aria-busy={isPending} className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
+      <DialogContent
+        showCloseButton={false}
+        aria-busy={isPending}
+        className="max-h-[calc(100dvh-2rem)] overflow-y-auto"
+      >
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription className="font-medium text-foreground">{memberName}</DialogDescription>
         </DialogHeader>
 
-        {isPending && !result && <p role="status" className="text-muted-foreground">{t("loading")}</p>}
+        {isPending && !result && (
+          <p role="status" className="text-muted-foreground">
+            {t("loading")}
+          </p>
+        )}
 
         {result?.status === "error" && (
           <div role="alert" className="flex flex-col items-start gap-2">

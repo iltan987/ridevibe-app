@@ -76,7 +76,12 @@ export function createInstallStore(env: InstallEnv): InstallStore {
       nav.standalone === true ||
       readStorage(INSTALL_INSTALLED_KEY) === "1" ||
       relatedInstalled;
-    const variant = installVariant({ platform: platform(), hasPrompt: Boolean(heldPrompt()), installed, androidFallback });
+    const variant = installVariant({
+      platform: platform(),
+      hasPrompt: Boolean(heldPrompt()),
+      installed,
+      androidFallback,
+    });
     const raw = readStorage(INSTALL_DISMISSED_KEY);
     const dismissedAt = raw === null || Number.isNaN(Number(raw)) ? null : Number(raw);
     return { variant, banner: showsBanner(variant) && !isDismissed(dismissedAt, env.now()) };

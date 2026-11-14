@@ -4,7 +4,10 @@ import { test } from "node:test";
 import vm from "node:vm";
 import { applyHintScript, guessApplyHidden, readApplyHint, writeApplyHint } from "./apply-hint.ts";
 
-const SIGNED_IN = ["sb-127-auth-token=base64-abc", "theme=x; sb-igqqicbfejhnsggfuydh-auth-token.0=base64-abc; NEXT_LOCALE=en"];
+const SIGNED_IN = [
+  "sb-127-auth-token=base64-abc",
+  "theme=x; sb-igqqicbfejhnsggfuydh-auth-token.0=base64-abc; NEXT_LOCALE=en",
+];
 const SIGNED_OUT = ["", "NEXT_LOCALE=tr", "sb-127-auth-token-code-verifier=abc"];
 const STORED = [null, "1", "0", "x"];
 
@@ -20,8 +23,14 @@ test("guessApplyHidden: session hides unless stored is exactly '0'", () => {
 });
 
 test("readApplyHint: returns the stored value, null when storage throws", () => {
-  assert.equal(readApplyHint(() => ({ getItem: () => "1" })), "1");
-  assert.equal(readApplyHint(() => ({ getItem: () => null })), null);
+  assert.equal(
+    readApplyHint(() => ({ getItem: () => "1" })),
+    "1",
+  );
+  assert.equal(
+    readApplyHint(() => ({ getItem: () => null })),
+    null,
+  );
   assert.equal(
     readApplyHint(() => {
       throw new Error("denied");

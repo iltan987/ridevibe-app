@@ -92,7 +92,10 @@ async function ApplicationsList({
         <ul className="flex flex-col gap-3">
           {rows.map((a) => (
             <li key={a.id} data-skeleton-result="admin-row">
-              <Link href={`/admin/applications/${a.id}`} className="block rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
+              <Link
+                href={`/admin/applications/${a.id}`}
+                className="block rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+              >
                 <Card className="transition-colors hover:bg-muted/40">
                   <CardContent className="flex flex-col gap-2">
                     <div className="flex items-start justify-between gap-3">

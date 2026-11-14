@@ -24,11 +24,20 @@ export function PagerButtons({
       {pageCount > 1 && (
         <div className={pagerClasses.row}>
           {page > 1 ? (
-            <button type="button" aria-label={t("previous")} className={pagerClasses.arrow} onClick={() => onPage(page - 1)}>
+            <button
+              type="button"
+              aria-label={t("previous")}
+              className={pagerClasses.arrow}
+              onClick={() => onPage(page - 1)}
+            >
               <ChevronLeft aria-hidden />
             </button>
           ) : (
-            <span aria-disabled="true" aria-label={t("previous")} className={cn(pagerClasses.arrow, pagerClasses.disabled)}>
+            <span
+              aria-disabled="true"
+              aria-label={t("previous")}
+              className={cn(pagerClasses.arrow, pagerClasses.disabled)}
+            >
               <ChevronLeft aria-hidden />
             </span>
           )}
@@ -51,7 +60,12 @@ export function PagerButtons({
             ),
           )}
           {page < pageCount ? (
-            <button type="button" aria-label={t("next")} className={pagerClasses.arrow} onClick={() => onPage(page + 1)}>
+            <button
+              type="button"
+              aria-label={t("next")}
+              className={pagerClasses.arrow}
+              onClick={() => onPage(page + 1)}
+            >
               <ChevronRight aria-hidden />
             </button>
           ) : (

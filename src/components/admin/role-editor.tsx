@@ -15,7 +15,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Field, FieldContent, FieldDescription, FieldGroup, FieldLabel, FieldLegend, FieldSet } from "@/components/ui/field";
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { type AccessActionResult, createRole, deleteRole, updateRole } from "@/lib/access/actions";
 import { PERMISSIONS, type Permission } from "@/lib/auth/permissions";
@@ -92,7 +100,7 @@ export function RoleEditor({
                       className="mt-0.5 self-start"
                     />
                     <FieldContent>
-                      <FieldLabel htmlFor={id} className="font-normal leading-snug">
+                      <FieldLabel htmlFor={id} className="leading-snug font-normal">
                         {t(`permissions.${permission}.label`)}
                       </FieldLabel>
                       <FieldDescription>{t(`permissions.${permission}.description`)}</FieldDescription>
@@ -107,7 +115,13 @@ export function RoleEditor({
           <Button type="submit" disabled={isPending}>
             {t("roles.save")}
           </Button>
-          <Button type="button" variant="ghost" className="text-destructive" disabled={isPending} onClick={() => setConfirmOpen(true)}>
+          <Button
+            type="button"
+            variant="ghost"
+            className="text-destructive"
+            disabled={isPending}
+            onClick={() => setConfirmOpen(true)}
+          >
             {t("roles.delete")}
           </Button>
           <ActionMessage status={status} />
@@ -127,7 +141,12 @@ export function RoleEditor({
             <AlertDialogAction
               variant="destructive"
               disabled={isPending}
-              onClick={() => run(() => deleteRole(role.id), () => setConfirmOpen(false))}
+              onClick={() =>
+                run(
+                  () => deleteRole(role.id),
+                  () => setConfirmOpen(false),
+                )
+              }
             >
               {t("roles.confirmDelete")}
             </AlertDialogAction>
@@ -146,7 +165,10 @@ export function CreateRoleForm() {
     event.preventDefault();
     const form = event.currentTarget;
     const name = String(new FormData(form).get("name") ?? "");
-    run(() => createRole(name), () => form.reset());
+    run(
+      () => createRole(name),
+      () => form.reset(),
+    );
   }
 
   return (

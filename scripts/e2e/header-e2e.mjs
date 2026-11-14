@@ -7,7 +7,10 @@ import { launch, newPage, signIn, throttle } from "./e2e-lib.mjs";
 const BASE = process.env.BASE_URL ?? "http://localhost:3123";
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let fails = 0;
-const check = (name, ok, extra = "") => { if (!ok) fails++; console.log(`${ok ? "PASS" : "FAIL"} ${name}${extra ? " — " + extra : ""}`); };
+const check = (name, ok, extra = "") => {
+  if (!ok) fails++;
+  console.log(`${ok ? "PASS" : "FAIL"} ${name}${extra ? " — " + extra : ""}`);
+};
 
 // Real scrollbars (Windows-style, 15px): a page whose skeleton is taller than its content toggles the scrollbar.
 const browser = await launch({ scrollbars: true });
@@ -16,7 +19,9 @@ async function fresh({ theme = "light", signedIn = false } = {}) {
   const ctx = await browser.createBrowserContext();
   const page = await newPage(ctx);
   const errors = [];
-  page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
+  page.on("console", (m) => {
+    if (m.type() === "error") errors.push(m.text());
+  });
   if (theme) await page.evaluateOnNewDocument((t) => localStorage.setItem("theme", t), theme);
   if (signedIn) await signIn(page, "member@test.local", BASE);
   return { ctx, page, errors };
@@ -24,8 +29,14 @@ async function fresh({ theme = "light", signedIn = false } = {}) {
 const scriptTagErrors = (errors) => errors.filter((e) => e.includes("Encountered a script tag"));
 // Next keeps the previous route's tree hidden in the DOM: always pick the visible element.
 async function visible(page, sel, text = "") {
-  const h = await page.evaluateHandle((sel, text) => [...document.querySelectorAll(sel)]
-    .find((e) => e.getBoundingClientRect().width > 0 && (!text || e.textContent.includes(text))) ?? null, sel, text);
+  const h = await page.evaluateHandle(
+    (sel, text) =>
+      [...document.querySelectorAll(sel)].find(
+        (e) => e.getBoundingClientRect().width > 0 && (!text || e.textContent.includes(text)),
+      ) ?? null,
+    sel,
+    text,
+  );
   return h.asElement();
 }
 /** Opens a header dropdown (trigger selector) and picks a radio item (by text, or the unchecked one). */
@@ -34,8 +45,15 @@ async function pick(page, triggerSel, itemText = "") {
     const trigger = await visible(page, triggerSel);
     if (trigger) await trigger.click();
     await sleep(400);
-    const item = await visible(page, itemText ? '[role="menuitemradio"]' : '[role="menuitemradio"]:not([aria-checked="true"])', itemText);
-    if (item) { await item.click(); return; }
+    const item = await visible(
+      page,
+      itemText ? '[role="menuitemradio"]' : '[role="menuitemradio"]:not([aria-checked="true"])',
+      itemText,
+    );
+    if (item) {
+      await item.click();
+      return;
+    }
     await page.keyboard.press("Escape");
     await sleep(300);
   }
@@ -43,30 +61,40 @@ async function pick(page, triggerSel, itemText = "") {
 }
 const switchLanguage = (page) => pick(page, '[data-skeleton-result="locale-switcher"]:not([disabled])');
 // Theme scripts in <head> that the browser would execute (no type, or a JavaScript type).
-const state = (page) => page.evaluate(() => ({
-  lang: document.documentElement.lang,
-  dark: document.documentElement.classList.contains("dark"),
-  executable: [...document.head.querySelectorAll("script:not([src])")]
-    .filter((s) => s.textContent.includes("prefers-color-scheme"))
-    .filter((s) => !s.type || /javascript/i.test(s.type)).length,
-}));
+const state = (page) =>
+  page.evaluate(() => ({
+    lang: document.documentElement.lang,
+    dark: document.documentElement.classList.contains("dark"),
+    executable: [...document.head.querySelectorAll("script:not([src])")]
+      .filter((s) => s.textContent.includes("prefers-color-scheme"))
+      .filter((s) => !s.type || /javascript/i.test(s.type)).length,
+  }));
 // Logs every frame where the user-menu box (skeleton or result) or the language button position changes.
 function frameLogger() {
   window.__frames = [];
   let last = "";
   const tick = () => {
     const vis = (e) => e && e.getBoundingClientRect().width > 0;
-    const um = [...document.querySelectorAll('[data-skeleton="user-menu"],[data-skeleton-result="user-menu"]')].find(vis);
-    const loc = [...document.querySelectorAll('[data-skeleton-result="locale-switcher"],[data-skeleton="locale-switcher"]')].find(vis);
+    const um = [...document.querySelectorAll('[data-skeleton="user-menu"],[data-skeleton-result="user-menu"]')].find(
+      vis,
+    );
+    const loc = [
+      ...document.querySelectorAll('[data-skeleton-result="locale-switcher"],[data-skeleton="locale-switcher"]'),
+    ].find(vis);
     const f = um && {
       kind: um.dataset.skeleton ? "skeleton" : "result",
       w: Math.round(um.getBoundingClientRect().width),
       h: Math.round(um.getBoundingClientRect().height),
       localeX: loc ? Math.round(loc.getBoundingClientRect().x) : null,
-      photo: [...um.querySelectorAll("img")].some((i) => i.complete && i.naturalWidth > 0 && i.getBoundingClientRect().width > 0),
+      photo: [...um.querySelectorAll("img")].some(
+        (i) => i.complete && i.naturalWidth > 0 && i.getBoundingClientRect().width > 0,
+      ),
     };
     const k = JSON.stringify(f);
-    if (f && k !== last) { window.__frames.push(f); last = k; }
+    if (f && k !== last) {
+      window.__frames.push(f);
+      last = k;
+    }
     if (performance.now() < 20000) requestAnimationFrame(tick);
   };
   requestAnimationFrame(tick);
@@ -86,7 +114,11 @@ const fmt = (frames) => frames.map((f) => `${f.kind} ${f.w}x${f.h}@${f.localeX}$
   const after = await state(page);
   check("still light after the language switch", !after.dark, JSON.stringify(after));
   check("client-rendered theme script is not executable", after.executable === 1, `executable: ${after.executable}`);
-  check("no script-tag warning on language switch", scriptTagErrors(errors).length === 0, scriptTagErrors(errors)[0] ?? "");
+  check(
+    "no script-tag warning on language switch",
+    scriptTagErrors(errors).length === 0,
+    scriptTagErrors(errors)[0] ?? "",
+  );
 }
 
 // 2. Direct load of an unknown path (the 404 is rendered on the client).
@@ -123,16 +155,30 @@ const fmt = (frames) => frames.map((f) => `${f.kind} ${f.w}x${f.h}@${f.localeX}$
       const s = getComputedStyle(e);
       return parseFloat(s.transitionDuration) > 0 && /all|color|background|border/.test(s.transitionProperty);
     });
-    const read = () => els.map((e) => { const s = getComputedStyle(e); return `${s.color}|${s.backgroundColor}|${s.borderColor}`; });
+    const read = () =>
+      els.map((e) => {
+        const s = getComputedStyle(e);
+        return `${s.color}|${s.backgroundColor}|${s.borderColor}`;
+      });
     window.__transitionEls = els.length;
-    new MutationObserver(() => { setTimeout(() => { window.__mid = read(); }, 50); setTimeout(() => { window.__end = read(); }, 800); })
-      .observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    new MutationObserver(() => {
+      setTimeout(() => {
+        window.__mid = read();
+      }, 50);
+      setTimeout(() => {
+        window.__end = read();
+      }, 800);
+    }).observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
   });
   await pick(page, 'button[aria-label="Tema"]', "Açık");
   await sleep(1200);
   const r = await page.evaluate(() => ({ n: window.__transitionEls, mid: window.__mid, end: window.__end }));
   const differing = r.mid && r.end ? r.mid.filter((v, i) => v !== r.end[i]).length : -1;
-  check("theme switch: colours don't animate", r.n > 0 && differing === 0, `${r.n} elements with transitions, ${differing} still animating at +50ms`);
+  check(
+    "theme switch: colours don't animate",
+    r.n > 0 && differing === 0,
+    `${r.n} elements with transitions, ${differing} still animating at +50ms`,
+  );
 }
 
 // 5. User-menu skeleton has the shape of what replaces it (signed out: button; signed in: avatar circle).
@@ -149,11 +195,16 @@ for (const signedIn of [false, true]) {
   // Compare at the swap: the web font can load later and resize the real button (and the skeleton) on its own.
   const swap = frames.findIndex((f, i) => f.kind === "result" && frames[i - 1]?.kind === "skeleton");
   check(`hard load (${who}): skeleton seen`, skel.length > 0, fmt(frames));
-  check(`hard load (${who}): skeleton size = result size at the swap`,
-    swap > 0 && frames[swap].w === frames[swap - 1].w && frames[swap].localeX === frames[swap - 1].localeX, fmt(frames));
+  check(
+    `hard load (${who}): skeleton size = result size at the swap`,
+    swap > 0 && frames[swap].w === frames[swap - 1].w && frames[swap].localeX === frames[swap - 1].localeX,
+    fmt(frames),
+  );
   if (signedIn) {
     // Switch to tr and back: the second switch reuses the cached shell and shows the fallback again.
-    await page.evaluate(() => { window.__frames = []; });
+    await page.evaluate(() => {
+      window.__frames = [];
+    });
     await switchLanguage(page);
     await page.waitForFunction(() => document.documentElement.lang === "tr", { timeout: 15000 });
     await sleep(2500);
@@ -164,12 +215,22 @@ for (const signedIn of [false, true]) {
     const xs = sw.map((f) => f.localeX).filter((x) => x !== null);
     const swSkel = sw.filter((f) => f.kind === "skeleton");
     // The fallback only shows when the cached shell commits before the user menu (seen with `pnpm start`, not always in dev).
-    if (swSkel.length === 0) console.log(`SKIP language switch back (signed in): fallback not shown in this run — ${fmt(sw)}`);
-    else check("language switch back (signed in): skeleton is the avatar circle", swSkel.every((f) => f.w === 32 && f.h === 32), fmt(sw));
+    if (swSkel.length === 0)
+      console.log(`SKIP language switch back (signed in): fallback not shown in this run — ${fmt(sw)}`);
+    else
+      check(
+        "language switch back (signed in): skeleton is the avatar circle",
+        swSkel.every((f) => f.w === 32 && f.h === 32),
+        fmt(sw),
+      );
     // The photo this tab already showed stays visible while the menu streams in again (no grey placeholder).
     check("language switch back (signed in): photo stays visible", sw.length > 0 && sw.every((f) => f.photo), fmt(sw));
     // TR/EN labels differ by ~1px; a skeleton/result width mismatch moves the button by ~40px.
-    check("language switch back (signed in): language button doesn't jump", Math.max(...xs) - Math.min(...xs) <= 2, fmt(sw));
+    check(
+      "language switch back (signed in): language button doesn't jump",
+      Math.max(...xs) - Math.min(...xs) <= 2,
+      fmt(sw),
+    );
   }
 }
 
@@ -188,7 +249,8 @@ for (const signedIn of [false, true]) {
       const logo = [...document.querySelectorAll("header a")].find((a) => a.getBoundingClientRect().width > 0);
       const x = Math.round(logo.getBoundingClientRect().x);
       const sb = window.innerWidth - document.documentElement.clientWidth;
-      if (!window.__xs.length || window.__xs.at(-1).x !== x || window.__xs.at(-1).sb !== sb) window.__xs.push({ x, sb });
+      if (!window.__xs.length || window.__xs.at(-1).x !== x || window.__xs.at(-1).sb !== sb)
+        window.__xs.push({ x, sb });
       if (performance.now() - t0 < 15000) requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
@@ -201,7 +263,11 @@ for (const signedIn of [false, true]) {
   await sleep(2500);
   const xs = await page.evaluate(() => window.__xs);
   const seq = xs.map((f) => `x${f.x}/sb${f.sb}`).join(" → ");
-  check("apply (member, desktop): scrollbar toggled during the switch (test is meaningful)", new Set(xs.map((f) => f.sb)).size > 1 || xs.some((f) => f.sb > 0), seq);
+  check(
+    "apply (member, desktop): scrollbar toggled during the switch (test is meaningful)",
+    new Set(xs.map((f) => f.sb)).size > 1 || xs.some((f) => f.sb > 0),
+    seq,
+  );
   check("apply (member, desktop): header doesn't move sideways", new Set(xs.map((f) => f.x)).size === 1, seq);
 }
 

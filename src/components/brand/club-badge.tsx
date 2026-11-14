@@ -12,12 +12,5 @@ export function ClubBadge({
   alt?: string;
   sizes?: string;
 }) {
-  return (
-    <Image
-      src={badge}
-      alt={alt}
-      sizes={sizes}
-      className={cn("h-auto w-30", className)}
-    />
-  );
+  return <Image src={badge} alt={alt} sizes={sizes} className={cn("h-auto w-30", className)} />;
 }

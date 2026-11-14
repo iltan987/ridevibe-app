@@ -60,8 +60,7 @@ async function AccountDetails() {
   const name = profile?.full_name || user.email || "";
   // Active members edit everything; inactive ones only keep the photo consent
   // (withdrawal must stay possible). Pending accounts have no profile data yet.
-  const myProfile =
-    profile?.status === "active" || profile?.status === "inactive" ? await getMyProfile() : null;
+  const myProfile = profile?.status === "active" || profile?.status === "inactive" ? await getMyProfile() : null;
 
   return (
     <>
@@ -70,9 +69,7 @@ async function AccountDetails() {
       <Card data-skeleton-result="account">
         <CardHeader className="flex flex-row items-center gap-4">
           <Avatar className="size-14">
-            {profile?.avatar_url && (
-              <AvatarImage src={profile.avatar_url} alt="" referrerPolicy="no-referrer" />
-            )}
+            {profile?.avatar_url && <AvatarImage src={profile.avatar_url} alt="" referrerPolicy="no-referrer" />}
             <AvatarFallback>{initials(name)}</AvatarFallback>
           </Avatar>
           <div className="min-w-0">
@@ -226,7 +223,15 @@ function AccountSkeleton() {
 }
 
 /** A profile section card: title (22px, like `CardTitle`), optional description, then the rows. */
-function SectionSkeleton({ id, description, children }: { id: string; description?: boolean; children: React.ReactNode }) {
+function SectionSkeleton({
+  id,
+  description,
+  children,
+}: {
+  id: string;
+  description?: boolean;
+  children: React.ReactNode;
+}) {
   return (
     <Card data-skeleton={id}>
       <CardHeader>

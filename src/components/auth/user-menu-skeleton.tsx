@@ -18,7 +18,11 @@ const noSubscribe = () => () => {};
 // instead of a grey circle. Keep the box in sync with the signed-out link in user-menu.tsx (buttonVariants outline/sm).
 export function UserMenuSkeleton() {
   const t = useTranslations("Auth");
-  const signedIn = useSyncExternalStore(noSubscribe, () => hasSessionCookie(document.cookie), () => false);
+  const signedIn = useSyncExternalStore(
+    noSubscribe,
+    () => hasSessionCookie(document.cookie),
+    () => false,
+  );
   const shown = useSyncExternalStore(noSubscribe, lastShownUser, () => null);
   if (signedIn && shown) {
     return (

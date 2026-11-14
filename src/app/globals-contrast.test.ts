@@ -9,9 +9,7 @@ function tokens(selector: string): Map<string, string> {
   const result = new Map<string, string>();
   const block = new RegExp(`(?:^|\\n)\\s*${selector}\\s*\\{([^}]*)\\}`, "g");
   for (const [, body] of css.matchAll(block)) {
-    for (const [, name, hex] of body.matchAll(
-      /--([\w-]+):\s*(#[0-9a-fA-F]{6})\s*;/g,
-    )) {
+    for (const [, name, hex] of body.matchAll(/--([\w-]+):\s*(#[0-9a-fA-F]{6})\s*;/g)) {
       result.set(name, hex);
     }
   }
@@ -94,10 +92,7 @@ for (const [theme, values] of Object.entries(themes)) {
         const b = values.get(bg);
         assert.ok(f && b, `${theme}: ${fg}/${bg} missing`);
         const ratio = contrast(f, b);
-        assert.ok(
-          ratio >= min,
-          `${theme}: ${fg} on ${bg} is ${ratio.toFixed(2)}, needs ${min}`,
-        );
+        assert.ok(ratio >= min, `${theme}: ${fg} on ${bg} is ${ratio.toFixed(2)}, needs ${min}`);
       });
     }
   }

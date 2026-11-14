@@ -7,10 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { pageMetadata } from "@/lib/seo/metadata";
 import { cn } from "@/lib/utils";
 
-export async function generateMetadata(
-  _props: unknown,
-  parent: ResolvingMetadata,
-): Promise<Metadata> {
+export async function generateMetadata(_props: unknown, parent: ResolvingMetadata): Promise<Metadata> {
   const [locale, t] = await Promise.all([getLocale(), getTranslations("Apply")]);
   const images = (await parent).openGraph?.images;
   return pageMetadata({
@@ -95,11 +92,7 @@ function ApplySkeleton() {
         <div className="flex h-47.25 flex-col gap-1.5 md:h-35.25">
           <Line className="h-5" bar="h-3.5 w-24" />
           <Line className="h-[21px]" bar="h-3.5 w-1/2" />
-          <Pills
-            widths={["w-24", "w-40", "w-36", "w-20", "w-40", "w-24"]}
-            className="h-full"
-            round="rounded-full"
-          />
+          <Pills widths={["w-24", "w-40", "w-36", "w-20", "w-40", "w-24"]} className="h-full" round="rounded-full" />
         </div>
         {/* Group experience */}
         <div className="flex h-17 flex-col gap-2">

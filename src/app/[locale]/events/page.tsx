@@ -4,15 +4,8 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { ComingSoon } from "@/components/coming-soon";
 import { pageMetadata } from "@/lib/seo/metadata";
 
-export async function generateMetadata(
-  _props: unknown,
-  parent: ResolvingMetadata,
-): Promise<Metadata> {
-  const [locale, t, tm] = await Promise.all([
-    getLocale(),
-    getTranslations("Nav"),
-    getTranslations("Metadata"),
-  ]);
+export async function generateMetadata(_props: unknown, parent: ResolvingMetadata): Promise<Metadata> {
+  const [locale, t, tm] = await Promise.all([getLocale(), getTranslations("Nav"), getTranslations("Metadata")]);
   const images = (await parent).openGraph?.images;
   return pageMetadata({
     locale,

@@ -80,7 +80,11 @@ export async function updateVisibility(input: VisibilityInput): Promise<ProfileA
   const { supabase, userId } = await currentUserId();
   if (!userId) return { status: "forbidden" };
 
-  const { data, error } = await supabase.from("member_details").update(parsed.data).eq("profile_id", userId).select("profile_id");
+  const { data, error } = await supabase
+    .from("member_details")
+    .update(parsed.data)
+    .eq("profile_id", userId)
+    .select("profile_id");
   return finish(error, data, "updateVisibility");
 }
 

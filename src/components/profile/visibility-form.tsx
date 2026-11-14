@@ -41,7 +41,8 @@ export function VisibilityForm({ instagram, showInstagram, showBirthday, showPla
     event.preventDefault();
     const submitted = handle;
     run(
-      () => updateVisibility({
+      () =>
+        updateVisibility({
           instagram: submitted,
           show_instagram: instagramOn,
           show_birthday: birthdayOn,
@@ -118,7 +119,12 @@ export function VisibilityForm({ instagram, showInstagram, showBirthday, showPla
         </form>
         {/* Outside the form above: forms can't nest. The birth-date controls join it via their `form` attribute. */}
         {!birthDate && (
-          <form id={BIRTH_DATE_FORM_ID} onSubmit={birthDateEntry.onSubmit} noValidate aria-busy={birthDateEntry.isPending} />
+          <form
+            id={BIRTH_DATE_FORM_ID}
+            onSubmit={birthDateEntry.onSubmit}
+            noValidate
+            aria-busy={birthDateEntry.isPending}
+          />
         )}
       </CardContent>
     </Card>

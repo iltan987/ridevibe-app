@@ -48,7 +48,10 @@ const yesNo = z.enum(["yes", "no"], err("required")).transform((v) => v === "yes
 const choices = <T extends readonly [string, ...string[]]>(values: T) =>
   z.array(z.enum(values, err("invalidOption"))).min(1, err("chooseAtLeastOne"));
 
-const checkbox = z.literal("on").optional().transform((v) => v === "on");
+const checkbox = z
+  .literal("on")
+  .optional()
+  .transform((v) => v === "on");
 
 const rule = (path: string, key: ApplyErrorKey = "required") => ({ path: [path], error: key });
 
@@ -119,11 +122,20 @@ const applicationFields = z.object({
   other_languages: optionalText(120),
 
   license_class: z.enum(LICENSE_CLASSES, err("required")),
-  riding_years: z.coerce.number(err("invalidNumber")).int(err("invalidNumber")).min(0, err("invalidNumber")).max(70, err("invalidNumber")),
+  riding_years: z.coerce
+    .number(err("invalidNumber"))
+    .int(err("invalidNumber"))
+    .min(0, err("invalidNumber"))
+    .max(70, err("invalidNumber")),
   owns_motorcycle: yesNo,
   motorcycle_brand: optionalText(60),
   motorcycle_model: optionalText(60),
-  motorcycle_cc: z.coerce.number(err("invalidNumber")).int(err("invalidNumber")).min(50, err("invalidNumber")).max(3000, err("invalidNumber")).optional(),
+  motorcycle_cc: z.coerce
+    .number(err("invalidNumber"))
+    .int(err("invalidNumber"))
+    .min(50, err("invalidNumber"))
+    .max(3000, err("invalidNumber"))
+    .optional(),
   riding_styles: choices(RIDING_STYLES),
   group_experience: z.enum(GROUP_EXPERIENCE, err("required")),
 
@@ -179,49 +191,47 @@ export const applicationSchema = applicationFields
     ...rule("other_event_interests"),
     when: onlyIf("event_interests", "other_event_interests"),
   })
-  .transform(
-    (v): TablesInsert<"applications"> => ({
-      locale: v.locale,
-      full_name: v.full_name,
-      phone: v.phone,
-      email: v.email,
-      birth_date: v.birth_date,
-      city: v.city_choice === "istanbul" ? ISTANBUL : v.city!,
-      district: v.district,
-      side: v.city_choice === "istanbul" ? sideOfDistrict(v.district) : null,
-      instagram: v.instagram ?? null,
-      languages: v.languages,
-      other_languages: v.languages.includes("other") ? v.other_languages! : null,
-      license_class: v.license_class,
-      riding_years: v.riding_years,
-      owns_motorcycle: v.owns_motorcycle,
-      // Drop bike/club/referrer details that don't apply to the chosen answer.
-      motorcycle_brand: v.owns_motorcycle ? v.motorcycle_brand! : null,
-      motorcycle_model: v.owns_motorcycle ? v.motorcycle_model! : null,
-      motorcycle_cc: v.owns_motorcycle ? (v.motorcycle_cc ?? null) : null,
-      riding_styles: v.riding_styles,
-      group_experience: v.group_experience,
-      in_other_clubs: v.in_other_clubs,
-      other_club_names: v.in_other_clubs ? v.other_club_names! : null,
-      heard_from: v.heard_from,
-      // Optional: lets us credit (and later reward) the referring member.
-      referrer_name: v.heard_from === "friend" ? (v.referrer_name ?? null) : null,
-      event_interests: v.event_interests,
-      other_event_interests: v.event_interests.includes("other") ? v.other_event_interests! : null,
-      expectations: v.expectations,
-      alienating_behaviors: v.alienating_behaviors,
-      conflict_handling: v.conflict_handling,
-      consent_privacy: v.consent_privacy,
-      consent_rules: v.consent_rules,
-      consent_photos: v.consent_photos,
-      privacy_notice_version: PRIVACY_NOTICE_VERSION,
-      utm_source: v.utm_source ?? null,
-      utm_medium: v.utm_medium ?? null,
-      utm_campaign: v.utm_campaign ?? null,
-      utm_content: v.utm_content ?? null,
-      utm_term: v.utm_term ?? null,
-    }),
-  );
+  .transform((v): TablesInsert<"applications"> => ({
+    locale: v.locale,
+    full_name: v.full_name,
+    phone: v.phone,
+    email: v.email,
+    birth_date: v.birth_date,
+    city: v.city_choice === "istanbul" ? ISTANBUL : v.city!,
+    district: v.district,
+    side: v.city_choice === "istanbul" ? sideOfDistrict(v.district) : null,
+    instagram: v.instagram ?? null,
+    languages: v.languages,
+    other_languages: v.languages.includes("other") ? v.other_languages! : null,
+    license_class: v.license_class,
+    riding_years: v.riding_years,
+    owns_motorcycle: v.owns_motorcycle,
+    // Drop bike/club/referrer details that don't apply to the chosen answer.
+    motorcycle_brand: v.owns_motorcycle ? v.motorcycle_brand! : null,
+    motorcycle_model: v.owns_motorcycle ? v.motorcycle_model! : null,
+    motorcycle_cc: v.owns_motorcycle ? (v.motorcycle_cc ?? null) : null,
+    riding_styles: v.riding_styles,
+    group_experience: v.group_experience,
+    in_other_clubs: v.in_other_clubs,
+    other_club_names: v.in_other_clubs ? v.other_club_names! : null,
+    heard_from: v.heard_from,
+    // Optional: lets us credit (and later reward) the referring member.
+    referrer_name: v.heard_from === "friend" ? (v.referrer_name ?? null) : null,
+    event_interests: v.event_interests,
+    other_event_interests: v.event_interests.includes("other") ? v.other_event_interests! : null,
+    expectations: v.expectations,
+    alienating_behaviors: v.alienating_behaviors,
+    conflict_handling: v.conflict_handling,
+    consent_privacy: v.consent_privacy,
+    consent_rules: v.consent_rules,
+    consent_photos: v.consent_photos,
+    privacy_notice_version: PRIVACY_NOTICE_VERSION,
+    utm_source: v.utm_source ?? null,
+    utm_medium: v.utm_medium ?? null,
+    utm_campaign: v.utm_campaign ?? null,
+    utm_content: v.utm_content ?? null,
+    utm_term: v.utm_term ?? null,
+  }));
 
 const emailAddress = z.email();
 

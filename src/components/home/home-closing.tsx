@@ -8,19 +8,9 @@ import { HomeApplyButton } from "@/components/home/home-apply-button";
 export function HomeClosing() {
   const t = useTranslations("Home.closing");
   return (
-    <section
-      data-home-closing
-      className="dark relative bg-background text-foreground md:h-155 md:overflow-hidden"
-    >
+    <section data-home-closing className="dark relative bg-background text-foreground md:h-155 md:overflow-hidden">
       <div className="relative h-90 w-full md:absolute md:inset-0 md:h-full">
-        <Image
-          src={closingPhoto}
-          alt={t("alt")}
-          fill
-          sizes="100vw"
-          placeholder="blur"
-          className="object-cover"
-        />
+        <Image src={closingPhoto} alt={t("alt")} fill sizes="100vw" placeholder="blur" className="object-cover" />
         <div
           aria-hidden
           className="absolute inset-0 hidden bg-linear-to-b from-background from-0% via-transparent via-30% to-transparent to-45% md:block"

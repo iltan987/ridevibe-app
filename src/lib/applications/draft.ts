@@ -15,7 +15,9 @@ export type ApplyDraft = {
 };
 
 // Only the first three steps are saved: contact details and consents are never stored in the browser.
-export const DRAFT_FIELDS: ReadonlySet<string> = new Set(APPLY_STEPS.slice(0, STEP_COUNT - 1).flatMap((step) => step.fields));
+export const DRAFT_FIELDS: ReadonlySet<string> = new Set(
+  APPLY_STEPS.slice(0, STEP_COUNT - 1).flatMap((step) => step.fields),
+);
 
 export type DraftStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 

@@ -41,13 +41,7 @@ export function RouteStop({
 }) {
   const Tag: ElementType = as;
   return (
-    <Tag
-      className={cn(
-        "relative before:absolute before:rounded-full before:content-['']",
-        DOT[kind],
-        className,
-      )}
-    >
+    <Tag className={cn("relative before:absolute before:rounded-full before:content-['']", DOT[kind], className)}>
       {children}
     </Tag>
   );

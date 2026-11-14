@@ -4,7 +4,12 @@ import type { Enums } from "@/lib/supabase/database.types";
 import { PAGE_SIZE } from "@/lib/pagination";
 
 export type ApplicationStatus = Enums<"application_status">;
-export const APPLICATION_STATUSES = ["new", "contacted", "approved", "rejected"] as const satisfies readonly ApplicationStatus[];
+export const APPLICATION_STATUSES = [
+  "new",
+  "contacted",
+  "approved",
+  "rejected",
+] as const satisfies readonly ApplicationStatus[];
 
 /** Tabs on the applications list: the real statuses plus approved applicants who haven't signed in yet. */
 export const APPLICATION_FILTERS = [...APPLICATION_STATUSES, "unlinked"] as const;

@@ -3,13 +3,26 @@
 const BASE = (process.env.BASE ?? "http://localhost:3123").replace(/\/$/, "");
 const SITE = "https://ridevibe.com.tr";
 let fails = 0;
-const check = (name, ok, extra = "") => { if (!ok) fails++; console.log(`${ok ? "PASS" : "FAIL"} ${name}${extra ? " — " + extra : ""}`); };
+const check = (name, ok, extra = "") => {
+  if (!ok) fails++;
+  console.log(`${ok ? "PASS" : "FAIL"} ${name}${extra ? " — " + extra : ""}`);
+};
 
-const decode = (s) => s
-  .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)))
-  .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(Number(d)))
-  .replace(/&quot;/g, '"').replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
-const norm = (u) => { try { return new URL(u).href; } catch { return u; } };
+const decode = (s) =>
+  s
+    .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)))
+    .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(Number(d)))
+    .replace(/&quot;/g, '"')
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&");
+const norm = (u) => {
+  try {
+    return new URL(u).href;
+  } catch {
+    return u;
+  }
+};
 
 async function get(path, headers = {}) {
   try {
@@ -28,9 +41,15 @@ function tags(html, name) {
   });
 }
 const metas = (html) => tags(html, "meta");
-const meta = (html, key) => metas(html).filter((m) => (m.property ?? m.name) === key).map((m) => m.content);
+const meta = (html, key) =>
+  metas(html)
+    .filter((m) => (m.property ?? m.name) === key)
+    .map((m) => m.content);
 const one = (html, key) => meta(html, key)[0];
-const title = (html) => { const m = html.match(/<title>([^<]*)<\/title>/i); return m ? decode(m[1]) : ""; };
+const title = (html) => {
+  const m = html.match(/<title>([^<]*)<\/title>/i);
+  return m ? decode(m[1]) : "";
+};
 const canonical = (html) => tags(html, "link").find((l) => l.rel === "canonical")?.href;
 
 // robots + sitemap
@@ -42,7 +61,11 @@ const canonical = (html) => tags(html, "link").find((l) => l.rel === "canonical"
   const locs = [...s.body.matchAll(/<loc>([^<]*)<\/loc>/g)].map((m) => m[1]).sort();
   const want = [`${SITE}`, `${SITE}/apply`, `${SITE}/en`, `${SITE}/en/apply`].map(norm).sort();
   check("sitemap.xml 200", s.status === 200 && /xml/.test(s.res.headers.get("content-type") ?? ""));
-  check("sitemap.xml has exactly the four URLs", JSON.stringify(locs.map(norm)) === JSON.stringify(want), locs.join(" "));
+  check(
+    "sitemap.xml has exactly the four URLs",
+    JSON.stringify(locs.map(norm)) === JSON.stringify(want),
+    locs.join(" "),
+  );
 }
 
 // indexable pages
@@ -65,19 +88,33 @@ for (const p of pages) {
   check(`${n} og:type website`, one(h, "og:type") === "website");
   check(`${n} og:site_name`, one(h, "og:site_name") === "Ride & Vibe", one(h, "og:site_name"));
   check(`${n} og:locale ${p.locale}`, one(h, "og:locale") === p.locale);
-  check(`${n} og:locale:alternate ${p.alt}`, JSON.stringify(meta(h, "og:locale:alternate")) === JSON.stringify([p.alt]));
-  check(`${n} og:image + size/type/alt`, !!one(h, "og:image") && !!one(h, "og:image:width") && !!one(h, "og:image:height")
-    && !!one(h, "og:image:type") && !!one(h, "og:image:alt"));
+  check(
+    `${n} og:locale:alternate ${p.alt}`,
+    JSON.stringify(meta(h, "og:locale:alternate")) === JSON.stringify([p.alt]),
+  );
+  check(
+    `${n} og:image + size/type/alt`,
+    !!one(h, "og:image") &&
+      !!one(h, "og:image:width") &&
+      !!one(h, "og:image:height") &&
+      !!one(h, "og:image:type") &&
+      !!one(h, "og:image:alt"),
+  );
   check(`${n} twitter:card summary_large_image`, one(h, "twitter:card") === "summary_large_image");
   check(`${n} twitter:title = og:title`, !!one(h, "twitter:title") && one(h, "twitter:title") === one(h, "og:title"));
   check(`${n} twitter:image`, !!one(h, "twitter:image"));
-  check(`${n} no noindex (meta + x-robots-tag)`,
-    !/noindex/i.test(one(h, "robots") ?? "") && !/noindex/i.test(res.headers.get("x-robots-tag") ?? ""));
+  check(
+    `${n} no noindex (meta + x-robots-tag)`,
+    !/noindex/i.test(one(h, "robots") ?? "") && !/noindex/i.test(res.headers.get("x-robots-tag") ?? ""),
+  );
 }
 check("/ and /en titles differ", title(heads["/"]) !== title(heads["/en"]));
 check("/ and /en descriptions differ", one(heads["/"], "description") !== one(heads["/en"], "description"));
 check("/apply and /en/apply titles differ", title(heads["/apply"]) !== title(heads["/en/apply"]));
-check("/apply and /en/apply descriptions differ", one(heads["/apply"], "description") !== one(heads["/en/apply"], "description"));
+check(
+  "/apply and /en/apply descriptions differ",
+  one(heads["/apply"], "description") !== one(heads["/en/apply"], "description"),
+);
 
 // query strings do not leak into canonical
 {
@@ -87,11 +124,24 @@ check("/apply and /en/apply descriptions differ", one(heads["/apply"], "descript
 }
 
 // noindex
-for (const path of ["/privacy", "/en/privacy", "/events", "/en/events", "/gallery", "/en/gallery", "/members", "/account", "/sign-in"]) {
+for (const path of [
+  "/privacy",
+  "/en/privacy",
+  "/events",
+  "/en/events",
+  "/gallery",
+  "/en/gallery",
+  "/members",
+  "/account",
+  "/sign-in",
+]) {
   const { res, body } = await get(path);
   const robots = one(body, "robots") ?? "";
-  check(`${path} 200 + noindex`, res.status === 200
-    && (/noindex/i.test(robots) || /noindex/i.test(res.headers.get("x-robots-tag") ?? "")), `status ${res.status}`);
+  check(
+    `${path} 200 + noindex`,
+    res.status === 200 && (/noindex/i.test(robots) || /noindex/i.test(res.headers.get("x-robots-tag") ?? "")),
+    `status ${res.status}`,
+  );
 }
 
 // JSON-LD on the home pages
@@ -99,30 +149,56 @@ for (const path of ["/", "/en"]) {
   const h = heads[path];
   const blocks = [...h.matchAll(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g)];
   let types = [];
-  try { types = JSON.parse(blocks[0][1])["@graph"].map((x) => x["@type"]); } catch { /* reported below */ }
-  check(`${path} one ld+json with WebSite + SportsOrganization`,
-    blocks.length === 1 && types.includes("WebSite") && types.includes("SportsOrganization"), `${blocks.length} block(s), ${types.join(",")}`);
+  try {
+    types = JSON.parse(blocks[0][1])["@graph"].map((x) => x["@type"]);
+  } catch {
+    /* reported below */
+  }
+  check(
+    `${path} one ld+json with WebSite + SportsOrganization`,
+    blocks.length === 1 && types.includes("WebSite") && types.includes("SportsOrganization"),
+    `${blocks.length} block(s), ${types.join(",")}`,
+  );
 }
 
 // locale handling
 {
   const wa = await get("/", { "user-agent": "WhatsApp/2.23.20.0 A", "accept-language": "en" });
-  check("/ with Accept-Language en: 200 Turkish", wa.status === 200 && /<html[^>]*lang="tr"/.test(wa.body), `status ${wa.status}`);
+  check(
+    "/ with Accept-Language en: 200 Turkish",
+    wa.status === 200 && /<html[^>]*lang="tr"/.test(wa.body),
+    `status ${wa.status}`,
+  );
   const c = await get("/", { cookie: "NEXT_LOCALE=en" });
   const loc = c.res.headers.get("location") ?? "";
-  check("/ with NEXT_LOCALE=en: 307 to /en", c.status === 307 && new URL(loc, BASE).pathname === "/en", `${c.status} ${loc}`);
+  check(
+    "/ with NEXT_LOCALE=en: 307 to /en",
+    c.status === 307 && new URL(loc, BASE).pathname === "/en",
+    `${c.status} ${loc}`,
+  );
   const e = await get("/en");
   const cookies = e.res.headers.getSetCookie?.() ?? [e.res.headers.get("set-cookie") ?? ""];
-  check("/en first visit sets NEXT_LOCALE Max-Age=31536000", cookies.some((x) => /NEXT_LOCALE=en/.test(x) && /Max-Age=31536000/i.test(x)), cookies.join(" | "));
+  check(
+    "/en first visit sets NEXT_LOCALE Max-Age=31536000",
+    cookies.some((x) => /NEXT_LOCALE=en/.test(x) && /Max-Age=31536000/i.test(x)),
+    cookies.join(" | "),
+  );
 }
 
 // hreflang header (paths and hreflang values; origins differ locally)
 {
   const { res } = await get("/apply");
   const link = res.headers.get("link") ?? "";
-  const alts = [...link.matchAll(/<([^>]+)>;\s*rel="alternate";\s*hreflang="([^"]+)"/g)].map((m) => [m[2], new URL(m[1]).pathname]);
+  const alts = [...link.matchAll(/<([^>]+)>;\s*rel="alternate";\s*hreflang="([^"]+)"/g)].map((m) => [
+    m[2],
+    new URL(m[1]).pathname,
+  ]);
   const map = Object.fromEntries(alts);
-  check("/apply hreflang header tr/en/x-default", map.tr === "/apply" && map.en === "/en/apply" && map["x-default"] === "/apply", link);
+  check(
+    "/apply hreflang header tr/en/x-default",
+    map.tr === "/apply" && map.en === "/en/apply" && map["x-default"] === "/apply",
+    link,
+  );
 }
 
 // PNG icon in the home head
@@ -135,7 +211,8 @@ for (const path of ["/", "/en"]) {
 // share image: the og:image URL has the production origin even locally, so fetch its path from BASE
 {
   const src = one(heads["/"], "og:image");
-  let ok = false, extra = String(src);
+  let ok = false,
+    extra = String(src);
   if (src) {
     const u = new URL(src, SITE);
     const path = u.pathname + u.search;
@@ -146,7 +223,9 @@ for (const path of ["/", "/en"]) {
       const size = Number(res.headers.get("content-length")) || buf.byteLength;
       ok = res.status === 200 && type.startsWith("image/") && size < 600000;
       extra = `${path} ${res.status} ${type} ${size} bytes`;
-    } catch (e) { extra = `${path} ${e?.message ?? e}`; }
+    } catch (e) {
+      extra = `${path} ${e?.message ?? e}`;
+    }
   }
   check("og:image of / is 200, image/*, < 600000 bytes", ok, extra);
 }

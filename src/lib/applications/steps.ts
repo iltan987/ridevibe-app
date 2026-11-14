@@ -20,7 +20,14 @@ export const APPLY_STEPS: readonly { id: ApplyStepId; fields: readonly string[] 
   },
   {
     id: "club",
-    fields: ["in_other_clubs", "other_club_names", "heard_from", "referrer_name", "event_interests", "other_event_interests"],
+    fields: [
+      "in_other_clubs",
+      "other_club_names",
+      "heard_from",
+      "referrer_name",
+      "event_interests",
+      "other_event_interests",
+    ],
   },
   { id: "words", fields: ["expectations", "alienating_behaviors", "conflict_handling"] },
   {

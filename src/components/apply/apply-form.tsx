@@ -62,7 +62,11 @@ const getServerUserAgent = () => null;
  * over" remounts it empty (`resetCount`).
  */
 export function ApplyForm({ defaults }: { defaults?: Defaults }) {
-  const hydrated = useSyncExternalStore(noSubscribe, () => true, () => false);
+  const hydrated = useSyncExternalStore(
+    noSubscribe,
+    () => true,
+    () => false,
+  );
   const [resetCount, setResetCount] = useState(0);
   return (
     <ApplyFormSteps
@@ -119,7 +123,9 @@ function ApplyFormSteps({
   const [otherClubs, setOtherClubs] = useState<string | null>(draftChoice(draft, YES_NO, "in_other_clubs") ?? null);
   const [heardFrom, setHeardFrom] = useState<string | null>(draftChoice(draft, HEARD_FROM, "heard_from") ?? null);
   const [languages, setLanguages] = useState<readonly string[]>([]);
-  const [events, setEvents] = useState<readonly string[]>(draftChoices(draft, EVENT_INTERESTS, "event_interests") ?? []);
+  const [events, setEvents] = useState<readonly string[]>(
+    draftChoices(draft, EVENT_INTERESTS, "event_interests") ?? [],
+  );
 
   // The current step lives in the URL (`?step=N`), so back/forward move between steps. Without one (reload of
   // `/apply`, language switch) a restored draft opens where the person left off.
@@ -304,7 +310,7 @@ function ApplyFormSteps({
               ? t("successSignedIn")
               : t.rich("successEmail", {
                   email: submittedEmail,
-                  b: (chunks) => <b className="font-semibold text-foreground wrap-anywhere">{chunks}</b>,
+                  b: (chunks) => <b className="font-semibold wrap-anywhere text-foreground">{chunks}</b>,
                 })}
           </CardDescription>
           <Link href="/" className={buttonVariants({ variant: "outline", className: "mt-2" })}>
@@ -547,7 +553,13 @@ function ApplyFormSteps({
       <Step n={4} current={step} className="flex flex-col gap-10">
         {canFillWithGoogle && (
           <div className="flex flex-col gap-2">
-            <Button type="button" variant="outline" onClick={fillWithGoogle} disabled={isPending} className="self-start">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={fillWithGoogle}
+              disabled={isPending}
+              className="self-start"
+            >
               <GoogleIcon />
               {t("google.button")}
             </Button>
@@ -598,7 +610,13 @@ function ApplyFormSteps({
           {cityChoice === "istanbul" ? (
             <Field data-field="district" data-invalid={!!error("district")}>
               <FieldLabel htmlFor="district">{t("fields.district")}</FieldLabel>
-              <NativeSelect id="district" name="district" defaultValue="" className="w-full" aria-invalid={!!error("district")}>
+              <NativeSelect
+                id="district"
+                name="district"
+                defaultValue=""
+                className="w-full"
+                aria-invalid={!!error("district")}
+              >
                 <NativeSelectOption value="" disabled>
                   {t("fields.districtPlaceholder")}
                 </NativeSelectOption>
@@ -612,7 +630,12 @@ function ApplyFormSteps({
             </Field>
           ) : (
             <>
-              <TextField name="city" label={t("fields.city_other")} error={error("city")} autoComplete="address-level2" />
+              <TextField
+                name="city"
+                label={t("fields.city_other")}
+                error={error("city")}
+                autoComplete="address-level2"
+              />
               <TextField name="district" label={t("fields.district")} error={error("district")} />
             </>
           )}
@@ -683,7 +706,11 @@ function draftChoice<T extends string>(draft: ApplyDraft | null, options: readon
 }
 
 /** Restored multiple choices that are still among `options`. */
-function draftChoices<T extends string>(draft: ApplyDraft | null, options: readonly T[], name: string): T[] | undefined {
+function draftChoices<T extends string>(
+  draft: ApplyDraft | null,
+  options: readonly T[],
+  name: string,
+): T[] | undefined {
   const value = draft?.fields[name];
   return Array.isArray(value) ? options.filter((option) => value.includes(option)) : undefined;
 }

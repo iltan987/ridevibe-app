@@ -51,9 +51,7 @@ export function installVariant(s: {
 }
 
 export function showsBanner(variant: InstallVariant): boolean {
-  return (
-    variant === "prompt" || variant === "ios-safari" || variant === "ios-other" || variant === "android-manual"
-  );
+  return variant === "prompt" || variant === "ios-safari" || variant === "ios-other" || variant === "android-manual";
 }
 
 export function isDismissed(dismissedAt: number | null, now: number): boolean {

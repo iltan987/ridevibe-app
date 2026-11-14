@@ -172,7 +172,8 @@ test("readThemePreference is dark without window", () => {
 function withGlobals(globals: Record<string, unknown>, fn: () => void) {
   const g = globalThis as Record<string, unknown>;
   const saved = Object.keys(globals).map((k) => [k, Object.getOwnPropertyDescriptor(g, k)] as const);
-  for (const [k, v] of Object.entries(globals)) Object.defineProperty(g, k, { value: v, configurable: true, writable: true });
+  for (const [k, v] of Object.entries(globals))
+    Object.defineProperty(g, k, { value: v, configurable: true, writable: true });
   try {
     fn();
   } finally {

@@ -70,20 +70,17 @@ export async function loadDirectory({
   });
 
   // Generated return types are non-nullable although the columns can be null.
-  const members = uniqueById(items).map(
-    (row): DirectoryMember => ({
-      id: row.id,
-      fullName: row.full_name,
-      avatarUrl: (row.avatar_url as string | null) ?? null,
-      district: (row.district as string | null) ?? null,
-      side: (row.side as IstanbulSide | null) ?? null,
-      birthday:
-        row.birth_month != null && row.birth_day != null ? { month: row.birth_month, day: row.birth_day } : null,
-      instagram: (row.instagram as string | null) ?? null,
-      motorcycles: Array.isArray(row.motorcycles) ? (row.motorcycles as Motorcycle[]) : [],
-      hasEmergencyContact: (row.has_emergency_contact as boolean | null) ?? null,
-    }),
-  );
+  const members = uniqueById(items).map((row): DirectoryMember => ({
+    id: row.id,
+    fullName: row.full_name,
+    avatarUrl: (row.avatar_url as string | null) ?? null,
+    district: (row.district as string | null) ?? null,
+    side: (row.side as IstanbulSide | null) ?? null,
+    birthday: row.birth_month != null && row.birth_day != null ? { month: row.birth_month, day: row.birth_day } : null,
+    instagram: (row.instagram as string | null) ?? null,
+    motorcycles: Array.isArray(row.motorcycles) ? (row.motorcycles as Motorcycle[]) : [],
+    hasEmergencyContact: (row.has_emergency_contact as boolean | null) ?? null,
+  }));
   return { members, overCeiling };
 }
 

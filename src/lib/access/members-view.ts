@@ -22,5 +22,11 @@ export function membersView<T extends { status: StaffStatus; search: string }>(
   const matched = rows.filter((row) => matchesFolded(row.search, foldedQuery));
   const counts: Record<StaffStatus, number> = { pending: 0, active: 0, inactive: 0 };
   for (const row of matched) counts[row.status] += 1;
-  return { counts, ...slicePage(matched.filter((row) => row.status === status), page) };
+  return {
+    counts,
+    ...slicePage(
+      matched.filter((row) => row.status === status),
+      page,
+    ),
+  };
 }

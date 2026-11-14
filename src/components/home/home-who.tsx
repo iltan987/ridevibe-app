@@ -35,9 +35,7 @@ export function HomeWho() {
               ))}
             </div>
           </div>
-          <p className="mt-2.5 text-sm text-pretty text-muted-foreground md:mt-3.5 md:text-base">
-            {t("conditions")}
-          </p>
+          <p className="mt-2.5 text-sm text-pretty text-muted-foreground md:mt-3.5 md:text-base">{t("conditions")}</p>
         </div>
         <div className="mt-5.5 md:col-start-1 md:row-start-1 md:mt-3">
           <RoutePhoto

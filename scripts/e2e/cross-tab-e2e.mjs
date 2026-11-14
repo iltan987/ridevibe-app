@@ -42,8 +42,7 @@ async function menu(page, triggerSel, itemSel, itemText) {
   }
   throw new Error(`could not pick "${itemText}" from ${triggerSel}`);
 }
-const signOutVia = (page) =>
-  menu(page, '[data-skeleton-result="user-menu"]', '[role="menuitem"]', "Çıkış Yap");
+const signOutVia = (page) => menu(page, '[data-skeleton-result="user-menu"]', '[role="menuitem"]', "Çıkış Yap");
 const switchLanguageVia = (page, label) =>
   menu(page, '[data-skeleton-result="locale-switcher"]:not([disabled])', '[role="menuitemradio"]', label);
 
@@ -118,7 +117,11 @@ try {
   await A.goto(BASE + "/account", { waitUntil: "networkidle0" });
   const bAfterIn = await until(async () => where(B) === "/members" && where(B));
   check("sign-in in A takes B from /sign-in to its next", bAfterIn === "/members", where(B));
-  check("B's header shows the signed-in user", (await until(async () => (await shownUser(B)) === memberName)), await shownUser(B));
+  check(
+    "B's header shows the signed-in user",
+    await until(async () => (await shownUser(B)) === memberName),
+    await shownUser(B),
+  );
 
   // --- Switch account in A (sign out, sign in as someone else) while B stays on /members.
   await dropSession(A);
@@ -126,7 +129,11 @@ try {
   await A.reload({ waitUntil: "networkidle0" });
   const secondName = await settledUser(A);
   const bSwitched = await until(async () => (await shownUser(B)) === secondName);
-  check("account switch in A shows the new user in B", bSwitched && secondName !== memberName, `${memberName} → ${await shownUser(B)}`);
+  check(
+    "account switch in A shows the new user in B",
+    bSwitched && secondName !== memberName,
+    `${memberName} → ${await shownUser(B)}`,
+  );
 
   // --- A tab frozen in the background catches up when it comes back.
   const cdp = await B.createCDPSession();
@@ -138,7 +145,11 @@ try {
   await cdp.send("Page.setWebLifecycleState", { state: "active" });
   await B.bringToFront();
   const bAfterFrozen = await until(async () => where(B).startsWith("/sign-in") && where(B));
-  check("a frozen tab follows a sign-out once it is active again", bAfterFrozen === "/sign-in?next=%2Fmembers", where(B));
+  check(
+    "a frozen tab follows a sign-out once it is active again",
+    bAfterFrozen === "/sign-in?next=%2Fmembers",
+    where(B),
+  );
 
   // --- Signed in, `/sign-in?next=/sign-in` doesn't loop.
   await signIn(A, "member@test.local", BASE);
@@ -158,7 +169,11 @@ try {
   const eShown = await until(async () => where(E).startsWith("/sign-in") && where(E));
   check("a tab shown late after a sign-out goes to sign-in", eShown === "/sign-in?next=%2Fmembers", where(E));
   await sleep(1000);
-  check("the late tab didn't store its outdated user", (await A.evaluate(() => localStorage.getItem("rv-auth")))?.startsWith("@"), await A.evaluate(() => localStorage.getItem("rv-auth")));
+  check(
+    "the late tab didn't store its outdated user",
+    (await A.evaluate(() => localStorage.getItem("rv-auth")))?.startsWith("@"),
+    await A.evaluate(() => localStorage.getItem("rv-auth")),
+  );
   await A.bringToFront();
   await signIn(A, "member@test.local", BASE);
   await A.goto(BASE + "/account", { waitUntil: "networkidle0" });
@@ -192,8 +207,16 @@ try {
   check("a tab loaded in the background catches up when shown", fEn === "/en/members", where(F));
   await F.close();
   await sleep(1000);
-  check("/apply keeps its language", where(C) === "/apply" && (await C.evaluate(() => document.documentElement.lang)) === "tr", where(C));
-  check("/account keeps its language", where(D) === "/account" && (await D.evaluate(() => document.documentElement.lang)) === "tr", where(D));
+  check(
+    "/apply keeps its language",
+    where(C) === "/apply" && (await C.evaluate(() => document.documentElement.lang)) === "tr",
+    where(C),
+  );
+  check(
+    "/account keeps its language",
+    where(D) === "/account" && (await D.evaluate(() => document.documentElement.lang)) === "tr",
+    where(D),
+  );
 
   await switchLanguageVia(A, "Türkçe");
   const bTr = await until(async () => where(B) === "/members?q=Test" && where(B));

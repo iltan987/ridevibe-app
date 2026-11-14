@@ -157,8 +157,13 @@ async function ApplicationDetail({ params }: { params: PageProps<"/[locale]/admi
 
   const decidedLabel = a.reviewed_at
     ? a.reviewer?.full_name
-      ? t("review.decidedBy", { name: a.reviewer.full_name, date: format.dateTime(new Date(a.reviewed_at), { dateStyle: "medium", timeStyle: "short" }) })
-      : t("review.decidedByUnknown", { date: format.dateTime(new Date(a.reviewed_at), { dateStyle: "medium", timeStyle: "short" }) })
+      ? t("review.decidedBy", {
+          name: a.reviewer.full_name,
+          date: format.dateTime(new Date(a.reviewed_at), { dateStyle: "medium", timeStyle: "short" }),
+        })
+      : t("review.decidedByUnknown", {
+          date: format.dateTime(new Date(a.reviewed_at), { dateStyle: "medium", timeStyle: "short" }),
+        })
     : null;
   // Linked = profile_id. The account details come from an RPC: profiles RLS
   // hides pending accounts from staff without members.manage.
@@ -231,7 +236,8 @@ async function ApplicationDetail({ params }: { params: PageProps<"/[locale]/admi
         }
       >
         <Row label={tApply("fields.birth_date")}>
-          {format.dateTime(new Date(`${a.birth_date}T12:00:00`), { dateStyle: "long" })} · {t("age", { age: ageFrom(a.birth_date) })}
+          {format.dateTime(new Date(`${a.birth_date}T12:00:00`), { dateStyle: "long" })} ·{" "}
+          {t("age", { age: ageFrom(a.birth_date) })}
         </Row>
         <Row label={tApply("fields.city")}>
           {a.city} / {a.district}
@@ -239,7 +245,12 @@ async function ApplicationDetail({ params }: { params: PageProps<"/[locale]/admi
         </Row>
         {a.instagram && (
           <Row label={tApply("fields.instagram")}>
-            <a href={`https://instagram.com/${a.instagram}`} target="_blank" rel="noreferrer" className="underline underline-offset-4">
+            <a
+              href={`https://instagram.com/${a.instagram}`}
+              target="_blank"
+              rel="noreferrer"
+              className="underline underline-offset-4"
+            >
               @{a.instagram}
             </a>
           </Row>
@@ -255,7 +266,9 @@ async function ApplicationDetail({ params }: { params: PageProps<"/[locale]/admi
         <Row label={tApply("fields.riding_years")}>{t("years", { years: a.riding_years })}</Row>
         <Row label={tApply("fields.owns_motorcycle")}>
           {a.owns_motorcycle
-            ? [a.motorcycle_brand, a.motorcycle_model, a.motorcycle_cc && `${a.motorcycle_cc} cc`].filter(Boolean).join(" · ")
+            ? [a.motorcycle_brand, a.motorcycle_model, a.motorcycle_cc && `${a.motorcycle_cc} cc`]
+                .filter(Boolean)
+                .join(" · ")
             : yesNo(false)}
         </Row>
         <Row label={tApply("fields.riding_styles")}>{list(a.riding_styles, "riding_styles")}</Row>
@@ -263,9 +276,7 @@ async function ApplicationDetail({ params }: { params: PageProps<"/[locale]/admi
       </Section>
 
       <Section title={tApply("sections.club")}>
-        <Row label={tApply("fields.in_other_clubs")}>
-          {a.in_other_clubs ? a.other_club_names : yesNo(false)}
-        </Row>
+        <Row label={tApply("fields.in_other_clubs")}>{a.in_other_clubs ? a.other_club_names : yesNo(false)}</Row>
         <Row label={tApply("fields.heard_from")}>
           {tApply(`options.heard_from.${a.heard_from}`)}
           {a.referrer_name && ` · ${a.referrer_name}`}
@@ -279,11 +290,17 @@ async function ApplicationDetail({ params }: { params: PageProps<"/[locale]/admi
           {list(a.event_interests, "event_interests")}
           {a.other_event_interests && ` (${a.other_event_interests})`}
         </Row>
-        <Row label={tApply("fields.expectations")} block>{a.expectations}</Row>
-        <Row label={tApply("fields.alienating_behaviors")} block>{a.alienating_behaviors}</Row>
+        <Row label={tApply("fields.expectations")} block>
+          {a.expectations}
+        </Row>
+        <Row label={tApply("fields.alienating_behaviors")} block>
+          {a.alienating_behaviors}
+        </Row>
         {/* Asked since 2026-11-10; older applications have no answer. */}
         {a.conflict_handling && (
-          <Row label={tApply("fields.conflict_handling")} block>{a.conflict_handling}</Row>
+          <Row label={tApply("fields.conflict_handling")} block>
+            {a.conflict_handling}
+          </Row>
         )}
       </Section>
 

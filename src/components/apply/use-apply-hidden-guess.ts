@@ -13,7 +13,11 @@ const noSubscribe = () => () => {};
 export function useApplyHiddenGuess(): boolean {
   return useSyncExternalStore(
     noSubscribe,
-    () => guessApplyHidden(hasSessionCookie(document.cookie), readApplyHint(() => localStorage)),
+    () =>
+      guessApplyHidden(
+        hasSessionCookie(document.cookie),
+        readApplyHint(() => localStorage),
+      ),
     () => false,
   );
 }

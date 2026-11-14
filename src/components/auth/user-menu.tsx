@@ -21,7 +21,11 @@ export async function UserMenu() {
     return (
       <>
         <AuthSync user={syncUser} renderedAt={renderedAt} />
-        <Link href="/sign-in" data-skeleton-result="user-menu" className={buttonVariants({ variant: "outline", size: "sm" })}>
+        <Link
+          href="/sign-in"
+          data-skeleton-result="user-menu"
+          className={buttonVariants({ variant: "outline", size: "sm" })}
+        >
           {t("signIn")}
         </Link>
       </>

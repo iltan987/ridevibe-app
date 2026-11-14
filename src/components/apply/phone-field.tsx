@@ -59,22 +59,22 @@ export function PhoneField({
           if (!e.currentTarget.contains(e.relatedTarget)) setFormatKey((k) => k + 1);
         }}
       >
-      <PhoneInput
-        key={formatKey}
-        id={name}
-        value={value}
-        onChange={(v) => setValue(fixTurkishNumber(v) as Value | undefined)}
-        defaultCountry="TR"
-        international
-        withCountryCallingCode
-        countryCallingCodeEditable={false}
-        flags={flags}
-        labels={LABELS[locale as keyof typeof LABELS] ?? en}
-        inputComponent={Input}
-        autoComplete="tel"
-        aria-invalid={!!error}
-        className="phone-field flex items-center gap-2 [&_input]:h-10 md:[&_input]:h-9"
-      />
+        <PhoneInput
+          key={formatKey}
+          id={name}
+          value={value}
+          onChange={(v) => setValue(fixTurkishNumber(v) as Value | undefined)}
+          defaultCountry="TR"
+          international
+          withCountryCallingCode
+          countryCallingCodeEditable={false}
+          flags={flags}
+          labels={LABELS[locale as keyof typeof LABELS] ?? en}
+          inputComponent={Input}
+          autoComplete="tel"
+          aria-invalid={!!error}
+          className="phone-field flex items-center gap-2 [&_input]:h-10 md:[&_input]:h-9"
+        />
       </div>
       {hint && <FieldDescription>{hint}</FieldDescription>}
       <FieldError>{error}</FieldError>
