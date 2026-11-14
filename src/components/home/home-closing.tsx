@@ -21,7 +21,7 @@ export function HomeClosing() {
         />
       </div>
       <div className="relative px-5 pt-6.5 pb-10 md:absolute md:inset-x-0 md:bottom-0 md:mx-auto md:max-w-5xl md:pt-0 md:pr-8 md:pb-20 md:pl-22">
-        <p className="mb-5 text-[40px] leading-[0.95] font-extrabold text-balance [font-stretch:70%] md:mb-6.5 md:max-w-[14ch] md:text-[80px]">
+        <p className="mb-5 text-[40px] leading-[0.95] font-extrabold text-balance font-stretch-70% md:mb-6.5 md:max-w-[14ch] md:text-[80px]">
           {t("line")}
         </p>
         <HomeApplyButton />

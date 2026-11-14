@@ -3,6 +3,7 @@ import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
 import eslintComments from "@eslint-community/eslint-plugin-eslint-comments";
 import tseslint from "typescript-eslint";
+import betterTailwindcss from "eslint-plugin-better-tailwindcss";
 
 const eslintConfig = defineConfig([
   ...nextVitals,
@@ -54,6 +55,27 @@ const eslintConfig = defineConfig([
       "@typescript-eslint/prefer-includes": "error",
       "@typescript-eslint/prefer-regexp-exec": "error",
       "@typescript-eslint/prefer-string-starts-ends-with": "error",
+    },
+  },
+  // Tailwind classes (in `className`, `cn`, `cva`): unknown, conflicting, duplicate and non-canonical ones.
+  {
+    files: ["**/*.{ts,tsx}"],
+    plugins: { "better-tailwindcss": betterTailwindcss },
+    settings: { "better-tailwindcss": { entryPoint: "src/app/globals.css" } },
+    rules: {
+      // `dark` is no utility: it is the class the theme script puts on <html> (and on sections that stay dark), which
+      // the `dark` custom variant in globals.css matches.
+      "better-tailwindcss/no-unknown-classes": ["error", { ignore: ["^dark$"] }],
+      "better-tailwindcss/no-conflicting-classes": "error",
+      "better-tailwindcss/no-concatenated-classes": "error",
+      "better-tailwindcss/no-duplicate-classes": "error",
+      "better-tailwindcss/no-deprecated-classes": "error",
+      "better-tailwindcss/enforce-canonical-classes": "error",
+      "better-tailwindcss/no-unnecessary-whitespace": "error",
+      // Class order is Prettier's job (prettier-plugin-tailwindcss); two tools would fight over it.
+      "better-tailwindcss/enforce-consistent-class-order": "off",
+      // Line wrapping is Prettier's job as well.
+      "better-tailwindcss/enforce-consistent-line-wrapping": "off",
     },
   },
   // JavaScript (config files, E2E scripts): no type information.

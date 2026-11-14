@@ -27,7 +27,7 @@ export function InstallBanner() {
       <div className="flex items-center gap-3">
         <ClubBadge className="w-10 shrink-0" sizes="40px" />
         <div className="min-w-0 flex-1">
-          <p className="text-sm leading-snug font-medium">{t("bannerTitle")}</p>
+          <p className="text-sm/snug font-medium">{t("bannerTitle")}</p>
           <p className="text-xs text-muted-foreground">{t("bannerBody")}</p>
         </div>
       </div>

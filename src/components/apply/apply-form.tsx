@@ -351,7 +351,7 @@ function ApplyFormSteps({
         return value ? <input key={key} type="hidden" name={key} value={value.slice(0, 200)} /> : null;
       })}
       {/* Honeypot: hidden from people and assistive tech; bots tend to fill it. */}
-      <div aria-hidden className="absolute -left-[9999px] h-px w-px overflow-hidden">
+      <div aria-hidden className="absolute left-[-9999px] size-px overflow-hidden">
         <label>
           Website <input type="text" name="website" tabIndex={-1} autoComplete="off" />
         </label>

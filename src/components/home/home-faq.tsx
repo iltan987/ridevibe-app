@@ -8,7 +8,7 @@ export function HomeFaq() {
   return (
     <section className="pt-13 pb-14 md:pt-28 md:pb-24">
       <div className="max-w-190">
-        <h2 className="text-[32px] leading-[0.95] font-extrabold text-balance [font-stretch:70%] md:text-[52px]">
+        <h2 className="text-[32px] leading-[0.95] font-extrabold text-balance font-stretch-70% md:text-[52px]">
           {t("title")}
         </h2>
         <dl>

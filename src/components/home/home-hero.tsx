@@ -37,7 +37,7 @@ export function HomeHero() {
       />
       <div className="relative mx-auto w-full max-w-5xl px-5 pb-14 md:px-8 md:pb-28">
         <div className="md:max-w-150">
-          <h1 className="text-[min(23.5vw,5.75rem)] leading-[0.86] font-extrabold tracking-[-0.01em] text-foreground [font-stretch:62%] md:text-[min(13vw,10.5rem)]">
+          <h1 className="text-[min(23.5vw,5.75rem)] leading-[0.86] font-extrabold tracking-[-0.01em] text-foreground font-stretch-62% md:text-[min(13vw,10.5rem)]">
             {t.rich("title", { line: (chunks) => <span className="block whitespace-nowrap">{chunks}</span> })}
           </h1>
           <p className="mt-3.5 mb-4.5 max-w-[30ch] text-pretty text-foreground/90 md:mt-5 md:mb-6 md:max-w-[34ch] md:text-xl">
