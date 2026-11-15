@@ -62,10 +62,12 @@
 
 ### Overriding a preset rule's options falls back to the rule's own defaults, not the preset's (2026-11-15)
 - **Symptom:** `restrict-template-expressions: ["error", { allowNumber: true }]` silently allowed booleans, null,
-  undefined, RegExp and `any` in templates; `@ts-expect-error` stayed allowed although casts and `@ts-*` are banned.
+  undefined, RegExp and `any` in templates.
 - **Cause:** options in a flat-config rule entry replace the preset's options entirely; unlisted options take the
-  rule's `defaultOptions`, which are looser than `strictTypeChecked` (`ban-ts-comment` defaults
-  `ts-expect-error` to `allow-with-description`).
-- **Do:** when you set options for a rule a preset already configures, spell out every option. Prove it with a stdin
-  or scratch-file probe that must report the case the rule is meant to catch.
+  rule's `defaultOptions`, which are looser than `strictTypeChecked`'s.
+- **Related:** the preset itself is not as strict as it sounds: `strictTypeChecked` sets `ban-ts-comment` to
+  `{ minimumDescriptionLength: 10 }`, so `@ts-expect-error` with a description is allowed; we ban it explicitly.
+- **Do:** when you set options for a rule a preset already configures, spell out every option, and don't assume a
+  preset bans what our rules ban. Prove it with a stdin or scratch-file probe that must report the case the rule is
+  meant to catch.
 - **Source:** whole-branch review of the lint-format branch; probes on this repo.
