@@ -7,6 +7,7 @@ import { Field, FieldContent, FieldDescription, FieldError, FieldLabel, FieldTit
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
+import { oneOf } from "@/lib/one-of";
 
 function OptionalTag({ text }: { text?: string }) {
   return text ? <span className="font-normal text-muted-foreground">({text})</span> : null;
@@ -106,7 +107,7 @@ export function ChoiceRadios<T extends string>({
         defaultValue={defaultValue}
         onValueChange={(v) => {
           // Only our own options can be checked; anything else is ignored.
-          const option = options.find((o) => o === v);
+          const option = oneOf(options, v);
           if (option !== undefined) onChange?.(option);
         }}
         className={horizontal ? "flex flex-wrap gap-2" : "grid gap-2"}

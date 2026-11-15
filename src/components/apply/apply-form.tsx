@@ -31,6 +31,7 @@ import { type ApplicationFieldErrors, isEmailAddress, validateApplication } from
 import { errorsOfStep, firstStepWithError, isLastStep, parseStep, stepOfField } from "@/lib/applications/steps";
 import { istanbulDistrictNames } from "@/lib/istanbul-districts";
 import { noSubscribe } from "@/lib/no-subscribe";
+import { oneOf } from "@/lib/one-of";
 import { ChoiceChips, ChoiceRadios, ConsentCheckbox, TextAreaField, TextField } from "./apply-fields";
 import { PhoneField } from "./phone-field";
 import { StepHeader } from "./step-header";
@@ -698,7 +699,7 @@ function draftText(draft: ApplyDraft | null, name: string): string | undefined {
 /** A restored single choice, only if it is still one of `options`. */
 function draftChoice<T extends string>(draft: ApplyDraft | null, options: readonly T[], name: string): T | undefined {
   const value = draft?.fields[name];
-  return options.find((option) => option === value);
+  return oneOf(options, value);
 }
 
 /** Restored multiple choices that are still among `options`. */

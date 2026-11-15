@@ -13,6 +13,7 @@ import { ApplicationReviewPanel } from "@/components/admin/application-review-pa
 import { getPathname, Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { can } from "@/lib/auth/permissions";
+import { oneOf } from "@/lib/one-of";
 import { whatsAppUrl } from "@/lib/applications/contact";
 import { EVENT_INTERESTS, LANGUAGES, RIDING_STYLES } from "@/lib/applications/options";
 import { getApplication, getApplicationAccount } from "@/lib/applications/queries";
@@ -156,7 +157,7 @@ async function ApplicationDetail({ params }: { params: PageProps<"/[locale]/admi
   const list = <T extends string>(values: string[], options: readonly T[], label: (option: T) => string) =>
     values
       .map((v) => {
-        const option = options.find((o) => o === v);
+        const option = oneOf(options, v);
         return option === undefined ? v : label(option);
       })
       .join(", ");

@@ -11,6 +11,7 @@ import { PagerButtons } from "@/components/pager-buttons";
 import { Input } from "@/components/ui/input";
 import { Link } from "@/i18n/navigation";
 import { listSearch, paramOff } from "@/lib/list-url";
+import { oneOf } from "@/lib/one-of";
 import { directoryView } from "@/lib/members/directory-view";
 import type { DirectoryMember, IstanbulSide } from "@/lib/members/queries";
 import { foldSearch, SEARCH_MAX_LENGTH } from "@/lib/search-fold";
@@ -40,7 +41,7 @@ export function DirectoryList({
   const t = useTranslations("Members");
   const params = useListParams();
   const search = useListSearch(params);
-  const side = SIDES.find((s) => s === params.get("side")) ?? null;
+  const side = oneOf(SIDES, params.get("side")) ?? null;
   // Safety filters only exist for members.safety holders: never carry them for anyone else.
   const blood = safety ? params.get("blood") : null;
   const noContact = safety ? params.get("noContact") : null;

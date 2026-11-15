@@ -9,7 +9,7 @@ import { parseMotorcycles } from "./rpc-json";
 
 export type { Motorcycle };
 export type IstanbulSide = Enums<"istanbul_side">;
-export type EmergencyRelationship = Enums<"emergency_relationship">;
+type EmergencyRelationship = Enums<"emergency_relationship">;
 
 export type DirectoryMember = {
   id: string;

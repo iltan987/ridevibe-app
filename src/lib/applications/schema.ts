@@ -1,8 +1,9 @@
 import { isPossiblePhoneNumber } from "libphonenumber-js";
 import { z } from "zod";
 import { EARLIEST_BIRTH_DATE_EXCLUSIVE, isAtLeast18 } from "../birth-date.ts";
-import { formDataText } from "../form-data.ts";
+import { formDataText, formDataTexts } from "../form-data.ts";
 import { ISTANBUL, isIstanbulDistrict, sideOfDistrict } from "../istanbul-districts.ts";
+import { oneOf } from "../one-of.ts";
 import type { TablesInsert } from "../supabase/database.types.ts";
 import { isTurkishMobileOrForeign } from "./contact.ts";
 import {
@@ -34,7 +35,7 @@ const APPLY_ERROR_KEYS = [
   "invalidInstagram",
   "invalidDistrict",
 ] as const;
-export type ApplyErrorKey = (typeof APPLY_ERROR_KEYS)[number];
+type ApplyErrorKey = (typeof APPLY_ERROR_KEYS)[number];
 
 const err = (key: ApplyErrorKey) => ({ error: key });
 
@@ -199,7 +200,7 @@ export const applicationSchema = applicationFields
     const answer = (field: string, value: string | undefined) => {
       if (value) return value;
       ctx.issues.push({ code: "custom", message: "required" satisfies ApplyErrorKey, input: value, path: [field] });
-      return "";
+      return z.NEVER;
     };
     return {
       locale: v.locale,
@@ -260,7 +261,7 @@ export function formDataToObject(formData: FormData) {
   const out: Record<string, unknown> = {};
   for (const key of new Set(formData.keys())) {
     if (ARRAY_FIELDS.has(key)) {
-      out[key] = formData.getAll(key).map(String);
+      out[key] = formDataTexts(formData, key);
       continue;
     }
     const value = formDataText(formData, key).trim();
@@ -277,7 +278,7 @@ function firstErrorPerField(issues: readonly { path: readonly PropertyKey[]; mes
   for (const issue of issues) {
     const field = String(issue.path[0] ?? "_form");
     // Every rule here sets a key; anything else (e.g. zod's default English message) shows as invalidOption.
-    fieldErrors[field] ??= APPLY_ERROR_KEYS.find((key) => key === issue.message) ?? "invalidOption";
+    fieldErrors[field] ??= oneOf(APPLY_ERROR_KEYS, issue.message) ?? "invalidOption";
   }
   return fieldErrors;
 }

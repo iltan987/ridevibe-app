@@ -1,7 +1,7 @@
 // Run with: pnpm test
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { formDataText } from "./form-data.ts";
+import { formDataText, formDataTexts } from "./form-data.ts";
 
 test("formDataText: a string entry as is (untrimmed)", () => {
   const fd = new FormData();
@@ -24,4 +24,17 @@ test("formDataText: first of several entries, like FormData.get", () => {
   fd.append("x", "first");
   fd.append("x", "second");
   assert.equal(formDataText(fd, "x"), "first");
+});
+
+test("formDataTexts: every string entry in order, files skipped", () => {
+  const fd = new FormData();
+  fd.append("x", "one");
+  fd.append("x", new Blob(["data"]), "a.txt");
+  fd.append("x", "two");
+  fd.append("y", "other");
+  assert.deepEqual(formDataTexts(fd, "x"), ["one", "two"]);
+});
+
+test("formDataTexts: missing entry → empty array", () => {
+  assert.deepEqual(formDataTexts(new FormData(), "x"), []);
 });

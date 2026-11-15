@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { formDataText } from "@/lib/form-data";
+import { oneOf } from "@/lib/one-of";
 import { ISTANBUL, istanbulDistrictNames } from "@/lib/istanbul-districts";
 import { updateLocation } from "@/lib/members/actions";
 import { ActionStatus, useProfileAction } from "./use-profile-action";
@@ -50,7 +51,7 @@ export function LocationForm({ city, district }: { city: string; district: strin
               aria-labelledby="profile-city-choice"
               value={choice}
               onValueChange={(v) => {
-                const next = CITY_CHOICES.find((c) => c === v);
+                const next = oneOf(CITY_CHOICES, v);
                 if (next === undefined) return; // only our own options can be checked
                 setChoice(next);
                 setResult(null);

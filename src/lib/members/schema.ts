@@ -3,6 +3,7 @@ import { EARLIEST_BIRTH_DATE_EXCLUSIVE, isAtLeast18 } from "../birth-date.ts";
 import { phoneField } from "../applications/schema.ts";
 import { Constants } from "../supabase/database.types.ts";
 import { ISTANBUL, isIstanbulDistrict, sideOfDistrict } from "../istanbul-districts.ts";
+import { oneOf } from "../one-of.ts";
 import { BLOOD_TYPES } from "./blood-type.ts";
 import { normalizePlate } from "./plate.ts";
 
@@ -167,8 +168,7 @@ export function firstErrorPerField(issues: readonly { path: readonly PropertyKey
   const fieldErrors: Record<string, ProfileErrorKey> = {};
   for (const issue of issues) {
     // Every rule here sets a key; anything else (e.g. zod's default English message) shows as "required".
-    fieldErrors[String(issue.path[0] ?? "_form")] ??=
-      PROFILE_ERROR_KEYS.find((key) => key === issue.message) ?? "required";
+    fieldErrors[String(issue.path[0] ?? "_form")] ??= oneOf(PROFILE_ERROR_KEYS, issue.message) ?? "required";
   }
   return fieldErrors;
 }

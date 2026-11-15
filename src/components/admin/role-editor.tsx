@@ -27,7 +27,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { type AccessActionResult, createRole, deleteRole, updateRole } from "@/lib/access/actions";
 import { PERMISSIONS, type Permission } from "@/lib/auth/permissions";
-import { formDataText } from "@/lib/form-data";
+import { formDataText, formDataTexts } from "@/lib/form-data";
 
 type Status = AccessActionResult["status"] | null;
 
@@ -69,7 +69,7 @@ export function RoleEditor({
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const name = formDataText(formData, "name");
-    const permissions = formData.getAll("permissions").map(String);
+    const permissions = formDataTexts(formData, "permissions");
     run(() => updateRole(role.id, name, permissions));
   }
 

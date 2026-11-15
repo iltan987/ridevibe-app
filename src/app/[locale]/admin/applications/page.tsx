@@ -12,6 +12,7 @@ import {
   listApplications,
 } from "@/lib/applications/queries";
 import { requirePermission } from "@/lib/auth/require-access";
+import { oneOf } from "@/lib/one-of";
 import { ListSkeleton } from "@/components/admin/list-skeleton";
 import { ChipCount, listChipClasses } from "@/components/lists/list-chip";
 import { PagerLinks } from "@/components/pager";
@@ -46,7 +47,7 @@ async function ApplicationsList({
   await requirePermission("applications.view", "/admin/applications");
 
   const params = await searchParams;
-  const status: ApplicationFilter = APPLICATION_FILTERS.find((s) => s === params.status) ?? "new";
+  const status: ApplicationFilter = oneOf(APPLICATION_FILTERS, params.status) ?? "new";
 
   // The list query runs alongside the counts with the page as asked; a URL the counts correct redirects instead.
   const [rows, counts, locale, t, tApply, format] = await Promise.all([
