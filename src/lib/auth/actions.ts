@@ -27,7 +27,9 @@ export async function signInWithGoogle(formData: FormData) {
 
 export async function signOut() {
   const supabase = await createClient();
-  await supabase.auth.signOut();
+  // This device only: auth-js defaults to "global", which would also end the member's sessions on their other devices.
+  // Account deletion ends every session itself (`admin.signOut(jwt, "global")` in deletion-actions.ts).
+  await supabase.auth.signOut({ scope: "local" });
   // The proxy sends "/" to the visitor's language.
   redirect("/");
 }
