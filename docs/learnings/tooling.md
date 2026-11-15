@@ -71,3 +71,23 @@
   preset bans what our rules ban. Prove it with a stdin or scratch-file probe that must report the case the rule is
   meant to catch.
 - **Source:** whole-branch review of the lint-format branch; probes on this repo.
+
+### lint-staged's default backup is a `git stash` + `reset --hard` on failure: run it with `--no-stash` (2026-11-15)
+- **Symptom:** risk only (iltan's local `.claude/settings.json` stays unstaged on purpose; a tree-wide restore wiped it
+  once). lint-staged 17 by default stores a backup stash and, if a task errors, runs `git reset --hard HEAD` and
+  `git stash apply` of that backup.
+- **Cause:** `restoreOriginalState` in `node_modules/lint-staged/lib/gitWorkflow.js`.
+- **Do:** keep `--no-stash` in `.husky/pre-commit`: no backup, no hard reset; on failure the fixes stay in the index.
+  Partially staged files are still handled: their unstaged hunks go to a patch file, those files only get
+  `git restore --worktree`, and the patch is applied back. Verified in a throwaway clone: an unstaged untouched file
+  kept its hash, the unstaged hunk of a partially staged file stayed out of the commit, no stash entry appeared.
+- **Source:** lint-staged README + source; clone test.
+
+### A throwaway clone with a symlinked `node_modules`: `pnpm exec` installs through the link (2026-11-15)
+- **Symptom:** `pnpm exec husky` in a scratch clone (with `node_modules` symlinked to the real repo's) downloaded
+  packages and ran the clone's `prepare` script.
+- **Cause:** pnpm checks dependencies before `exec`/`run` and installs when the clone's lockfile differs; the install
+  writes into the linked (real) `node_modules`.
+- **Do:** copy the lockfile into the clone too, and afterwards run `pnpm install --frozen-lockfile` in the real repo
+  to confirm it is intact.
+- **Source:** hook test for the pre-commit setup.

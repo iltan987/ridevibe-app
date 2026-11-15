@@ -32,6 +32,8 @@ Short design: everything here was settled in conversation with iltan (approved 2
   existing pre-commit checks): `pnpm format` → `pnpm lint:fix` → `pnpm lint`; then review the diff of that batch. At
   most one re-read per file per commit. Subagents do the same at each of their commits.
 - **C. Git pre-commit hook (husky/lint-staged).** Blocks commits and adds packages; rejected (no blocking).
+  **Changed later the same day (iltan):** adopted on top of B, so the batch runs itself at `git commit` on the staged
+  files (lint-staged `--no-stash`); the full lint/tsc/test/build check stays manual. See CLAUDE.md "Commands".
 
 ## Decisions
 

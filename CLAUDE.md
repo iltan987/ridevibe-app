@@ -64,10 +64,13 @@ pnpm test         # unit tests (node --test, *.test.ts)
                   # tested modules import relatively with `.ts` extensions (`node --test` can't resolve `@/`)
 ```
 
-Before every commit that touches code, one batch: `pnpm lint:fix && pnpm format` (Prettier last, so autofixed text is
-formatted; `eslint --fix` already exits non-zero on remaining errors), review what that changed, then
-`pnpm format:check && pnpm exec tsc --noEmit && pnpm test && pnpm build`. No format-on-edit hooks (iltan):
-they rewrite lines just written and force re-reads; the tools run only in this batch (subagents too, per commit).
+`git commit` runs a pre-commit hook (husky + lint-staged, `lint-staged.config.mjs`): `eslint --fix` then Prettier on
+the staged files, fixes added to the commit, anything unfixable fails the commit (~20 s). It runs with `--no-stash`
+(no backup stash, no hard reset; never remove that flag: see Git). Before every commit that touches code, also run
+`pnpm lint && pnpm exec tsc --noEmit && pnpm test && pnpm build` (the hook lints only staged files, so a type change
+breaking another file shows up only in the full `pnpm lint`); after committing, check what the hook changed
+(`git show --stat`). No format-on-edit hooks in Claude Code (iltan): they rewrite lines just written and force re-reads;
+the tools run only at commit time (subagents too).
 
 ```bash
 pnpm db:start                 # local Supabase in Docker (Docker Desktop with WSL integration must be running)
