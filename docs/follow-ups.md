@@ -14,11 +14,6 @@ Nothing queued.
 
 ## Open decisions (need iltan)
 
-- **Header sign-out ends every device** (2026-11-14, account deletion) — `signOut()` (`src/lib/auth/actions.ts`) calls
-  `supabase.auth.signOut()` without a scope, and auth-js defaults to `global`: "Çıkış Yap" on the phone also signs
-  out the laptop. Claude's recommendation: `{ scope: "local" }` for the header button (what people expect), global
-  stays for account deletion (it uses `admin.signOut(jwt, "global")`, not this action). Note the deletion done
-  state and the recovery card's "Silmeye devam et" reuse this action after the sessions are already revoked.
 - **No lawyer** (iltan, 2026-11-13) — the "lawyer" questions below are Claude's to research and decide; iltan
   confirms the outcome. Reword them as they are settled.
 

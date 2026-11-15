@@ -248,9 +248,12 @@
   `getClaims()` checks it locally, so a revoked user still reads as signed in until then (the app treats a deleted
   profile as signed out in `getCurrentUser`).
 - **Do:** pass the scope explicitly. Account deletion wants `global` (`admin.signOut(jwt, "global")`, see
-  `docs/learnings/nextjs.md`); the header's sign-out (`src/lib/auth/actions.ts`) uses the default, i.e. global
-  (`docs/follow-ups.md`).
-- **Source:** `node_modules/@supabase/auth-js/dist/main/GoTrueClient.js` (`signOut`, `_signOut`).
+  `docs/learnings/nextjs.md`); the header's sign-out (`src/lib/auth/actions.ts`) uses `{ scope: "local" }` (since
+  2026-11-15: this device only, as members expect). `local` removes the session cookies before the server request,
+  so it also works when the session was already revoked (the deletion done state reuses this action).
+- **Check:** two sessions for one user (two browser contexts), sign out in one, count `auth.sessions` rows for the
+  user: `local` leaves 1, `global` leaves 0.
+- **Source:** `node_modules/@supabase/auth-js/dist/main/GoTrueClient.js` (`signOut`, `_signOut`); two-context probe.
 
 ### Auth audit log rows outlive the deleted user (2026-11-14)
 - **Symptom (found in review):** after `delete from auth.users`, `auth.audit_log_entries` still held the person's
