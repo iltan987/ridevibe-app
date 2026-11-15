@@ -296,7 +296,11 @@ Nothing queued.
 - **Install E2E minors** (2026-11-12, install-prompt Task 6 review) — `scripts/e2e/install-e2e.mjs`: no
   `try/finally` around scenarios (a thrown error skips `ctx.close()`, later scenarios inherit cookies/storage); the
   fallback `page.mouse.click(195, 400)` in `open()` (user activation when the event is late) can hit real UI; the
-  `apply-nav-e2e.mjs` "showed the guess first" check flaked once (passed on rerun). From the fix-wave re-review: the
+  `apply-nav-e2e.mjs` "showed the guess first" check flaked once (passed on rerun). Seen 2026-11-15 (lint-format final
+  E2E, each passed on the rerun): install's `/account` scenario failed all four banner checks ("Yükle" not shown,
+  `prompt()` calls=0) while `/members` just before passed (a late or missing install event?), and apply-nav's
+  "pending-noapp phone TR: second load, one layout" started with the hidden guess (4 tabs) before 5 (the first
+  load's stored hint not yet written?). From the fix-wave re-review: the
   iPhone "installed flag still set" check is near-tautological (`initScript` sets the flag on every document; the real
   assertions there are "no banner / no menu entry"); the language-switch scenario doesn't assert exactly one spacer
   after the switch; the comment near line 39 still states "Chrome ignores a re-dispatched real event" as fact (see the
