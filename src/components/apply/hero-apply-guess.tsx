@@ -16,7 +16,7 @@ export function HeroApplyGuess({ className, children }: { className?: string; ch
       data-apply-link=""
       data-apply-hidden={hidden ? "" : undefined}
       suppressHydrationWarning
-      className={`${className ?? ""} data-[apply-hidden]:hidden`}
+      className={`${className ?? ""} data-apply-hidden:hidden`}
     >
       {/* First child: the script marks its parent link before the label is parsed. */}
       <InlineScript html={applyHintScript} />

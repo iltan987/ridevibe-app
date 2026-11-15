@@ -8,7 +8,7 @@ const getServerSnapshot = () => NO_INSTALL;
 const subscribe = (listener: () => void) => installStore().subscribe(listener);
 const getSnapshot = () => installStore().getSnapshot();
 
-export function useInstall(): InstallSnapshot & { install(): Promise<void>; dismiss(): void } {
+export function useInstall(): InstallSnapshot & { install: () => Promise<void>; dismiss: () => void } {
   const snapshot = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   return {
     ...snapshot,

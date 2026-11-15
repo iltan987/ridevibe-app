@@ -39,7 +39,7 @@ function disableTransitions(doc: Document): () => void {
   style.appendChild(doc.createTextNode("*,*::before,*::after{transition:none!important}"));
   doc.head.appendChild(style);
   return () => {
-    void doc.defaultView?.getComputedStyle(doc.body).opacity; // force style recalculation
+    doc.defaultView?.getComputedStyle(doc.body).getPropertyValue("opacity"); // force style recalculation
     setTimeout(() => style.remove(), 1);
   };
 }

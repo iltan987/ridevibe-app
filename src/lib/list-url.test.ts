@@ -86,7 +86,10 @@ test("addWrite: fast writes never flip back when the router catches up one write
   // Writing again after the router reached q=a keeps the chain.
   assert.deepEqual(addWrite(pending, "q=a", "?q=abcd").from, ["", "q=a", "q=ab", "q=abc"]);
   // A write after the router moved elsewhere starts over.
-  assert.deepEqual(addWrite(pending, "side=asian", "?side=asian&page=2"), { from: ["side=asian"], search: "side=asian&page=2" });
+  assert.deepEqual(addWrite(pending, "side=asian", "?side=asian&page=2"), {
+    from: ["side=asian"],
+    search: "side=asian&page=2",
+  });
 });
 
 test("serverPage clamps ?page= to the list and flags URLs to correct", () => {

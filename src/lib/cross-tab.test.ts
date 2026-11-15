@@ -17,7 +17,8 @@ import {
 function fakeTab(initial: Record<string, string> = {}, { throwing = false } = {}) {
   const data = new Map(Object.entries(initial));
   let writes = 0;
-  const document = Object.assign(new EventTarget(), { visibilityState: "visible" as DocumentVisibilityState });
+  const state: { visibilityState: DocumentVisibilityState } = { visibilityState: "visible" };
+  const document = Object.assign(new EventTarget(), state);
   const storage = {
     getItem(key: string) {
       if (throwing) throw new Error("blocked");
@@ -31,7 +32,7 @@ function fakeTab(initial: Record<string, string> = {}, { throwing = false } = {}
   };
   const win = Object.assign(new EventTarget(), { localStorage: storage, document });
   return {
-    win: win as unknown as Window,
+    win,
     data,
     writes: () => writes,
     // Another tab wrote `value` (null = removed / storage cleared): the browser updates storage, then fires `storage`.
@@ -194,7 +195,7 @@ test("pages with unsaved form input keep their language when another tab switche
   }
 });
 
-test("current() returns the stored value, \"\" for a missing key and null when storage is blocked", () => {
+test('current() returns the stored value, "" for a missing key and null when storage is blocked', () => {
   assert.equal(createTabChannel("k", fakeTab({ k: "a" }).win).current(), "a");
   assert.equal(createTabChannel("k", fakeTab().win).current(), "");
   assert.equal(createTabChannel("k", fakeTab({}, { throwing: true }).win).current(), null);

@@ -272,3 +272,19 @@
 - **Gotcha:** "X is not in the page" checks must load the page without `?q=X`: the search box echoes the query into
   the HTML (`scripts/e2e/deletion-e2e.mjs` checks `/admin/members` without `q`).
 - **Source:** found while writing `scripts/e2e/deletion-e2e.mjs`; auth-js `getCodeChallengeAndMethod`.
+
+### `node --test` strips types only: no constructor parameter properties in test fakes (2026-11-15)
+- **Symptom:** `ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX: TypeScript parameter property is not supported in strip-only mode`.
+- **Cause:** Node's built-in TypeScript support only erases types; `constructor(private x: T)` would need code
+  generation (likewise `enum` and `namespace`).
+- **Do:** declare plain fields and assign them in the constructor (`FakeWindow` in
+  `src/lib/pwa/install-store.test.ts`).
+- **Source:** checked with `node` 24 (2026-11-15).
+
+### A class field without an initializer exists on the instance: use `declare` for "absent" (2026-11-15)
+- **Symptom:** a fake meant to lack a property still passes `"prop" in obj` checks.
+- **Cause:** with ES2022 class fields, `prop?: T;` defines the property (value `undefined`); `declare prop?: T;` only
+  types it.
+- **Do:** `declare` optional fields a test must be able to leave out (`BeforeInstallPromptEvent` in
+  `src/lib/pwa/install-store.test.ts`).
+- **Source:** checked with `node` 24 (2026-11-15).

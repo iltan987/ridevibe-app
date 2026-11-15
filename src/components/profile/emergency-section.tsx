@@ -68,7 +68,8 @@ export function EmergencySection({ contacts, bloodType, bloodConsent, withdrawOn
                     )}
                   </p>
                   <p className="truncate text-muted-foreground">
-                    {t(`relationships.${contact.relationship}`)} · {formatPhoneNumberIntl(contact.phone) || contact.phone}
+                    {t(`relationships.${contact.relationship}`)} ·{" "}
+                    {formatPhoneNumberIntl(contact.phone) || contact.phone}
                   </p>
                 </div>
                 <div className="flex shrink-0 gap-1">
@@ -76,7 +77,12 @@ export function EmergencySection({ contacts, bloodType, bloodConsent, withdrawOn
                     <EmergencyContactDialog
                       contact={contact}
                       trigger={
-                        <Button type="button" variant="outline" size="icon" aria-label={t("editLabel", { name: contact.name })}>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          aria-label={t("editLabel", { name: contact.name })}
+                        >
                           <Pencil aria-hidden />
                         </Button>
                       }
@@ -105,7 +111,12 @@ export function EmergencySection({ contacts, bloodType, bloodConsent, withdrawOn
           <div className="flex flex-col items-start gap-2">
             <EmergencyContactDialog
               trigger={
-                <Button type="button" variant="outline" disabled={full} aria-describedby={full ? "profile-contact-limit" : undefined}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={full}
+                  aria-describedby={full ? "profile-contact-limit" : undefined}
+                >
                   <Plus aria-hidden /> {t("add")}
                 </Button>
               }
@@ -138,7 +149,13 @@ export function EmergencySection({ contacts, bloodType, bloodConsent, withdrawOn
             <AlertDialogAction
               variant="destructive"
               disabled={isPending}
-              onClick={() => target && run(() => deleteEmergencyContact(target.id), () => setConfirmOpen(false))}
+              onClick={() =>
+                target &&
+                run(
+                  () => deleteEmergencyContact(target.id),
+                  () => setConfirmOpen(false),
+                )
+              }
             >
               {tp("confirmDelete")}
             </AlertDialogAction>

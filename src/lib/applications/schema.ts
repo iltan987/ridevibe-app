@@ -1,7 +1,9 @@
 import { isPossiblePhoneNumber } from "libphonenumber-js";
 import { z } from "zod";
 import { EARLIEST_BIRTH_DATE_EXCLUSIVE, isAtLeast18 } from "../birth-date.ts";
+import { formDataText, formDataTexts } from "../form-data.ts";
 import { ISTANBUL, isIstanbulDistrict, sideOfDistrict } from "../istanbul-districts.ts";
+import { oneOf } from "../one-of.ts";
 import type { TablesInsert } from "../supabase/database.types.ts";
 import { isTurkishMobileOrForeign } from "./contact.ts";
 import {
@@ -17,21 +19,23 @@ import {
 
 // Shared by the browser (instant feedback) and the server action (the real
 // check). Error messages are translation keys under Apply.errors.*.
-export type ApplyErrorKey =
-  | "required"
-  | "tooShort"
-  | "tooLong"
-  | "invalidEmail"
-  | "invalidPhone"
-  | "notTurkishMobile"
-  | "invalidDate"
-  | "tooYoung"
-  | "invalidNumber"
-  | "invalidOption"
-  | "chooseAtLeastOne"
-  | "mustAccept"
-  | "invalidInstagram"
-  | "invalidDistrict";
+const APPLY_ERROR_KEYS = [
+  "required",
+  "tooShort",
+  "tooLong",
+  "invalidEmail",
+  "invalidPhone",
+  "notTurkishMobile",
+  "invalidDate",
+  "tooYoung",
+  "invalidNumber",
+  "invalidOption",
+  "chooseAtLeastOne",
+  "mustAccept",
+  "invalidInstagram",
+  "invalidDistrict",
+] as const;
+type ApplyErrorKey = (typeof APPLY_ERROR_KEYS)[number];
 
 const err = (key: ApplyErrorKey) => ({ error: key });
 
@@ -48,7 +52,10 @@ const yesNo = z.enum(["yes", "no"], err("required")).transform((v) => v === "yes
 const choices = <T extends readonly [string, ...string[]]>(values: T) =>
   z.array(z.enum(values, err("invalidOption"))).min(1, err("chooseAtLeastOne"));
 
-const checkbox = z.literal("on").optional().transform((v) => v === "on");
+const checkbox = z
+  .literal("on")
+  .optional()
+  .transform((v) => v === "on");
 
 const rule = (path: string, key: ApplyErrorKey = "required") => ({ path: [path], error: key });
 
@@ -119,11 +126,20 @@ const applicationFields = z.object({
   other_languages: optionalText(120),
 
   license_class: z.enum(LICENSE_CLASSES, err("required")),
-  riding_years: z.coerce.number(err("invalidNumber")).int(err("invalidNumber")).min(0, err("invalidNumber")).max(70, err("invalidNumber")),
+  riding_years: z.coerce
+    .number(err("invalidNumber"))
+    .int(err("invalidNumber"))
+    .min(0, err("invalidNumber"))
+    .max(70, err("invalidNumber")),
   owns_motorcycle: yesNo,
   motorcycle_brand: optionalText(60),
   motorcycle_model: optionalText(60),
-  motorcycle_cc: z.coerce.number(err("invalidNumber")).int(err("invalidNumber")).min(50, err("invalidNumber")).max(3000, err("invalidNumber")).optional(),
+  motorcycle_cc: z.coerce
+    .number(err("invalidNumber"))
+    .int(err("invalidNumber"))
+    .min(50, err("invalidNumber"))
+    .max(3000, err("invalidNumber"))
+    .optional(),
   riding_styles: choices(RIDING_STYLES),
   group_experience: z.enum(GROUP_EXPERIENCE, err("required")),
 
@@ -179,35 +195,43 @@ export const applicationSchema = applicationFields
     ...rule("other_event_interests"),
     when: onlyIf("event_interests", "other_event_interests"),
   })
-  .transform(
-    (v): TablesInsert<"applications"> => ({
+  .transform((v, ctx): TablesInsert<"applications"> => {
+    // The rules above guarantee these answers; should one ever be missing, the field reports "required".
+    const answer = (field: string, value: string | undefined) => {
+      if (value) return value;
+      ctx.issues.push({ code: "custom", message: "required" satisfies ApplyErrorKey, input: value, path: [field] });
+      return z.NEVER;
+    };
+    return {
       locale: v.locale,
       full_name: v.full_name,
       phone: v.phone,
       email: v.email,
       birth_date: v.birth_date,
-      city: v.city_choice === "istanbul" ? ISTANBUL : v.city!,
+      city: v.city_choice === "istanbul" ? ISTANBUL : answer("city", v.city),
       district: v.district,
       side: v.city_choice === "istanbul" ? sideOfDistrict(v.district) : null,
       instagram: v.instagram ?? null,
       languages: v.languages,
-      other_languages: v.languages.includes("other") ? v.other_languages! : null,
+      other_languages: v.languages.includes("other") ? answer("other_languages", v.other_languages) : null,
       license_class: v.license_class,
       riding_years: v.riding_years,
       owns_motorcycle: v.owns_motorcycle,
       // Drop bike/club/referrer details that don't apply to the chosen answer.
-      motorcycle_brand: v.owns_motorcycle ? v.motorcycle_brand! : null,
-      motorcycle_model: v.owns_motorcycle ? v.motorcycle_model! : null,
+      motorcycle_brand: v.owns_motorcycle ? answer("motorcycle_brand", v.motorcycle_brand) : null,
+      motorcycle_model: v.owns_motorcycle ? answer("motorcycle_model", v.motorcycle_model) : null,
       motorcycle_cc: v.owns_motorcycle ? (v.motorcycle_cc ?? null) : null,
       riding_styles: v.riding_styles,
       group_experience: v.group_experience,
       in_other_clubs: v.in_other_clubs,
-      other_club_names: v.in_other_clubs ? v.other_club_names! : null,
+      other_club_names: v.in_other_clubs ? answer("other_club_names", v.other_club_names) : null,
       heard_from: v.heard_from,
       // Optional: lets us credit (and later reward) the referring member.
       referrer_name: v.heard_from === "friend" ? (v.referrer_name ?? null) : null,
       event_interests: v.event_interests,
-      other_event_interests: v.event_interests.includes("other") ? v.other_event_interests! : null,
+      other_event_interests: v.event_interests.includes("other")
+        ? answer("other_event_interests", v.other_event_interests)
+        : null,
       expectations: v.expectations,
       alienating_behaviors: v.alienating_behaviors,
       conflict_handling: v.conflict_handling,
@@ -220,8 +244,8 @@ export const applicationSchema = applicationFields
       utm_campaign: v.utm_campaign ?? null,
       utm_content: v.utm_content ?? null,
       utm_term: v.utm_term ?? null,
-    }),
-  );
+    };
+  });
 
 const emailAddress = z.email();
 
@@ -237,23 +261,24 @@ export function formDataToObject(formData: FormData) {
   const out: Record<string, unknown> = {};
   for (const key of new Set(formData.keys())) {
     if (ARRAY_FIELDS.has(key)) {
-      out[key] = formData.getAll(key).map(String);
+      out[key] = formDataTexts(formData, key);
       continue;
     }
-    const value = String(formData.get(key) ?? "").trim();
+    const value = formDataText(formData, key).trim();
     if (value !== "") out[key] = value;
   }
   for (const key of ARRAY_FIELDS) out[key] ??= [];
-  for (const key of UTM_KEYS) if (typeof out[key] === "string") out[key] = (out[key] as string).slice(0, 200);
+  for (const key of UTM_KEYS) if (typeof out[key] === "string") out[key] = out[key].slice(0, 200);
   return out;
 }
 
 /** Zod issues → the first error key per top-level field. */
 function firstErrorPerField(issues: readonly { path: readonly PropertyKey[]; message: string }[]) {
-  const fieldErrors: Record<string, ApplyErrorKey> = {};
+  const fieldErrors: ApplicationFieldErrors = {};
   for (const issue of issues) {
     const field = String(issue.path[0] ?? "_form");
-    fieldErrors[field] ??= (issue.message as ApplyErrorKey) || "invalidOption";
+    // Every rule here sets a key; anything else (e.g. zod's default English message) shows as invalidOption.
+    fieldErrors[field] ??= oneOf(APPLY_ERROR_KEYS, issue.message) ?? "invalidOption";
   }
   return fieldErrors;
 }

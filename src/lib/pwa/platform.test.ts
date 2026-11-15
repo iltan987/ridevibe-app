@@ -72,19 +72,33 @@ test("detectInstallPlatform: desktop Chrome and Firefox are other", () => {
 
 test("installVariant: installed wins over everything", () => {
   for (const platform of ["ios-safari", "ios-other", "android", "desktop-safari", "other"] as const) {
-    assert.equal(installVariant({ platform, hasPrompt: true, installed: true, androidFallback: true }), "none", platform);
+    assert.equal(
+      installVariant({ platform, hasPrompt: true, installed: true, androidFallback: true }),
+      "none",
+      platform,
+    );
   }
 });
 
 test("installVariant: a captured prompt wins on every platform", () => {
   for (const platform of ["ios-safari", "ios-other", "android", "desktop-safari", "other"] as const) {
-    assert.equal(installVariant({ platform, hasPrompt: true, installed: false, androidFallback: false }), "prompt", platform);
+    assert.equal(
+      installVariant({ platform, hasPrompt: true, installed: false, androidFallback: false }),
+      "prompt",
+      platform,
+    );
   }
 });
 
 test("installVariant: android uses the manual fallback only when allowed", () => {
-  assert.equal(installVariant({ platform: "android", hasPrompt: false, installed: false, androidFallback: false }), "none");
-  assert.equal(installVariant({ platform: "android", hasPrompt: false, installed: false, androidFallback: true }), "android-manual");
+  assert.equal(
+    installVariant({ platform: "android", hasPrompt: false, installed: false, androidFallback: false }),
+    "none",
+  );
+  assert.equal(
+    installVariant({ platform: "android", hasPrompt: false, installed: false, androidFallback: true }),
+    "android-manual",
+  );
 });
 
 test("installVariant: iOS and desktop-safari map to their own variant", () => {
@@ -95,7 +109,10 @@ test("installVariant: iOS and desktop-safari map to their own variant", () => {
 });
 
 test("installVariant: other platforms get nothing", () => {
-  assert.equal(installVariant({ platform: "other", hasPrompt: false, installed: false, androidFallback: true }), "none");
+  assert.equal(
+    installVariant({ platform: "other", hasPrompt: false, installed: false, androidFallback: true }),
+    "none",
+  );
 });
 
 test("showsBanner: true for the four banner variants only", () => {

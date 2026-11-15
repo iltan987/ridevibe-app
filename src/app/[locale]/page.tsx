@@ -12,10 +12,7 @@ import { Route } from "@/components/home/route";
 import { clubJsonLd, serializeJsonLd } from "@/lib/seo/json-ld";
 import { pageMetadata } from "@/lib/seo/metadata";
 
-export async function generateMetadata(
-  _props: unknown,
-  parent: ResolvingMetadata,
-): Promise<Metadata> {
+export async function generateMetadata(_props: unknown, parent: ResolvingMetadata): Promise<Metadata> {
   const [locale, t] = await Promise.all([getLocale(), getTranslations("Metadata")]);
   const images = (await parent).openGraph?.images;
   return pageMetadata({

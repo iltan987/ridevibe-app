@@ -27,14 +27,11 @@ import {
 } from "@/lib/applications/options";
 import { isGoogleMailAddress } from "@/lib/applications/contact";
 import { type ApplyDraft, browserStorage, clearDraft, createDraftSaver, readDraft } from "@/lib/applications/draft";
-import {
-  type ApplicationFieldErrors,
-  type ApplyErrorKey,
-  isEmailAddress,
-  validateApplication,
-} from "@/lib/applications/schema";
+import { type ApplicationFieldErrors, isEmailAddress, validateApplication } from "@/lib/applications/schema";
 import { errorsOfStep, firstStepWithError, isLastStep, parseStep, stepOfField } from "@/lib/applications/steps";
 import { istanbulDistrictNames } from "@/lib/istanbul-districts";
+import { noSubscribe } from "@/lib/no-subscribe";
+import { oneOf } from "@/lib/one-of";
 import { ChoiceChips, ChoiceRadios, ConsentCheckbox, TextAreaField, TextField } from "./apply-fields";
 import { PhoneField } from "./phone-field";
 import { StepHeader } from "./step-header";
@@ -49,7 +46,6 @@ type Defaults = { fullName: string; email: string };
 
 const YES_NO = ["yes", "no"] as const;
 
-const noSubscribe = () => () => {};
 const getUserAgent = () => navigator.userAgent;
 const getServerUserAgent = () => null;
 
@@ -62,11 +58,15 @@ const getServerUserAgent = () => null;
  * over" remounts it empty (`resetCount`).
  */
 export function ApplyForm({ defaults }: { defaults?: Defaults }) {
-  const hydrated = useSyncExternalStore(noSubscribe, () => true, () => false);
+  const hydrated = useSyncExternalStore(
+    noSubscribe,
+    () => true,
+    () => false,
+  );
   const [resetCount, setResetCount] = useState(0);
   return (
     <ApplyFormSteps
-      key={`${hydrated}-${resetCount}`}
+      key={`${String(hydrated)}-${resetCount}`}
       defaults={defaults}
       hydrated={hydrated}
       startedOver={resetCount > 0}
@@ -119,7 +119,9 @@ function ApplyFormSteps({
   const [otherClubs, setOtherClubs] = useState<string | null>(draftChoice(draft, YES_NO, "in_other_clubs") ?? null);
   const [heardFrom, setHeardFrom] = useState<string | null>(draftChoice(draft, HEARD_FROM, "heard_from") ?? null);
   const [languages, setLanguages] = useState<readonly string[]>([]);
-  const [events, setEvents] = useState<readonly string[]>(draftChoices(draft, EVENT_INTERESTS, "event_interests") ?? []);
+  const [events, setEvents] = useState<readonly string[]>(
+    draftChoices(draft, EVENT_INTERESTS, "event_interests") ?? [],
+  );
 
   // The current step lives in the URL (`?step=N`), so back/forward move between steps. Without one (reload of
   // `/apply`, language switch) a restored draft opens where the person left off.
@@ -224,14 +226,15 @@ function ApplyFormSteps({
   // handler, so re-validate on the next frame.
   const revalidateSoon = () => requestAnimationFrame(revalidate);
 
-  function onFieldBlur(event: React.FocusEvent<HTMLFormElement>) {
-    const field = (event.target as HTMLElement).closest("[data-field]")?.getAttribute("data-field");
+  // Typed by the blurred element (blur bubbles up from the field), not by the form the handler sits on.
+  function onFieldBlur(event: React.FocusEvent) {
+    const field = event.target.closest("[data-field]")?.getAttribute("data-field");
     if (field && !touched.has(field)) setTouched(new Set(touched).add(field));
     revalidate();
     scheduleSave();
     // Focus left the form (e.g. to the language switcher): write now. A language switch renders the new form, which
     // reads the draft, before this one unmounts, so the flush on unmount would come too late.
-    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) saver.flush();
+    if (!event.currentTarget.contains(event.relatedTarget)) saver.flush();
   }
 
   // Base UI checkboxes/radios update their hidden inputs after the click handler; the save reads the form later.
@@ -241,7 +244,7 @@ function ApplyFormSteps({
   }
 
   // Also fired by Enter in a text input: on steps 1–3 that means "Next", never an early submit.
-  function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+  function onSubmit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const check = validateApplication(formData);
@@ -304,7 +307,7 @@ function ApplyFormSteps({
               ? t("successSignedIn")
               : t.rich("successEmail", {
                   email: submittedEmail,
-                  b: (chunks) => <b className="font-semibold text-foreground wrap-anywhere">{chunks}</b>,
+                  b: (chunks) => <b className="font-semibold wrap-anywhere text-foreground">{chunks}</b>,
                 })}
           </CardDescription>
           <Link href="/" className={buttonVariants({ variant: "outline", className: "mt-2" })}>
@@ -319,7 +322,7 @@ function ApplyFormSteps({
     const fieldStep = stepOfField(name);
     const shown = submitted || touched.has(name) || (fieldStep !== null && checkedSteps.has(fieldStep));
     const key = shown ? errors[name] : undefined;
-    return key ? t(`errors.${key as ApplyErrorKey}`) : undefined;
+    return key ? t(`errors.${key}`) : undefined;
   };
 
   // "Fix the highlighted fields" only while there is something left to fix.
@@ -349,7 +352,7 @@ function ApplyFormSteps({
         return value ? <input key={key} type="hidden" name={key} value={value.slice(0, 200)} /> : null;
       })}
       {/* Honeypot: hidden from people and assistive tech; bots tend to fill it. */}
-      <div aria-hidden className="absolute -left-[9999px] h-px w-px overflow-hidden">
+      <div aria-hidden className="absolute left-[-9999px] size-px overflow-hidden">
         <label>
           Website <input type="text" name="website" tabIndex={-1} autoComplete="off" />
         </label>
@@ -547,7 +550,13 @@ function ApplyFormSteps({
       <Step n={4} current={step} className="flex flex-col gap-10">
         {canFillWithGoogle && (
           <div className="flex flex-col gap-2">
-            <Button type="button" variant="outline" onClick={fillWithGoogle} disabled={isPending} className="self-start">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={fillWithGoogle}
+              disabled={isPending}
+              className="self-start"
+            >
               <GoogleIcon />
               {t("google.button")}
             </Button>
@@ -591,14 +600,20 @@ function ApplyFormSteps({
             options={["istanbul", "other"] as const}
             optionLabel={(v) => t(`options.city.${v}`)}
             defaultValue="istanbul"
-            onChange={(v) => setCityChoice(v as "istanbul" | "other")}
+            onChange={setCityChoice}
             error={error("city_choice")}
             horizontal
           />
           {cityChoice === "istanbul" ? (
             <Field data-field="district" data-invalid={!!error("district")}>
               <FieldLabel htmlFor="district">{t("fields.district")}</FieldLabel>
-              <NativeSelect id="district" name="district" defaultValue="" className="w-full" aria-invalid={!!error("district")}>
+              <NativeSelect
+                id="district"
+                name="district"
+                defaultValue=""
+                className="w-full"
+                aria-invalid={!!error("district")}
+              >
                 <NativeSelectOption value="" disabled>
                   {t("fields.districtPlaceholder")}
                 </NativeSelectOption>
@@ -612,7 +627,12 @@ function ApplyFormSteps({
             </Field>
           ) : (
             <>
-              <TextField name="city" label={t("fields.city_other")} error={error("city")} autoComplete="address-level2" />
+              <TextField
+                name="city"
+                label={t("fields.city_other")}
+                error={error("city")}
+                autoComplete="address-level2"
+              />
               <TextField name="district" label={t("fields.district")} error={error("district")} />
             </>
           )}
@@ -679,11 +699,15 @@ function draftText(draft: ApplyDraft | null, name: string): string | undefined {
 /** A restored single choice, only if it is still one of `options`. */
 function draftChoice<T extends string>(draft: ApplyDraft | null, options: readonly T[], name: string): T | undefined {
   const value = draft?.fields[name];
-  return options.find((option) => option === value);
+  return oneOf(options, value);
 }
 
 /** Restored multiple choices that are still among `options`. */
-function draftChoices<T extends string>(draft: ApplyDraft | null, options: readonly T[], name: string): T[] | undefined {
+function draftChoices<T extends string>(
+  draft: ApplyDraft | null,
+  options: readonly T[],
+  name: string,
+): T[] | undefined {
   const value = draft?.fields[name];
   return Array.isArray(value) ? options.filter((option) => value.includes(option)) : undefined;
 }

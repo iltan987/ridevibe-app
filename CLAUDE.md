@@ -19,7 +19,7 @@ join, rules, Samet's answers): `docs/content/home-page-questions.md`.
   trial, or by fixing your own mistake — add an entry (symptom → cause → do) in the same commit as the work.
 - **Workflow per iteration (superpowers):** design → `brainstorming` (spec, iltan approves) → `writing-plans` →
   `subagent-driven-development` with `test-driven-development` (pgTAP first for permissions) → `verification-before-
-  completion` (lint, tsc, test, db:test, build, browser E2E) → `requesting-code-review` (+ `/security-review` for
+  completion` (format, lint, tsc, test, db:test, build, browser E2E) → `requesting-code-review` (+ `/security-review` for
   RLS/grant changes) → iltan reviews → merge. Small fixes skip design/plan. No git worktrees (one local Supabase DB);
   no PRs (local `--no-ff` merge). End of session: `claude-md-management:revise-claude-md`.
   Plans: a task that changes a shared type/schema also updates its consumers, so every commit passes tsc.
@@ -57,13 +57,17 @@ join, rules, Samet's answers): `docs/content/home-page-questions.md`.
 ```bash
 pnpm dev          # dev server
 pnpm build        # production build (also validates Cache Components rules)
-pnpm lint         # ESLint
+pnpm format       # Prettier (TS/JS/CSS/JSON + Tailwind class order); `format:check` only checks; Markdown/SQL by hand
+pnpm lint         # ESLint, type-aware (~30–40 s); `lint:fix` applies the autofixes
 pnpm exec tsc --noEmit
 pnpm test         # unit tests (node --test, *.test.ts)
                   # tested modules import relatively with `.ts` extensions (`node --test` can't resolve `@/`)
 ```
 
-Run lint, typecheck, tests and build before every commit that touches code.
+Before every commit that touches code, one batch: `pnpm lint:fix && pnpm format` (Prettier last, so autofixed text is
+formatted; `eslint --fix` already exits non-zero on remaining errors), review what that changed, then
+`pnpm format:check && pnpm exec tsc --noEmit && pnpm test && pnpm build`. No format-on-edit hooks (iltan):
+they rewrite lines just written and force re-reads; the tools run only in this batch (subagents too, per commit).
 
 ```bash
 pnpm db:start                 # local Supabase in Docker (Docker Desktop with WSL integration must be running)
@@ -298,6 +302,12 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   screen, revoke via `auth.admin.signOut(jwt)` and clear cookies on a later navigation (`docs/learnings/nextjs.md`).
 - `Date.now()` in an async Server Component after a session read (request-time) trips `react-hooks/purity`: use
   `// eslint-disable-line react-hooks/purity -- <reason>`, never move it into a helper to dodge the rule.
+- **Write it so lint passes** (`eslint.config.mjs`, details in `docs/learnings/tooling.md`): no `as` casts (`as const`
+  is fine), `!`, `any` or `@ts-*`: narrow with guards, parse outside data (FormData, JSON, RPC `jsonb`) with Zod
+  (`formDataText` / `formDataTexts`, `oneOf` for option lists); template values are strings or numbers only; `String()`
+  never on objects or FormData values; every promise is awaited or `void`ed on purpose; a disable names one rule and
+  says why (`eslint-disable-next-line <rule> -- <reason>`), never blanket or file-wide; Tailwind classes are known,
+  unique, non-conflicting and canonical (an override is a later `cn` argument).
 - **Every list paginates and shows its total; never a silent cap** like `.limit(200)` (the club grew to ~130 members
   in two weeks). Lists people browse get numbered pages (`src/lib/pagination.ts`, `PagerButtons` / `PagerLinks`):
   either load fully on the server up to `LIST_CEILING` (2,000) with `readAll` and filter/page in the browser, failing

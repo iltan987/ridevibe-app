@@ -13,25 +13,38 @@ import { detectInstallPlatform, installVariant, isDismissed, showsBanner, type I
 export type InstallSnapshot = { variant: InstallVariant; banner: boolean };
 export const NO_INSTALL: InstallSnapshot = { variant: "none", banner: false };
 
-export type InstallEnv = {
-  window: Window;
-  now(): number;
-  setTimeout: typeof setTimeout;
-  clearTimeout: typeof clearTimeout;
-};
-
-export type InstallStore = {
-  subscribe(listener: () => void): () => void;
-  getSnapshot(): InstallSnapshot;
-  install(): Promise<void>;
-  dismiss(): void;
-};
-
-type InstallPromptEvent = { prompt(): Promise<void>; userChoice: Promise<{ outcome: string }> };
-type Nav = Navigator & {
+export type InstallPromptEvent = { prompt(): Promise<void>; userChoice: Promise<{ outcome: string }> };
+// lib.dom declares maxTouchPoints and userActivation, but older browsers lack them: kept optional.
+type InstallNavigator = {
+  userAgent: string;
+  maxTouchPoints?: number;
   standalone?: boolean;
   userActivation?: { hasBeenActive: boolean };
   getInstalledRelatedApps?: () => Promise<unknown[]>;
+};
+
+/** What the store uses of `window`, plus the prompt property the capture script sets (tests pass a fake). */
+export type InstallWindow = {
+  navigator: InstallNavigator;
+  localStorage: Pick<Storage, "getItem" | "setItem">;
+  matchMedia(query: string): { matches: boolean; addEventListener(type: "change", listener: () => void): void };
+  addEventListener(type: string, listener: () => void): void;
+  [INSTALL_PROMPT_PROP]?: InstallPromptEvent | null;
+};
+
+export type InstallEnv = {
+  window: InstallWindow;
+  now: () => number;
+  setTimeout: (callback: () => void, ms: number) => number;
+  clearTimeout: (id: number) => void;
+};
+
+// Arrow-function properties: callers may pass them on unbound (none of them uses `this`).
+export type InstallStore = {
+  subscribe: (listener: () => void) => () => void;
+  getSnapshot: () => InstallSnapshot;
+  install: () => Promise<void>;
+  dismiss: () => void;
 };
 
 const STANDALONE_QUERY = "(display-mode: standalone)";
@@ -40,7 +53,7 @@ const FALLBACK_AFTER_ACTIVATION_MS = 30_000;
 
 export function createInstallStore(env: InstallEnv): InstallStore {
   const win = env.window;
-  const nav = win.navigator as Nav;
+  const nav = win.navigator;
   const listeners = new Set<() => void>();
   let snapshot: InstallSnapshot | null = null;
   let started = false;
@@ -49,9 +62,9 @@ export function createInstallStore(env: InstallEnv): InstallStore {
   // still fail; `appinstalled` stores the flag once it really happened.
   let accepted = false;
   let androidFallback = false;
-  let watchTimer: ReturnType<typeof setTimeout> | undefined;
+  let watchTimer: number | undefined;
 
-  const heldPrompt = () => (win as unknown as Record<string, InstallPromptEvent | null>)[INSTALL_PROMPT_PROP];
+  const heldPrompt = () => win[INSTALL_PROMPT_PROP];
 
   function readStorage(key: string): string | null {
     try {
@@ -76,7 +89,12 @@ export function createInstallStore(env: InstallEnv): InstallStore {
       nav.standalone === true ||
       readStorage(INSTALL_INSTALLED_KEY) === "1" ||
       relatedInstalled;
-    const variant = installVariant({ platform: platform(), hasPrompt: Boolean(heldPrompt()), installed, androidFallback });
+    const variant = installVariant({
+      platform: platform(),
+      hasPrompt: Boolean(heldPrompt()),
+      installed,
+      androidFallback,
+    });
     const raw = readStorage(INSTALL_DISMISSED_KEY);
     const dismissedAt = raw === null || Number.isNaN(Number(raw)) ? null : Number(raw);
     return { variant, banner: showsBanner(variant) && !isDismissed(dismissedAt, env.now()) };
@@ -175,7 +193,7 @@ export function createInstallStore(env: InstallEnv): InstallStore {
       const event = heldPrompt();
       if (!event) return;
       // A BeforeInstallPromptEvent works once: drop it before using it.
-      (win as unknown as Record<string, unknown>)[INSTALL_PROMPT_PROP] = null;
+      win[INSTALL_PROMPT_PROP] = null;
       try {
         await event.prompt();
         const { outcome } = await event.userChoice;
@@ -199,9 +217,9 @@ export function installStore(): InstallStore {
   singleton ??= createInstallStore({
     window,
     now: () => Date.now(),
-    // bound: browsers throw "Illegal invocation" when setTimeout is called with another `this`
-    setTimeout: window.setTimeout.bind(window) as typeof setTimeout,
-    clearTimeout: window.clearTimeout.bind(window) as typeof clearTimeout,
+    // called on `window`: browsers throw "Illegal invocation" when setTimeout is called with another `this`
+    setTimeout: (callback, ms) => window.setTimeout(callback, ms),
+    clearTimeout: (id) => window.clearTimeout(id),
   });
   return singleton;
 }

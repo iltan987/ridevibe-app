@@ -3,23 +3,26 @@ import { EARLIEST_BIRTH_DATE_EXCLUSIVE, isAtLeast18 } from "../birth-date.ts";
 import { phoneField } from "../applications/schema.ts";
 import { Constants } from "../supabase/database.types.ts";
 import { ISTANBUL, isIstanbulDistrict, sideOfDistrict } from "../istanbul-districts.ts";
+import { oneOf } from "../one-of.ts";
 import { BLOOD_TYPES } from "./blood-type.ts";
 import { normalizePlate } from "./plate.ts";
 
 // Shared by the profile forms (instant feedback) and the server actions (the
 // real check). Error messages are translation keys under Profile.errors.*.
-export type ProfileErrorKey =
-  | "required"
-  | "tooLong"
-  | "invalidNumber"
-  | "invalidInstagram"
-  | "invalidDistrict"
-  | "invalidDate"
-  | "tooYoung"
-  | "invalidPhone"
-  | "notTurkishMobile"
-  | "invalidPlate"
-  | "consentRequired";
+const PROFILE_ERROR_KEYS = [
+  "required",
+  "tooLong",
+  "invalidNumber",
+  "invalidInstagram",
+  "invalidDistrict",
+  "invalidDate",
+  "tooYoung",
+  "invalidPhone",
+  "notTurkishMobile",
+  "invalidPlate",
+  "consentRequired",
+] as const;
+export type ProfileErrorKey = (typeof PROFILE_ERROR_KEYS)[number];
 
 const err = (key: ProfileErrorKey) => ({ error: key });
 
@@ -30,11 +33,14 @@ const INSTAGRAM_URL_PREFIX = /^(?:https?:\/\/)?(?:www\.)?instagram\.com\//i;
  * Accepts `handle`, `@handle` or an instagram.com profile URL (trailing `/` and
  * query string allowed). Empty → null; anything else that isn't a handle → "invalid".
  */
-export function normalizeInstagram(raw: string): string | null | "invalid" {
+export function normalizeInstagram(raw: string): string | null {
   let value = raw.trim();
   if (!value) return null;
   if (INSTAGRAM_URL_PREFIX.test(value)) {
-    value = value.replace(INSTAGRAM_URL_PREFIX, "").replace(/[?#].*$/, "").replace(/\/+$/, "");
+    value = value
+      .replace(INSTAGRAM_URL_PREFIX, "")
+      .replace(/[?#].*$/, "")
+      .replace(/\/+$/, "");
   } else {
     value = value.replace(/^@/, "");
   }
@@ -59,11 +65,16 @@ export const locationSchema = z
     error: "required" satisfies ProfileErrorKey,
     when: (payload) => payload.issues.every((i) => !["city_choice", "city"].includes(String(i.path?.[0]))),
   })
-  .transform((v) => ({
-    city: v.city_choice === "istanbul" ? ISTANBUL : v.city!.trim(),
-    district: v.district,
-    side: v.city_choice === "istanbul" ? sideOfDistrict(v.district) : null,
-  }));
+  .transform((v, ctx) => {
+    if (v.city_choice === "istanbul") return { city: ISTANBUL, district: v.district, side: sideOfDistrict(v.district) };
+    // The rule above guarantees a city; should it ever be missing, the field reports "required".
+    const city = v.city?.trim();
+    if (!city) {
+      ctx.issues.push({ code: "custom", message: "required" satisfies ProfileErrorKey, input: v.city, path: ["city"] });
+      return z.NEVER;
+    }
+    return { city, district: v.district, side: null };
+  });
 
 export type LocationInput = z.input<typeof locationSchema>;
 
@@ -106,22 +117,22 @@ const motorcycleText = z.string(err("required")).trim().min(1, err("required")).
 
 export const motorcycleSchema = z
   .object({
-  brand: motorcycleText,
-  model: motorcycleText,
-  // Empty string = "don't know" → undefined.
-  cc: z.preprocess(
-    (v) => (v === "" || v === null ? undefined : v),
-    z.coerce
-      .number(err("invalidNumber"))
-      .int(err("invalidNumber"))
-      .min(50, err("invalidNumber"))
-      .max(3000, err("invalidNumber"))
-      .optional(),
-  ),
-  // Empty = no plate shown. `plate_foreign` picks the format rules.
-  plate: z.string(err("invalidPlate")).max(20, err("invalidPlate")).optional(),
-  plate_foreign: z.boolean(err("required")).default(false),
-})
+    brand: motorcycleText,
+    model: motorcycleText,
+    // Empty string = "don't know" → undefined.
+    cc: z.preprocess(
+      (v) => (v === "" || v === null ? undefined : v),
+      z.coerce
+        .number(err("invalidNumber"))
+        .int(err("invalidNumber"))
+        .min(50, err("invalidNumber"))
+        .max(3000, err("invalidNumber"))
+        .optional(),
+    ),
+    // Empty = no plate shown. `plate_foreign` picks the format rules.
+    plate: z.string(err("invalidPlate")).max(20, err("invalidPlate")).optional(),
+    plate_foreign: z.boolean(err("required")).default(false),
+  })
   .transform((v, ctx) => {
     const plate = normalizePlate(v.plate ?? "", v.plate_foreign);
     if (plate === "invalid") {
@@ -135,7 +146,8 @@ export type MotorcycleInput = z.input<typeof motorcycleSchema>;
 
 export const emergencyContactSchema = z.object({
   name: z.string(err("required")).trim().min(1, err("required")).max(80, err("tooLong")),
-  relationship: z.enum(Constants.public.Enums.emergency_relationship, err("required")),
+  // A string in (the form's select sends "" until one is chosen), the enum out.
+  relationship: z.string(err("required")).pipe(z.enum(Constants.public.Enums.emergency_relationship, err("required"))),
   phone: phoneField,
 });
 
@@ -155,7 +167,8 @@ export type BloodTypeInput = z.input<typeof bloodTypeSchema>;
 export function firstErrorPerField(issues: readonly { path: readonly PropertyKey[]; message: string }[]) {
   const fieldErrors: Record<string, ProfileErrorKey> = {};
   for (const issue of issues) {
-    fieldErrors[String(issue.path[0] ?? "_form")] ??= issue.message as ProfileErrorKey;
+    // Every rule here sets a key; anything else (e.g. zod's default English message) shows as "required".
+    fieldErrors[String(issue.path[0] ?? "_form")] ??= oneOf(PROFILE_ERROR_KEYS, issue.message) ?? "required";
   }
   return fieldErrors;
 }

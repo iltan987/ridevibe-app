@@ -41,12 +41,7 @@ function LocaleButton(props: React.ComponentProps<typeof Button>) {
   // The accessible name must contain the visible text (WCAG 2.5.3 Label in
   // Name): "Dil: TR", so voice-control users can say "TR".
   return (
-    <Button
-      variant="ghost"
-      size="sm"
-      aria-label={t("current", { code })}
-      {...props}
-    >
+    <Button variant="ghost" size="sm" aria-label={t("current", { code })} {...props}>
       <Languages aria-hidden />
       {code}
     </Button>
@@ -90,7 +85,9 @@ function LocaleSwitcherMenu() {
           <DropdownMenuLabel>{t("label")}</DropdownMenuLabel>
           <DropdownMenuRadioGroup
             value={locale}
-            onValueChange={(value) => onChange(value as Locale)}
+            onValueChange={(value) => {
+              if (hasLocale(routing.locales, value)) onChange(value); // only our own locales can be checked
+            }}
           >
             {routing.locales.map((l) => (
               <DropdownMenuRadioItem key={l} value={l}>

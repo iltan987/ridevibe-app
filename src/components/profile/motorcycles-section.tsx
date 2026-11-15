@@ -22,7 +22,14 @@ import { ActionStatus, useProfileAction } from "./use-profile-action";
 
 export const MAX_MOTORCYCLES = 10;
 
-type Item = { id: string; brand: string; model: string; cc: number | null; plate?: string | null; plateForeign: boolean };
+type Item = {
+  id: string;
+  brand: string;
+  model: string;
+  cc: number | null;
+  plate?: string | null;
+  plateForeign: boolean;
+};
 
 /** The member's motorcycles: add, edit (dialog) and delete (confirm). */
 export function MotorcyclesSection({ motorcycles }: { motorcycles: Item[] }) {
@@ -52,7 +59,12 @@ export function MotorcyclesSection({ motorcycles }: { motorcycles: Item[] }) {
                     <MotorcycleDialog
                       motorcycle={bike}
                       trigger={
-                        <Button type="button" variant="outline" size="icon" aria-label={t("editMotorcycleLabel", { name })}>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          aria-label={t("editMotorcycleLabel", { name })}
+                        >
                           <Pencil aria-hidden />
                         </Button>
                       }
@@ -80,7 +92,12 @@ export function MotorcyclesSection({ motorcycles }: { motorcycles: Item[] }) {
         <div className="flex flex-col items-start gap-2">
           <MotorcycleDialog
             trigger={
-              <Button type="button" variant="outline" disabled={full} aria-describedby={full ? "profile-motorcycle-limit" : undefined}>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={full}
+                aria-describedby={full ? "profile-motorcycle-limit" : undefined}
+              >
                 <Plus aria-hidden /> {t("addMotorcycle")}
               </Button>
             }
@@ -108,7 +125,13 @@ export function MotorcyclesSection({ motorcycles }: { motorcycles: Item[] }) {
             <AlertDialogAction
               variant="destructive"
               disabled={isPending}
-              onClick={() => target && run(() => deleteMotorcycle(target.id), () => setConfirmOpen(false))}
+              onClick={() =>
+                target &&
+                run(
+                  () => deleteMotorcycle(target.id),
+                  () => setConfirmOpen(false),
+                )
+              }
             >
               {t("confirmDelete")}
             </AlertDialogAction>

@@ -14,7 +14,7 @@ export function HomeRides() {
     <section className="pt-13 md:pt-28">
       <RouteStop className="md:grid md:grid-cols-2 md:gap-x-16 md:[--dot-top:1.6rem]">
         <div className="md:col-start-1 md:row-start-1">
-          <h2 className="mb-3 text-[40px] leading-[0.95] font-extrabold text-balance [font-stretch:70%] md:mb-4.5 md:text-[72px]">
+          <h2 className="mb-3 text-[40px] leading-[0.95] font-extrabold text-balance font-stretch-70% md:mb-4.5 md:text-[72px]">
             {t("title")}
           </h2>
           <p className="text-pretty text-muted-foreground">{t("weekend")}</p>
@@ -24,7 +24,7 @@ export function HomeRides() {
                 key={p}
                 as="li"
                 kind="place"
-                className="text-[30px] leading-tight font-bold [font-stretch:75%] md:text-5xl"
+                className="text-[30px] leading-tight font-bold font-stretch-75% md:text-5xl"
               >
                 {t(p)}
               </RouteStop>

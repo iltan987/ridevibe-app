@@ -9,9 +9,7 @@ function tokens(selector: string): Map<string, string> {
   const result = new Map<string, string>();
   const block = new RegExp(`(?:^|\\n)\\s*${selector}\\s*\\{([^}]*)\\}`, "g");
   for (const [, body] of css.matchAll(block)) {
-    for (const [, name, hex] of body.matchAll(
-      /--([\w-]+):\s*(#[0-9a-fA-F]{6})\s*;/g,
-    )) {
+    for (const [, name, hex] of body.matchAll(/--([\w-]+):\s*(#[0-9a-fA-F]{6})\s*;/g)) {
       result.set(name, hex);
     }
   }
@@ -72,13 +70,15 @@ const UI: Pair[] = [
 const UI_DARK_ONLY: Pair[] = [["primary", "background"]];
 
 const themes = { light: tokens(":root"), dark: tokens("\\.dark") };
+const THEMES = ["light", "dark"] as const;
 
-for (const [theme, values] of Object.entries(themes)) {
+for (const theme of THEMES) {
+  const values = themes[theme];
   const checks: [Pair[], number][] = [
     [TEXT, 4.5],
     [UI, 3],
-    ...(theme === "dark" ? ([[UI_DARK_ONLY, 3]] as [Pair[], number][]) : []),
   ];
+  if (theme === "dark") checks.push([UI_DARK_ONLY, 3]);
 
   test(`${theme}: every contrast token is defined as 6-digit hex`, () => {
     const names = new Set(checks.flatMap(([pairs]) => pairs.flat()));
@@ -94,16 +94,14 @@ for (const [theme, values] of Object.entries(themes)) {
         const b = values.get(bg);
         assert.ok(f && b, `${theme}: ${fg}/${bg} missing`);
         const ratio = contrast(f, b);
-        assert.ok(
-          ratio >= min,
-          `${theme}: ${fg} on ${bg} is ${ratio.toFixed(2)}, needs ${min}`,
-        );
+        assert.ok(ratio >= min, `${theme}: ${fg} on ${bg} is ${ratio.toFixed(2)}, needs ${min}`);
       });
     }
   }
 }
 
-for (const [theme, values] of Object.entries(themes)) {
+for (const theme of THEMES) {
+  const values = themes[theme];
   const get = (name: string) => {
     const hex = values.get(name);
     assert.ok(hex, `${theme}: --${name} missing`);
@@ -112,7 +110,7 @@ for (const [theme, values] of Object.entries(themes)) {
   const destructive = () => get("destructive");
 
   for (const base of ["card", "popover", "background"]) {
-    for (const alpha of DESTRUCTIVE_TINT[theme as "light" | "dark"]) {
+    for (const alpha of DESTRUCTIVE_TINT[theme]) {
       test(`${theme}: destructive text on destructive/${alpha * 100} over ${base} >= 4.5`, () => {
         const bg = blend(destructive(), get(base), alpha);
         const ratio = contrast(destructive(), bg);

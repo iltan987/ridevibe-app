@@ -8,7 +8,7 @@ export function LicensePlate() {
         <div className="flex w-8 items-end justify-center bg-[#1F4FB3] pb-1.5 text-xs font-bold text-white md:w-[38px] md:text-sm">
           TR
         </div>
-        <div className="flex flex-1 items-center justify-center text-[min(2.5rem,10.25vw)] leading-none font-[650] tracking-[0.06em] whitespace-nowrap [font-stretch:88%] md:text-5xl">
+        <div className="flex flex-1 items-center justify-center text-[min(2.5rem,10.25vw)] leading-none font-[650] tracking-[0.06em] whitespace-nowrap font-stretch-88% md:text-5xl">
           34 RV 2026
         </div>
       </div>

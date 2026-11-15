@@ -274,3 +274,12 @@
   same CSS variable as the line (`left: calc(var(--route-x) + 1.5px - 30px)`), so the ends meet exactly. Verify by
   reading `getScreenCTM()` of the path ends against the line's centre.
 - **Source:** iltan's review of the live redesign; measured with puppeteer (`src/components/home/route.tsx`).
+
+### `text-base/snug` sets no `--tw-leading`: a variant `text-sm` then drops the line height (2026-11-15)
+- **Symptom:** after `text-base leading-snug` became `text-base/snug` (the canonical form), small card titles
+  (`group-data-[size=sm]/card:text-sm`) got `text-sm`'s default line height instead of snug.
+- **Cause:** Tailwind 4's `leading-*` sets `--tw-leading`, which a later `text-*` keeps; the `text-X/Y` shorthand
+  writes `line-height` directly, so any other `text-*` replaces it.
+- **Do:** when a size changes in a variant, repeat the line height there too (`…:text-sm/snug`, `src/components/ui/card.tsx`),
+  or keep a separate `leading-*` class.
+- **Source:** Task 4 review; measured in headless Chrome (16/22px and 14/19.25px before and after the fix).

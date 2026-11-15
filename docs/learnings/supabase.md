@@ -271,3 +271,13 @@
   user's objects in the same job, per account (`docs/follow-ups.md`, "Purge is one transaction").
 - **Source:** supabase.com/docs/guides/auth/managing-user-data (deleting users), supabase.com/docs/guides/auth/auth-anonymous
   (cleanup with SQL); pgTAP `account_deletion_purge*.test.sql`.
+
+### Generated RPC types call every column and argument non-null (2026-11-15)
+- **Symptom:** `no-unnecessary-condition` on `row.birthday ?? null` / `!= null` checks; after the lint autofix removed
+  `(x as T | null)`, the `?? null` behind it was flagged too. Passing `null` for a nullable RPC argument doesn't type.
+- **Cause:** `supabase gen types` can't tell which columns of a function's result (or which arguments) may be null.
+- **Do:** widen the row type at the read: `Omit<Generated…Row, "col"> & { col: T | null }` and assign `data` to it
+  (an annotation, not a cast: `DirectoryRow` in `src/lib/members/queries.ts`, `SafetyCardRow` in
+  `src/lib/members/safety-card.ts`). A nullable argument needs a justified disable (`setMemberRole` in
+  `src/lib/access/actions.ts`) or a `default null` parameter in SQL.
+- **Source:** `src/lib/supabase/database.types.ts`; found by linting (Tasks 2–3).

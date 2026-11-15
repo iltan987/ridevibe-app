@@ -15,13 +15,19 @@ function fakeWindow(setItem?: (k: string, v: string) => void, removeItem?: (k: s
   const target = new EventTarget();
   const changes: string[] = [];
   target.addEventListener(INSTALL_CHANGE_EVENT, () => changes.push(INSTALL_CHANGE_EVENT));
-  const win = Object.assign(target, {
-    Event,
-    localStorage: {
-      setItem: setItem ?? ((k: string, v: string) => void store.set(k, v)),
-      removeItem: removeItem ?? ((k: string) => void store.delete(k)),
+  // Set by the script under test; typed here so the tests can read it.
+  const promptSlot: { [INSTALL_PROMPT_PROP]?: unknown } = {};
+  const win = Object.assign(
+    target,
+    {
+      Event,
+      localStorage: {
+        setItem: setItem ?? ((k: string, v: string) => void store.set(k, v)),
+        removeItem: removeItem ?? ((k: string) => void store.delete(k)),
+      },
     },
-  }) as unknown as Record<string, unknown> & EventTarget;
+    promptSlot,
+  );
   return { win, store, changes };
 }
 
@@ -35,7 +41,9 @@ function fakePromptEvent(type: string) {
   return { e, calls };
 }
 
-const run = (win: unknown) => vm.runInNewContext(installCaptureScript, { window: win });
+const run = (win: unknown): void => {
+  vm.runInNewContext(installCaptureScript, { window: win });
+};
 
 test("constants", () => {
   assert.equal(INSTALL_DISMISSED_KEY, "rv-install-dismissed");

@@ -10,10 +10,7 @@ const navigation = createNavigation(routing);
 export const { redirect, usePathname, useRouter, getPathname } = navigation;
 
 // Same as next-intl's Link, plus a pending marker (see LinkPending).
-export function Link({
-  children,
-  ...props
-}: ComponentProps<typeof navigation.Link>) {
+export function Link({ children, ...props }: ComponentProps<typeof navigation.Link>) {
   return (
     <navigation.Link {...props}>
       {children}

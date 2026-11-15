@@ -41,13 +41,7 @@ export function RouteStop({
 }) {
   const Tag: ElementType = as;
   return (
-    <Tag
-      className={cn(
-        "relative before:absolute before:rounded-full before:content-['']",
-        DOT[kind],
-        className,
-      )}
-    >
+    <Tag className={cn("relative before:absolute before:rounded-full before:content-['']", DOT[kind], className)}>
       {children}
     </Tag>
   );
@@ -89,7 +83,7 @@ export function RoutePhoto({
   sizes: string;
 }) {
   return (
-    <div className="relative z-10 -mr-5 -ml-(--route-pad) md:mr-0 md:ml-0">
+    <div className="relative z-10 -mr-5 -ml-(--route-pad) md:mx-0">
       <RouteBend direction="out" />
       <Image
         src={src}

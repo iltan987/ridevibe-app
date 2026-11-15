@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { type FormEvent, useState, useTransition } from "react";
+import { type SubmitEvent, useState, useTransition } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,10 +15,19 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Field, FieldContent, FieldDescription, FieldGroup, FieldLabel, FieldLegend, FieldSet } from "@/components/ui/field";
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { type AccessActionResult, createRole, deleteRole, updateRole } from "@/lib/access/actions";
 import { PERMISSIONS, type Permission } from "@/lib/auth/permissions";
+import { formDataText, formDataTexts } from "@/lib/form-data";
 
 type Status = AccessActionResult["status"] | null;
 
@@ -56,11 +65,11 @@ export function RoleEditor({
   const { isPending, status, run } = useAction();
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  function onSubmit(event: FormEvent<HTMLFormElement>) {
+  function onSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    const name = String(formData.get("name") ?? "");
-    const permissions = formData.getAll("permissions").map(String);
+    const name = formDataText(formData, "name");
+    const permissions = formDataTexts(formData, "permissions");
     run(() => updateRole(role.id, name, permissions));
   }
 
@@ -92,7 +101,7 @@ export function RoleEditor({
                       className="mt-0.5 self-start"
                     />
                     <FieldContent>
-                      <FieldLabel htmlFor={id} className="font-normal leading-snug">
+                      <FieldLabel htmlFor={id} className="leading-snug font-normal">
                         {t(`permissions.${permission}.label`)}
                       </FieldLabel>
                       <FieldDescription>{t(`permissions.${permission}.description`)}</FieldDescription>
@@ -107,7 +116,13 @@ export function RoleEditor({
           <Button type="submit" disabled={isPending}>
             {t("roles.save")}
           </Button>
-          <Button type="button" variant="ghost" className="text-destructive" disabled={isPending} onClick={() => setConfirmOpen(true)}>
+          <Button
+            type="button"
+            variant="ghost"
+            className="text-destructive"
+            disabled={isPending}
+            onClick={() => setConfirmOpen(true)}
+          >
             {t("roles.delete")}
           </Button>
           <ActionMessage status={status} />
@@ -127,7 +142,12 @@ export function RoleEditor({
             <AlertDialogAction
               variant="destructive"
               disabled={isPending}
-              onClick={() => run(() => deleteRole(role.id), () => setConfirmOpen(false))}
+              onClick={() =>
+                run(
+                  () => deleteRole(role.id),
+                  () => setConfirmOpen(false),
+                )
+              }
             >
               {t("roles.confirmDelete")}
             </AlertDialogAction>
@@ -142,11 +162,14 @@ export function CreateRoleForm() {
   const t = useTranslations("Admin");
   const { isPending, status, run } = useAction();
 
-  function onSubmit(event: FormEvent<HTMLFormElement>) {
+  function onSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
-    const name = String(new FormData(form).get("name") ?? "");
-    run(() => createRole(name), () => form.reset());
+    const name = formDataText(new FormData(form), "name");
+    run(
+      () => createRole(name),
+      () => form.reset(),
+    );
   }
 
   return (

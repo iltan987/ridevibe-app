@@ -53,9 +53,17 @@ const switchRows = [];
 async function switchLanguage(page) {
   const before = page.url();
   for (let i = 0; i < 5 && page.url() === before; i++) {
-    await page.evaluate(() => [...document.querySelectorAll('[data-skeleton-result="locale-switcher"]:not([disabled])')].find((e) => e.getBoundingClientRect().width > 0)?.click());
+    await page.evaluate(() =>
+      [...document.querySelectorAll('[data-skeleton-result="locale-switcher"]:not([disabled])')]
+        .find((e) => e.getBoundingClientRect().width > 0)
+        ?.click(),
+    );
     await sleep(400);
-    await page.evaluate(() => [...document.querySelectorAll('[role="menuitemradio"]:not([aria-checked="true"])')].find((e) => e.getBoundingClientRect().width > 0)?.click());
+    await page.evaluate(() =>
+      [...document.querySelectorAll('[role="menuitemradio"]:not([aria-checked="true"])')]
+        .find((e) => e.getBoundingClientRect().width > 0)
+        ?.click(),
+    );
     for (let t = 0; t < 100 && page.url() === before; t++) await sleep(100);
   }
   await page.waitForNetworkIdle({ idleTime: 500 }).catch(() => {});
@@ -78,7 +86,8 @@ async function measureSwitchBack(page, route, theme) {
       for (const el of document.querySelectorAll("[data-skeleton]")) {
         const r = el.getBoundingClientRect();
         const name = el.getAttribute("data-skeleton");
-        if (r.width > 0 && r.height > 0 && !(name in window.__fallbacks)) window.__fallbacks[name] = { h: r.height, w: r.width };
+        if (r.width > 0 && r.height > 0 && !(name in window.__fallbacks))
+          window.__fallbacks[name] = { h: r.height, w: r.width };
       }
       requestAnimationFrame(tick);
     };
@@ -86,7 +95,12 @@ async function measureSwitchBack(page, route, theme) {
   });
   const cdp = await throttle(page, { latency: 400, kbps: 2000 });
   await switchLanguage(page);
-  await cdp.send("Network.emulateNetworkConditions", { offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
+  await cdp.send("Network.emulateNetworkConditions", {
+    offline: false,
+    latency: 0,
+    downloadThroughput: -1,
+    uploadThroughput: -1,
+  });
   await sleep(800);
   return page.evaluate(() => window.__fallbacks);
 }
@@ -132,7 +146,8 @@ for (const state of states) {
           const p3 = await open();
           const seen = await measureSwitchBack(p3, route, theme);
           await p3.close();
-          for (const name of Object.keys(sk)) switchRows.push({ name, route, state, width, theme, re: re[name], seen: seen[name] });
+          for (const name of Object.keys(sk))
+            switchRows.push({ name, route, state, width, theme, re: re[name], seen: seen[name] });
         }
         await ctx.close();
         const names = new Set([...Object.keys(sk), ...Object.keys(re)]);
@@ -164,11 +179,18 @@ md += `## Summary: worst Δh per fallback and state (all routes, viewports, them
 for (const [k, v] of [...sum].sort()) md += `| ${k} | ${v.worst} | ${v.at} |\n`;
 
 md += `\n## All rows\n\n| name | route | state | viewport | theme | skeleton h×w | result h×w | Δh |\n|---|---|---|---|---|---|---|---|\n`;
-rows.sort((a, b) => (a.name + a.route + a.state).localeCompare(b.name + b.route + b.state) || a.width - b.width || a.theme.localeCompare(b.theme));
-for (const r of rows) md += `| ${r.name} | ${r.route} | ${r.state} | ${r.width} | ${r.theme} | ${f(r.sk)} | ${f(r.re)} | ${d(r) ?? "—"} |\n`;
+rows.sort(
+  (a, b) =>
+    (a.name + a.route + a.state).localeCompare(b.name + b.route + b.state) ||
+    a.width - b.width ||
+    a.theme.localeCompare(b.theme),
+);
+for (const r of rows)
+  md += `| ${r.name} | ${r.route} | ${r.state} | ${r.width} | ${r.theme} | ${f(r.sk)} | ${f(r.re)} | ${d(r) ?? "—"} |\n`;
 if (switchBack) {
   md += `\n## Switch back (JS on, throttled): fallback seen during the second language switch vs. the result\n\n| name | route | state | viewport | theme | seen on switch back h×w | result h×w | Δh |\n|---|---|---|---|---|---|---|---|\n`;
-  for (const r of switchRows) md += `| ${r.name} | ${r.route} | ${r.state} | ${r.width} | ${r.theme} | ${f(r.seen)} | ${f(r.re)} | ${r.seen ? (r.re ? Math.round((r.seen.h - r.re.h) * 10) / 10 : "—") : "not seen"} |\n`;
+  for (const r of switchRows)
+    md += `| ${r.name} | ${r.route} | ${r.state} | ${r.width} | ${r.theme} | ${f(r.seen)} | ${f(r.re)} | ${r.seen ? (r.re ? Math.round((r.seen.h - r.re.h) * 10) / 10 : "—") : "not seen"} |\n`;
 }
 writeFileSync(out, md);
 console.error(`wrote ${out}`);

@@ -117,12 +117,11 @@ export function LinkAccountDialog({
   }
 
   const accountName = (account: LinkableAccount) => account.full_name || account.email || "—";
-  const failureMessage =
-    failure && (
-      <p role="alert" className="text-sm text-destructive">
-        {failure === "invalid" ? t("link.invalid") : t(`accessErrors.${failure}`)}
-      </p>
-    );
+  const failureMessage = failure && (
+    <p role="alert" className="text-sm text-destructive">
+      {failure === "invalid" ? t("link.invalid") : t(`accessErrors.${failure}`)}
+    </p>
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -182,7 +181,9 @@ export function LinkAccountDialog({
                         className="flex w-full items-center gap-3 rounded-lg border border-input p-2 text-left outline-none hover:bg-muted focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
                       >
                         <Avatar className="size-10">
-                          {account.avatar_url && <AvatarImage src={account.avatar_url} alt="" referrerPolicy="no-referrer" />}
+                          {account.avatar_url && (
+                            <AvatarImage src={account.avatar_url} alt="" referrerPolicy="no-referrer" />
+                          )}
                           <AvatarFallback>{initials(accountName(account))}</AvatarFallback>
                         </Avatar>
                         <span className="flex min-w-0 flex-col">
@@ -194,9 +195,13 @@ export function LinkAccountDialog({
                               </Badge>
                             )}
                           </span>
-                          <span className="truncate text-xs text-muted-foreground">{account.email ?? t("members.noEmail")}</span>
+                          <span className="truncate text-xs text-muted-foreground">
+                            {account.email ?? t("members.noEmail")}
+                          </span>
                           <span className="text-xs text-muted-foreground">
-                            {t("link.signedUp", { date: format.dateTime(new Date(account.created_at), { dateStyle: "medium" }) })}
+                            {t("link.signedUp", {
+                              date: format.dateTime(new Date(account.created_at), { dateStyle: "medium" }),
+                            })}
                           </span>
                         </span>
                       </button>

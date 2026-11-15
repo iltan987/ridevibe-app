@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { foldSearch } from "../search-fold.ts";
-import { membersView, type StaffStatus } from "./members-view.ts";
+import { isStaffStatus, membersView, type StaffStatus } from "./members-view.ts";
 
 type Row = { name: string; status: StaffStatus; search: string };
 const row = (name: string, status: StaffStatus, email: string | null = null): Row => ({
@@ -58,4 +58,9 @@ test("no match: no items, page 1, an empty range", () => {
   const view = membersView(rows, { query: "zzz", status: "pending", page: 3 });
   assert.deepEqual(view.counts, { pending: 0, active: 0, inactive: 0 });
   assert.deepEqual([view.items.length, view.page, view.pageCount, view.from, view.to, view.total], [0, 1, 1, 0, 0, 0]);
+});
+
+test("isStaffStatus: every status except deleting", () => {
+  for (const status of ["pending", "active", "inactive"]) assert.equal(isStaffStatus(status), true);
+  for (const status of ["deleting", "", "Active"]) assert.equal(isStaffStatus(status), false);
 });

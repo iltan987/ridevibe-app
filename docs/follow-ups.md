@@ -10,14 +10,7 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ## Next up (iltan asked for these; in priority order; start in a new session)
 
-- **Stricter ESLint rules** (2026-11-13, iltan) — own session. Goals: (1) stop `any`, `unknown`, casts (`as`),
-  non-null `!` and `eslint-disable` / `@ts-expect-error` being used to bypass problems instead of fixing them;
-  (2) let ESLint catch real bugs earlier (e.g. type-aware rules: floating/misused promises, unsafe `any` flows,
-  exhaustive switches, unnecessary conditions). Claude picks the rule set (research current `typescript-eslint`
-  presets and Next 16 / React Compiler lint first), measures the violations on the current code, and fixes them or
-  justifies each remaining disable with a reason (like the `react-hooks/purity` rule in CLAUDE.md). Fits with the
-  dead-code tool decision (Open decisions).
-
+Nothing queued.
 
 ## Open decisions (need iltan)
 
@@ -285,12 +278,9 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 - **Contact editor shows the generic "invalid" message** for a DB `23514` (only reachable by bypassing Zod).
 - **Rename dialog can be closed mid-save** (`src/components/admin/member-name-dialog.tsx`) — a failure after closing is
   lost; also its failure type includes an unreachable `duplicate`.
-- **Members profile validation edges** (2026-11-10, members review) — `city` / non-object input reaching the profile
-  action shows zod's default English message cast to `ProfileErrorKey` (only via direct endpoint calls; fix:
-  `z.string(err("required"))` or map unknown messages to `required`); the motorcycles `jsonb` cast in the directory
-  query has no element validation; `instagramUrl` doesn't encode the handle (safe: handles are `[A-Za-z0-9._]`);
-  city choice "other" accepts "İstanbul" (check form parity); `z.uuid` is strict about fixture-style ids;
-  `fail()` / `finish()` in the profile actions are untested.
+- **Members profile validation edges** (2026-11-10, members review) — `instagramUrl` doesn't encode the handle
+  (safe: handles are `[A-Za-z0-9._]`); city choice "other" accepts "İstanbul" (check form parity); `z.uuid` is strict
+  about fixture-style ids; `fail()` / `finish()` in the profile actions are untested.
 - **Install prompt review minors** (2026-11-12, install-prompt reviews) — (a) `platform.ts`: the `OPT` token in the
   iOS "other browser" regex is a bare substring (could match inside another UA word). The iPadOS case (Mac UA with
   touch) is tested; untested are a Mac UA with 1–2 touch points, iOS `OPT`/`Ddg`/`YaBrowser`, macOS Edge and Android
@@ -306,7 +296,11 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 - **Install E2E minors** (2026-11-12, install-prompt Task 6 review) — `scripts/e2e/install-e2e.mjs`: no
   `try/finally` around scenarios (a thrown error skips `ctx.close()`, later scenarios inherit cookies/storage); the
   fallback `page.mouse.click(195, 400)` in `open()` (user activation when the event is late) can hit real UI; the
-  `apply-nav-e2e.mjs` "showed the guess first" check flaked once (passed on rerun). From the fix-wave re-review: the
+  `apply-nav-e2e.mjs` "showed the guess first" check flaked once (passed on rerun). Seen 2026-11-15 (lint-format final
+  E2E, each passed on the rerun): install's `/account` scenario failed all four banner checks ("Yükle" not shown,
+  `prompt()` calls=0) while `/members` just before passed (a late or missing install event?), and apply-nav's
+  "pending-noapp phone TR: second load, one layout" started with the hidden guess (4 tabs) before 5 (the first
+  load's stored hint not yet written?). From the fix-wave re-review: the
   iPhone "installed flag still set" check is near-tautological (`initScript` sets the flag on every document; the real
   assertions there are "no banner / no menu entry"); the language-switch scenario doesn't assert exactly one spacer
   after the switch; the comment near line 39 still states "Chrome ignores a re-dispatched real event" as fact (see the
@@ -413,8 +407,8 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   redundant cursor class.
 - **Hide-Başvur review minors** (2026-11-11, hide-Başvur review) — nav/hero: the guess plumbing is duplicated in
   `desktop-nav.tsx` / `bottom-nav.tsx` (a `useApplyNavItems` helper); `group-data-apply-hidden` relies on an unnamed
-  Tailwind `group`; `useApplyHiddenGuess` also runs in the streamed nav (one no-op re-render); `noSubscribe` is
-  defined 3×; `hero-apply-guess.tsx` builds its className with a template string instead of `cn`; the hero guess link
+  Tailwind `group`; `useApplyHiddenGuess` also runs in the streamed nav (one no-op re-render);
+  `hero-apply-guess.tsx` builds its className with a template string instead of `cn`; the hero guess link
   carries no UTM params; the inline script in `apply-hint.ts` reads `doc.cookie` outside its `try` and uses an
   optional catch binding (same as `markSessionHint`); the parity test doesn't assert `hasSessionCookie(c)` against
   the list label. E2E (`scripts/e2e/apply-nav-e2e.mjs`): the language-switch check prints INFO instead of failing
@@ -452,8 +446,6 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   to Turkish copy, English not measured. Re-run `scripts/e2e/skeletons.mjs` after UI changes.
 - **ApplySkeleton mirrors step 1 only** (2026-11-11, apply-steps Task 7) — a restored draft or `?step=N` opens another
   step, so the form can be taller/shorter than the fallback there; measured only signed out at step 1.
-- **`user-menu.tsx` long line** (2026-11-10, loading-states review) — `src/components/auth/user-menu.tsx` has one
-  long unformatted line (the signed-out `Link`).
 - **Theme switcher selection after a revealed hidden route** (2026-11-11, header review, unverified) — if Next ever
   reveals a hidden `Activity` copy of the `[locale]` layout after the theme changed, its `useLayoutEffect` re-applies
   the stored theme but `pref` keeps the old value (wrong radio checked). Fix if seen: read `pref` via
@@ -520,8 +512,26 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 - **Staff RPCs read the target's status without a row lock** (2026-11-14, account deletion) — `set_member_role` /
   `set_member_status` / `set_member_name`: a deletion request committing in between gives staff a 23514 error (status)
   or silently re-roles/renames a just-deleting row. Add `for update of p` when touching these next.
-- **`MEMBER_STATUSES` / `listAllProfiles` `status as StaffStatus` cast** (2026-11-14, account deletion) — revisit with
-  the stricter ESLint item.
+- **Lint/format review minors** (2026-11-15, lint-format reviews) — none urgent:
+  - `normalizePlate` (`src/lib/members/plate.ts`) / `normalizeInstagram` (`src/lib/members/schema.ts`) return
+    `string | null` with an `"invalid"` sentinel string; a discriminated result (`{ ok, value }`) would let the type
+    checker tell "invalid" from a real handle/plate.
+  - The four widened-row types could share a `NullableColumns<T, K>` helper.
+  - `CardTitle` / `FieldDescription` now use the `text-X/Y` shorthand; an override like `cn(…, "leading-7")` from a
+    caller is untested (no caller does it today; `docs/learnings/ui.md`).
+  - Two justified cast disables remain: `setMemberRole` (`src/lib/access/actions.ts`, generated types can't make
+    `new_role_id` nullable: a `new_role_id uuid default null` signature would remove it, a production rollout) and the
+    fake `Document` in `src/lib/theme.test.ts` (narrowing `applyResolvedTheme` to a structural type fails on
+    `querySelectorAll`'s generic and would touch the inline `initTheme` script).
+  - `InstallWindow[INSTALL_PROMPT_PROP]` trusts the capture script to store a real prompt event (as the old cast did);
+    `findLinkableAccounts` maps any non-`active` status to `pending` (the RPC returns only those two) instead of
+    dropping the row, which would shift keyset paging.
+- **More lint later?** (2026-11-15, lint-format) — not enabled, each measured: `prefer-nullish-coalescing` (15 hits)
+  and `prefer-optional-chain` (6) are suggestion-only (several `||` on strings rely on `""` falling through);
+  `no-empty-function` (20) catches nothing; `consistent-type-definitions` (40) is taste; import order isn't enforced
+  (see "Install prompt review minors" (d)). `eslint --cache` was not added: `pnpm lint` takes ~30–40 s, and the cache
+  can't see that a type changed in another file, so a cached run may miss type-aware errors. Revisit if lint time
+  starts to hurt.
 - **Purge audit rows on hosted** (2026-11-14, account deletion) — `delete from auth.audit_log_entries` inside the purge
   was verified on the local stack only; after the rollout `db push`, confirm the first real run (or a read-only
   privilege check: `has_table_privilege('postgres', 'auth.audit_log_entries', 'delete')`, and `'insert'` too: the

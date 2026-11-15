@@ -9,7 +9,12 @@ export const LANGUAGES = ["tr", "en", "other"] as const;
 export const LICENSE_CLASSES = ["a1", "a2", "a", "b", "none"] as const satisfies readonly Enums<"license_class">[];
 export const RIDING_STYLES = ["city", "touring", "enduro", "sport", "cruiser", "scooter"] as const;
 export const GROUP_EXPERIENCE = ["none", "some", "a_lot"] as const satisfies readonly Enums<"group_ride_experience">[];
-export const HEARD_FROM = ["instagram_ad", "instagram_other", "friend", "other"] as const satisfies readonly Enums<"heard_from">[];
+export const HEARD_FROM = [
+  "instagram_ad",
+  "instagram_other",
+  "friend",
+  "other",
+] as const satisfies readonly Enums<"heard_from">[];
 export const EVENT_INTERESTS = [
   "day_rides",
   "multi_day_tours",

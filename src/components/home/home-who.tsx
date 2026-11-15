@@ -12,7 +12,7 @@ export function HomeWho() {
     <section className="pt-13 md:pt-28">
       <RouteStop className="md:grid md:grid-cols-2 md:items-start md:gap-x-16 md:[--dot-top:1.6rem]">
         <div className="md:col-start-2 md:row-start-1">
-          <h2 className="mb-3 text-[40px] leading-[0.95] font-extrabold text-balance [font-stretch:70%] md:mb-4.5 md:text-[72px]">
+          <h2 className="mb-3 text-[40px] leading-[0.95] font-extrabold text-balance font-stretch-70% md:mb-4.5 md:text-[72px]">
             {t("title")}
           </h2>
           <p className="text-pretty text-muted-foreground">{t("body")}</p>
@@ -28,16 +28,14 @@ export function HomeWho() {
             </div>
             <div
               aria-hidden
-              className="flex justify-between text-[13px] text-muted-foreground [font-stretch:85%] md:text-base"
+              className="flex justify-between text-[13px] text-muted-foreground font-stretch-85% md:text-base"
             >
               {TICKS.map((label) => (
                 <span key={label}>{label}</span>
               ))}
             </div>
           </div>
-          <p className="mt-2.5 text-sm text-pretty text-muted-foreground md:mt-3.5 md:text-base">
-            {t("conditions")}
-          </p>
+          <p className="mt-2.5 text-sm text-pretty text-muted-foreground md:mt-3.5 md:text-base">{t("conditions")}</p>
         </div>
         <div className="mt-5.5 md:col-start-1 md:row-start-1 md:mt-3">
           <RoutePhoto

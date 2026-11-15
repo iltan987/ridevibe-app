@@ -2,10 +2,10 @@ export type InAppBrowser = "Instagram" | "Facebook" | "TikTok" | "LinkedIn";
 
 /** Social apps' embedded browsers, where Google blocks OAuth sign-in. Null for normal browsers. */
 export function detectInAppBrowser(userAgent: string): InAppBrowser | null {
-  if (/Instagram/.test(userAgent)) return "Instagram";
+  if (userAgent.includes("Instagram")) return "Instagram";
   if (/FBAN|FBAV|FB_IAB/.test(userAgent)) return "Facebook";
   if (/musical_ly|BytedanceWebview|TikTok/i.test(userAgent)) return "TikTok";
-  if (/LinkedInApp/.test(userAgent)) return "LinkedIn";
+  if (userAgent.includes("LinkedInApp")) return "LinkedIn";
   return null;
 }
 

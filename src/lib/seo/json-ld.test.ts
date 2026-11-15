@@ -5,16 +5,15 @@ import { clubJsonLd, serializeJsonLd } from "./json-ld.ts";
 test("clubJsonLd describes the website and the club", () => {
   const g = clubJsonLd("desc");
   assert.equal(g["@context"], "https://schema.org");
-  const [site, org] = g["@graph"] as Record<string, unknown>[];
-  assert.deepEqual(site, {
+  const site = {
     "@type": "WebSite",
     "@id": "https://ridevibe.com.tr/#website",
     name: "Ride & Vibe",
     alternateName: "Ride and Vibe",
     url: "https://ridevibe.com.tr/",
     publisher: { "@id": "https://ridevibe.com.tr/#organization" },
-  });
-  assert.deepEqual(org, {
+  };
+  const org = {
     "@type": "SportsOrganization",
     "@id": "https://ridevibe.com.tr/#organization",
     name: "Ride & Vibe",
@@ -25,7 +24,8 @@ test("clubJsonLd describes the website and the club", () => {
     description: "desc",
     sport: "Motorcycling",
     areaServed: { "@type": "City", name: "Istanbul" },
-  });
+  };
+  assert.deepEqual(g["@graph"], [site, org]);
 });
 
 test("serializeJsonLd escapes < so a payload cannot close the script tag", () => {

@@ -3,17 +3,11 @@
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Field,
-  FieldContent,
-  FieldDescription,
-  FieldError,
-  FieldLabel,
-  FieldTitle,
-} from "@/components/ui/field";
+import { Field, FieldContent, FieldDescription, FieldError, FieldLabel, FieldTitle } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
+import { oneOf } from "@/lib/one-of";
 
 function OptionalTag({ text }: { text?: string }) {
   return text ? <span className="font-normal text-muted-foreground">({text})</span> : null;
@@ -42,7 +36,13 @@ export function TextField({
       <FieldLabel htmlFor={name}>
         {label} <OptionalTag text={optional} />
       </FieldLabel>
-      <Input id={name} name={name} aria-invalid={!!error} className={`h-10 md:h-9 ${className ?? ""}`} {...inputProps} />
+      <Input
+        id={name}
+        name={name}
+        aria-invalid={!!error}
+        className={`h-10 md:h-9 ${className ?? ""}`}
+        {...inputProps}
+      />
       {hint && <FieldDescription>{hint}</FieldDescription>}
       {note && <FieldDescription className="text-accent-text">{note}</FieldDescription>}
       <FieldError>{error}</FieldError>
@@ -94,7 +94,7 @@ export function ChoiceRadios<T extends string>({
   options: readonly T[];
   optionLabel: (value: T) => string;
   defaultValue?: T;
-  onChange?: (value: string) => void;
+  onChange?: (value: T) => void;
   error?: string;
   horizontal?: boolean;
 }) {
@@ -105,7 +105,11 @@ export function ChoiceRadios<T extends string>({
         name={name}
         aria-labelledby={`${name}-label`}
         defaultValue={defaultValue}
-        onValueChange={(v) => onChange?.(String(v))}
+        onValueChange={(v) => {
+          // Only our own options can be checked; anything else is ignored.
+          const option = oneOf(options, v);
+          if (option !== undefined) onChange?.(option);
+        }}
         className={horizontal ? "flex flex-wrap gap-2" : "grid gap-2"}
       >
         {options.map((value) => (
@@ -190,7 +194,7 @@ export function ConsentCheckbox({
     <Field orientation="horizontal" data-field={name} data-invalid={!!error}>
       <Checkbox id={name} name={name} aria-invalid={!!error} className="mt-0.5 self-start" />
       <FieldContent>
-        <FieldLabel htmlFor={name} className="font-normal leading-snug">
+        <FieldLabel htmlFor={name} className="leading-snug font-normal">
           {label}
         </FieldLabel>
         {hint && <FieldDescription>{hint}</FieldDescription>}

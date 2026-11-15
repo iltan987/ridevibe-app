@@ -3,17 +3,11 @@
 import { useTranslations } from "next-intl";
 import { type ReactElement, useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { formDataText } from "@/lib/form-data";
 import { addMotorcycle, updateMotorcycle } from "@/lib/members/actions";
 import { normalizePlate } from "@/lib/members/plate";
 import { ActionStatus, useProfileAction } from "./use-profile-action";
@@ -59,13 +53,13 @@ export function MotorcycleDialog({ trigger, motorcycle }: Props) {
     return tidy ?? "";
   }
 
-  function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+  function onSubmit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     const input = {
-      brand: String(data.get("brand") ?? ""),
-      model: String(data.get("model") ?? ""),
-      cc: String(data.get("cc") ?? ""),
+      brand: formDataText(data, "brand"),
+      model: formDataText(data, "model"),
+      cc: formDataText(data, "cc"),
       plate,
       plate_foreign: foreign,
     };

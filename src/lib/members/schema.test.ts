@@ -6,6 +6,7 @@ import {
   birthDateSchema,
   bloodTypeSchema,
   emergencyContactSchema,
+  firstErrorPerField,
   locationSchema,
   motorcycleSchema,
   normalizeInstagram,
@@ -27,7 +28,8 @@ test("birthDateSchema requires the birthday switch value", () => {
 });
 
 test("birthDateSchema maps errors to profile keys", () => {
-  const key = (birth_date: unknown) => birthDateSchema.safeParse({ birth_date, show_birthday: true }).error?.issues[0]?.message;
+  const key = (birth_date: unknown) =>
+    birthDateSchema.safeParse({ birth_date, show_birthday: true }).error?.issues[0]?.message;
   assert.equal(key(""), "required");
   assert.equal(key(undefined), "required");
   assert.equal(key("17.05.1990"), "invalidDate");
@@ -82,13 +84,27 @@ test("locationSchema validates Istanbul districts and derives the side", () => {
 });
 
 test("visibilitySchema normalizes instagram and reports an invalid handle", () => {
-  const ok = visibilitySchema.safeParse({ instagram: "@rider.one", show_instagram: true, show_birthday: false, show_plates: true });
+  const ok = visibilitySchema.safeParse({
+    instagram: "@rider.one",
+    show_instagram: true,
+    show_birthday: false,
+    show_plates: true,
+  });
   assert.deepEqual(ok.data, { instagram: "rider.one", show_instagram: true, show_birthday: false, show_plates: true });
-  assert.equal(visibilitySchema.safeParse({ instagram: "", show_instagram: false, show_birthday: false, show_plates: true }).data?.instagram, null);
-  const bad = visibilitySchema.safeParse({ instagram: "rider one", show_instagram: true, show_birthday: false, show_plates: true });
+  assert.equal(
+    visibilitySchema.safeParse({ instagram: "", show_instagram: false, show_birthday: false, show_plates: true }).data
+      ?.instagram,
+    null,
+  );
+  const bad = visibilitySchema.safeParse({
+    instagram: "rider one",
+    show_instagram: true,
+    show_birthday: false,
+    show_plates: true,
+  });
   assert.equal(bad.success, false);
-  assert.equal(bad.error?.issues[0].message, "invalidInstagram");
-  assert.deepEqual(bad.error?.issues[0].path, ["instagram"]);
+  assert.equal(bad.error.issues[0].message, "invalidInstagram");
+  assert.deepEqual(bad.error.issues[0].path, ["instagram"]);
 });
 
 test("emergencyContactSchema normalises the phone and validates the relationship", () => {
@@ -102,19 +118,45 @@ test("emergencyContactSchema normalises the phone and validates the relationship
     emergencyContactSchema.safeParse({ ...base, phone: "+90 216 123 45 67" }).error?.issues[0]?.message,
     "notTurkishMobile",
   );
-  assert.equal(emergencyContactSchema.safeParse({ ...base, relationship: "boss", phone: "0532 123 45 67" }).success, false);
+  assert.equal(
+    emergencyContactSchema.safeParse({ ...base, relationship: "boss", phone: "0532 123 45 67" }).success,
+    false,
+  );
+});
+
+test("emergencyContactSchema: an unchosen relationship (empty select) is required", () => {
+  const empty = emergencyContactSchema.safeParse({ name: "Ayşe", relationship: "", phone: "0532 123 45 67" });
+  assert.deepEqual(firstErrorPerField(empty.error?.issues ?? []), { relationship: "required" });
+});
+
+test("firstErrorPerField keeps the first key per field and maps unknown messages to required", () => {
+  assert.deepEqual(
+    firstErrorPerField([
+      { path: ["city"], message: "Invalid input: expected string, received number" },
+      { path: ["district"], message: "invalidDistrict" },
+      { path: ["district"], message: "tooLong" },
+      { path: [], message: "consentRequired" },
+    ]),
+    { city: "required", district: "invalidDistrict", _form: "consentRequired" },
+  );
 });
 
 test("bloodTypeSchema requires the consent", () => {
   assert.equal(bloodTypeSchema.safeParse({ blood_type: "A+", consent: true }).success, true);
-  assert.equal(bloodTypeSchema.safeParse({ blood_type: "A+", consent: false }).error?.issues[0]?.message, "consentRequired");
+  assert.equal(
+    bloodTypeSchema.safeParse({ blood_type: "A+", consent: false }).error?.issues[0]?.message,
+    "consentRequired",
+  );
   assert.equal(bloodTypeSchema.safeParse({ blood_type: "A+" }).error?.issues[0]?.message, "consentRequired");
   assert.equal(bloodTypeSchema.safeParse({ blood_type: "C+", consent: true }).success, false);
 });
 
 test("motorcycleSchema normalises the plate", () => {
   const bike = { brand: "Yamaha", model: "MT-07", cc: "" };
-  assert.equal(motorcycleSchema.safeParse({ ...bike, plate: "34abc123", plate_foreign: false }).data?.plate, "34 ABC 123");
+  assert.equal(
+    motorcycleSchema.safeParse({ ...bike, plate: "34abc123", plate_foreign: false }).data?.plate,
+    "34 ABC 123",
+  );
   assert.equal(motorcycleSchema.safeParse({ ...bike, plate: "", plate_foreign: false }).data?.plate, null);
   assert.equal(motorcycleSchema.safeParse(bike).data?.plate, null);
   assert.equal(motorcycleSchema.safeParse(bike).data?.plate_foreign, false);

@@ -47,12 +47,26 @@ test("toPage returns a next cursor only when there are more rows", () => {
   const page = toPage(rows, 2);
   assert.equal(page.items.length, 2);
   assert.deepEqual(decodeCursor(page.nextCursor), null, "test rows aren't real timestamps/uuids");
-  assert.equal(Buffer.from(page.nextCursor!, "base64url").toString(), "t2|2");
+  assert.ok(page.nextCursor);
+  assert.equal(Buffer.from(page.nextCursor, "base64url").toString(), "t2|2");
 });
 
 test("parsePage accepts canonical positive integers only", () => {
-  for (const [v, want] of [["1", 1], ["14", 14], [undefined, 1], ["0", 1], ["-3", 1], ["2.5", 1], ["1e3", 1],
-    ["abc", 1], ["", 1], [" 2", 1], ["02", 1], [["2", "3"], 1], ["9999999", 1]] as const)
+  for (const [v, want] of [
+    ["1", 1],
+    ["14", 14],
+    [undefined, 1],
+    ["0", 1],
+    ["-3", 1],
+    ["2.5", 1],
+    ["1e3", 1],
+    ["abc", 1],
+    ["", 1],
+    [" 2", 1],
+    ["02", 1],
+    [["2", "3"], 1],
+    ["9999999", 1],
+  ] as const)
     assert.equal(parsePage(v), want, JSON.stringify(v));
 });
 
@@ -79,20 +93,28 @@ test("readAll reads chunks until a short one and flags the ceiling", async () =>
     const calls: [number, number][] = [];
     return {
       calls,
-      fetch: async (from: number, to: number) => {
+      fetch: (from: number, to: number) => {
         calls.push([from, to]);
-        return Array.from({ length: Math.max(0, Math.min(to, n - 1) - from + 1) }, (_, i) => from + i);
+        return Promise.resolve(Array.from({ length: Math.max(0, Math.min(to, n - 1) - from + 1) }, (_, i) => from + i));
       },
     };
   };
-  for (const [n, items, over, calls] of [[150, 150, false, 1], [1000, 1000, false, 2], [2000, 2000, false, 3],
-    [2001, 2000, true, 3], [5000, 2000, true, 3]] as const) {
+  for (const [n, items, over, calls] of [
+    [150, 150, false, 1],
+    [1000, 1000, false, 2],
+    [2000, 2000, false, 3],
+    [2001, 2000, true, 3],
+    [5000, 2000, true, 3],
+  ] as const) {
     const s = source(n);
     const r = await readAll(s.fetch, 2000, 1000);
     assert.equal(r.items.length, items);
     assert.equal(r.overCeiling, over);
     assert.equal(s.calls.length, calls);
-    assert.ok(s.calls.every(([, to]) => to <= 2000), "never asks past ceiling + 1 rows");
+    assert.ok(
+      s.calls.every(([, to]) => to <= 2000),
+      "never asks past ceiling + 1 rows",
+    );
   }
 });
 
@@ -113,7 +135,14 @@ test("uniqueById keeps the first row of each id, in order", () => {
 
 test("slicePage: the clamped page's items and a 1-based range", () => {
   const items = Array.from({ length: 30 }, (_, i) => i + 1);
-  assert.deepEqual(slicePage(items, 2), { items: [26, 27, 28, 29, 30], page: 2, pageCount: 2, total: 30, from: 26, to: 30 });
+  assert.deepEqual(slicePage(items, 2), {
+    items: [26, 27, 28, 29, 30],
+    page: 2,
+    pageCount: 2,
+    total: 30,
+    from: 26,
+    to: 30,
+  });
   assert.equal(slicePage(items, 1).items.length, 25);
   assert.deepEqual(slicePage(items, 99).page, 2);
   assert.deepEqual(slicePage([], 3), { items: [], page: 1, pageCount: 1, total: 0, from: 0, to: 0 });
@@ -123,7 +152,13 @@ test("chunks splits into pieces of at most `size`", () => {
   assert.deepEqual(chunks([1, 2, 3, 4, 5], 2), [[1, 2], [3, 4], [5]]);
   assert.deepEqual(chunks([1, 2], 2), [[1, 2]]);
   assert.deepEqual(chunks([], 2), []);
-  assert.equal(chunks(Array.from({ length: 2001 }, (_, i) => i), 1000).length, 3);
+  assert.equal(
+    chunks(
+      Array.from({ length: 2001 }, (_, i) => i),
+      1000,
+    ).length,
+    3,
+  );
 });
 
 test("chunks rejects a size below 1 (would loop forever)", () => {

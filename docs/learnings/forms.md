@@ -97,3 +97,24 @@
   just cancel it. A flushed save may read a detached `<form>`: its inputs keep their values. Example:
   `src/components/apply/apply-form.tsx`, `createDraftSaver` in `src/lib/applications/draft.ts`.
 - **Source:** found by testing (application steps Task 5, puppeteer: switch 155 ms after typing).
+
+### React 19 types deprecate `FormEvent`: type `onSubmit` handlers with `SubmitEvent` (2026-11-15)
+- **Symptom:** `@typescript-eslint/no-deprecated` on `React.FormEvent<HTMLFormElement>`.
+- **Cause:** `@types/react` 19 marks `FormEvent` deprecated ("you probably meant ChangeEvent, InputEvent, SubmitEvent
+  or SyntheticEvent").
+- **Do:** `(event: React.SubmitEvent<HTMLFormElement>)` for submit handlers.
+- **Source:** `node_modules/@types/react/index.d.ts`.
+
+### `String(formData.get(name))` can print "null" or "[object File]" (2026-11-15)
+- **Cause:** `FormData.get` returns `string | File | null`; `String()` stringifies whatever it gets.
+- **Do:** read text fields with `formDataText(form, name)` (`src/lib/form-data.ts`: the string as is, `""` for a
+  missing or file entry).
+- **Source:** `no-base-to-string` lint hits (Task 2).
+
+### Zod 4 never runs a transform after a failing refine: transform-time checks are safety nets (2026-11-15)
+- **Cause:** a pipe stops at the first failing stage (`handlePipeResult`, zod 4.6.7), so a `.transform()` only sees
+  values that passed every earlier refine.
+- **Do:** when a transform reads an answer the refines already made required, don't assert it with `!`: check it and
+  push a `"required"` issue (`ctx.issues.push`) for the field; the branch is unreachable for valid input but typed
+  honestly (`src/lib/applications/schema.ts`).
+- **Source:** zod source; Task 3.

@@ -4,17 +4,11 @@ import { useTranslations } from "next-intl";
 import { type ReactElement, useState } from "react";
 import { PhoneField } from "@/components/apply/phone-field";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { formDataText } from "@/lib/form-data";
 import { Constants } from "@/lib/supabase/database.types";
 import { addEmergencyContact, updateEmergencyContact } from "@/lib/members/actions";
 import type { EmergencyContact } from "@/lib/members/queries";
@@ -40,13 +34,13 @@ export function EmergencyContactDialog({ trigger, contact }: Props) {
     setResult(null);
   }
 
-  function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+  function onSubmit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     const input = {
-      name: String(data.get("name") ?? ""),
-      relationship: String(data.get("relationship") ?? "") as EmergencyContact["relationship"],
-      phone: String(data.get("phone") ?? ""),
+      name: formDataText(data, "name"),
+      relationship: formDataText(data, "relationship"),
+      phone: formDataText(data, "phone"),
     };
     run(
       () => (contact ? updateEmergencyContact(contact.id, input) : addEmergencyContact(input)),

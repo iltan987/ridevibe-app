@@ -30,7 +30,10 @@ const check = (name, ok, extra = "") => {
   if (!ok) fails++;
   console.log(`${ok ? "PASS" : "FAIL"} ${name}${extra ? " — " + extra : ""}`);
 };
-const sql = (q) => execFileSync("docker", ["exec", DB, "psql", "-U", "postgres", "-v", "ON_ERROR_STOP=1", "-tA", "-c", q], { encoding: "utf8" }).trim();
+const sql = (q) =>
+  execFileSync("docker", ["exec", DB, "psql", "-U", "postgres", "-v", "ON_ERROR_STOP=1", "-tA", "-c", q], {
+    encoding: "utf8",
+  }).trim();
 const num = (q) => Number(sql(q));
 
 function clean() {
@@ -53,7 +56,9 @@ sql(`insert into auth.users (id, email, raw_user_meta_data, created_at)
 // handle_new_user stamps profiles with now(): copy the seeded age so the fixtures sort last (docs/learnings/testing.md).
 sql(`update profiles p set created_at = u.created_at from auth.users u
   where u.id = p.id and (u.email like 'lxp%@fixture.invalid' or u.email like 'lxi%@fixture.invalid')`);
-sql("update profiles set status = 'inactive' where id in (select id from auth.users where email like 'lxi%@fixture.invalid')");
+sql(
+  "update profiles set status = 'inactive' where id in (select id from auth.users where email like 'lxi%@fixture.invalid')",
+);
 sql(`insert into applications (status, full_name, phone, email, birth_date, district, side, languages, license_class,
     riding_years, owns_motorcycle, riding_styles, group_experience, in_other_clubs, heard_from, event_interests,
     expectations, alienating_behaviors, conflict_handling, consent_privacy, consent_rules, privacy_notice_version, created_at)
@@ -64,7 +69,9 @@ sql(`insert into applications (status, full_name, phone, email, birth_date, dist
 
 const statusCount = (status) => num(`select count(*) from profiles where status = '${status}'`);
 const fixtureCount = (status) =>
-  num(`select count(*) from profiles p join member_contacts c on c.profile_id = p.id where p.status = '${status}' and c.email like '%@fixture.invalid'`);
+  num(
+    `select count(*) from profiles p join member_contacts c on c.profile_id = p.id where p.status = '${status}' and c.email like '%@fixture.invalid'`,
+  );
 const PENDING = statusCount("pending");
 const ACTIVE = statusCount("active");
 const INACTIVE = statusCount("inactive");
@@ -74,7 +81,9 @@ const LAST = Math.ceil(PENDING / 25);
 const ON_LAST = PENDING - 25 * (LAST - 1);
 /** The URL query for page `n` of the pending tab ("" for page 1). */
 const pendingPage = (n) => (n === 1 ? "" : `?page=${n}`);
-console.log(`INFO pending ${PENDING} (planted ${plantPending}; ${LAST} pages, ${ON_LAST} on the last), active ${ACTIVE}, inactive ${INACTIVE}, new applications ${NEW_APPS}`);
+console.log(
+  `INFO pending ${PENDING} (planted ${plantPending}; ${LAST} pages, ${ON_LAST} on the last), active ${ACTIVE}, inactive ${INACTIVE}, new applications ${NEW_APPS}`,
+);
 
 const browser = await launch();
 async function scenario(name, fn, viewport) {
@@ -109,7 +118,9 @@ async function find(page, selector, text = "") {
   const h = await page.evaluateHandle(
     (selector, text) =>
       [...document.querySelectorAll(selector)].find(
-        (e) => e.getBoundingClientRect().width > 0 && (!text || new RegExp(text).test(e.textContent + (e.getAttribute("aria-label") ?? ""))),
+        (e) =>
+          e.getBoundingClientRect().width > 0 &&
+          (!text || new RegExp(text).test(e.textContent + (e.getAttribute("aria-label") ?? ""))),
       ) ?? null,
     selector,
     text,
@@ -130,15 +141,27 @@ const listState = (page) =>
       new Promise((resolve) =>
         requestAnimationFrame(() => {
           const vis = (e) => e.getBoundingClientRect().width > 0;
-          const chips = [...document.querySelectorAll("[data-skeleton-result=admin-chips] button, nav[data-skeleton-result=admin-chips] a")].filter(vis);
+          const chips = [
+            ...document.querySelectorAll(
+              "[data-skeleton-result=admin-chips] button, nav[data-skeleton-result=admin-chips] a",
+            ),
+          ].filter(vis);
           const nav = [...document.querySelectorAll("nav[data-skeleton-result=pager]")].find(vis);
           resolve({
-            counts: Object.fromEntries(chips.map((c) => [c.firstChild.textContent, Number(c.lastElementChild?.textContent)])),
-            tab: chips.find((c) => c.getAttribute("aria-pressed") === "true" || c.getAttribute("aria-current") === "page")?.firstChild.textContent ?? null,
-            rows: [...document.querySelectorAll("li[data-skeleton-result=admin-row]")].filter(vis).map((li) => li.querySelector("p, span.font-semibold")?.textContent.trim()),
+            counts: Object.fromEntries(
+              chips.map((c) => [c.firstChild.textContent, Number(c.lastElementChild?.textContent)]),
+            ),
+            tab:
+              chips.find((c) => c.getAttribute("aria-pressed") === "true" || c.getAttribute("aria-current") === "page")
+                ?.firstChild.textContent ?? null,
+            rows: [...document.querySelectorAll("li[data-skeleton-result=admin-row]")]
+              .filter(vis)
+              .map((li) => li.querySelector("p, span.font-semibold")?.textContent.trim()),
             value: [...document.querySelectorAll("input[type=search]")].find(vis)?.value ?? null,
             page: nav?.querySelector("[aria-current=page]")?.textContent ?? (nav ? "1" : null),
-            pages: [...(nav?.querySelectorAll("[aria-label^='Sayfa '], [aria-label^='Page ']") ?? [])].map((b) => b.textContent).join(),
+            pages: [...(nav?.querySelectorAll("[aria-label^='Sayfa '], [aria-label^='Page ']") ?? [])]
+              .map((b) => b.textContent)
+              .join(),
             range: nav?.querySelector("p")?.textContent ?? null,
           });
         }),
@@ -152,39 +175,97 @@ await scenario("admin members", async (page) => {
   const server = watchServer(page, BASE);
   await go(page, "/admin/members");
   const s0 = await listState(page);
-  check("members: pending tab by default with the DB counts", s0.tab === "Onay bekleyen" && s0.counts["Onay bekleyen"] === PENDING && s0.counts.Aktif === ACTIVE && s0.counts.Pasif === INACTIVE, fmt(s0));
-  check("members: first page of 25, range line", s0.rows.length === 25 && s0.range === `1–25 / ${PENDING} kişi`, fmt(s0));
+  check(
+    "members: pending tab by default with the DB counts",
+    s0.tab === "Onay bekleyen" &&
+      s0.counts["Onay bekleyen"] === PENDING &&
+      s0.counts.Aktif === ACTIVE &&
+      s0.counts.Pasif === INACTIVE,
+    fmt(s0),
+  );
+  check(
+    "members: first page of 25, range line",
+    s0.rows.length === 25 && s0.range === `1–25 / ${PENDING} kişi`,
+    fmt(s0),
+  );
   await shot(page, "admin-members");
 
   server.reset();
   await clearAndType(page, "pending-noapp@test");
   const byEmail = await listState(page);
-  check("members: search by email finds the person in the next frame", byEmail.rows.join() === "Bekleyen Fixture" && byEmail.value === "pending-noapp@test", fmt(byEmail));
-  check("members: tab counts follow the search", byEmail.counts["Onay bekleyen"] === 1 && byEmail.counts.Aktif === 0 && byEmail.counts.Pasif === 0, fmt(byEmail));
-  check("members: URL ?q=pending-noapp%40test", !!(await until(page, () => location.search === "?q=pending-noapp%40test", null)), await search(page));
+  check(
+    "members: search by email finds the person in the next frame",
+    byEmail.rows.join() === "Bekleyen Fixture" && byEmail.value === "pending-noapp@test",
+    fmt(byEmail),
+  );
+  check(
+    "members: tab counts follow the search",
+    byEmail.counts["Onay bekleyen"] === 1 && byEmail.counts.Aktif === 0 && byEmail.counts.Pasif === 0,
+    fmt(byEmail),
+  );
+  check(
+    "members: URL ?q=pending-noapp%40test",
+    !!(await until(page, () => location.search === "?q=pending-noapp%40test", null)),
+    await search(page),
+  );
 
   await clearAndType(page, "@fixture.invalid");
   const fx = await listState(page);
   const want = { pending: fixtureCount("pending"), active: fixtureCount("active"), inactive: fixtureCount("inactive") };
-  check("members: counts follow a search over many rows (fixture domain)", fx.counts["Onay bekleyen"] === want.pending && fx.counts.Aktif === want.active && fx.counts.Pasif === want.inactive, `${fmt(fx)} want ${JSON.stringify(want)}`);
+  check(
+    "members: counts follow a search over many rows (fixture domain)",
+    fx.counts["Onay bekleyen"] === want.pending && fx.counts.Aktif === want.active && fx.counts.Pasif === want.inactive,
+    `${fmt(fx)} want ${JSON.stringify(want)}`,
+  );
   await click(page, "[data-skeleton-result=admin-chips] button", "^Pasif");
   const inactiveTab = await listState(page);
-  check("members: tab tap shows that tab in the next frame, search kept", inactiveTab.tab === "Pasif" && inactiveTab.value === "@fixture.invalid" && inactiveTab.rows.length === 25 && !!(await until(page, () => location.search === "?status=inactive&q=%40fixture.invalid", null)), `${fmt(inactiveTab)} ${await search(page)}`);
+  check(
+    "members: tab tap shows that tab in the next frame, search kept",
+    inactiveTab.tab === "Pasif" &&
+      inactiveTab.value === "@fixture.invalid" &&
+      inactiveTab.rows.length === 25 &&
+      !!(await until(page, () => location.search === "?status=inactive&q=%40fixture.invalid", null)),
+    `${fmt(inactiveTab)} ${await search(page)}`,
+  );
   await click(page, "nav[data-skeleton-result=pager] button", "Sayfa 2$");
   const p2 = await listState(page);
-  check("members: page tap shows page 2 in the next frame", p2.page === "2" && p2.range === `26–50 / ${want.inactive} kişi` && !!(await until(page, () => location.search === "?status=inactive&q=%40fixture.invalid&page=2", null)), `${fmt(p2)} ${await search(page)}`);
+  check(
+    "members: page tap shows page 2 in the next frame",
+    p2.page === "2" &&
+      p2.range === `26–50 / ${want.inactive} kişi` &&
+      !!(await until(page, () => location.search === "?status=inactive&q=%40fixture.invalid&page=2", null)),
+    `${fmt(p2)} ${await search(page)}`,
+  );
   await clearAndType(page, "");
   const cleared = await listState(page);
-  check("members: clearing the search keeps the tab, drops the page", cleared.tab === "Pasif" && cleared.page === "1" && !!(await until(page, () => location.search === "?status=inactive", null)), `${fmt(cleared)} ${await search(page)}`);
+  check(
+    "members: clearing the search keeps the tab, drops the page",
+    cleared.tab === "Pasif" &&
+      cleared.page === "1" &&
+      !!(await until(page, () => location.search === "?status=inactive", null)),
+    `${fmt(cleared)} ${await search(page)}`,
+  );
   await click(page, "[data-skeleton-result=admin-chips] button", "^Onay bekleyen");
-  check("members: back on the default tab, the URL has no query", !!(await until(page, () => location.search === "", null)), await search(page));
+  check(
+    "members: back on the default tab, the URL has no query",
+    !!(await until(page, () => location.search === "", null)),
+    await search(page),
+  );
   await sleep(1500);
-  check("members: tabs, search and pages made no document or RSC request", server.count() === 0, server.list().join(" | "));
+  check(
+    "members: tabs, search and pages made no document or RSC request",
+    server.count() === 0,
+    server.list().join(" | "),
+  );
 
   await page.goBack();
   await sleep(300);
   const back = await listState(page);
-  check("members: back restores the inactive tab", back.tab === "Pasif" && (await search(page)) === "?status=inactive", `${fmt(back)} ${await search(page)}`);
+  check(
+    "members: back restores the inactive tab",
+    back.tab === "Pasif" && (await search(page)) === "?status=inactive",
+    `${fmt(back)} ${await search(page)}`,
+  );
 
   // URL fixes (replaceState): default spelled out, unknown tab, past the end, repeated, stale cursor.
   for (const [from, to] of [
@@ -196,29 +277,41 @@ await scenario("admin members", async (page) => {
     ["/admin/members?cursor=MjAyNi0xMS0wOFQx&status=active", "?status=active"],
   ]) {
     await go(page, from);
-    check(`members URL fix: ${from} -> ${to || "(no query)"}`, !!(await until(page, (to) => location.search === to, to)), await search(page));
+    check(
+      `members URL fix: ${from} -> ${to || "(no query)"}`,
+      !!(await until(page, (to) => location.search === to, to)),
+      await search(page),
+    );
   }
 });
 
 // 2 the widest pager (7 pages, page 4: 7 numbers + 2 arrows) on a phone
 for (const width of [390, 360]) {
-  await scenario(`pager ${width}`, async (page) => {
-    await go(page, "/admin/members?status=inactive&page=4");
-    const fit = await pagerFit(page);
-    const s = await listState(page);
-    const name = `widest pager at ${width}px (${s.pages}): one row, no horizontal overflow`;
-    // 7+ pages, page 4: always 7 items (numbers and gaps) + 2 arrows, the widest the pager gets.
-    if (width === 390) check(name, fit.items === 9 && fit.oneRow && fit.fits, JSON.stringify(fit));
-    else console.log(`INFO ${name}: ${fit.oneRow && fit.fits ? "fits" : "DOES NOT FIT"} ${JSON.stringify(fit)}`);
-    await shot(page, `pager-${width}`);
-  }, { width, height: 844, isMobile: true, hasTouch: true });
+  await scenario(
+    `pager ${width}`,
+    async (page) => {
+      await go(page, "/admin/members?status=inactive&page=4");
+      const fit = await pagerFit(page);
+      const s = await listState(page);
+      const name = `widest pager at ${width}px (${s.pages}): one row, no horizontal overflow`;
+      // 7+ pages, page 4: always 7 items (numbers and gaps) + 2 arrows, the widest the pager gets.
+      if (width === 390) check(name, fit.items === 9 && fit.oneRow && fit.fits, JSON.stringify(fit));
+      else console.log(`INFO ${name}: ${fit.oneRow && fit.fits ? "fits" : "DOES NOT FIT"} ${JSON.stringify(fit)}`);
+      await shot(page, `pager-${width}`);
+    },
+    { width, height: 844, isMobile: true, hasTouch: true },
+  );
 }
 
 // 3 a row action that empties the last page: the page is clamped, counts update
 await scenario("admin action clamps", async (page) => {
   await go(page, `/admin/members?page=${LAST}`);
   const before = await listState(page);
-  check(`action: the last page (${LAST}) of the pending tab holds one row`, ON_LAST === 1 && before.page === String(LAST) && before.rows.length === 1, fmt(before));
+  check(
+    `action: the last page (${LAST}) of the pending tab holds one row`,
+    ON_LAST === 1 && before.page === String(LAST) && before.rows.length === 1,
+    fmt(before),
+  );
   const name = before.rows[0];
   // Never activate a real profile: the row must be one of this script's fixtures.
   if (before.rows.length !== 1 || !/^Liste Fixture \d+$/.test(name ?? "")) {
@@ -229,9 +322,26 @@ await scenario("admin action clamps", async (page) => {
   const clamped = await until(page, (to) => location.search === to, pendingPage(LAST - 1));
   await sleep(500);
   const after = await listState(page);
-  check(`action: URL clamped to page ${LAST - 1} (${pendingPage(LAST - 1) || "no query"})`, !!clamped, await search(page));
-  check("action: the row is gone, the new last page is full, counts updated", !after.rows.includes(name) && after.rows.length === 25 && after.page === String(LAST - 1) && after.counts["Onay bekleyen"] === PENDING - 1 && after.counts.Aktif === ACTIVE + 1, fmt(after));
-  check("action: the profile is active in the DB", sql(`select status from profiles p join member_contacts c on c.profile_id = p.id where p.full_name = '${name}' and c.email like 'lxp%'`) === "active");
+  check(
+    `action: URL clamped to page ${LAST - 1} (${pendingPage(LAST - 1) || "no query"})`,
+    !!clamped,
+    await search(page),
+  );
+  check(
+    "action: the row is gone, the new last page is full, counts updated",
+    !after.rows.includes(name) &&
+      after.rows.length === 25 &&
+      after.page === String(LAST - 1) &&
+      after.counts["Onay bekleyen"] === PENDING - 1 &&
+      after.counts.Aktif === ACTIVE + 1,
+    fmt(after),
+  );
+  check(
+    "action: the profile is active in the DB",
+    sql(
+      `select status from profiles p join member_contacts c on c.profile_id = p.id where p.full_name = '${name}' and c.email like 'lxp%'`,
+    ) === "active",
+  );
 });
 
 // 3b a row action with a tab, a search and a page in the URL: refresh() keeps all three (spec §6)
@@ -240,35 +350,89 @@ await scenario("admin action keeps tab, search and page", async (page) => {
   const matching = num("select count(*) from profiles where status = 'inactive' and full_name like 'Pasif Liste %'");
   await go(page, `/admin/members${url}`);
   const before = await listState(page);
-  check("action with search: page 2 of the searched inactive tab", before.tab === "Pasif" && before.value === "pasif liste" && before.page === "2" && before.rows.length === 25 && matching > 50, fmt(before));
+  check(
+    "action with search: page 2 of the searched inactive tab",
+    before.tab === "Pasif" &&
+      before.value === "pasif liste" &&
+      before.page === "2" &&
+      before.rows.length === 25 &&
+      matching > 50,
+    fmt(before),
+  );
   const name = before.rows[0];
   if (!/^Pasif Liste \d+$/.test(name ?? "")) {
     check("action with search: the row is a fixture (else nothing is changed)", false, fmt(before));
     return;
   }
   const row = await find(page, "li[data-skeleton-result=admin-row]", name);
-  const button = (await row.evaluateHandle((li) => [...li.querySelectorAll("button")].find((b) => b.textContent.trim() === "Yeniden aktifleştir") ?? null)).asElement();
+  const button = (
+    await row.evaluateHandle(
+      (li) => [...li.querySelectorAll("button")].find((b) => b.textContent.trim() === "Yeniden aktifleştir") ?? null,
+    )
+  ).asElement();
   await button.evaluate((b) => b.scrollIntoView({ block: "center" }));
   await button.click();
-  const gone = await until(page, (name) => ![...document.querySelectorAll("li[data-skeleton-result=admin-row]")].some((li) => li.getBoundingClientRect().width > 0 && li.textContent.includes(name)), name);
+  const gone = await until(
+    page,
+    (name) =>
+      ![...document.querySelectorAll("li[data-skeleton-result=admin-row]")].some(
+        (li) => li.getBoundingClientRect().width > 0 && li.textContent.includes(name),
+      ),
+    name,
+  );
   await sleep(500);
   const after = await listState(page);
-  check("action with search: after refresh() the URL keeps tab, search and page", !!gone && (await search(page)) === url, await search(page));
-  check("action with search: box, tab and page kept, row gone, counts follow the search", after.tab === "Pasif" && after.value === "pasif liste" && after.page === "2" && after.rows.length === 25 && !after.rows.includes(name) && after.counts.Pasif === matching - 1 && after.counts.Aktif === 1, fmt(after));
-  check("action with search: the profile is active in the DB", sql(`select status from profiles p join member_contacts c on c.profile_id = p.id where p.full_name = '${name}' and c.email like 'lxi%'`) === "active");
+  check(
+    "action with search: after refresh() the URL keeps tab, search and page",
+    !!gone && (await search(page)) === url,
+    await search(page),
+  );
+  check(
+    "action with search: box, tab and page kept, row gone, counts follow the search",
+    after.tab === "Pasif" &&
+      after.value === "pasif liste" &&
+      after.page === "2" &&
+      after.rows.length === 25 &&
+      !after.rows.includes(name) &&
+      after.counts.Pasif === matching - 1 &&
+      after.counts.Aktif === 1,
+    fmt(after),
+  );
+  check(
+    "action with search: the profile is active in the DB",
+    sql(
+      `select status from profiles p join member_contacts c on c.profile_id = p.id where p.full_name = '${name}' and c.email like 'lxi%'`,
+    ) === "active",
+  );
 });
 
 // 4 English: the /en prefix stays
 await scenario("admin members en", async (page) => {
   await go(page, "/en/admin/members");
   await clearAndType(page, "liste fixture 1");
-  check("English: typing keeps the /en prefix", !!(await until(page, () => location.pathname + location.search === "/en/admin/members?q=liste+fixture+1", null)), page.url().replace(BASE, ""));
+  check(
+    "English: typing keeps the /en prefix",
+    !!(await until(page, () => location.pathname + location.search === "/en/admin/members?q=liste+fixture+1", null)),
+    page.url().replace(BASE, ""),
+  );
   const s = await listState(page);
   // The search is a contains-match: every pending name holding "Liste Fixture 1" (1, 10–19, 100…).
   const n = num("select count(*) from profiles where status = 'pending' and full_name like '%Liste Fixture 1%'");
-  check("English: range line", s.range === `1–${Math.min(n, 25)} of ${n} ${n === 1 ? "person" : "people"}` && s.rows.length === Math.min(n, 25), fmt(s));
+  check(
+    "English: range line",
+    s.range === `1–${Math.min(n, 25)} of ${n} ${n === 1 ? "person" : "people"}` && s.rows.length === Math.min(n, 25),
+    fmt(s),
+  );
   await click(page, "[data-skeleton-result=admin-chips] button", "^Active");
-  check("English: tab tap keeps the /en prefix", !!(await until(page, () => location.pathname + location.search === "/en/admin/members?status=active&q=liste+fixture+1", null)), page.url().replace(BASE, ""));
+  check(
+    "English: tab tap keeps the /en prefix",
+    !!(await until(
+      page,
+      () => location.pathname + location.search === "/en/admin/members?status=active&q=liste+fixture+1",
+      null,
+    )),
+    page.url().replace(BASE, ""),
+  );
 });
 
 // 5 /admin/applications: server pages and redirects
@@ -276,13 +440,27 @@ await scenario("applications", async (page) => {
   await go(page, "/admin/applications");
   const s1 = await listState(page);
   const APP_LAST = Math.ceil(NEW_APPS / 25);
-  check("applications: first page of 25, pages from 1-2", s1.rows.length === 25 && s1.pages.startsWith("1,2") && s1.range === `1–25 / ${NEW_APPS} başvuru`, fmt(s1));
-  check("applications: pager at 390px fits", (await pagerFit(page)).fits && (await pagerFit(page)).oneRow, JSON.stringify(await pagerFit(page)));
+  check(
+    "applications: first page of 25, pages from 1-2",
+    s1.rows.length === 25 && s1.pages.startsWith("1,2") && s1.range === `1–25 / ${NEW_APPS} başvuru`,
+    fmt(s1),
+  );
+  check(
+    "applications: pager at 390px fits",
+    (await pagerFit(page)).fits && (await pagerFit(page)).oneRow,
+    JSON.stringify(await pagerFit(page)),
+  );
   await click(page, "nav[data-skeleton-result=pager] a", "Sayfa 2$");
   await until(page, () => location.search === "?page=2", null);
   await sleep(800);
   const s2 = await listState(page);
-  check("applications: page link 2 -> ?page=2", s2.page === "2" && s2.rows.length === Math.min(25, NEW_APPS - 25) && s2.range === `26–${Math.min(50, NEW_APPS)} / ${NEW_APPS} başvuru`, fmt(s2));
+  check(
+    "applications: page link 2 -> ?page=2",
+    s2.page === "2" &&
+      s2.rows.length === Math.min(25, NEW_APPS - 25) &&
+      s2.range === `26–${Math.min(50, NEW_APPS)} / ${NEW_APPS} başvuru`,
+    fmt(s2),
+  );
   await go(page, "/admin/applications?page=2");
   check("applications: ?page=2 loads directly", (await listState(page)).page === "2");
   for (const [from, to] of [
@@ -299,7 +477,11 @@ await scenario("applications", async (page) => {
     await go(page, from);
     const ok = await until(page, (to) => location.search === to, to);
     const s = await listState(page);
-    check(`applications redirect: ${from} -> ${to || "(no query)"}`, !!ok && s.rows.length > 0, `${await search(page)} ${s.rows.length} rows`);
+    check(
+      `applications redirect: ${from} -> ${to || "(no query)"}`,
+      !!ok && s.rows.length > 0,
+      `${await search(page)} ${s.rows.length} rows`,
+    );
   }
 });
 

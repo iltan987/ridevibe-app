@@ -2,13 +2,14 @@ import "server-only";
 import { getCurrentUser } from "@/lib/auth/user";
 import { readAll, uniqueById } from "@/lib/pagination";
 import { createClient } from "@/lib/supabase/server";
-import type { Enums } from "@/lib/supabase/database.types";
+import type { Database, Enums } from "@/lib/supabase/database.types";
 import type { BloodType } from "./blood-type";
 import type { Motorcycle } from "./format";
+import { parseMotorcycles } from "./rpc-json";
 
 export type { Motorcycle };
 export type IstanbulSide = Enums<"istanbul_side">;
-export type EmergencyRelationship = Enums<"emergency_relationship">;
+type EmergencyRelationship = Enums<"emergency_relationship">;
 
 export type DirectoryMember = {
   id: string;
@@ -48,6 +49,14 @@ export type MyProfile = {
   bloodConsent: boolean;
 };
 
+type GeneratedDirectoryRow = Database["public"]["Functions"]["member_directory"]["Returns"][number];
+type NullableDirectoryColumn =
+  "avatar_url" | "birth_day" | "birth_month" | "district" | "has_emergency_contact" | "instagram" | "side";
+/** A member_directory row: the generated types call every column non-null, but these are null when unset or hidden. */
+type DirectoryRow = Omit<GeneratedDirectoryRow, NullableDirectoryColumn> & {
+  [K in NullableDirectoryColumn]: GeneratedDirectoryRow[K] | null;
+};
+
 /**
  * Every active member for the directory (the DB sorts by Turkish name and hides opted-out fields), read in
  * CHUNK_SIZE pages up to LIST_CEILING. The browser filters and pages; the safety filters stay here because a blood
@@ -63,27 +72,24 @@ export async function loadDirectory({
   const supabase = await createClient();
   // Generated arg types are non-nullable: omit absent args instead of passing null.
   const args = { ...(bloodType ? { blood_filter: bloodType } : {}), ...(noContact ? { no_contact: true } : {}) };
-  const { items, overCeiling } = await readAll(async (from, to) => {
+  // The return type annotation is what widens the generated rows to DirectoryRow (nullable columns): keep it.
+  const { items, overCeiling } = await readAll(async (from, to): Promise<DirectoryRow[]> => {
     const { data, error } = await supabase.rpc("member_directory", args).range(from, to);
     if (error) throw new Error(`loadDirectory failed: ${error.code}`);
     return data;
   });
 
-  // Generated return types are non-nullable although the columns can be null.
-  const members = uniqueById(items).map(
-    (row): DirectoryMember => ({
-      id: row.id,
-      fullName: row.full_name,
-      avatarUrl: (row.avatar_url as string | null) ?? null,
-      district: (row.district as string | null) ?? null,
-      side: (row.side as IstanbulSide | null) ?? null,
-      birthday:
-        row.birth_month != null && row.birth_day != null ? { month: row.birth_month, day: row.birth_day } : null,
-      instagram: (row.instagram as string | null) ?? null,
-      motorcycles: Array.isArray(row.motorcycles) ? (row.motorcycles as Motorcycle[]) : [],
-      hasEmergencyContact: (row.has_emergency_contact as boolean | null) ?? null,
-    }),
-  );
+  const members = uniqueById(items).map((row): DirectoryMember => ({
+    id: row.id,
+    fullName: row.full_name,
+    avatarUrl: row.avatar_url,
+    district: row.district,
+    side: row.side,
+    birthday: row.birth_month != null && row.birth_day != null ? { month: row.birth_month, day: row.birth_day } : null,
+    instagram: row.instagram,
+    motorcycles: parseMotorcycles(row.motorcycles),
+    hasEmergencyContact: row.has_emergency_contact,
+  }));
   return { members, overCeiling };
 }
 

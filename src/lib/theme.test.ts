@@ -45,9 +45,17 @@ function fakeDoc(initialDark = true) {
     createTextNode: (text: string) => ({ text }),
     head: { appendChild: (el: { text: string }) => void styles.push(el) },
     body: {},
-    defaultView: { getComputedStyle: () => ({ opacity: "1" }) },
+    defaultView: { getComputedStyle: () => ({ getPropertyValue: () => "1" }) },
   };
-  return { doc: doc as unknown as Document, classes, meta, second, styles, toggledWithStyle };
+  return {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- test fake with only the parts of Document theme.ts touches; lib.dom's Document can't be built in node
+    doc: doc as unknown as Document,
+    classes,
+    meta,
+    second,
+    styles,
+    toggledWithStyle,
+  };
 }
 
 const media = (matches: boolean) => () => ({ matches });
@@ -170,15 +178,16 @@ test("readThemePreference is dark without window", () => {
 });
 
 function withGlobals(globals: Record<string, unknown>, fn: () => void) {
-  const g = globalThis as Record<string, unknown>;
+  const g = globalThis;
   const saved = Object.keys(globals).map((k) => [k, Object.getOwnPropertyDescriptor(g, k)] as const);
-  for (const [k, v] of Object.entries(globals)) Object.defineProperty(g, k, { value: v, configurable: true, writable: true });
+  for (const [k, v] of Object.entries(globals))
+    Object.defineProperty(g, k, { value: v, configurable: true, writable: true });
   try {
     fn();
   } finally {
     for (const [k, d] of saved) {
       if (d) Object.defineProperty(g, k, d);
-      else delete g[k];
+      else Reflect.deleteProperty(g, k);
     }
   }
 }

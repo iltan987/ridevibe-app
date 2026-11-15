@@ -21,7 +21,8 @@ const check = (name, ok, extra = "") => {
   if (!ok) fails++;
   console.log(`${ok ? "PASS" : "FAIL"} ${name}${extra ? " — " + extra : ""}`);
 };
-const sql = (q) => execFileSync("docker", ["exec", DB, "psql", "-U", "postgres", "-tA", "-c", q], { encoding: "utf8" }).trim();
+const sql = (q) =>
+  execFileSync("docker", ["exec", DB, "psql", "-U", "postgres", "-tA", "-c", q], { encoding: "utf8" }).trim();
 const deleteTestApplication = () => sql(`delete from applications where email = '${TEST_EMAIL}'`);
 const testApplicationCount = () => Number(sql(`select count(*) from applications where email = '${TEST_EMAIL}'`));
 
@@ -54,13 +55,16 @@ async function until(page, fn, arg, ms = 8000) {
   return null;
 }
 const bodyText = (page) => page.evaluate(() => document.body.innerText);
-const hasText = (page, re) => until(page, ([src, flags]) => new RegExp(src, flags).test(document.body.innerText), [re.source, re.flags]);
+const hasText = (page, re) =>
+  until(page, ([src, flags]) => new RegExp(src, flags).test(document.body.innerText), [re.source, re.flags]);
 /** First visible element matching selector (and text regexp source), as a handle. */
 async function find(page, selector, text = "") {
   const h = await page.evaluateHandle(
     (selector, text) =>
       [...document.querySelectorAll(selector)].find(
-        (e) => e.getBoundingClientRect().width > 0 && (!text || new RegExp(text).test(e.textContent + (e.getAttribute("aria-label") ?? ""))),
+        (e) =>
+          e.getBoundingClientRect().width > 0 &&
+          (!text || new RegExp(text).test(e.textContent + (e.getAttribute("aria-label") ?? ""))),
       ) ?? null,
     selector,
     text,
@@ -116,10 +120,17 @@ async function setInputValue(page, selector, value) {
 /** The number of the visible step, or null. */
 const visibleStep = (page) =>
   page.evaluate(() => {
-    const el = [...document.querySelectorAll("[data-step]")].find((e) => !e.hidden && e.getBoundingClientRect().width > 0);
+    const el = [...document.querySelectorAll("[data-step]")].find(
+      (e) => !e.hidden && e.getBoundingClientRect().width > 0,
+    );
     return el ? Number(el.getAttribute("data-step")) : null;
   });
-const waitStep = (page, n) => until(page, (n) => [...document.querySelectorAll("[data-step]")].some((e) => !e.hidden && Number(e.dataset.step) === n), n);
+const waitStep = (page, n) =>
+  until(
+    page,
+    (n) => [...document.querySelectorAll("[data-step]")].some((e) => !e.hidden && Number(e.dataset.step) === n),
+    n,
+  );
 const stepParam = (page) => new URL(page.url()).searchParams.get("step");
 const draftRaw = (page) => page.evaluate((k) => localStorage.getItem(k), DRAFT_KEY);
 const value = (page, selector) => page.evaluate((s) => document.querySelector(s)?.value ?? null, selector);
@@ -150,7 +161,8 @@ async function fillStep2(page, { other = false } = {}) {
   if (other) await typeInto(page, "input[name=other_event_interests]", "Gece sürüşleri");
 }
 async function fillStep3(page) {
-  for (const name of ["expectations", "alienating_behaviors", "conflict_handling"]) await typeInto(page, `textarea[name=${name}]`, TEXT);
+  for (const name of ["expectations", "alienating_behaviors", "conflict_handling"])
+    await typeInto(page, `textarea[name=${name}]`, TEXT);
 }
 async function fillStep4(page, { consents = true } = {}) {
   await typeInto(page, "input[name=full_name]", "Apply Testkisi");
@@ -178,15 +190,27 @@ try {
     await click(page, "button[type=submit]", "^Devam$");
     const errors = await hasText(page, /Bu alan zorunlu\./);
     const s = await page.evaluate(() => ({
-      step2Errors: document.querySelector('[data-step="2"]')?.textContent.includes("Bu alan zorunlu.") || !!document.querySelector('[data-step="2"] [data-invalid="true"]'),
-      step4Errors: document.querySelector('[data-step="4"]')?.textContent.includes("Bu alan zorunlu.") || !!document.querySelector('[data-step="4"] [data-invalid="true"]'),
-      invalidSteps: [...document.querySelectorAll('[data-invalid="true"]')].map((e) => e.closest("[data-step]")?.getAttribute("data-step")),
+      step2Errors:
+        document.querySelector('[data-step="2"]')?.textContent.includes("Bu alan zorunlu.") ||
+        !!document.querySelector('[data-step="2"] [data-invalid="true"]'),
+      step4Errors:
+        document.querySelector('[data-step="4"]')?.textContent.includes("Bu alan zorunlu.") ||
+        !!document.querySelector('[data-step="4"] [data-invalid="true"]'),
+      invalidSteps: [...document.querySelectorAll('[data-invalid="true"]')].map((e) =>
+        e.closest("[data-step]")?.getAttribute("data-step"),
+      ),
     }));
     const focusInLicence = await until(page, () => !!document.activeElement?.closest('[data-field="license_class"]'));
     await shot(page, "step1-errors");
     check(
       "step1-errors-only",
-      !!errors && stepParam(page) === null && s.invalidSteps.length > 0 && s.invalidSteps.every((x) => x === "1") && !s.step2Errors && !s.step4Errors && !!focusInLicence,
+      !!errors &&
+        stepParam(page) === null &&
+        s.invalidSteps.length > 0 &&
+        s.invalidSteps.every((x) => x === "1") &&
+        !s.step2Errors &&
+        !s.step4Errors &&
+        !!focusInLicence,
       `step=${stepParam(page)} invalid in steps ${[...new Set(s.invalidSteps)]} focus in licence group: ${!!focusInLicence}`,
     );
     await ctx.close();
@@ -207,13 +231,26 @@ try {
     const reached = await waitStep(page, 2);
     await sleep(800);
     await shot(page, "step2");
-    check("enter-acts-as-next", !!reached && stepParam(page) === "2" && posts.length === 0, `step=${stepParam(page)} POSTs=${posts.length}`);
+    check(
+      "enter-acts-as-next",
+      !!reached && stepParam(page) === "2" && posts.length === 0,
+      `step=${stepParam(page)} POSTs=${posts.length}`,
+    );
 
     await page.goBack();
     const back = await waitStep(page, 1);
     const years1 = await value(page, "input[name=riding_years]");
-    const licence = await page.evaluate(() => document.querySelector('[data-field="license_class"] [role=radio][aria-checked=true]')?.closest("label")?.textContent.trim());
-    check("back-button", !!back && years1 === "5" && licence === "A2", `step visible=${await visibleStep(page)} years=${years1} licence=${licence}`);
+    const licence = await page.evaluate(() =>
+      document
+        .querySelector('[data-field="license_class"] [role=radio][aria-checked=true]')
+        ?.closest("label")
+        ?.textContent.trim(),
+    );
+    check(
+      "back-button",
+      !!back && years1 === "5" && licence === "A2",
+      `step visible=${await visibleStep(page)} years=${years1} licence=${licence}`,
+    );
     await ctx.close();
   }
 
@@ -243,7 +280,13 @@ try {
     const brandVisible = !!(await find(page, "input[name=motorcycle_brand]"));
     check(
       "draft-restore",
-      !!step && !!restored && expectations === "Yeni rotalar keşfetmek istiyorum" && otherEvent === "Gece sürüşleri" && brand === "Honda" && model === "CB650R" && brandVisible,
+      !!step &&
+        !!restored &&
+        expectations === "Yeni rotalar keşfetmek istiyorum" &&
+        otherEvent === "Gece sürüşleri" &&
+        brand === "Honda" &&
+        model === "CB650R" &&
+        brandVisible,
       `step3=${!!step} text=${expectations} restoredLine=${!!restored} otherEvent=${otherEvent} brand=${brand}/${model} visible=${brandVisible}`,
     );
 
@@ -254,16 +297,36 @@ try {
     await fillStep4(page);
     // Force a save after step 4 was filled (a step 1-3 answer changes; step 4 inputs would otherwise be unproven).
     await setInputValue(page, "input[name=riding_years]", "9");
-    const saved = await until(page, (k) => JSON.parse(localStorage.getItem(k) ?? "null")?.fields?.riding_years === "9", DRAFT_KEY);
+    const saved = await until(
+      page,
+      (k) => JSON.parse(localStorage.getItem(k) ?? "null")?.fields?.riding_years === "9",
+      DRAFT_KEY,
+    );
     await sleep(700);
     const raw = (await draftRaw(page)) ?? "";
     const savedAfter = !!before && !!saved && JSON.parse(raw).savedAt !== before.savedAt;
-    const forbiddenKeys = ["full_name", "phone", "email", "birth_date", "city_choice", "district", "instagram", "languages", "consent_privacy", "consent_rules", "consent_photos"];
+    const forbiddenKeys = [
+      "full_name",
+      "phone",
+      "email",
+      "birth_date",
+      "city_choice",
+      "district",
+      "instagram",
+      "languages",
+      "consent_privacy",
+      "consent_rules",
+      "consent_photos",
+    ];
     const forbiddenValues = ["Apply Testkisi", "5321234567", "532 123", TEST_EMAIL, "1990-05-17", "Kadıköy"];
     const keyLeaks = forbiddenKeys.filter((k) => raw.includes(`"${k}"`));
     const valueLeaks = forbiddenValues.filter((v) => raw.includes(v));
     await shot(page, "step4-filled");
-    check("draft-no-personal-data", savedAfter && raw.length > 0 && keyLeaks.length === 0 && valueLeaks.length === 0, `save after step 4 filled=${savedAfter} key leaks=${keyLeaks} value leaks=${valueLeaks.length}`);
+    check(
+      "draft-no-personal-data",
+      savedAfter && raw.length > 0 && keyLeaks.length === 0 && valueLeaks.length === 0,
+      `save after step 4 filled=${savedAfter} key leaks=${keyLeaks} value leaks=${valueLeaks.length}`,
+    );
     await ctx.close();
   }
 
@@ -280,17 +343,31 @@ try {
     const tTyped = Date.now();
     await click(page, "button", "Dil: TR$");
     let clickedEn = false;
-    for (let i = 0; i < 50 && !clickedEn; i++) clickedEn = await click(page, "[role=menuitemradio]", "English") || (await sleep(20), false);
+    for (let i = 0; i < 50 && !clickedEn; i++)
+      clickedEn = (await click(page, "[role=menuitemradio]", "English")) || (await sleep(20), false);
     const sinceTyped = Date.now() - tTyped;
-    const onEn = await until(page, () => location.pathname.startsWith("/en/apply") && /Step 2 of 4/.test(document.body.innerText));
+    const onEn = await until(
+      page,
+      () => location.pathname.startsWith("/en/apply") && /Step 2 of 4/.test(document.body.innerText),
+    );
     await sleep(500);
     const clubs = await value(page, "input[name=other_club_names]");
-    const heard = await page.evaluate(() => document.querySelector('[data-field="heard_from"] [role=radio][aria-checked=true]')?.closest("label")?.textContent.trim());
+    const heard = await page.evaluate(() =>
+      document
+        .querySelector('[data-field="heard_from"] [role=radio][aria-checked=true]')
+        ?.closest("label")
+        ?.textContent.trim(),
+    );
     const years = await value(page, "input[name=riding_years]");
     await shot(page, "step2-en");
     check(
       "language-switch-keeps-draft",
-      clickedEn && !!onEn && (await visibleStep(page)) === 2 && heard === "Instagram ad" && years === "5" && clubs === "Gece Atlıları",
+      clickedEn &&
+        !!onEn &&
+        (await visibleStep(page)) === 2 &&
+        heard === "Instagram ad" &&
+        years === "5" &&
+        clubs === "Gece Atlıları",
       `path=${new URL(page.url()).pathname}${new URL(page.url()).search} step=${await visibleStep(page)} heard_from=${heard} years=${years} other_club_names=${clubs} (switch ${sinceTyped} ms after typing)`,
     );
     await ctx.close();
@@ -308,11 +385,23 @@ try {
     const atStep1 = await waitStep(page, 1);
     await sleep(900); // longer than the save debounce: nothing may re-create the draft
     const years = await value(page, "input[name=riding_years]");
-    const checked = await page.evaluate(() => document.querySelectorAll('[data-step="1"] [role=radio][aria-checked=true], [data-step="2"] [role=radio][aria-checked=true]').length);
+    const checked = await page.evaluate(
+      () =>
+        document.querySelectorAll(
+          '[data-step="1"] [role=radio][aria-checked=true], [data-step="2"] [role=radio][aria-checked=true]',
+        ).length,
+    );
     const line = /Kaldığın yerden/.test(await bodyText(page));
     check(
       "start-over",
-      !!restored && clicked && !!atStep1 && stepParam(page) === "1" && years === "" && checked === 0 && !line && (await draftRaw(page)) === null,
+      !!restored &&
+        clicked &&
+        !!atStep1 &&
+        stepParam(page) === "1" &&
+        years === "" &&
+        checked === 0 &&
+        !line &&
+        (await draftRaw(page)) === null,
       `step=${stepParam(page)} years="${years}" checked=${checked} draft=${(await draftRaw(page)) === null ? "absent" : "present"}`,
     );
     await ctx.close();
@@ -326,7 +415,10 @@ try {
     await fillStep4(page);
     await click(page, "button[type=submit]", "^Başvuruyu gönder$");
     const atStep1 = await waitStep(page, 1);
-    const focusIn1 = await until(page, () => !!document.activeElement?.closest('[data-step="1"]') && document.activeElement !== document.body);
+    const focusIn1 = await until(
+      page,
+      () => !!document.activeElement?.closest('[data-step="1"]') && document.activeElement !== document.body,
+    );
     check(
       "deep-link-step4",
       !!onStep4 && !!atStep1 && stepParam(page) === "1" && !!focusIn1,
@@ -339,10 +431,15 @@ try {
   {
     const { ctx, page } = await fresh();
     await go(page, "/apply?step=3");
-    const tooShort = () => page.evaluate(() => document.querySelector('[data-field="expectations"]')?.textContent.includes("Biraz daha detay yazar mısın?"));
+    const tooShort = () =>
+      page.evaluate(() =>
+        document.querySelector('[data-field="expectations"]')?.textContent.includes("Biraz daha detay yazar mısın?"),
+      );
     await typeInto(page, "textarea[name=expectations]", "12345678901234"); // 14
     await page.evaluate(() => document.activeElement?.blur());
-    const shown14 = await until(page, () => document.querySelector('[data-field="expectations"]')?.textContent.includes("Biraz daha detay yazar mısın?"));
+    const shown14 = await until(page, () =>
+      document.querySelector('[data-field="expectations"]')?.textContent.includes("Biraz daha detay yazar mısın?"),
+    );
     const area = await find(page, "textarea[name=expectations]");
     await area.focus();
     await page.keyboard.press("End");
@@ -350,7 +447,11 @@ try {
     await page.evaluate(() => document.activeElement?.blur());
     await sleep(300);
     const shown15 = await tooShort();
-    check("writing-minimum", !!shown14 && !shown15, `14 chars: tooShort shown=${!!shown14}; 15 chars: shown=${!!shown15}`);
+    check(
+      "writing-minimum",
+      !!shown14 && !shown15,
+      `14 chars: tooShort shown=${!!shown14}; 15 chars: shown=${!!shown15}`,
+    );
     await ctx.close();
   }
 
@@ -375,7 +476,11 @@ try {
     await sleep(1500); // longer than the save debounce: a late save would re-create the draft
     const draftAfter = await draftRaw(page);
     const rows = testApplicationCount();
-    check("submit-clears-draft", draftBefore && !!success && draftAfter === null && rows === 1, `draft before=${draftBefore} success=${!!success} draft after=${draftAfter === null ? "absent" : "present"} rows=${rows}`);
+    check(
+      "submit-clears-draft",
+      draftBefore && !!success && draftAfter === null && rows === 1,
+      `draft before=${draftBefore} success=${!!success} draft after=${draftAfter === null ? "absent" : "present"} rows=${rows}`,
+    );
     deleteTestApplication();
     await ctx.close();
   }
@@ -410,7 +515,9 @@ try {
     const draftStep = JSON.parse((await draftRaw(page).catch(() => null)) ?? "null")?.step ?? null;
     await ctx.close();
 
-    const ig = await fresh("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Instagram 300.0.0.0.0");
+    const ig = await fresh(
+      "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Instagram 300.0.0.0.0",
+    );
     await go(ig.page, "/apply?step=4");
     // Positive control: step 4 is shown and hydrated (the form remounts on hydration; the honeypot-free email input
     // is visible), so an absent button means "hidden for this UA", not "never rendered".
@@ -442,9 +549,15 @@ try {
     const exists = sql("select count(*) from auth.users where email = 'pending-noapp@test.local'") === "1";
     const { ctx, page } = await fresh();
     let signedIn = false;
-    if (exists) signedIn = await signIn(page, "pending-noapp@test.local", BASE).then(() => true, () => false);
+    if (exists)
+      signedIn = await signIn(page, "pending-noapp@test.local", BASE).then(
+        () => true,
+        () => false,
+      );
     if (!signedIn) {
-      console.log(`SKIP signed-in-no-google — ${exists ? "email sign-in is disabled locally" : "pending-noapp@test.local does not exist"}`);
+      console.log(
+        `SKIP signed-in-no-google — ${exists ? "email sign-in is disabled locally" : "pending-noapp@test.local does not exist"}`,
+      );
     } else {
       await go(page, "/apply?step=4");
       await waitStep(page, 4);

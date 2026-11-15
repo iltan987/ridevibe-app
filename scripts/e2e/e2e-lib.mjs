@@ -71,7 +71,10 @@ export async function signInViaCallback(page, email, next, baseUrl = "http://loc
     await new Promise((r) => setTimeout(r, 100));
     const { messages = [] } = await (await fetch(`${MAILPIT}/api/v1/messages`)).json();
     const m = messages.find((x) => x.To?.some((t) => t.Address === email));
-    if (m) link = (await (await fetch(`${MAILPIT}/api/v1/message/${m.ID}`)).json()).Text.match(/https?:\/\/\S+\/verify\?\S+/)?.[0];
+    if (m)
+      link = (await (await fetch(`${MAILPIT}/api/v1/message/${m.ID}`)).json()).Text.match(
+        /https?:\/\/\S+\/verify\?\S+/,
+      )?.[0];
   }
   if (!link) throw new Error(`no magic link mail for ${email}`);
   const verify = await fetch(link, { redirect: "manual" });
@@ -102,7 +105,8 @@ export function watchServer(page, baseUrl = "http://localhost:3123") {
   let seen = [];
   page.on("request", (r) => {
     const url = r.url();
-    if (r.resourceType() === "document" || url.includes("_rsc=") || r.headers()["rsc"]) seen.push(`${r.resourceType()} ${url.replace(baseUrl, "")}`);
+    if (r.resourceType() === "document" || url.includes("_rsc=") || r.headers()["rsc"])
+      seen.push(`${r.resourceType()} ${url.replace(baseUrl, "")}`);
   });
   return { reset: () => (seen = []), count: () => seen.length, list: () => seen };
 }
@@ -111,7 +115,9 @@ export function watchServer(page, baseUrl = "http://localhost:3123") {
  *  scrolling anywhere. */
 export const pagerFit = (page) =>
   page.evaluate(() => {
-    const nav = [...document.querySelectorAll("nav[data-skeleton-result=pager]")].find((n) => n.getBoundingClientRect().width > 0);
+    const nav = [...document.querySelectorAll("nav[data-skeleton-result=pager]")].find(
+      (n) => n.getBoundingClientRect().width > 0,
+    );
     const row = nav?.querySelector("div");
     if (!row) return { found: false };
     const tops = new Set([...row.children].map((c) => Math.round(c.getBoundingClientRect().top)));
@@ -131,7 +137,10 @@ export const pagerFit = (page) =>
 /** Clears the visible search box (`input[type=search]`) and types `value` with no delay between keys. */
 export async function clearAndType(page, value) {
   const input = (
-    await page.evaluateHandle(() => [...document.querySelectorAll("input[type=search]")].find((e) => e.getBoundingClientRect().width > 0) ?? null)
+    await page.evaluateHandle(
+      () =>
+        [...document.querySelectorAll("input[type=search]")].find((e) => e.getBoundingClientRect().width > 0) ?? null,
+    )
   ).asElement();
   if (!input) throw new Error("no visible search box");
   await input.focus();

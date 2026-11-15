@@ -11,6 +11,7 @@ import { PagerButtons } from "@/components/pager-buttons";
 import { Input } from "@/components/ui/input";
 import { MEMBER_STATUSES, type StaffStatus, membersView } from "@/lib/access/members-view";
 import { listSearch, paramOff } from "@/lib/list-url";
+import { oneOf } from "@/lib/one-of";
 import { SEARCH_MAX_LENGTH } from "@/lib/search-fold";
 
 const DEFAULTS = { status: "pending", page: 1 };
@@ -39,7 +40,7 @@ export function MembersList({
   const t = useTranslations("Admin.members");
   const params = useListParams();
   const search = useListSearch(params);
-  const status: StaffStatus = MEMBER_STATUSES.find((s) => s === params.get("status")) ?? "pending";
+  const status: StaffStatus = oneOf(MEMBER_STATUSES, params.get("status")) ?? "pending";
 
   const view = membersView(rows, { query: search.query, status, page: search.page });
 

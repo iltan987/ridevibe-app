@@ -34,7 +34,7 @@ export function MemberNameDialog({ memberId, currentName }: { memberId: string; 
     setFailure(null);
   }
 
-  function onSubmit(event: React.FormEvent) {
+  function onSubmit(event: React.SubmitEvent) {
     event.preventDefault();
     if (name.trim().length < MIN_LENGTH) {
       setFailure("tooShort");

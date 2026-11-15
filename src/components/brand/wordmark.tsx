@@ -10,7 +10,7 @@ export function Wordmark({ className }: { className?: string }) {
     <span
       role="img"
       aria-label="Ride & Vibe"
-      className={cn("inline-block aspect-[1794/572] bg-current forced-color-adjust-none", className)}
+      className={cn("inline-block aspect-1794/572 bg-current forced-color-adjust-none", className)}
       style={{ mask: MASK, WebkitMask: MASK }}
     />
   );

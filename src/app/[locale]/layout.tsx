@@ -44,15 +44,9 @@ export const viewport: Viewport = {
   themeColor: THEME_COLORS.dark, // the theme script/switcher update the meta for other themes
 };
 
-export default async function LocaleLayout({
-  children,
-}: LayoutProps<"/[locale]">) {
+export default async function LocaleLayout({ children }: LayoutProps<"/[locale]">) {
   return (
-    <html
-      lang={await locale()}
-      className={`${saira.variable} dark h-full antialiased`}
-      suppressHydrationWarning
-    >
+    <html lang={await locale()} className={`${saira.variable} dark h-full antialiased`} suppressHydrationWarning>
       <head>
         <ThemeScript />
         <InlineScript html={installCaptureScript} />

@@ -20,4 +20,4 @@ function markSessionHint(doc: Document, sessionCookie: RegExp): void {
   if (el && sessionCookie.test(doc.cookie)) el.setAttribute("data-session", "");
 }
 
-export const sessionHintScript = `(${markSessionHint.toString()})(document, ${SESSION_COOKIE})`;
+export const sessionHintScript = `(${markSessionHint.toString()})(document, ${SESSION_COOKIE.toString()})`;

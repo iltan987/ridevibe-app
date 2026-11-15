@@ -8,7 +8,10 @@ import { type Access, NO_ACCESS, PERMISSIONS } from "./permissions";
 export type CurrentUser = {
   id: string;
   email: string | null;
-  profile: Pick<Tables<"profiles">, "full_name" | "avatar_url" | "status" | "preferred_locale" | "deletion_requested_at"> | null;
+  profile: Pick<
+    Tables<"profiles">,
+    "full_name" | "avatar_url" | "status" | "preferred_locale" | "deletion_requested_at"
+  > | null;
   /** Null = regular member without a staff role. */
   role: { id: string; name: string; isAdmin: boolean } | null;
   access: Access;
@@ -29,14 +32,16 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   const id = data.claims.sub;
   const lookup = await supabase
     .from("profiles")
-    .select("full_name, avatar_url, status, preferred_locale, deletion_requested_at, role:roles(id, name, is_admin, role_permissions(permission))")
+    .select(
+      "full_name, avatar_url, status, preferred_locale, deletion_requested_at, role:roles(id, name, is_admin, role_permissions(permission))",
+    )
     .eq("id", id)
     .maybeSingle();
   // A deleted account's token stays valid until it expires: treat it as signed out.
   if (accountDeleted(lookup)) return null;
   const row = lookup.data;
 
-  const { role: roleRow, ...profile } = row ?? { role: null };
+  const roleRow = row?.role ?? null;
   const role = roleRow ? { id: roleRow.id, name: roleRow.name, isAdmin: roleRow.is_admin } : null;
   // Same rule as private.has_permission(): only active members have rights.
   const access: Access =
@@ -50,7 +55,15 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   return {
     id,
     email: typeof data.claims.email === "string" ? data.claims.email : null,
-    profile: row ? (profile as CurrentUser["profile"]) : null,
+    profile: row
+      ? {
+          full_name: row.full_name,
+          avatar_url: row.avatar_url,
+          status: row.status,
+          preferred_locale: row.preferred_locale,
+          deletion_requested_at: row.deletion_requested_at,
+        }
+      : null,
     role,
     access,
   };

@@ -10,10 +10,7 @@ import { Link } from "@/i18n/navigation";
 export default function ErrorPage({ error, retry }: { error: unknown; retry: () => void }) {
   const t = useTranslations("Error");
   // Server errors carry a digest that matches the Vercel log entry; the message is hidden in production.
-  const digest =
-    error instanceof Error && "digest" in error && typeof error.digest === "string"
-      ? error.digest
-      : null;
+  const digest = error instanceof Error && "digest" in error && typeof error.digest === "string" ? error.digest : null;
 
   return (
     <section className="mx-auto flex w-full max-w-5xl flex-1 flex-col items-start gap-4 px-4 py-16">

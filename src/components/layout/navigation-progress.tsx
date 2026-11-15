@@ -1,11 +1,7 @@
 "use client";
 
 import { useEffect, useState, useSyncExternalStore } from "react";
-import {
-  getPendingCount,
-  getServerPendingCount,
-  subscribePending,
-} from "@/lib/navigation/pending-store";
+import { getPendingCount, getServerPendingCount, subscribePending } from "@/lib/navigation/pending-store";
 
 const SHOW_DELAY_MS = 150;
 
@@ -14,11 +10,7 @@ const SHOW_DELAY_MS = 150;
  * a short delay so instant (prefetched) navigations never flash it.
  */
 export function NavigationProgress() {
-  const count = useSyncExternalStore(
-    subscribePending,
-    getPendingCount,
-    getServerPendingCount,
-  );
+  const count = useSyncExternalStore(subscribePending, getPendingCount, getServerPendingCount);
   const pending = count > 0;
   const [visible, setVisible] = useState(false);
 
@@ -34,12 +26,8 @@ export function NavigationProgress() {
   if (!visible || !pending) return null;
 
   return (
-    <div
-      aria-hidden
-      data-nav-progress
-      className="pointer-events-none fixed inset-x-0 top-0 z-50 h-0.5"
-    >
-      <div className="h-full origin-left animate-[nav-progress_8s_ease-out_forwards] bg-primary motion-reduce:animate-none motion-reduce:scale-x-100" />
+    <div aria-hidden data-nav-progress className="pointer-events-none fixed inset-x-0 top-0 z-50 h-0.5">
+      <div className="h-full origin-left animate-[nav-progress_8s_ease-out_forwards] bg-primary motion-reduce:scale-x-100 motion-reduce:animate-none" />
     </div>
   );
 }

@@ -12,6 +12,7 @@ import {
   listApplications,
 } from "@/lib/applications/queries";
 import { requirePermission } from "@/lib/auth/require-access";
+import { oneOf } from "@/lib/one-of";
 import { ListSkeleton } from "@/components/admin/list-skeleton";
 import { ChipCount, listChipClasses } from "@/components/lists/list-chip";
 import { PagerLinks } from "@/components/pager";
@@ -46,7 +47,7 @@ async function ApplicationsList({
   await requirePermission("applications.view", "/admin/applications");
 
   const params = await searchParams;
-  const status: ApplicationFilter = APPLICATION_FILTERS.find((s) => s === params.status) ?? "new";
+  const status: ApplicationFilter = oneOf(APPLICATION_FILTERS, params.status) ?? "new";
 
   // The list query runs alongside the counts with the page as asked; a URL the counts correct redirects instead.
   const [rows, counts, locale, t, tApply, format] = await Promise.all([
@@ -92,7 +93,10 @@ async function ApplicationsList({
         <ul className="flex flex-col gap-3">
           {rows.map((a) => (
             <li key={a.id} data-skeleton-result="admin-row">
-              <Link href={`/admin/applications/${a.id}`} className="block rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
+              <Link
+                href={`/admin/applications/${a.id}`}
+                className="block rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+              >
                 <Card className="transition-colors hover:bg-muted/40">
                   <CardContent className="flex flex-col gap-2">
                     <div className="flex items-start justify-between gap-3">
@@ -108,7 +112,9 @@ async function ApplicationsList({
                       </Badge>
                       <Badge variant="outline">{tApply(`options.license_class.${a.license_class}`)}</Badge>
                       <Badge variant="outline">
-                        {a.owns_motorcycle ? `${a.motorcycle_brand} ${a.motorcycle_model}` : t("noBike")}
+                        {a.owns_motorcycle
+                          ? [a.motorcycle_brand, a.motorcycle_model].filter(Boolean).join(" ")
+                          : t("noBike")}
                       </Badge>
                     </div>
                     {a.retained_until && (

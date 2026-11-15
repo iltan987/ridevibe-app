@@ -13,7 +13,9 @@ import { ApplicationReviewPanel } from "@/components/admin/application-review-pa
 import { getPathname, Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { can } from "@/lib/auth/permissions";
+import { oneOf } from "@/lib/one-of";
 import { whatsAppUrl } from "@/lib/applications/contact";
+import { EVENT_INTERESTS, LANGUAGES, RIDING_STYLES } from "@/lib/applications/options";
 import { getApplication, getApplicationAccount } from "@/lib/applications/queries";
 import { requirePermission } from "@/lib/auth/require-access";
 
@@ -151,14 +153,25 @@ async function ApplicationDetail({ params }: { params: PageProps<"/[locale]/admi
   ]);
   if (!a) notFound();
 
-  const list = (values: string[], key: "languages" | "riding_styles" | "event_interests") =>
-    values.map((v) => tApply(`options.${key}.${v}` as Parameters<typeof tApply>[0])).join(", ");
+  // Stored choices → labels; a value that isn't (or no longer is) an option shows as stored.
+  const list = <T extends string>(values: string[], options: readonly T[], label: (option: T) => string) =>
+    values
+      .map((v) => {
+        const option = oneOf(options, v);
+        return option === undefined ? v : label(option);
+      })
+      .join(", ");
   const yesNo = (v: boolean) => tApply(v ? "options.yes" : "options.no");
 
   const decidedLabel = a.reviewed_at
     ? a.reviewer?.full_name
-      ? t("review.decidedBy", { name: a.reviewer.full_name, date: format.dateTime(new Date(a.reviewed_at), { dateStyle: "medium", timeStyle: "short" }) })
-      : t("review.decidedByUnknown", { date: format.dateTime(new Date(a.reviewed_at), { dateStyle: "medium", timeStyle: "short" }) })
+      ? t("review.decidedBy", {
+          name: a.reviewer.full_name,
+          date: format.dateTime(new Date(a.reviewed_at), { dateStyle: "medium", timeStyle: "short" }),
+        })
+      : t("review.decidedByUnknown", {
+          date: format.dateTime(new Date(a.reviewed_at), { dateStyle: "medium", timeStyle: "short" }),
+        })
     : null;
   // Linked = profile_id. The account details come from an RPC: profiles RLS
   // hides pending accounts from staff without members.manage.
@@ -231,7 +244,8 @@ async function ApplicationDetail({ params }: { params: PageProps<"/[locale]/admi
         }
       >
         <Row label={tApply("fields.birth_date")}>
-          {format.dateTime(new Date(`${a.birth_date}T12:00:00`), { dateStyle: "long" })} · {t("age", { age: ageFrom(a.birth_date) })}
+          {format.dateTime(new Date(`${a.birth_date}T12:00:00`), { dateStyle: "long" })} ·{" "}
+          {t("age", { age: ageFrom(a.birth_date) })}
         </Row>
         <Row label={tApply("fields.city")}>
           {a.city} / {a.district}
@@ -239,13 +253,18 @@ async function ApplicationDetail({ params }: { params: PageProps<"/[locale]/admi
         </Row>
         {a.instagram && (
           <Row label={tApply("fields.instagram")}>
-            <a href={`https://instagram.com/${a.instagram}`} target="_blank" rel="noreferrer" className="underline underline-offset-4">
+            <a
+              href={`https://instagram.com/${a.instagram}`}
+              target="_blank"
+              rel="noreferrer"
+              className="underline underline-offset-4"
+            >
               @{a.instagram}
             </a>
           </Row>
         )}
         <Row label={tApply("fields.languages")}>
-          {list(a.languages, "languages")}
+          {list(a.languages, LANGUAGES, (v) => tApply(`options.languages.${v}`))}
           {a.other_languages && ` (${a.other_languages})`}
         </Row>
       </Section>
@@ -255,17 +274,19 @@ async function ApplicationDetail({ params }: { params: PageProps<"/[locale]/admi
         <Row label={tApply("fields.riding_years")}>{t("years", { years: a.riding_years })}</Row>
         <Row label={tApply("fields.owns_motorcycle")}>
           {a.owns_motorcycle
-            ? [a.motorcycle_brand, a.motorcycle_model, a.motorcycle_cc && `${a.motorcycle_cc} cc`].filter(Boolean).join(" · ")
+            ? [a.motorcycle_brand, a.motorcycle_model, a.motorcycle_cc && `${a.motorcycle_cc} cc`]
+                .filter(Boolean)
+                .join(" · ")
             : yesNo(false)}
         </Row>
-        <Row label={tApply("fields.riding_styles")}>{list(a.riding_styles, "riding_styles")}</Row>
+        <Row label={tApply("fields.riding_styles")}>
+          {list(a.riding_styles, RIDING_STYLES, (v) => tApply(`options.riding_styles.${v}`))}
+        </Row>
         <Row label={tApply("fields.group_experience")}>{tApply(`options.group_experience.${a.group_experience}`)}</Row>
       </Section>
 
       <Section title={tApply("sections.club")}>
-        <Row label={tApply("fields.in_other_clubs")}>
-          {a.in_other_clubs ? a.other_club_names : yesNo(false)}
-        </Row>
+        <Row label={tApply("fields.in_other_clubs")}>{a.in_other_clubs ? a.other_club_names : yesNo(false)}</Row>
         <Row label={tApply("fields.heard_from")}>
           {tApply(`options.heard_from.${a.heard_from}`)}
           {a.referrer_name && ` · ${a.referrer_name}`}
@@ -276,14 +297,20 @@ async function ApplicationDetail({ params }: { params: PageProps<"/[locale]/admi
           </Row>
         )}
         <Row label={tApply("fields.event_interests")}>
-          {list(a.event_interests, "event_interests")}
+          {list(a.event_interests, EVENT_INTERESTS, (v) => tApply(`options.event_interests.${v}`))}
           {a.other_event_interests && ` (${a.other_event_interests})`}
         </Row>
-        <Row label={tApply("fields.expectations")} block>{a.expectations}</Row>
-        <Row label={tApply("fields.alienating_behaviors")} block>{a.alienating_behaviors}</Row>
+        <Row label={tApply("fields.expectations")} block>
+          {a.expectations}
+        </Row>
+        <Row label={tApply("fields.alienating_behaviors")} block>
+          {a.alienating_behaviors}
+        </Row>
         {/* Asked since 2026-11-10; older applications have no answer. */}
         {a.conflict_handling && (
-          <Row label={tApply("fields.conflict_handling")} block>{a.conflict_handling}</Row>
+          <Row label={tApply("fields.conflict_handling")} block>
+            {a.conflict_handling}
+          </Row>
         )}
       </Section>
 
@@ -301,7 +328,7 @@ async function whatsAppInvite(a: { full_name: string; email: string; phone: stri
   const [t, h] = await Promise.all([getTranslations({ locale, namespace: "Admin.invite" }), headers()]);
   const host = h.get("x-forwarded-host") ?? h.get("host");
   const proto = h.get("x-forwarded-proto") ?? (host?.startsWith("localhost") ? "http" : "https");
-  const url = `${proto}://${host}${getPathname({ href: "/sign-in", locale })}`;
+  const url = `${proto}://${host ?? ""}${getPathname({ href: "/sign-in", locale })}`;
   const text = t("message", { name: a.full_name.split(" ")[0], email: a.email, url });
   return whatsAppUrl(a.phone, text);
 }

@@ -1,10 +1,15 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
-import type { Enums } from "@/lib/supabase/database.types";
+import type { Database, Enums } from "@/lib/supabase/database.types";
 import { PAGE_SIZE } from "@/lib/pagination";
 
 export type ApplicationStatus = Enums<"application_status">;
-export const APPLICATION_STATUSES = ["new", "contacted", "approved", "rejected"] as const satisfies readonly ApplicationStatus[];
+export const APPLICATION_STATUSES = [
+  "new",
+  "contacted",
+  "approved",
+  "rejected",
+] as const satisfies readonly ApplicationStatus[];
 
 /** Tabs on the applications list: the real statuses plus approved applicants who haven't signed in yet. */
 export const APPLICATION_FILTERS = [...APPLICATION_STATUSES, "unlinked"] as const;
@@ -33,7 +38,7 @@ export async function listApplications(filter: ApplicationFilter, page: number) 
   return data;
 }
 
-export async function countApplicationsByStatus() {
+export async function countApplicationsByStatus(): Promise<Record<ApplicationFilter, number>> {
   const supabase = await createClient();
   const counts = await Promise.all(
     APPLICATION_FILTERS.map(async (filter) => {
@@ -47,7 +52,9 @@ export async function countApplicationsByStatus() {
       return [filter, count ?? 0] as const;
     }),
   );
-  return Object.fromEntries(counts) as Record<ApplicationFilter, number>;
+  const totals: Record<ApplicationFilter, number> = { new: 0, contacted: 0, approved: 0, rejected: 0, unlinked: 0 };
+  for (const [filter, count] of counts) totals[filter] = count;
+  return totals;
 }
 
 const isUuidLike = (id: string) => /^[0-9a-f-]{36}$/i.test(id);
@@ -72,6 +79,10 @@ export type ApplicationAccount = {
   status: Enums<"member_status">;
 };
 
+type GeneratedAccountRow = Database["public"]["Functions"]["application_account"]["Returns"][number];
+/** An application_account row: the generated types call every column non-null; email is null without a member_contacts row. */
+type ApplicationAccountRow = Omit<GeneratedAccountRow, "email"> & { email: string | null };
+
 /**
  * The account an application is linked to (applications.view), or null when unlinked. Uses an RPC because profiles
  * RLS hides pending/inactive accounts and sign-in emails from staff without members.manage.
@@ -82,9 +93,9 @@ export async function getApplicationAccount(applicationId: string): Promise<Appl
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("application_account", { application_id: applicationId }).maybeSingle();
   if (error) throw new Error(`getApplicationAccount failed: ${error.code}`);
-  if (!data) return null;
-  // Generated types say non-null; email is null without a member_contacts row.
-  return { id: data.id, fullName: data.full_name, email: (data.email as string | null) ?? null, status: data.status };
+  const row: ApplicationAccountRow | null = data;
+  if (!row) return null;
+  return { id: row.id, fullName: row.full_name, email: row.email, status: row.status };
 }
 
 /** Status of the signed-in user's latest application (linked, or unlinked with their sign-in email), or null. Signed-in only. */
@@ -93,5 +104,6 @@ export async function getMyApplicationStatus(): Promise<ApplicationStatus | null
   const { data, error } = await supabase.rpc("my_application_status");
   if (error) throw new Error(`getMyApplicationStatus failed: ${error.code}`);
   // The generated type says non-null, but the function returns null without an application.
-  return (data as ApplicationStatus | null) ?? null;
+  const status: ApplicationStatus | null = data;
+  return status;
 }

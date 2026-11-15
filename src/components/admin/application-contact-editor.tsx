@@ -2,13 +2,14 @@
 
 import { Pencil } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { type FormEvent, type ReactNode, useEffect, useRef, useState, useTransition } from "react";
+import { type SubmitEvent, type ReactNode, useEffect, useRef, useState, useTransition } from "react";
 import { PhoneField } from "@/components/apply/phone-field";
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { saveApplicationContact } from "@/lib/applications/review-actions";
-import { type ApplyErrorKey, type ContactValues, validateContactChanges } from "@/lib/applications/schema";
+import { type ApplicationFieldErrors, type ContactValues, validateContactChanges } from "@/lib/applications/schema";
+import { formDataText } from "@/lib/form-data";
 
 type Failure = "forbidden" | "invalid" | "duplicate" | "error";
 
@@ -32,7 +33,7 @@ export function ApplicationContactEditor({
   const tApply = useTranslations("Apply");
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const [fieldErrors, setFieldErrors] = useState<Record<string, ApplyErrorKey>>({});
+  const [fieldErrors, setFieldErrors] = useState<ApplicationFieldErrors>({});
   const [failure, setFailure] = useState<Failure | null>(null);
   const editButton = useRef<HTMLButtonElement>(null);
   const restoreFocus = useRef(false);
@@ -52,13 +53,13 @@ export function ApplicationContactEditor({
     setOpen(false);
   }
 
-  function onSubmit(event: FormEvent<HTMLFormElement>) {
+  function onSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const values: ContactValues = {
-      full_name: String(formData.get("full_name") ?? ""),
-      phone: String(formData.get("phone") ?? ""),
-      email: String(formData.get("email") ?? ""),
+      full_name: formDataText(formData, "full_name"),
+      phone: formDataText(formData, "phone"),
+      email: formDataText(formData, "email"),
     };
     setFailure(null);
     const checked = validateContactChanges(application, values);

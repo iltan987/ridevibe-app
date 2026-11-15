@@ -5,8 +5,9 @@ import { z } from "zod";
 import type { AccessActionResult } from "@/lib/access/actions";
 import { decodeCursor, toPage } from "@/lib/pagination";
 import { createClient } from "@/lib/supabase/server";
+import type { Database } from "@/lib/supabase/database.types";
 import { APPLICATION_STATUSES } from "./queries";
-import { type ApplyErrorKey, type ContactValues, validateContactChanges } from "./schema";
+import { type ApplicationFieldErrors, type ContactValues, validateContactChanges } from "./schema";
 
 // Public endpoints: RLS (applications.review / .delete), the
 // applications_check_decision trigger (approve/reject and the email of an
@@ -22,7 +23,11 @@ function fail(code: string | undefined, where: string): AccessActionResult {
 }
 
 // Zero rows touched = RLS hid the row (no permission) or it doesn't exist.
-async function updateApplication(id: string, values: { status?: (typeof APPLICATION_STATUSES)[number]; admin_notes?: string | null }, where: string) {
+async function updateApplication(
+  id: string,
+  values: { status?: (typeof APPLICATION_STATUSES)[number]; admin_notes?: string | null },
+  where: string,
+) {
   const supabase = await createClient();
   const { data, error } = await supabase.from("applications").update(values).eq("id", id).select("id");
   if (error) return fail(error.code, where);
@@ -54,9 +59,7 @@ export async function deleteApplication(id: string): Promise<AccessActionResult>
   return { status: "ok" };
 }
 
-export type ApplicationContactResult =
-  | AccessActionResult
-  | { status: "invalid"; fieldErrors: Record<string, ApplyErrorKey> };
+export type ApplicationContactResult = AccessActionResult | { status: "invalid"; fieldErrors: ApplicationFieldErrors };
 
 const rawText = z.string().max(1000);
 
@@ -68,9 +71,7 @@ const rawText = z.string().max(1000);
  * activates that account (DB trigger).
  */
 export async function saveApplicationContact(id: string, values: ContactValues): Promise<ApplicationContactResult> {
-  const input = z
-    .object({ id: uuid, full_name: rawText, phone: rawText, email: rawText })
-    .safeParse({ ...values, id });
+  const input = z.object({ id: uuid, full_name: rawText, phone: rawText, email: rawText }).safeParse({ ...values, id });
   if (!input.success) return { status: "invalid" };
   const { id: applicationId, ...contact } = input.data;
 
@@ -112,6 +113,12 @@ export type LinkableAccount = {
   status: "pending" | "active";
 };
 
+type GeneratedLinkableRow = Database["public"]["Functions"]["linkable_accounts"]["Returns"][number];
+type LinkableAccountRow = Omit<GeneratedLinkableRow, "avatar_url" | "email"> & {
+  avatar_url: string | null;
+  email: string | null;
+};
+
 /**
  * Pending accounts an application can be linked to, newest first, one page (applications.decide). With
  * `includeActive` (approved applications only) also active accounts that have no application yet.
@@ -145,7 +152,11 @@ export async function findLinkableAccounts(input: {
     return { status: "error" };
   }
   // Generated types claim avatar_url/email are non-null; they can be null.
-  return toPage(data as LinkableAccount[]);
+  const rows: LinkableAccountRow[] = data;
+  // The RPC returns pending accounts, plus active ones only when requested.
+  return toPage(
+    rows.map((row): LinkableAccount => ({ ...row, status: row.status === "active" ? "active" : "pending" })),
+  );
 }
 
 /** Links an unlinked, non-rejected application to a pending account (applications.decide). */

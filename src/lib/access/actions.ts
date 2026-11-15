@@ -23,7 +23,7 @@ function fail(code: string | undefined, where: string): AccessActionResult {
   return { status: "error" };
 }
 
-async function done(error: { code?: string } | null, where: string): Promise<AccessActionResult> {
+function done(error: { code?: string } | null, where: string): AccessActionResult {
   if (error) return fail(error.code, where);
   refresh();
   return { status: "ok" };
@@ -59,6 +59,7 @@ export async function setMemberRole(targetId: string, roleId: string | null): Pr
   const { error } = await supabase.rpc("set_member_role", {
     target_id: input.data.targetId,
     // Generated types say `string`; SQL accepts null (= no role).
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- supabase gen types can't mark an RPC argument nullable
     new_role_id: input.data.roleId as string,
   });
   return done(error, "setMemberRole");
@@ -98,12 +99,10 @@ export async function updateRole(roleId: string, name: string, permissions: stri
   if (removeError) return fail(removeError.code, "updateRole");
 
   if (keep.length) {
-    const { error: addError } = await supabase
-      .from("role_permissions")
-      .upsert(
-        keep.map((permission) => ({ role_id: data.roleId, permission })),
-        { onConflict: "role_id,permission", ignoreDuplicates: true },
-      );
+    const { error: addError } = await supabase.from("role_permissions").upsert(
+      keep.map((permission) => ({ role_id: data.roleId, permission })),
+      { onConflict: "role_id,permission", ignoreDuplicates: true },
+    );
     if (addError) return fail(addError.code, "updateRole");
   }
 

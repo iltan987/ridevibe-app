@@ -33,7 +33,8 @@ export function paramOff(
   shown: string | number | null,
   fallback?: string | number,
 ): boolean {
-  const canonical = shown === null || (fallback !== undefined && String(shown) === String(fallback)) ? null : String(shown);
+  const canonical =
+    shown === null || (fallback !== undefined && String(shown) === String(fallback)) ? null : String(shown);
   return (raw ?? null) !== canonical;
 }
 
@@ -79,10 +80,7 @@ export function serverPage(raw: string | string[] | undefined, total: number): {
  * `prev.url` is the URL value last seen, not the one just written: on typing, update only `input`. When the URL
  * then catches up with the typed text (`normalizeQuery(input)`), the text stays as typed (keeps e.g. a trailing space).
  */
-export function syncedInput(
-  prev: { url: string; input: string },
-  urlValue: string,
-): { url: string; input: string } {
+export function syncedInput(prev: { url: string; input: string }, urlValue: string): { url: string; input: string } {
   if (urlValue === prev.url) return prev;
   return { url: urlValue, input: normalizeQuery(prev.input) === urlValue ? prev.input : urlValue };
 }

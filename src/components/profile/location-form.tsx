@@ -8,11 +8,14 @@ import { Field, FieldError, FieldLabel, FieldTitle } from "@/components/ui/field
 import { Input } from "@/components/ui/input";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { formDataText } from "@/lib/form-data";
+import { oneOf } from "@/lib/one-of";
 import { ISTANBUL, istanbulDistrictNames } from "@/lib/istanbul-districts";
 import { updateLocation } from "@/lib/members/actions";
 import { ActionStatus, useProfileAction } from "./use-profile-action";
 
-type CityChoice = "istanbul" | "other";
+const CITY_CHOICES = ["istanbul", "other"] as const;
+type CityChoice = (typeof CITY_CHOICES)[number];
 
 /** City and district; the side of the Bosphorus is derived on the server. */
 export function LocationForm({ city, district }: { city: string; district: string | null }) {
@@ -20,14 +23,14 @@ export function LocationForm({ city, district }: { city: string; district: strin
   const { isPending, result, setResult, run, fieldError } = useProfileAction();
   const [choice, setChoice] = useState<CityChoice>(city === ISTANBUL ? "istanbul" : "other");
 
-  function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+  function onSubmit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     run(() =>
       updateLocation({
         city_choice: choice,
-        city: String(data.get("city") ?? ""),
-        district: String(data.get("district") ?? ""),
+        city: formDataText(data, "city"),
+        district: formDataText(data, "district"),
       }),
     );
   }
@@ -48,12 +51,14 @@ export function LocationForm({ city, district }: { city: string; district: strin
               aria-labelledby="profile-city-choice"
               value={choice}
               onValueChange={(v) => {
-                setChoice(v as CityChoice);
+                const next = oneOf(CITY_CHOICES, v);
+                if (next === undefined) return; // only our own options can be checked
+                setChoice(next);
                 setResult(null);
               }}
               className="flex flex-wrap gap-2"
             >
-              {(["istanbul", "other"] as const).map((value) => (
+              {CITY_CHOICES.map((value) => (
                 <label
                   key={value}
                   className="flex min-h-10 cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2 text-sm has-data-checked:border-primary has-data-checked:bg-primary/5"

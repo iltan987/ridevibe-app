@@ -32,7 +32,13 @@ export function useProfileAction() {
  * Polite live region: "saved" after a successful save, otherwise the error
  * (field errors show under their inputs, so a form-level hint is enough here).
  */
-export function ActionStatus({ result, showSaved = true }: { result: ProfileActionResult | null; showSaved?: boolean }) {
+export function ActionStatus({
+  result,
+  showSaved = true,
+}: {
+  result: ProfileActionResult | null;
+  showSaved?: boolean;
+}) {
   const t = useTranslations("Profile");
   let text: string | null = null;
   let isError = false;
