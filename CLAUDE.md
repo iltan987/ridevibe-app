@@ -59,6 +59,7 @@ pnpm dev          # dev server
 pnpm build        # production build (also validates Cache Components rules)
 pnpm format       # Prettier (TS/JS/CSS/JSON + Tailwind class order); `format:check` only checks; Markdown/SQL by hand
 pnpm lint         # ESLint, type-aware (~30–40 s); `lint:fix` applies the autofixes
+echo '<code>' | pnpm exec eslint --stdin --stdin-filename src/lib/<existing-file>.ts   # probe a rule (a filename not on disk fails typed lint)
 pnpm exec tsc --noEmit
 pnpm test         # unit tests (node --test, *.test.ts)
                   # tested modules import relatively with `.ts` extensions (`node --test` can't resolve `@/`)
@@ -71,6 +72,8 @@ the staged files, fixes added to the commit, anything unfixable fails the commit
 breaking another file shows up only in the full `pnpm lint`); after committing, check what the hook changed
 (`git show --stat`). No format-on-edit hooks in Claude Code (iltan): they rewrite lines just written and force re-reads;
 the tools run only at commit time (subagents too).
+Try git-hook or tooling changes in a throwaway clone in the scratchpad (`node_modules` symlinked, lockfile copied, then
+`pnpm install --frozen-lockfile` in the real repo): `docs/learnings/tooling.md`.
 
 ```bash
 pnpm db:start                 # local Supabase in Docker (Docker Desktop with WSL integration must be running)
