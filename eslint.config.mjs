@@ -35,8 +35,24 @@ const eslintConfig = defineConfig([
           ],
         },
       ],
-      // Numbers print predictably in text; the rule stays on for null, undefined, booleans and objects.
-      "@typescript-eslint/restrict-template-expressions": ["error", { allowNumber: true }],
+      // Numbers print predictably in text; the rule stays on for null, undefined, booleans, RegExp, any and objects.
+      // Options replace the preset's (the rule's own defaults are looser): every flag is spelled out.
+      "@typescript-eslint/restrict-template-expressions": [
+        "error",
+        {
+          allowAny: false,
+          allowBoolean: false,
+          allowNever: false,
+          allowNullish: false,
+          allowNumber: true,
+          allowRegExp: false,
+        },
+      ],
+      // No `@ts-*` directives at all (the preset still allows `@ts-expect-error` with a description).
+      "@typescript-eslint/ban-ts-comment": [
+        "error",
+        { "ts-expect-error": true, "ts-ignore": true, "ts-nocheck": true, "ts-check": false },
+      ],
       // Stylistic: flags `() => setX(…)` shorthand arrows (~90 hits), no bugs found.
       "@typescript-eslint/no-confusing-void-expression": "off",
       // No casts (`as const` stays allowed) and no `!`: narrow with guards, parse with Zod or fix the source type.

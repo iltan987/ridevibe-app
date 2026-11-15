@@ -59,3 +59,13 @@
 - **Do:** keep the `^dark$` ignore in `eslint.config.mjs`; review canonical renames that touch theme scales (radius,
   shadows) instead of trusting the autofix blindly.
 - **Source:** found by linting (Task 4); compiled CSS compared.
+
+### Overriding a preset rule's options falls back to the rule's own defaults, not the preset's (2026-11-15)
+- **Symptom:** `restrict-template-expressions: ["error", { allowNumber: true }]` silently allowed booleans, null,
+  undefined, RegExp and `any` in templates; `@ts-expect-error` stayed allowed although casts and `@ts-*` are banned.
+- **Cause:** options in a flat-config rule entry replace the preset's options entirely; unlisted options take the
+  rule's `defaultOptions`, which are looser than `strictTypeChecked` (`ban-ts-comment` defaults
+  `ts-expect-error` to `allow-with-description`).
+- **Do:** when you set options for a rule a preset already configures, spell out every option. Prove it with a stdin
+  or scratch-file probe that must report the case the rule is meant to catch.
+- **Source:** whole-branch review of the lint-format branch; probes on this repo.
