@@ -22,7 +22,7 @@ in `.claude/settings.json` assumes it; elsewhere, put `{"autoMemoryDirectory": "
 git clone git@github.com:iltan987/ridevibe-app.git ~/projects/ridingclub && cd ~/projects/ridingclub
 git config user.name iltan && git config user.email iltancanerr@gmail.com   # commit author
 git config blame.ignoreRevsFile .git-blame-ignore-revs   # hide the Prettier reformat commit in `git blame`
-pnpm install
+pnpm install                      # also installs the pre-commit hook (husky; check: git config core.hooksPath)
 pnpm db:start                     # local Supabase in Docker; applies migrations + seed
 cp .env.example .env.local        # fill NEXT_PUBLIC_SUPABASE_* from `pnpm db:status`
 vercel link                       # scope iltan-caners-projects, project ridevibe-app
