@@ -516,6 +516,7 @@ Nothing queued.
   - `normalizePlate` (`src/lib/members/plate.ts`) / `normalizeInstagram` (`src/lib/members/schema.ts`) return
     `string | null` with an `"invalid"` sentinel string; a discriminated result (`{ ok, value }`) would let the type
     checker tell "invalid" from a real handle/plate.
+  - The four widened-row types could share a `NullableColumns<T, K>` helper.
   - `CardTitle` / `FieldDescription` now use the `text-X/Y` shorthand; an override like `cn(…, "leading-7")` from a
     caller is untested (no caller does it today; `docs/learnings/ui.md`).
   - Two justified cast disables remain: `setMemberRole` (`src/lib/access/actions.ts`, generated types can't make

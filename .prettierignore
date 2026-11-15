@@ -11,3 +11,5 @@ supabase/.temp/
 # Out of scope (Prettier covers TS/JS/CSS/JSON only): static HTML design mockups and pnpm's own YAML.
 docs/design/mockups/
 pnpm-workspace.yaml
+# Local Claude Code settings; `prettier --write .` must not rewrite them.
+.claude/
