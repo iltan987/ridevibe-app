@@ -284,3 +284,27 @@
   `src/lib/members/safety-card.ts`). A nullable argument needs a justified disable (`setMemberRole` in
   `src/lib/access/actions.ts`) or a `default null` parameter in SQL.
 - **Source:** `src/lib/supabase/database.types.ts`; found by linting (Tasks 2–3).
+
+### `supabase db dump` leaves out auth-table triggers and the pg_cron schedule (2026-11-17)
+- **Symptom:** the schema dump (`supabase db dump`, no flags) has no `create trigger … on auth.users` /
+  `on auth.identities` (our sign-up and avatar triggers, `10_profiles.sql`), and the data dump has no `cron.job` rows.
+- **Cause:** the CLI dumps only non-managed schemas; triggers belong to the (managed) table they sit on, and `cron`
+  is excluded. Restoring "roles + schema + data" into a fresh project (Supabase's backup guide) would lose them
+  silently.
+- **Do:** restore **data** onto a schema built from the migrations, only `public` + `auth.users`/`auth.identities`:
+  `DELETE` each table right before its `COPY` block, all in one transaction under the dump's
+  `session_replication_role = replica` (`scripts/db/restore-sql.mts`, `docs/runbooks/database-backup.md`). Not one
+  `truncate` over every dumped table, and not all of `auth`: hosted and local Supabase versions differ (local has
+  `storage.iceberg_*` referencing `buckets_analytics`, production doesn't → foreign-key error; production's
+  `auth.one_time_tokens` has `link_token_hash`, local doesn't → COPY error). Tried locally 2026-11-18: counts equal,
+  triggers still fire.
+- **Source:** found by testing (pre-push backup, `scripts/db/production.mts`).
+
+### The CLI prints JSON when stdout isn't a terminal (2026-11-17)
+- **Symptom:** `supabase db push --dry-run` from a script prints
+  `{"upToDate":true,…,"message":"Remote database is up to date.",…}` instead of text; errors too
+  (`{"_tag":"Error",…}`).
+- **Cause:** CLI 3 detects agents/non-TTY output (`--agent auto`) and switches the output format.
+- **Do:** match on text both formats share (`/up to date/i` in `production.mts`), or pass `--output-format` /
+  `--agent no` explicitly when parsing. `db dump` still writes plain SQL to stdout (status lines go to stderr).
+- **Source:** found by testing (CLI 3.0.0).
