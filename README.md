@@ -39,7 +39,7 @@ vercel link                       # scope iltan-caners-projects, project ridevib
   ```bash
   for p in superpowers claude-md-management context7 frontend-design; do
     claude plugin install "$p@anthropic-plugin-directory" --scope project; done
-  for p in typescript-lsp figma vercel; do
+  for p in figma vercel; do
     claude plugin install "$p@claude-plugins-official" --scope project; done
   ```
 

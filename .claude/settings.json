@@ -34,7 +34,6 @@
     "claude-md-management@anthropic-plugin-directory": true,
     "context7@anthropic-plugin-directory": true,
     "frontend-design@anthropic-plugin-directory": true,
-    "typescript-lsp@claude-plugins-official": true,
     "figma@claude-plugins-official": true,
     "vercel@claude-plugins-official": true
   }
