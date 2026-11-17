@@ -99,3 +99,15 @@
 - **Do:** standalone scripts and their helpers use `.mts` (always ESM; tsconfig, ESLint, lint-staged and
   `node --test` already include it), e.g. `scripts/db/`. Unit tests under `src/` still warn; harmless there.
 - **Source:** found by testing (Node 24.20).
+
+### Merging a branch that changed `.claude/settings.json` while iltan's local edit sits there (2026-11-18)
+- **Symptom:** `git switch main` aborts: "Your local changes to the following files would be overwritten by checkout:
+  .claude/settings.json" (the branch committed hook lines; iltan's own uncommitted edit stays in that file).
+- **Cause:** the file differs between the branches and has local changes; stashing or discarding them is off-limits.
+- **Do:** while still on the branch, if `main` is an ancestor of it (`git merge-base --is-ancestor main <branch>`),
+  build the `--no-ff` merge commit without a checkout:
+  `git update-ref refs/heads/main $(git commit-tree "<branch>^{tree}" -p main -p <branch> -m "Merge branch '<branch>'") $(git rev-parse main)`,
+  then `git switch main` (the file is now identical on both sides, the local edit carries over). If `main` moved,
+  ask iltan to commit or set aside their edit instead. Stage only your lines in that file with `git hash-object -w` +
+  `git update-index --cacheinfo` (see the pre-push backup plan, Task 1).
+- **Source:** found while merging `chore/pre-push-backup`.
