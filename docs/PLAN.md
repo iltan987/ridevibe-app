@@ -193,7 +193,7 @@ Target: **$0/month** for Phase 1 (domain renewal aside).
 | Service | Plan | Limits that matter | Our mitigation |
 |---|---|---|---|
 | Vercel | Hobby (free) | Non-commercial use only | Move to Pro ($20/mo) if the app ever takes payments |
-| Supabase | Free | 500 MB DB, 50k MAU, **no backups**, pauses after 1 week of inactivity | Own nightly encrypted backup (scheduled GitHub job, todo); keep-alive query 3×/day (Vercel cron → `/api/keep-alive`, done) |
+| Supabase | Free | 500 MB DB, 50k MAU, **no backups**, pauses after 1 week of inactivity | Encrypted backup before every production push (`pnpm db:push`, kept 14 days on iltan's PC; no nightly job: the repo is public and every extra copy is a KVKK cost; `docs/runbooks/database-backup.md`); keep-alive query 3×/day (Vercel cron → `/api/keep-alive`, done) |
 | Cloudflare R2 | Free tier | 10 GB storage, then $0.015/GB-month; free egress | Resize photos on upload; curated videos only |
 
 Upgrade trigger: Supabase Pro ($25/mo: daily backups, no pausing, 8 GB DB, 100 GB storage) when the club wants managed

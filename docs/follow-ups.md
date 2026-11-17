@@ -154,10 +154,10 @@ Nothing queued.
 - **Last-admin check races a concurrent role change** (2026-11-14, account deletion) — `request_my_account_deletion`
   peeks at other active admins; a role change committing in between could leave no admin (documented in the function;
   needs two admins acting within milliseconds).
-- **Backups on a paid plan would keep deleted data** (2026-11-14, account deletion) — the Supabase Free plan has no
-  automatic backups (docs checked 2026-11-14: daily backups only for Pro, 7 days; Team 14; Enterprise up to 30), so the
-  notice and the delete dialog say nothing about backups. If the project moves to a paid plan, add "deleted data may
-  remain in backups for up to N days" to notice §6 and `Account.delete.removed`.
+- **Backups on a paid plan would keep deleted data longer** (2026-11-14, account deletion; updated 2026-11-18) —
+  the Supabase Free plan has no automatic backups (docs checked 2026-11-14: daily backups only for Pro, 7 days; Team
+  14; Enterprise up to 30). Notice §6 and `Account.delete.kept` now name our own 14-day pre-push backups; on a paid
+  plan, add Supabase's window there too.
 - **Install prompt: iOS in-app webviews look like Safari** (2026-11-12, install-prompt final review) — Instagram /
   Facebook in-app browsers on iOS classify as `ios-safari` (`src/lib/pwa/platform.ts`), so they'd get Safari steps
   that don't work there. Signed-in users can't be in those webviews today (Google blocks OAuth there; `/sign-in` shows

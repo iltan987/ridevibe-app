@@ -186,6 +186,10 @@ export function PrivacyEn() {
           legitimate interest (KVKK art. 5/2-f), and then deleted. Safety logs are kept with the details that identify
           you removed.
         </li>
+        <li>
+          Backups: backups taken before changes to the database are kept encrypted, only on the computer of the person
+          who runs the app, for at most 14 days, and then deleted. Deleted data may remain in these backups until then.
+        </li>
       </ul>
 
       <h2>7. How we collect it</h2>

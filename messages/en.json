@@ -139,7 +139,7 @@
       "cancel": "Cancel",
       "dialogTitle": "Delete your account?",
       "removed": "What gets deleted: your profile, contact details, motorcycles, emergency contacts, blood type, preferences and application.",
-      "kept": "What stays: a rejected application is kept until its 6 months are up; access records that don't identify you remain.",
+      "kept": "What stays: a rejected application is kept until its 6 months are up; access records that don't identify you remain. Deleted data may stay in encrypted backups for up to 14 more days.",
       "keptInactive": "If you have an approved application, it's kept for 1 year from this request because your membership has ended.",
       "grace": "Sign in again within 14 days to get your account back; after that it's deleted for good.",
       "club": "Your club membership and the WhatsApp groups aren't affected.",

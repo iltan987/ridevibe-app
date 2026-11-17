@@ -31,6 +31,8 @@ vercel link                       # scope iltan-caners-projects, project ridevib
 - **`.env`** (git-ignored): `GOOGLE_LOCAL_*` / `GOOGLE_PROD_*` OAuth clients (names in `.env.example`). Keep them in
   your password manager; they can be re-issued in the Google Cloud console. Needed for Google sign-in locally and for
   `supabase config push`. Production app secrets stay in Vercel (`vercel env pull`, see CLAUDE.md).
+- **Database backups:** `pnpm db:push` / `pnpm db:backup` work right away (the public key is in the repo; gpg and
+  `vercel login` needed). Older backups stay on the old machine; key and restore: `docs/runbooks/database-backup.md`.
 - **Claude Code:** open the folder and trust it. Settings, permissions, plugins and memory (`.claude/memory/`) come
   from the repo; plugins still need a one-time install per machine:
 

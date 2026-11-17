@@ -81,6 +81,8 @@ pnpm db:reset                 # rebuild local DB from migrations (+ seed)
 pnpm db:migration <name>      # generate a migration from supabase/schemas (review it!)
 pnpm db:test                  # pgTAP tests in supabase/tests/database
 pnpm db:types                 # regenerate src/lib/supabase/database.types.ts
+pnpm db:push                  # production rollout: encrypted backup → dry-run → confirm (--yes) → push → pgTAP
+pnpm db:backup                # encrypted production backup alone (--local: the local stack); runbook below
 pnpm exec supabase migration up   # apply new migrations locally, keeping data (db:reset wipes auth users; after
                                   # an iteration that reset, restore iltan's local admin before browser review)
 kill $(ss -ltnp | grep ':3123 ' | grep -oP 'pid=\K[0-9]+')   # stop a local server; never `pkill -f` (kills own shell)
@@ -172,17 +174,20 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
 
 - Provisioned via Vercel Marketplace (Free plan); env vars are injected into Vercel **production + preview** only.
   Local dev always uses the Docker stack. Preview deployments share the production database.
-- **Migrations:** `pnpm exec supabase db push --remote=<POSTGRES_URL_NON_POOLING> --dry-run` first, then without
-  `--dry-run` + `--yes`; then run `supabase test db` against the same target. Get the URL with
-  `vercel env pull --environment=production <file outside the repo>` and delete the file afterwards.
+- **Migrations:** `pnpm db:push` (needs Docker, `vercel login`, gpg): backs up first (encrypted,
+  `~/ridevibe-backups/`, 14 days), shows the dry-run, pushes after a y/N (Claude: `--yes` once iltan said go), then
+  runs pgTAP against production. A bare remote `supabase db push` is blocked for Claude by a hook (dry-run allowed).
+  Backups, the key and restoring: `docs/runbooks/database-backup.md`. Other tools needing the URL: `vercel env pull
+  --environment=production <file outside the repo>` and delete the file afterwards.
 - Changing app data on production (e.g. role permissions): an idempotent hand-written data migration, never ad-hoc SQL.
 - **Investigating production data:** read-only psql only (`set default_transaction_read_only = on`, see below), select
   the fewest columns (mask emails), never write personal data into the repo or logs.
 - **Deleting an account:** members delete their own account on `/account` (14-day grace, purge job above). The manual
-  path below is for staff-requested deletions only: only on iltan's explicit OK; first check status/role/linked
-  application and `applications.reviewed_by`, then delete the person's non-rejected applications first (an inactive
-  person's approved application: keep it with `retained_until` = now + 1 year instead), or ask them to use the
-  self-service flow: a remaining approved unlinked application would otherwise re-activate them on their next sign-in.
+  path below is for staff-requested deletions only: only on iltan's explicit OK; `pnpm db:backup` first; check
+  status/role/linked application and `applications.reviewed_by`, then delete the person's non-rejected applications
+  first (an inactive person's approved application: keep it with `retained_until` = now + 1 year instead), or ask
+  them to use the self-service flow: a remaining approved unlinked application would otherwise re-activate them on
+  their next sign-in.
   Then `DELETE {SUPABASE_URL}/auth/v1/admin/users/<id>` with `SUPABASE_SECRET_KEY`
   (cascades profile, member_contacts, member_details, member_motorcycles, member_emergency_contacts and
   member_health; applications become unlinked, `reviewed_by` → null; `safety_access_log` rows stay with actor/target
@@ -206,7 +211,7 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
 - Google OAuth creds: `GOOGLE_LOCAL_*` / `GOOGLE_PROD_*` in the root `.env` (git-ignored). Never name config env vars
   `SUPABASE_*` — the CLI lets those override every config value, including remote blocks.
 - Functions run in `fra1` (`vercel.ts`), next to the database.
-- Rollout: merge → `db push` (dry-run first) → `test db --remote --yes` → push `main` (Vercel deploys). If the
+- Rollout: merge → `pnpm db:push` (backup, dry-run, push, pgTAP) → push `main` (Vercel deploys). If the
   migration removes something old code uses, push `main` immediately after. Don't push branches with schema changes
   for a preview first: previews use the production DB.
   Adding a column to an RPC's return type doesn't break old callers (PostgREST returns it, old JS ignores the key,
