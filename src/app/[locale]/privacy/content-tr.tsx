@@ -188,6 +188,11 @@ export function PrivacyTr() {
           dayanılarak silme talebinden itibaren 1 yıl saklanır, ardından silinir. Güvenlik kayıtları, kimliğinizi
           belirleyen bilgiler çıkarılarak saklanır.
         </li>
+        <li>
+          Yedekler: veritabanında değişiklik yapılmadan önce alınan yedekler, şifrelenmiş olarak yalnızca uygulamayı
+          yöneten kişinin bilgisayarında en fazla 14 gün saklanır, ardından silinir. Silinen bilgiler bu süre dolana
+          kadar bu yedeklerde kalabilir.
+        </li>
       </ul>
 
       <h2>7. Verileri nasıl topluyoruz?</h2>

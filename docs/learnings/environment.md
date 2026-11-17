@@ -86,3 +86,13 @@
   Run the script from the repo root with `require.resolve('next', { paths: [process.cwd()] })` (a scratchpad script
   can't resolve `next` relative to itself).
 - **Source:** found by testing (home-page photos, 2026-11-13).
+
+### Local Supabase won't start: Windows reserved its ports (2026-11-17)
+- **Symptom:** `supabase start` fails with `ports are not available: exposing port TCP 0.0.0.0:54322 … /forwards/expose
+  returned unexpected status: 500`; containers run but no host port is bound.
+- **Cause:** Windows (WinNAT/Hyper-V) reserves dynamic TCP ranges at boot; that day it held 54259–54358, covering
+  54321–54324. Check: `/mnt/c/Windows/System32/netsh.exe interface ipv4 show excludedportrange protocol=tcp`.
+- **Do:** quit Docker Desktop first, then in an admin PowerShell `net stop winnat; net start winnat`, then start
+  Docker. With Docker still running, `net stop winnat` hung until a reboot (iltan, 2026-11-17); a reboot also clears
+  the reservation. Don't change our ports for it: the ranges move at every boot.
+- **Source:** found by testing.

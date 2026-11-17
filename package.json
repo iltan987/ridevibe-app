@@ -19,7 +19,9 @@
     "db:reset": "supabase db reset",
     "db:migration": "supabase db schema declarative sync --no-apply -f",
     "db:test": "supabase test db",
-    "db:types": "supabase gen types typescript --local --schema public > src/lib/supabase/database.types.ts"
+    "db:types": "supabase gen types typescript --local --schema public > src/lib/supabase/database.types.ts",
+    "db:backup": "node scripts/db/production.mts backup",
+    "db:push": "node scripts/db/production.mts push"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

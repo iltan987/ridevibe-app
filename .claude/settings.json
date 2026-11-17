@@ -16,6 +16,19 @@
       "mcp__plugin_vercel_vercel__get_runtime_logs"
     ]
   },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [{ "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/scripts/db/guard-hook.mts\"" }]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [{ "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/scripts/db/production.mts\" prune" }]
+      }
+    ]
+  },
   "enabledPlugins": {
     "superpowers@anthropic-plugin-directory": true,
     "claude-md-management@anthropic-plugin-directory": true,

@@ -91,3 +91,11 @@
 - **Do:** copy the lockfile into the clone too, and afterwards run `pnpm install --frozen-lockfile` in the real repo
   to confirm it is intact.
 - **Source:** hook test for the pre-commit setup.
+
+### Node scripts run directly: use `.mts`, not `.ts` (2026-11-17)
+- **Symptom:** `node scripts/x.ts` prints `[MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of … is not
+  specified` on stderr (for every `.ts` module it loads); in a Claude Code hook that stderr is what Claude is shown.
+- **Cause:** `package.json` has no `"type"`, so Node guesses per file and reparses ESM syntax.
+- **Do:** standalone scripts and their helpers use `.mts` (always ESM; tsconfig, ESLint, lint-staged and
+  `node --test` already include it), e.g. `scripts/db/`. Unit tests under `src/` still warn; harmless there.
+- **Source:** found by testing (Node 24.20).

@@ -62,7 +62,9 @@
 - **Fact:** "We automatically back up all Pro, Team, and Enterprise Plan projects on a daily basis" (Pro 7 days, Team
   14, Enterprise up to 30); Free projects are told to export with `supabase db dump` themselves. So deleted data
   leaves no backup copy today, and the notice says nothing about backups.
-- **Do:** if the project moves to a paid plan, add the backup window to notice §6 and the delete dialog
-  (`docs/follow-ups.md`, "Backups on a paid plan"). Some third-party pages claim Free has hidden backups; the docs
-  don't say so — re-check the dashboard's Database → Backups page then.
+- **Do:** we back up ourselves before every production push (`pnpm db:push`, encrypted, 14 days, iltan's PC only;
+  `docs/runbooks/database-backup.md`); notice §6 and the delete dialog name that window (2026-11-18). If the
+  project moves to a paid plan, add Supabase's window too (`docs/follow-ups.md`, "Backups on a paid plan"). Some
+  third-party pages claim Free has hidden backups; the docs don't say so — re-check the dashboard's Database →
+  Backups page then.
 - **Source:** supabase.com/docs/guides/platform/backups (checked 2026-11-14).
