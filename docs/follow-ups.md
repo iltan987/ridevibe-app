@@ -10,7 +10,12 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ## Next up (iltan asked for these; in priority order; start in a new session)
 
-Nothing queued.
+- **The repo is public now** (2026-11-18, iltan made `iltan987/ridevibe-app` public) — (a) scan the whole git history
+  for what must not be public: secrets/keys, personal data in docs, fixtures, SQL previews or learnings, photo files
+  ever committed (incl. removed ones); decide per find (rewrite history with `git filter-repo` + force-push, rotate a
+  secret, or accept). (b) Rework CLAUDE.md "Removing or replacing a website photo": step 2 accepts orphaned commits
+  reachable by SHA because the repo was private; public changes that (GitHub Support purge, or keep the repo private
+  again). Also re-check other places that assumed a private repo.
 
 ## Open decisions (need iltan)
 

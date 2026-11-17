@@ -34,6 +34,8 @@ join, rules, Samet's answers): `docs/content/home-page-questions.md`.
   out. New machine: README "New machine setup".
 - **Fix the environment yourself** before calling it a blocker: e.g. Docker down → start
   `"/mnt/c/Program Files/Docker/Docker/Docker Desktop.exe" &` and wait for `/var/run/docker.sock`.
+  `supabase start` "ports are not available" = Windows reserved the ports: quit Docker first, then admin
+  `net stop winnat; net start winnat` (iltan runs it; with Docker running it hangs) or reboot (learnings/environment.md).
 - **Remove dead code.** Unused exports, helpers, messages, flags and leftovers from replaced approaches go in the same
   change that makes them dead, unless there is a stated reason to keep them. Also do a periodic dead-code sweep
   (`docs/follow-ups.md`).
@@ -48,6 +50,8 @@ join, rules, Samet's answers): `docs/content/home-page-questions.md`.
   then merge into `main` with `--no-ff`. Small doc/config tweaks may go straight to `main`.
 - Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`).
 - Stage files by path; never `git commit -a` / `git add -A`: iltan's local `.claude/settings.json` change stays unstaged.
+  The file also holds shared hooks: commit only your lines (`git hash-object -w` + `git update-index --cacheinfo`),
+  merge without a checkout when `git switch` refuses (both recipes: docs/learnings/tooling.md).
 - Never discard working-tree changes you didn't make: no `git checkout -- .`, `git restore .`, `git reset --hard`,
   `git stash` or `git clean`; undo your own edits file by file (a tree-wide checkout wiped iltan's local settings once).
   Subagent briefs repeat this rule.
@@ -63,6 +67,7 @@ echo '<code>' | pnpm exec eslint --stdin --stdin-filename src/lib/<existing-file
 pnpm exec tsc --noEmit
 pnpm test         # unit tests (node --test, *.test.ts)
                   # tested modules import relatively with `.ts` extensions (`node --test` can't resolve `@/`)
+                  # scripts run directly by node (scripts/db/) are `.mts`; Supabase CLI prints JSON when stdout isn't a TTY
 ```
 
 `git commit` runs a pre-commit hook (husky + lint-staged, `lint-staged.config.mjs`): `eslint --fix` then Prettier on
@@ -179,6 +184,7 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   runs pgTAP against production. A bare remote `supabase db push` is blocked for Claude by a hook (dry-run allowed).
   Backups, the key and restoring: `docs/runbooks/database-backup.md`. Other tools needing the URL: `vercel env pull
   --environment=production <file outside the repo>` and delete the file afterwards.
+  Decrypting a backup needs iltan's gpg passphrase cached first (iltan runs one `gpg --decrypt` in their terminal).
 - Changing app data on production (e.g. role permissions): an idempotent hand-written data migration, never ad-hoc SQL.
 - **Investigating production data:** read-only psql only (`set default_transaction_read_only = on`, see below), select
   the fewest columns (mask emails), never write personal data into the repo or logs.
