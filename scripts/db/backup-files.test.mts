@@ -1,9 +1,12 @@
 // Run with: pnpm test
 import assert from "node:assert/strict";
+import { mkdir, mkdtemp, readdir, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { Readable } from "node:stream";
 import { text } from "node:stream/consumers";
 import { test } from "node:test";
-import { backupFolderName, createMarkerCheck, DATA_MARKERS, expiredBackups } from "./backup-files.mts";
+import { backupFolderName, createMarkerCheck, DATA_MARKERS, expiredBackups, pruneBackups } from "./backup-files.mts";
 
 test("backupFolderName: UTC time without colons or milliseconds", () => {
   const now = new Date("2026-11-15T21:04:05.123Z");
@@ -57,4 +60,20 @@ test("createMarkerCheck: an empty stream misses every marker", async () => {
   const { output, missing } = await check([]);
   assert.equal(output, "");
   assert.deepEqual(missing, [...DATA_MARKERS]);
+});
+
+test("pruneBackups: deletes expired folders, keeps the rest, returns what it deleted", async () => {
+  const root = await mkdtemp(join(tmpdir(), "prune-test-"));
+  try {
+    for (const name of ["2026-11-01T00-00-00Z", "2026-11-29T00-00-00Z", "notes"]) await mkdir(join(root, name));
+    const deleted = await pruneBackups(root, new Date("2026-11-30T00:00:00Z"));
+    assert.deepEqual(deleted, ["2026-11-01T00-00-00Z"]);
+    assert.deepEqual((await readdir(root)).sort(), ["2026-11-29T00-00-00Z", "notes"]);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("pruneBackups: a missing backup folder is not an error", async () => {
+  assert.deepEqual(await pruneBackups(join(tmpdir(), "prune-test-missing-folder"), new Date()), []);
 });

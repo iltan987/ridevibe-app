@@ -11,6 +11,8 @@ const blocked = [
   "cd /repo && pnpm exec supabase db push --remote=$URL --yes",
   "supabase db push --remote=x | tee log",
   "supabase  db   push --remote",
+  "pnpm exec supabase db push \\\n  --remote=$URL --yes",
+  "pnpm exec supabase db \\\n  push --remote=$URL",
 ];
 
 const allowed = [

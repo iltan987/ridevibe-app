@@ -2,25 +2,20 @@
 //
 //   node scripts/db/production.mts backup [--local]   back up (production, or the local stack with --local)
 //   node scripts/db/production.mts push [--yes]       back up, dry-run, confirm, push, run pgTAP against production
+//   node scripts/db/production.mts prune              delete expired backups only (Claude Code SessionStart hook)
 //
 // Each dump streams through a marker check straight into `gpg --encrypt` (public key in this folder), so no plaintext
 // reaches the disk. Backups: ~/ridevibe-backups/<UTC time>/, deleted after 14 days. Runbook:
 // docs/runbooks/database-backup.md. The production URL is only ever passed as an argument, never printed.
 import { spawn, type StdioOptions } from "node:child_process";
 import { existsSync, readFileSync, rmSync } from "node:fs";
-import { mkdir, mkdtemp, readdir, rename, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, rename, rm } from "node:fs/promises";
 import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 import { createInterface } from "node:readline/promises";
 import { pipeline } from "node:stream/promises";
 import { parseEnv } from "node:util";
-import {
-  BACKUP_MAX_AGE_DAYS,
-  backupFolderName,
-  createMarkerCheck,
-  DATA_MARKERS,
-  expiredBackups,
-} from "./backup-files.mts";
+import { backupFolderName, createMarkerCheck, DATA_MARKERS, pruneBackups } from "./backup-files.mts";
 
 const BACKUP_ROOT = join(homedir(), "ridevibe-backups");
 const PUBLIC_KEY = join(import.meta.dirname, "backup-key.asc");
@@ -114,6 +109,7 @@ async function dumpEncrypted(target: string[], dumpArgs: string[], markers: read
 }
 
 async function backup(url: string | null): Promise<string> {
+  await pruneBackups(BACKUP_ROOT, new Date());
   await mkdir(BACKUP_ROOT, { recursive: true, mode: 0o700 });
   const name = backupFolderName(new Date(), url === null);
   const partial = join(BACKUP_ROOT, `${name}.partial`);
@@ -134,10 +130,6 @@ async function backup(url: string | null): Promise<string> {
   }
   const folder = join(BACKUP_ROOT, name);
   await rename(partial, folder);
-
-  for (const expired of expiredBackups(await readdir(BACKUP_ROOT), new Date(), BACKUP_MAX_AGE_DAYS)) {
-    await rm(join(BACKUP_ROOT, expired), { recursive: true, force: true });
-  }
   return folder;
 }
 
@@ -171,9 +163,14 @@ async function push(url: string, yes: boolean): Promise<number> {
 
 async function main(argv: string[]): Promise<number> {
   const [mode, ...flags] = argv;
+  if (mode === "prune" && flags.length === 0) {
+    const deleted = await pruneBackups(BACKUP_ROOT, new Date());
+    if (deleted.length > 0) console.log(`Deleted ${deleted.length} expired database backup(s).`);
+    return 0;
+  }
   const unknown = flags.filter((flag) => flag !== "--local" && flag !== "--yes");
   if ((mode !== "backup" && mode !== "push") || unknown.length > 0) {
-    console.error("Usage: production.mts backup [--local] | push [--yes]");
+    console.error("Usage: production.mts backup [--local] | push [--yes] | prune");
     return 2;
   }
   const local = flags.includes("--local");

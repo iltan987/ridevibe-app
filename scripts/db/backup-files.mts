@@ -1,5 +1,7 @@
-// Pure helpers for `production.mts`: backup folder names, which folders to prune, and a pass-through check that a
+// Helpers for `production.mts`: backup folder names, pruning expired folders, and a pass-through check that a
 // dump contains the tables it must contain (run on the stream before gpg, so no plaintext is ever written).
+import { readdir, rm } from "node:fs/promises";
+import { join } from "node:path";
 import { StringDecoder } from "node:string_decoder";
 import { Transform } from "node:stream";
 
@@ -26,6 +28,19 @@ export function expiredBackups(names: readonly string[], now: Date, maxAgeDays: 
     const age = now.getTime() - Date.UTC(+year, +month - 1, +day, +hour, +minute, +second);
     return age > maxAgeDays * DAY_MS || (name.endsWith(".partial") && age > PARTIAL_MAX_AGE_MS);
   });
+}
+
+/** Deletes the expired backup folders in `root` (missing root: nothing to do); returns their names. */
+export async function pruneBackups(root: string, now: Date): Promise<string[]> {
+  let names: string[];
+  try {
+    names = await readdir(root);
+  } catch {
+    return [];
+  }
+  const expired = expiredBackups(names, now, BACKUP_MAX_AGE_DAYS);
+  for (const name of expired) await rm(join(root, name), { recursive: true, force: true });
+  return expired;
 }
 
 /** A pass-through stream that records which markers start a line. */

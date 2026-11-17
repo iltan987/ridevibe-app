@@ -14,7 +14,12 @@ Spec: `docs/superpowers/specs/2026-11-15-pre-push-backup-design.md`. Code: `scri
 A backup is `~/ridevibe-backups/<UTC time>/{roles,schema,data}.sql.gpg` (folder mode 700). Every dump streams
 through a check (the data must contain `public.profiles` and `auth.users`) straight into `gpg`, encrypted to the
 public key `scripts/db/backup-key.asc`; no plaintext is written. A failed run leaves no backup (a `.partial` folder
-after Ctrl+C is deleted by a later run). Each run deletes backups older than 14 days.
+after Ctrl+C is deleted by a later run, after an hour).
+
+Backups older than 14 days are deleted by `node scripts/db/production.mts prune`, which runs at the start of every
+Claude Code session in this project (`SessionStart` hook in `.claude/settings.json`) and before every backup. Gap: if
+neither happens for a while, an old backup outlives its 14 days until the next session; open Claude Code here (or
+run the prune command) at least every two weeks while backups exist.
 
 ## KVKK rules
 
@@ -46,11 +51,16 @@ foreign-key checks off (the dump's own `session_replication_role = replica`), an
 `auth.identities`. Skipped: auth's short-lived tables (sessions, refresh/one-time tokens, flows), its audit log,
 `storage` (unused) and the rest. Their tables differ between the hosted and the local Supabase versions (production
 has no `storage.iceberg_*`; its `auth.one_time_tokens` has a column the local one lacks), and nobody needs them back:
-after a restore people at most sign in again. It needs the target's schema to match the backup's.
+after a restore people at most sign in again. It needs the target's schema to match the backup's. It ends in
+`COMMIT` only when the dump's last pg_dump line (`-- \unrestrict …`) came through; a cut-off stream (failed or
+corrupt decrypt) ends in `ROLLBACK`, and the script exits 1. Sessions of restored accounts stay valid (replica mode
+doesn't cascade); rows of accounts created after the backup are removed from `auth.users` but their sessions linger
+until they expire.
 
 ### Into the local stack (test restore)
 
 ```bash
+set -o pipefail        # a failing gpg or filter must fail the whole pipe
 pnpm db:reset          # schema from the migrations (wipes local data, incl. your local admin)
 B=~/ridevibe-backups/<folder>
 gpg --batch --quiet --decrypt "$B/data.sql.gpg" | node scripts/db/restore-sql.mts \
@@ -71,7 +81,8 @@ in iltan's own terminal.
 1. `pnpm db:backup` first (the current state, in case the restore makes things worse).
 2. The schema must match the backup's. If a migration ran since the backup, either restore after rolling the schema
    back with a new migration, or restore only the affected tables (pass the dump through `grep`/an editor to keep
-   only those tables' `COPY` blocks first). Compare: `gpg --decrypt <folder>/schema.sql.gpg | diff - <(pnpm exec supabase db dump --remote="$URL")`.
+   only those tables' `COPY` blocks first; keep the dump's last `-- \unrestrict` line, or the restore rolls back).
+   Compare: `gpg --decrypt <folder>/schema.sql.gpg | diff - <(pnpm exec supabase db dump --remote="$URL")`.
 3. Run the pipe above with `psql "$URL"` instead of `docker exec … psql -U postgres` (URL:
    `POSTGRES_URL_NON_POOLING` from `vercel env pull --environment=production <file outside the repo>`; delete the
    file afterwards), e.g. `docker run --rm -i postgres:17-alpine psql "$URL" -v ON_ERROR_STOP=1 -q`.

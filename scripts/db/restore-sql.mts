@@ -20,18 +20,25 @@ export function isRestoredTable(schema: string, table: string): boolean {
 const COPY_HEADER = /^COPY "([^"]+)"\."([^"]+)"/;
 const SETVAL = /^SELECT pg_catalog\.setval\('"([^"]+)"\./;
 const END_OF_DATA = "\\.";
+/** pg_dump's last line (commented out by the CLI): a dump without it was cut off. */
+const END_OF_DUMP = "-- \\unrestrict ";
 
-export function createRestoreFilter(isRestored: (schema: string, table: string) => boolean): Transform {
+/** Ends in COMMIT only for a complete dump; a cut-off one (e.g. a failed decrypt) ends in ROLLBACK. */
+export function createRestoreFilter(
+  isRestored: (schema: string, table: string) => boolean,
+): Transform & { complete(): boolean } {
   const decoder = new StringDecoder("utf8");
   let rest = "";
   let inBlock = false;
   let keep = false;
+  let complete = false;
 
   const lineOut = (line: string): string => {
     if (inBlock) {
       if (line === END_OF_DATA) inBlock = false;
       return keep ? `${line}\n` : "";
     }
+    if (line.startsWith(END_OF_DUMP)) complete = true;
     const header = COPY_HEADER.exec(line);
     if (header) {
       const [, schema, table] = header;
@@ -51,7 +58,7 @@ export function createRestoreFilter(isRestored: (schema: string, table: string) 
     return lines.map(lineOut).join("");
   };
 
-  return new Transform({
+  const transform = new Transform({
     construct(callback) {
       this.push("BEGIN;\n");
       callback();
@@ -62,11 +69,17 @@ export function createRestoreFilter(isRestored: (schema: string, table: string) 
     flush(callback) {
       let out = linesOut(decoder.end());
       if (rest !== "") out += lineOut(rest);
-      callback(null, `${out}COMMIT;\n`);
+      callback(null, `${out}${complete ? "COMMIT" : "ROLLBACK"};\n`);
     },
   });
+  return Object.assign(transform, { complete: () => complete });
 }
 
 if (import.meta.main) {
-  await pipeline(process.stdin, createRestoreFilter(isRestoredTable), process.stdout);
+  const restore = createRestoreFilter(isRestoredTable);
+  await pipeline(process.stdin, restore, process.stdout);
+  if (!restore.complete()) {
+    process.stderr.write("The dump ended early (no pg_dump end line): rolled back, nothing restored.\n");
+    process.exitCode = 1;
+  }
 }

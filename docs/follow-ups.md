@@ -540,3 +540,21 @@ Nothing queued.
   `countApplicationsByStatus` (`src/lib/applications/queries.ts`); extract a helper.
 - **Forms already open in another tab** (2026-11-14, account deletion) — a `deleting` user can still submit forms open
   in another tab (profile, apply); the rows are hidden and purged, or return on restore: harmless, noted.
+- **Guard other destructive remote commands** (2026-11-18, pre-push backup final review) — the Claude Code guard
+  (`scripts/db/push-guard.mts`) blocks only `supabase db push` to a remote; `supabase db reset --remote` (wipes
+  production) and `supabase migration up --remote` pass unguarded. Block `db reset` with a remote target outright and
+  route other remote writes through `pnpm db:push`. Risk if left: a mistaken Claude command with no backup first.
+- **Pre-push backup review minors** (2026-11-18, final review) — (a) guard: a single `&` isn't a separator and
+  `--dry-run` anywhere in a segment allows it (`… --dry-run & supabase db push --remote` passes); text that merely
+  mentions the command (a `git commit -m` message, `grep`) is blocked (recoverable; rephrase). (b) `production.mts`:
+  SIGTERM/SIGHUP (terminal closed) skip the `exit` handler, so the private temp `.env` with every production secret
+  can stay in `os.tmpdir()` (handle them like SIGINT); `/up to date/i` is correct for CLI 3.0.0 (stdout only when
+  nothing is pending) but should be re-checked on CLI upgrades or replaced by `--output-format json` + `upToDate`;
+  the roles and schema dumps have no content check (a `CREATE TABLE` marker for the schema); when gpg dies first the
+  error says "Dump failed" (check gpg's result first). (c) Unverified: whether CLI 3 error output can echo the
+  `--remote=<url>` value (try a fake URL on `127.0.0.1:1`). (d) Restore: sessions of accounts created after the
+  backup linger until they expire (documented in the runbook); delete `auth.sessions` too if that matters.
+- **Backups older than 14 days without a Claude session** (2026-11-18, final review) — pruning runs at every Claude
+  Code session start here and before every backup; with neither for over two weeks, the newest backup outlives the
+  notice's 14 days. A Windows scheduled task (`wsl … production.mts prune`) would close the gap; open Claude Code here
+  every two weeks meanwhile (runbook).
