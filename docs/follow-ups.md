@@ -589,5 +589,8 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   with-birth-date form.
 - **`apply-nav-e2e.mjs` "second load, one layout" fails every run** (2026-11-18, ön alım Task 8) — "visitor phone TR"
   and/or "pending-noapp phone TR" see the 4-tab guess before the 5-tab layout (4 of 4 runs, 1-2 FAILs each); the same two
-  FAIL on a clean build of `main` (b7682f9) on the same stack, so not a regression of this branch. Earlier seen as a
+  FAIL on a clean build of `main` (b7682f9) on the same stack (control run output, verbatim:
+  `FAIL visitor phone TR: second load, one layout from first paint to settled — guess:4tabs@0/75/150/225 hero=1 end=1 desk=0 → guess:5tabs+B@0/75/150/225/300 hero=1 end=1 desk=0 → real:5tabs+B@0/75/150/225/300 hero=1 end=1 desk=0`,
+  `FAIL pending-noapp phone TR: second load, one layout from first paint to settled — guess:4tabs@0/75/150/225 hero=1 end=1 desk=0 → guess:5tabs+B@0/75/150/225/300 hero=1 end=1 desk=0 → real:5tabs+B@0/75/150/225/300 hero=1 end=1 desk=0`,
+  `2 FAILED`, 49 PASS), so not a regression of this branch. Earlier seen as a
   one-off flake (above); now consistent: investigate the stored-hint timing on the second load.
