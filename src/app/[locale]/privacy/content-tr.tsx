@@ -148,8 +148,9 @@ export function PrivacyTr() {
         Kulüp notları: üye notlarını görme yetkisi verilen kulüp ekibi üyeleri, katılımınız ve kulüp içindeki
         davranışlarınız hakkında olgusal notlar kaydedebilir. Notları yalnızca bu yetkiye sahip kişiler okuyabilir;
         yönetici rolündeki kişiler hakkındaki notları yalnızca yöneticiler görebilir. Notları siz uygulamada
-        göremezsiniz; içeriğini 8. bölümdeki haklarınız çerçevesinde bizden isteyebilirsiniz. Notlar hesabınız
-        silindiğinde sizinle birlikte silinir.
+        göremezsiniz; içeriğini 8. bölümdeki haklarınız çerçevesinde bizden isteyebilirsiniz. Bu durumda notların
+        içeriğini ve tarihini paylaşırız; notu yazan ekip üyesinin adını, onun kişisel verisi olduğu için paylaşmayız.
+        Notlar hesabınız silindiğinde sizinle birlikte silinir.
       </p>
       <p>
         Acil durum kişileriniz ve kan grubunuz üye rehberinde herkese gösterilmez. Bunları yalnızca kulübün güvenlik
