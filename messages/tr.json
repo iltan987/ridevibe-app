@@ -598,6 +598,10 @@
         "safety": {
           "label": "Güvenlik bilgilerini görme",
           "description": "Üyelerin acil durum kişilerini, kan grubunu ve plakalarını görebilir; kan grubuna göre arayabilir."
+        },
+        "notes": {
+          "label": "Üye notlarını görme ve yazma",
+          "description": "Üyeler hakkındaki iç notları görebilir ve yazabilir; üyenin kendisi göremez. Yönetici hesaplarının notlarını yalnızca yöneticiler görür."
         }
       }
     },

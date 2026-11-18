@@ -598,6 +598,10 @@
         "safety": {
           "label": "See safety information",
           "description": "Can see members' emergency contacts, blood type and plates, and search by blood type."
+        },
+        "notes": {
+          "label": "Read and write member notes",
+          "description": "Can read and write internal staff notes about members; the member never sees them. Notes about admin accounts are visible to admins only."
         }
       }
     },

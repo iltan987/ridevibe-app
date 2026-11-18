@@ -322,3 +322,14 @@
 - **Also:** adding a column to a `returns table` function makes the declarative diff emit `DROP FUNCTION` + `CREATE`
   + fresh grants (a return type can't be replaced in place); check the grants at the end of the generated file.
 - **Source:** `supabase/schemas/30_member_directory.sql` (`club_overview`), probation Task 2.
+
+### A new `permission` enum value: split migration, and tests that count permissions
+- **Symptom:** `pnpm db:migration` after adding an enum value (plus a table using it) emits two files (`_1`, `_2`):
+  `ALTER TYPE … ADD VALUE` goes into its own migration (a new value can't be used in the transaction that adds it);
+  `_1` also carries a stray `SELECT cron.unschedule('purge-deleted-accounts')`. `roles.test.sql` then failed on a
+  hardcoded permission count.
+- **Do:** keep both files, delete the `cron.unschedule` line; tests that need "every permission" count with
+  `array_length(enum_range(null::public.permission), 1)`, never a literal.
+- **Also:** a planted row (as `postgres`) through a before-insert trigger that sets `author_id := auth.uid()` gets a
+  null author; fine for fixtures that only need visibility.
+- **Source:** `supabase/schemas/18_member_notes.sql`, probation Task 3.
