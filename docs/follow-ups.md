@@ -578,3 +578,16 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   Code session start here and before every backup; with neither for over two weeks, the newest backup outlives the
   notice's 14 days. A Windows scheduled task (`wsl … production.mts prune`) would close the gap; open Claude Code here
   every two weeks meanwhile (runbook).
+- **Probation `/members` fallback shows the list skeleton** (2026-11-18, ön alım Task 8 E2E) — `skeletons.mjs
+  STATES=probation /members` finds the members fallbacks (total, search, chips, row, pager) but no matching
+  `data-skeleton-result`: the page streams in the crowd card (`ClubOverview`), so a probation member first sees a list
+  skeleton that is replaced by a different card (layout shift). Give the card its own `data-skeleton-result` and let the
+  fallback follow `hasSessionCookie()`/a stored hint, or accept it (one-off view for people in their first weeks).
+- **`/account` visibility skeleton for members without a birth date** (2026-11-18, ön alım Task 8 E2E) — `profile-visibility`
+  measures -208px at 390px for `admin@test.local` and `probation@test.local` (no birth date: the form also holds the
+  one-time birth-date block) and 0 for `member@test.local`. Not caused by the probation work; skeleton mirrors the
+  with-birth-date form.
+- **`apply-nav-e2e.mjs` "second load, one layout" fails every run** (2026-11-18, ön alım Task 8) — "visitor phone TR"
+  and/or "pending-noapp phone TR" see the 4-tab guess before the 5-tab layout (4 of 4 runs, 1-2 FAILs each); the same two
+  FAIL on a clean build of `main` (b7682f9) on the same stack, so not a regression of this branch. Earlier seen as a
+  one-off flake (above); now consistent: investigate the stored-hint timing on the second load.
