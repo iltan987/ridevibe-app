@@ -159,7 +159,7 @@ Requested by iltan 2026-11-08: people responsible for members must be able to re
 with notes only they can see.
 
 - **Confidential notes** (built 2026-11-18, without `kind`; admin-role holders' notes admin-only, no notes about
-  oneself) on a member (`member_notes`: member, author, kind, body, created_at). Readable and writable
+  oneself) on a member (`member_notes`: member, author, body, created_at). Readable and writable
   only with a new permission **`members.notes`**; the member never sees them in the app. Append-only: no editing in
   place (a correction is a new note), author + time always shown; only admins can delete (e.g. KVKK erasure).
 - **Warnings** = notes of kind `warning`, created with **`members.discipline`**; warning count shown in member lists.

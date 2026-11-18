@@ -76,6 +76,14 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 - **Events: "full members only" ride flag** (2026-11-18, ön alım + notes; decided, spec non-goal) — ön alım members may
   join some rides and not others; the flag comes with Events (PLAN step 3), together with the event requirements.
+- **Probation E2E gaps** (2026-11-18, ön alım + notes, final review) — `scripts/e2e/probation-e2e.mjs`: the district
+  check matches only `district":` keys (a district printed as plain text in the crowd card would pass; idea: compare
+  bare-word counts with the signed-out page); the HTML render check asserts only the locked sentence (add the summary);
+  the RSC capture could pick a prefetch request (filter on path `/members` / no `next-router-prefetch`). Risk: a leak
+  or a wrong capture goes unnoticed.
+- **`/admin/members` skeleton not re-measured** (2026-11-18, ön alım + notes, final review) — rows gained the "Notlar"
+  button and two status buttons on probation/inactive rows; `ListSkeleton` (`h-36.75` at 390px) not re-checked. Run
+  `scripts/e2e/skeletons.mjs`. Risk: layout shift on load.
 - **Notes on the application detail page** (2026-11-18, ön alım + notes; spec non-goal) — notes exist only on
   `/admin/members`; staff reviewing an application can't see or add notes there. Add if staff ask.
 - **Reminder for long ön alım periods** (2026-11-18, ön alım + notes; spec non-goal) — ön alım usually lasts days, but
@@ -92,7 +100,7 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   deleted 6 months after the decision and member data deleted/anonymised 1 year after membership ends, but no job does
   it yet (the account-deletion purge only covers self-deleted accounts and their kept applications). Natural home:
   another step in `private.purge_deleted_accounts`'s nightly job (or a sibling job), with "membership ended" needing a
-  date (`inactive` has none today). Also the retention of pending accounts that never apply (item below).
+  date (`profiles.status_changed_at` now records when a member became `inactive`; null for changes before 2026-11-18). Also the retention of pending accounts that never apply (item below).
 - **"Etkinlikleri Gör" back in the hero** (2026-11-13, home content) — removed while Events has no content; restore the
   secondary hero button when Events ships.
 - **Gallery candidates** (2026-11-13, home content) — Glob Coffee and small-café photos, not committed; the small-café

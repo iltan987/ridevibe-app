@@ -168,7 +168,7 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   email) and the person's `auth.audit_log_entries` rows (no FK; matched on `payload->>'actor_id'`; rows also hold the
   email in `actor_username` and the IP in `ip_address`).
   Approved applications of accounts that were `inactive` are kept unlinked with `applications.retained_until`
-  (request + 1 year) and then deleted; a kept row never matches, links or activates anyone (every email-matching path
+  (request + 1 year) and then deleted; a deleted ön alım account is handled like an active one (its approved application is deleted; only `inactive` keeps it for a year); a kept row never matches, links or activates anyone (every email-matching path
   skips `retained_until is not null`); `/admin/members` flags a returning pending account as `former_member`. The
   schedule is DML: a hand-written idempotent migration (`docs/learnings/supabase.md`).
   Generated migrations touching `90_ops.sql` may emit `cron.unschedule(...)`: delete that line.
