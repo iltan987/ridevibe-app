@@ -569,7 +569,7 @@
       "empty": "No notes yet.",
       "unknownAuthor": "Deleted account",
       "label": "New note",
-      "hint": "Notes can be shown to the person if they ask for their data; stick to facts.",
+      "hint": "Members never see notes in the app. Under KVKK they can ask for the data held about them; a note's content may then be shared, never its author's name. So write what you saw, not opinions.",
       "add": "Add note",
       "delete": "Delete",
       "deleteConfirm": "Delete this note?",

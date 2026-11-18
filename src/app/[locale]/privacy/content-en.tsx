@@ -149,7 +149,9 @@ export function PrivacyEn() {
         Club notes: club team members who have been given the permission to see member notes may record factual notes
         about your participation and conduct in the club. Only people with this permission can read the notes; notes
         about people in the admin role can only be seen by admins. You cannot see the notes in the app; you can request
-        their content from us under your rights in section 8. Notes are deleted together with your account.
+        their content from us under your rights in section 8. We then share each note&apos;s content and date; we do not
+        share the name of the team member who wrote it, as that is their personal data. Notes are deleted together with
+        your account.
       </p>
       <p>
         Your emergency contacts and blood type are not shown to everyone in the directory. Only the club&apos;s safety

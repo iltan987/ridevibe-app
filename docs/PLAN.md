@@ -248,6 +248,11 @@ file and in `docs/follow-ups.md` are such questions.
   accounts are kept 1 year from the request; spec `docs/superpowers/specs/2026-11-14-account-deletion-design.md`).
   **Data download** (art. 11) is still open (`docs/follow-ups.md`). Deleting rejected applications after their
   retention period is **not built yet** (follow-ups, "General retention jobs").
+- **Access requests and staff notes** (decided 2026-11-18, Claude, no lawyer): a note about a member is that member's
+  personal data (KVKK art. 3: information relating to them, whoever wrote it; cf. CJEU *Nowak* C-434/16, examiner
+  comments are the candidate's data), so an art. 11 request is answered with each note's content and date, by hand
+  within 30 days. The author's name is the staff member's own personal data and is **never** shared. Members never
+  see notes in the app. Notice §5 and the notes dialog hint say so.
 - Retention: instead of keeping expired records "archived" (still personal data → not allowed past the purpose),
   **anonymise** them: strip name/contact/birth date/free text, keep counts, district/side, source, dates for stats.
 
@@ -257,8 +262,8 @@ file and in `docs/follow-ups.md` are such questions.
 - Contact email for data requests (e.g. `kvkk@ridevibe.com.tr` forwarded to a Gmail).
 - Retention periods: 6 months for rejected applications, 1 year after membership ends (proposed, accepted by iltan).
 - Cross-border transfer formalities (art. 9) — Claude researches the formalities (no lawyer); decide before public launch.
-- Member conduct notes/warnings/bans and the ban list (identifiers kept to detect re-joining): wording in the privacy
-  notice, retention, and how to answer access requests.
+- Member conduct warnings/bans and the ban list (identifiers kept to detect re-joining): wording in the privacy
+  notice, retention, and how to answer access requests (notes: settled above, "Access requests and staff notes").
 
 ## Git workflow
 

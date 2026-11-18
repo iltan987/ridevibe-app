@@ -569,7 +569,7 @@
       "empty": "Henüz not yok.",
       "unknownAuthor": "Silinmiş hesap",
       "label": "Yeni not",
-      "hint": "Kişi verilerini isterse notlar kendisine gösterilebilir; olguları yaz.",
+      "hint": "Üye notları uygulamada görmez. KVKK'ya göre kendisi hakkındaki bilgileri isterse notun içeriği paylaşılabilir, yazanın adı paylaşılmaz. Bu yüzden yorum değil, gördüğünü yaz.",
       "add": "Not ekle",
       "delete": "Sil",
       "deleteConfirm": "Bu not silinsin mi?",
