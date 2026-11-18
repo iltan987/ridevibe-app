@@ -35,20 +35,23 @@ export default function MembersPage() {
 async function Members() {
   const me = await requirePermission("members.manage", "/admin/members");
 
-  const [{ profiles, overCeiling }, roles, t, tAccount, format] = await Promise.all([
+  const [{ profiles, overCeiling: profilesOver }, roles, t, tAccount, format] = await Promise.all([
     listAllProfiles(),
     listRoles(),
     getTranslations("Admin.members"),
     getTranslations("Account"),
     getFormatter(),
   ]);
-  if (overCeiling) console.error("admin members over ceiling", { count: `${LIST_CEILING}+` });
 
   const canNotes = can(me.access, "members.notes");
-  const [flags, notes] = await Promise.all([
+  const [flags, noteResult] = await Promise.all([
     getPendingApplicationFlags(profiles.filter((p) => p.status === "pending").map((p) => p.id)),
     canNotes ? noteCounts() : Promise.resolve(null),
   ]);
+
+  const notes = noteResult?.counts ?? null;
+  const overCeiling = profilesOver || (noteResult?.overCeiling ?? false);
+  if (overCeiling) console.error("admin members over ceiling", { count: `${LIST_CEILING}+` });
 
   const roleLabel = (roleId: string | null) => {
     const role = roles.find((r) => r.id === roleId);

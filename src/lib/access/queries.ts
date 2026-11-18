@@ -83,22 +83,20 @@ export async function listRoles() {
   }));
 }
 
-// Notes outnumber members; the list ceiling (people) would cut the counts early.
-const NOTE_COUNT_CEILING = 20_000;
-
 /**
- * Notes per profile (staff with members.notes; RLS returns nothing to anyone else). Counted in JS over every row, read
- * in CHUNK_SIZE pages.
+ * Notes per person (staff with members.notes; the caller's RLS decides which rows are counted). One view row per
+ * person, so LIST_CEILING applies like the members list.
  */
-export async function noteCounts(): Promise<Map<string, number>> {
+export async function noteCounts(): Promise<{ counts: Map<string, number>; overCeiling: boolean }> {
   const supabase = await createClient();
   const { items, overCeiling } = await readAll(async (from, to) => {
-    const { data, error } = await supabase.from("member_notes").select("id, profile_id").order("id").range(from, to);
+    const { data, error } = await supabase
+      .from("member_note_counts")
+      .select("profile_id, notes")
+      .order("profile_id")
+      .range(from, to);
     if (error) throw new Error(`noteCounts failed: ${error.code}`);
     return data;
-  }, NOTE_COUNT_CEILING);
-  if (overCeiling) console.error("noteCounts over ceiling", { count: `${NOTE_COUNT_CEILING}+` });
-  const counts = new Map<string, number>();
-  for (const { profile_id } of uniqueById(items)) counts.set(profile_id, (counts.get(profile_id) ?? 0) + 1);
-  return counts;
+  });
+  return { counts: new Map(items.map((row) => [row.profile_id, row.notes ?? 0])), overCeiling };
 }

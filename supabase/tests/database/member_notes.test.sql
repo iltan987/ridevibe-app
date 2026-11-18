@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(42);
+select plan(47);
 
 -- Fixtures: 0731 admin A, 0732 admin B, 0733 notes holder, 0734 active without the permission, 0735 subject (active),
 -- 0736 subject in deleting, 0737 probation member holding a role with members.notes, 0738 pending subject,
@@ -103,6 +103,12 @@ select throws_ok($$ insert into public.member_notes (profile_id, body)
   'holder cannot note an inactive admin-role holder');
 select is((select count(*) from public.member_notes where profile_id = '00000000-0000-0000-0000-000000000733'), 0::bigint,
   'holder reads no notes about themselves (a note exists)');
+select is((select notes from public.member_note_counts where profile_id = '00000000-0000-0000-0000-000000000735'), 1,
+  'holder sees the note count for a subject');
+select is_empty($$ select 1 from public.member_note_counts where profile_id = '00000000-0000-0000-0000-000000000733' $$,
+  'holder sees no count row for themselves');
+select is_empty($$ select 1 from public.member_note_counts where profile_id = '00000000-0000-0000-0000-000000000731' $$,
+  'holder sees no count row for an admin-role holder');
 reset role;
 
 -- ---------------------------------------------------------------------------
@@ -111,6 +117,8 @@ reset role;
 select pg_temp.login('00000000-0000-0000-0000-000000000734');
 select is((select count(*) from public.member_notes where profile_id = '00000000-0000-0000-0000-000000000735'), 0::bigint,
   'active member without the permission reads nothing');
+select is((select count(*) from public.member_note_counts), 0::bigint,
+  'active member without the permission sees no note counts');
 select throws_ok($$ insert into public.member_notes (profile_id, body) values ('00000000-0000-0000-0000-000000000735', 'x') $$, '42501', null,
   'active member without the permission cannot insert');
 reset role;
@@ -129,6 +137,7 @@ reset role;
 
 set local role anon;
 select throws_ok($$ select * from public.member_notes $$, '42501', null, 'anon cannot read');
+select throws_ok($$ select * from public.member_note_counts $$, '42501', null, 'anon cannot read the note counts');
 select throws_ok($$ insert into public.member_notes (profile_id, body) values ('00000000-0000-0000-0000-000000000735', 'x') $$, '42501', null,
   'anon cannot insert');
 reset role;

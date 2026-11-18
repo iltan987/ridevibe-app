@@ -112,7 +112,7 @@ export function MemberNotesDialog({
           <DialogDescription>{t("description")}</DialogDescription>
         </DialogHeader>
 
-        <div className="max-h-[40vh] overflow-y-auto" aria-live="polite">
+        <div className="max-h-[40vh] overflow-y-auto">
           {loadFailed ? (
             <p role="alert" className="text-sm text-destructive">
               {t("loadError")}
@@ -180,7 +180,10 @@ export function MemberNotesDialog({
             <Textarea
               id={inputId}
               value={body}
-              onChange={(event) => setBody(event.target.value)}
+              onChange={(event) => {
+                setBody(event.target.value);
+                setFailure(null);
+              }}
               maxLength={NOTE_MAX_LENGTH}
               disabled={isSaving}
             />

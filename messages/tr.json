@@ -558,7 +558,7 @@
       "open": "Notlar",
       "openCount": "Notlar ({count})",
       "title": "{name} için notlar",
-      "description": "Yalnızca notları görebilen yetkililer okur.",
+      "description": "Bu notları yalnızca yetkili ekip üyeleri görür.",
       "loading": "Notlar yükleniyor…",
       "empty": "Henüz not yok.",
       "unknownAuthor": "Silinmiş hesap",

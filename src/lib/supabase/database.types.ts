@@ -240,7 +240,21 @@ isOneToOne: false
                 }
           }
           Views: {
-            [_ in never]: never
+            "member_note_counts": {
+                  Row: {
+                    "notes": number | null,"profile_id": string
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    {
+      foreignKeyName: "member_notes_profile_id_fkey"
+      columns: ["profile_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                }
           }
           Functions: {
             "application_account":

@@ -85,3 +85,15 @@ on public.member_notes
 for delete
 to authenticated
 using ((select private.is_admin()) and (select private.can_access_member_notes(profile_id)));
+
+-- Notes per person for the members list badges: bounded by people, not notes. security_invoker = the caller's
+-- member_notes RLS decides which rows are counted (no row for oneself, admins' rows only for admins, ...).
+create view public.member_note_counts
+with (security_invoker = true)
+as
+select profile_id, count(*)::integer as notes
+from public.member_notes
+group by profile_id;
+
+revoke all on table public.member_note_counts from anon, authenticated;
+grant select on table public.member_note_counts to authenticated;
