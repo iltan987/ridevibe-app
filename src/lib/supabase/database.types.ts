@@ -225,6 +225,11 @@ isOneToOne: false
 "cancel_my_account_deletion":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
+"club_overview":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "asian": number,"european": number,"initials": (string)[],"total": number
+            }[]
+                           },
 "keep_alive":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
@@ -238,7 +243,7 @@ isOneToOne: false
                            },
 "member_directory":
 { Args: { "blood_filter"?: Database["public"]['Enums']["blood_type"],"no_contact"?: boolean }; Returns: {
-              "avatar_url": string,"birth_day": number,"birth_month": number,"district": string,"full_name": string,"has_emergency_contact": boolean,"id": string,"instagram": string,"motorcycles": Json,"side": Database["public"]['Enums']["istanbul_side"]
+              "avatar_url": string,"birth_day": number,"birth_month": number,"district": string,"full_name": string,"has_emergency_contact": boolean,"id": string,"instagram": string,"motorcycles": Json,"probation": boolean,"side": Database["public"]['Enums']["istanbul_side"]
             }[]
                            },
 "member_safety_card":

@@ -22,6 +22,8 @@ export type DirectoryMember = {
   motorcycles: Motorcycle[];
   /** null unless the viewer may see safety data (members.safety). */
   hasEmergencyContact: boolean | null;
+  /** In ön alım; only members.manage / members.safety viewers receive such members at all. */
+  probation: boolean;
 };
 
 export type EmergencyContact = {
@@ -58,7 +60,8 @@ type DirectoryRow = Omit<GeneratedDirectoryRow, NullableDirectoryColumn> & {
 };
 
 /**
- * Every active member for the directory (the DB sorts by Turkish name and hides opted-out fields), read in
+ * Every active member for the directory (plus ön alım members for members.manage / members.safety viewers; the DB
+ * sorts by Turkish name and hides opted-out fields), read in
  * CHUNK_SIZE pages up to LIST_CEILING. The browser filters and pages; the safety filters stay here because a blood
  * filter is logged per call.
  */
@@ -89,6 +92,7 @@ export async function loadDirectory({
     instagram: row.instagram,
     motorcycles: parseMotorcycles(row.motorcycles),
     hasEmergencyContact: row.has_emergency_contact,
+    probation: row.probation,
   }));
   return { members, overCeiling };
 }

@@ -77,33 +77,33 @@ using (
   )
 );
 
-create policy "member_motorcycles: insert own while active"
+create policy "member_motorcycles: insert own while active or probation"
 on public.member_motorcycles
 for insert
 to authenticated
 with check (
   profile_id = (select auth.uid())
-  and (select private.is_active_member())
+  and (select private.is_club_member())
 );
 
-create policy "member_motorcycles: update own while active"
+create policy "member_motorcycles: update own while active or probation"
 on public.member_motorcycles
 for update
 to authenticated
 using (
   profile_id = (select auth.uid())
-  and (select private.is_active_member())
+  and (select private.is_club_member())
 )
 with check (
   profile_id = (select auth.uid())
-  and (select private.is_active_member())
+  and (select private.is_club_member())
 );
 
-create policy "member_motorcycles: delete own while active"
+create policy "member_motorcycles: delete own while active or probation"
 on public.member_motorcycles
 for delete
 to authenticated
 using (
   profile_id = (select auth.uid())
-  and (select private.is_active_member())
+  and (select private.is_club_member())
 );

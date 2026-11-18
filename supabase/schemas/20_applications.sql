@@ -394,18 +394,18 @@ revoke all on function private.applications_after_approval() from public, anon, 
 -- definer: deciders may lack members.manage, so RLS would hide pending
 -- profiles and their sign-in emails from them. Only these RPCs expose them,
 -- and only the unmatched pending ones (plus, for approved applications, active
--- accounts without an application: staff activated them before their
+-- or ön alım accounts without an application: staff activated them before their
 -- application could be matched).
 -- ---------------------------------------------------------------------------
 
 -- The application must be unlinked and not rejected; the account must be
--- pending (or active, for an approved application), with no open/approved
+-- pending (or active/probation, for an approved application), with no open/approved
 -- application linked to it and no *other* open/approved unlinked application
 -- with its sign-in email (same rule as linkable_accounts; a rejected one
 -- doesn't count). Linking an approved application activates a pending account;
 -- one under review activates on approval (applications_after_approval). An
--- active account only gets the application attached (status, name and role
--- stay). Never touches inactive accounts.
+-- active or ön alım account only gets the application attached (status, name
+-- and role stay). Never touches inactive accounts.
 create or replace function public.link_application(application_id uuid, target_id uuid)
 returns void
 language plpgsql
@@ -433,7 +433,7 @@ begin
   select p.status into target_status
   from public.profiles p
   where p.id = target_id
-    and (p.status = 'pending' or (p.status = 'active' and app_status = 'approved'))
+    and (p.status = 'pending' or (p.status in ('active', 'probation') and app_status = 'approved'))
   for update;
   if not found
     or exists (
@@ -466,7 +466,7 @@ end;
 $$;
 
 -- Pending accounts an application could be linked to (with include_active,
--- for approved applications: active ones too): no open/approved application
+-- for approved applications: active and ön alım ones too): no open/approved application
 -- linked to them and no open/approved unlinked application with their sign-in
 -- email (those match automatically). Optional case-insensitive search on name
 -- or email. Newest first, keyset by (created_at, id) — both or neither
@@ -504,7 +504,7 @@ begin
   select p.id, p.full_name, p.avatar_url, c.email, p.created_at, p.status
   from public.profiles p
   left join public.member_contacts c on c.profile_id = p.id
-  where (p.status = 'pending' or (include_active and p.status = 'active'))
+  where (p.status = 'pending' or (include_active and p.status in ('active', 'probation')))
     and not exists (
       select 1 from public.applications a
       where a.profile_id = p.id and a.status in ('new', 'contacted', 'approved')

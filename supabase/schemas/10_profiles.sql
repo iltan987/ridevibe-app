@@ -1,7 +1,8 @@
 -- ---------------------------------------------------------------------------
 -- Profiles: one row per signed-in user (created automatically on sign-up).
--- A new profile starts as `pending`; staff with `members.manage` activate it
--- (later: automatically when it matches an approved application).
+-- A new profile starts as `pending`. An approved application (or staff with
+-- `members.manage`) moves it into `probation` (ön alım); staff later make it a
+-- full member (`active`).
 -- ---------------------------------------------------------------------------
 
 create type public.member_status as enum ('pending', 'probation', 'active', 'inactive', 'deleting');
@@ -90,9 +91,11 @@ for each row execute function private.profiles_tidy_name();
 
 -- ---------------------------------------------------------------------------
 -- Access helpers (security definer so they can read profiles/roles without
--- recursing into their RLS policies). Only *active* members have any rights.
+-- recursing into their RLS policies). Only *active* (full) members have rights
+-- over other members' data; probation members only over their own rows.
 -- ---------------------------------------------------------------------------
 
+-- Full member: guards everything that exposes other members.
 create or replace function private.is_active_member()
 returns boolean
 language sql
@@ -103,6 +106,21 @@ as $$
   select exists (
     select 1 from public.profiles p
     where p.id = (select auth.uid()) and p.status = 'active'
+  );
+$$;
+
+-- Full or ön alım member: guards writes to the caller's own member rows only (bikes,
+-- emergency contacts, blood type, birth date), never reads of others.
+create or replace function private.is_club_member()
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1 from public.profiles p
+    where p.id = (select auth.uid()) and p.status in ('active', 'probation')
   );
 $$;
 
@@ -146,9 +164,11 @@ as $$
 $$;
 
 revoke all on function private.is_active_member() from public, anon;
+revoke all on function private.is_club_member() from public, anon;
 revoke all on function private.is_admin() from public, anon;
 revoke all on function private.has_permission(public.permission) from public, anon;
 grant execute on function private.is_active_member() to authenticated;
+grant execute on function private.is_club_member() to authenticated;
 grant execute on function private.is_admin() to authenticated;
 grant execute on function private.has_permission(public.permission) to authenticated;
 

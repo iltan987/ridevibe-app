@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(15);
+select plan(17);
 
 -- Fixtures: 0701 admin, 0702 staff (members.manage), 0703 pending with an approved-to-be application on the same
 -- email, 0704 pending without application, 0705 and 0707 inactive, 0706 probation member holding a members.manage role.
@@ -67,12 +67,16 @@ select throws_ok($$ select public.set_member_status('00000000-0000-0000-0000-000
   '42501', null, 'pending cannot become active directly');
 select lives_ok($$ select public.set_member_status('00000000-0000-0000-0000-000000000704', 'probation') $$,
   'pending → probation');
+select isnt((select status_changed_at from public.profiles where id = '00000000-0000-0000-0000-000000000704'),
+  null, 'pending → probation stamps status_changed_at');
 select lives_ok($$ select public.set_member_status('00000000-0000-0000-0000-000000000704', 'active') $$,
   'probation → active');
 select lives_ok($$ select public.set_member_status('00000000-0000-0000-0000-000000000705', 'probation') $$,
   'inactive → probation');
 select lives_ok($$ select public.set_member_status('00000000-0000-0000-0000-000000000707', 'active') $$,
   'inactive → active');
+select lives_ok($$ select public.set_member_status('00000000-0000-0000-0000-000000000707', 'probation') $$,
+  'active → probation (allowed, no UI offers it)');
 select throws_ok($$ select public.set_member_status('00000000-0000-0000-0000-000000000702', 'inactive') $$,
   '42501', null, 'staff cannot change their own status');
 reset role;
