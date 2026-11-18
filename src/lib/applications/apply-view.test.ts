@@ -23,6 +23,10 @@ test("applyView: active members are already members, whatever the application", 
   for (const a of APPLICATION_STATUSES) assert.equal(applyView("active", a), "alreadyMember", String(a));
 });
 
+test("applyView: members in ön alım are already members, whatever the application", () => {
+  for (const a of APPLICATION_STATUSES) assert.equal(applyView("probation", a), "alreadyMember", String(a));
+});
+
 test("applyView: inactive members get the inactive notice, whatever the application", () => {
   for (const a of APPLICATION_STATUSES) assert.equal(applyView("inactive", a), "inactive", String(a));
 });

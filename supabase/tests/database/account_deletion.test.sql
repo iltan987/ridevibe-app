@@ -64,7 +64,7 @@ $$;
 select has_column('public', 'profiles', 'deletion_requested_at', 'profiles.deletion_requested_at exists');
 select has_column('public', 'profiles', 'status_before_deletion', 'profiles.status_before_deletion exists');
 select has_column('public', 'applications', 'retained_until', 'applications.retained_until exists');
-select enum_has_labels('public', 'member_status', array['pending', 'active', 'inactive', 'deleting'],
+select enum_has_labels('public', 'member_status', array['pending', 'probation', 'active', 'inactive', 'deleting'],
   'member_status has the deleting label');
 
 select throws_ok(

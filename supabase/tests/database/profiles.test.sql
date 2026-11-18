@@ -158,8 +158,8 @@ select is(
 );
 
 select lives_ok(
-  $$ select public.set_member_status('00000000-0000-0000-0000-00000000000c', 'active') $$,
-  'members.manage can activate a pending user'
+  $$ select public.set_member_status('00000000-0000-0000-0000-00000000000c', 'probation') $$,
+  'members.manage can move a pending user to ön alım'
 );
 
 select throws_ok(
@@ -183,8 +183,8 @@ reset role;
 
 select is(
   (select status::text from public.profiles where id = '00000000-0000-0000-0000-00000000000c'),
-  'active',
-  'activation by members.manage is persisted'
+  'probation',
+  'the move to ön alım by members.manage is persisted'
 );
 
 -- ---------------------------------------------------------------------------

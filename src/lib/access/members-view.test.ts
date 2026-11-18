@@ -15,13 +15,14 @@ const rows: Row[] = [
   row("Çelik Cem", "pending", "cem@example.com"),
   row("İlker Işık", "active", "ilker@example.com"),
   row("Zehra Ak", "inactive"),
+  row("Mert Ön", "probation"),
   ...Array.from({ length: 27 }, (_, i) => row(`Bekleyen ${i + 1}`, "pending")),
 ];
 const names = (items: Row[]) => items.map((r) => r.name);
 
 test("no query: counts per status, the status tab's first page of 25 in the given order", () => {
   const view = membersView(rows, { query: "", status: "pending", page: 1 });
-  assert.deepEqual(view.counts, { pending: 28, active: 1, inactive: 1 });
+  assert.deepEqual(view.counts, { pending: 28, probation: 1, active: 1, inactive: 1 });
   assert.equal(view.total, 28);
   assert.equal(view.items.length, 25);
   assert.equal(view.items[0].name, "Çelik Cem");
@@ -31,15 +32,21 @@ test("no query: counts per status, the status tab's first page of 25 in the give
 test("the query matches the name or the email, folds Turkish letters and case; counts honour it", () => {
   const byName = membersView(rows, { query: "ISIK", status: "active", page: 1 });
   assert.deepEqual(names(byName.items), ["İlker Işık"]);
-  assert.deepEqual(byName.counts, { pending: 0, active: 1, inactive: 0 });
+  assert.deepEqual(byName.counts, { pending: 0, probation: 0, active: 1, inactive: 0 });
 
   const byEmail = membersView(rows, { query: "cem@exam", status: "pending", page: 1 });
   assert.deepEqual(names(byEmail.items), ["Çelik Cem"]);
-  assert.deepEqual(byEmail.counts, { pending: 1, active: 0, inactive: 0 });
+  assert.deepEqual(byEmail.counts, { pending: 1, probation: 0, active: 0, inactive: 0 });
 });
 
 test("other tabs: only rows of that status", () => {
   assert.deepEqual(names(membersView(rows, { query: "", status: "inactive", page: 1 }).items), ["Zehra Ak"]);
+});
+
+test("probation tab: only ön alım rows, counted on their own", () => {
+  const view = membersView(rows, { query: "", status: "probation", page: 1 });
+  assert.deepEqual(names(view.items), ["Mert Ön"]);
+  assert.equal(view.counts.probation, 1);
 });
 
 test("activating the only row of the last page: the page is clamped and the counts follow", () => {
@@ -51,16 +58,16 @@ test("activating the only row of the last page: the page is clamped and the coun
 
   const after = membersView(activate(twentySix, "Bekleyen 25"), { query: "", status: "pending", page: 2 });
   assert.deepEqual([after.page, after.pageCount, after.items.length], [1, 1, 25]);
-  assert.deepEqual(after.counts, { pending: 25, active: 4, inactive: 1 });
+  assert.deepEqual(after.counts, { pending: 25, probation: 1, active: 4, inactive: 1 });
 });
 
 test("no match: no items, page 1, an empty range", () => {
   const view = membersView(rows, { query: "zzz", status: "pending", page: 3 });
-  assert.deepEqual(view.counts, { pending: 0, active: 0, inactive: 0 });
+  assert.deepEqual(view.counts, { pending: 0, probation: 0, active: 0, inactive: 0 });
   assert.deepEqual([view.items.length, view.page, view.pageCount, view.from, view.to, view.total], [0, 1, 1, 0, 0, 0]);
 });
 
 test("isStaffStatus: every status except deleting", () => {
-  for (const status of ["pending", "active", "inactive"]) assert.equal(isStaffStatus(status), true);
+  for (const status of ["pending", "probation", "active", "inactive"]) assert.equal(isStaffStatus(status), true);
   for (const status of ["deleting", "", "Active"]) assert.equal(isStaffStatus(status), false);
 });

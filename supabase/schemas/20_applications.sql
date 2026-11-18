@@ -282,7 +282,7 @@ begin
   end if;
 
   update public.profiles p
-  set status = 'active',
+  set status = 'probation',
       full_name = app.full_name,
       city = case when p.district is null then app.city else p.city end,
       side = case when p.district is null then app.side else p.side end,

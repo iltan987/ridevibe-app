@@ -4,7 +4,7 @@
 -- (later: automatically when it matches an approved application).
 -- ---------------------------------------------------------------------------
 
-create type public.member_status as enum ('pending', 'active', 'inactive', 'deleting');
+create type public.member_status as enum ('pending', 'probation', 'active', 'inactive', 'deleting');
 create type public.istanbul_side as enum ('asian', 'european');
 
 create table public.profiles (
@@ -21,6 +21,7 @@ create table public.profiles (
   side public.istanbul_side,
   deletion_requested_at timestamptz,
   status_before_deletion public.member_status,
+  status_changed_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint profiles_deletion_state check (
@@ -31,9 +32,30 @@ create table public.profiles (
 );
 
 comment on table public.profiles is 'Club member profiles, one per auth user.';
-comment on column public.profiles.status is 'pending = signed in but not yet approved; active = club member; inactive = left or suspended; deleting = asked to delete the account (hidden, no rights, purged after 14 days).';
+comment on column public.profiles.status is 'pending = signed in but not yet approved; probation = ön alım, approved but not yet a full member (no member rights); active = club member; inactive = left or suspended; deleting = asked to delete the account (hidden, no rights, purged after 14 days).';
 comment on column public.profiles.deletion_requested_at is 'When the member asked to delete the account; set only while status = deleting.';
+comment on column public.profiles.status_changed_at is 'When the status last changed; moves into or out of deleting keep it. Null = before 2026-11-18.';
 comment on column public.profiles.status_before_deletion is 'The status to restore if the member cancels the deletion; set only while status = deleting.';
+
+create or replace function private.profiles_stamp_status_change()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if old.status is distinct from new.status and old.status <> 'deleting' and new.status <> 'deleting' then
+    new.status_changed_at = now();
+  end if;
+  return new;
+end;
+$$;
+
+revoke all on function private.profiles_stamp_status_change() from public, anon, authenticated;
+
+create trigger profiles_stamp_status_change
+  before update of status on public.profiles
+  for each row execute function private.profiles_stamp_status_change();
 
 -- Member/access lists: filter by status, newest first, keyset-paginated by (created_at, id).
 create index profiles_status_created_idx on public.profiles (status, created_at desc, id desc);
@@ -335,6 +357,11 @@ begin
 
   if target_is_admin and not private.is_admin() then
     raise exception 'only admins can change an admin''s status' using errcode = '42501';
+  end if;
+
+  -- A pending account first goes through ön alım.
+  if target_status = 'pending' and new_status = 'active' then
+    raise exception 'a pending account must go through probation first' using errcode = '42501';
   end if;
 
   update public.profiles set status = new_status where id = target_id;

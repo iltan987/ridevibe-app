@@ -63,8 +63,8 @@ select is(private.normalize_email('Ali.Veli+x@Example.com'), 'ali.veli+x@example
 -- ---------------------------------------------------------------------------
 select pg_temp.approve(pg_temp.apply('ali.veli@gmail.com', 'Moda'));
 insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000002a1', 'aliveli+x@gmail.com');
-select is(pg_temp.profile_of('aliveli+x@gmail.com'), 'active|Moda|1',
-  'signing in with the approved email (Gmail variant) activates, links and copies the district');
+select is(pg_temp.profile_of('aliveli+x@gmail.com'), 'probation|Moda|1',
+  'signing in with the approved email (Gmail variant) starts ön alım, links and copies the district');
 
 -- ---------------------------------------------------------------------------
 -- Approval after sign in
@@ -72,7 +72,7 @@ select is(pg_temp.profile_of('aliveli+x@gmail.com'), 'active|Moda|1',
 insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000002a2', 'early@pgtap.invalid');
 select is(pg_temp.profile_of('early@pgtap.invalid'), 'pending|-|0', 'signing in without an approved application stays pending');
 select pg_temp.approve(pg_temp.apply('EARLY@pgtap.invalid'));
-select is(pg_temp.profile_of('early@pgtap.invalid'), 'active|Kadıköy|1', 'approving activates an account that signed in earlier');
+select is(pg_temp.profile_of('early@pgtap.invalid'), 'probation|Kadıköy|1', 'approving starts ön alım for an account that signed in earlier');
 
 -- ---------------------------------------------------------------------------
 -- Things that must NOT activate

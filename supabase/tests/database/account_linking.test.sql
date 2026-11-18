@@ -141,8 +141,8 @@ select lives_ok(
   'a decider links an approved anonymous application to a pending account'
 );
 reset role;
-select is(pg_temp.profile_of('00000000-0000-0000-0000-0000000004a1'), 'active|Başvuru Bir',
-  'linking an approved application activates the account and copies the application name');
+select is(pg_temp.profile_of('00000000-0000-0000-0000-0000000004a1'), 'probation|Başvuru Bir',
+  'linking an approved application starts ön alım for the account and copies the application name');
 select is((select profile_id from public.applications where id = '00000000-0000-0000-0000-000000000451'),
   '00000000-0000-0000-0000-0000000004a1'::uuid, 'the application now belongs to the account');
 
@@ -158,8 +158,8 @@ select is(pg_temp.profile_of('00000000-0000-0000-0000-0000000004a2'), 'pending|G
 select pg_temp.login('00000000-0000-0000-0000-0000000004d1');
 update public.applications set status = 'approved' where id = '00000000-0000-0000-0000-000000000452';
 reset role;
-select is(pg_temp.profile_of('00000000-0000-0000-0000-0000000004a2'), 'active|Başvuru İki',
-  'approving the linked application later activates the account');
+select is(pg_temp.profile_of('00000000-0000-0000-0000-0000000004a2'), 'probation|Başvuru İki',
+  'approving the linked application later starts ön alım for the account');
 
 select pg_temp.login('00000000-0000-0000-0000-0000000004d1');
 select throws_ok(

@@ -116,6 +116,7 @@
     "role": "Rol",
     "statuses": {
       "pending": "Onay bekliyor",
+      "probation": "Ön alım",
       "active": "Aktif üye",
       "inactive": "Pasif",
       "deleting": "Silinecek"
@@ -522,6 +523,7 @@
       "title": "Üyeler ve erişim",
       "statuses": {
         "pending": "Onay bekleyen",
+        "probation": "Ön alım",
         "active": "Aktif",
         "inactive": "Pasif"
       },
@@ -537,6 +539,7 @@
       "activate": "Aktifleştir",
       "deactivate": "Pasifleştir",
       "reactivate": "Yeniden aktifleştir",
+      "promote": "Tam üye yap",
       "noEmail": "E-posta yok",
       "applied": "Başvurdu",
       "notApplied": "Başvurusu yok",

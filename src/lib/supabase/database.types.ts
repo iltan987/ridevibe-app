@@ -133,14 +133,14 @@ isOneToOne: false
                   ]
                 },"profiles": {
                   Row: {
-                    "avatar_url": string | null,"city": string,"created_at": string,"deletion_requested_at": string | null,"district": string | null,"full_name": string,"id": string,"preferred_locale": string,"role_id": string | null,"side": Database["public"]['Enums']["istanbul_side"] | null,"status": Database["public"]['Enums']["member_status"],"status_before_deletion": Database["public"]['Enums']["member_status"] | null,"updated_at": string
+                    "avatar_url": string | null,"city": string,"created_at": string,"deletion_requested_at": string | null,"district": string | null,"full_name": string,"id": string,"preferred_locale": string,"role_id": string | null,"side": Database["public"]['Enums']["istanbul_side"] | null,"status": Database["public"]['Enums']["member_status"],"status_before_deletion": Database["public"]['Enums']["member_status"] | null,"status_changed_at": string | null,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "avatar_url"?: string | null,"city"?: string,"created_at"?: string,"deletion_requested_at"?: string | null,"district"?: string | null,"full_name"?: string,"id": string,"preferred_locale"?: string,"role_id"?: string | null,"side"?: Database["public"]['Enums']["istanbul_side"] | null,"status"?: Database["public"]['Enums']["member_status"],"status_before_deletion"?: Database["public"]['Enums']["member_status"] | null,"updated_at"?: string
+                    "avatar_url"?: string | null,"city"?: string,"created_at"?: string,"deletion_requested_at"?: string | null,"district"?: string | null,"full_name"?: string,"id": string,"preferred_locale"?: string,"role_id"?: string | null,"side"?: Database["public"]['Enums']["istanbul_side"] | null,"status"?: Database["public"]['Enums']["member_status"],"status_before_deletion"?: Database["public"]['Enums']["member_status"] | null,"status_changed_at"?: string | null,"updated_at"?: string
                   }
                   Update: {
-                    "avatar_url"?: string | null,"city"?: string,"created_at"?: string,"deletion_requested_at"?: string | null,"district"?: string | null,"full_name"?: string,"id"?: string,"preferred_locale"?: string,"role_id"?: string | null,"side"?: Database["public"]['Enums']["istanbul_side"] | null,"status"?: Database["public"]['Enums']["member_status"],"status_before_deletion"?: Database["public"]['Enums']["member_status"] | null,"updated_at"?: string
+                    "avatar_url"?: string | null,"city"?: string,"created_at"?: string,"deletion_requested_at"?: string | null,"district"?: string | null,"full_name"?: string,"id"?: string,"preferred_locale"?: string,"role_id"?: string | null,"side"?: Database["public"]['Enums']["istanbul_side"] | null,"status"?: Database["public"]['Enums']["member_status"],"status_before_deletion"?: Database["public"]['Enums']["member_status"] | null,"status_changed_at"?: string | null,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -277,7 +277,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "application_status": "new"|"contacted"|"approved"|"rejected","blood_type": "A+"|"A-"|"B+"|"B-"|"AB+"|"AB-"|"0+"|"0-","emergency_relationship": "spouse_partner"|"parent"|"sibling"|"child"|"friend"|"other","group_ride_experience": "none"|"some"|"a_lot","heard_from": "instagram_ad"|"instagram_other"|"friend"|"other","istanbul_side": "asian"|"european","license_class": "a1"|"a2"|"a"|"b"|"none","member_status": "pending"|"active"|"inactive"|"deleting","permission": "applications.view"|"applications.review"|"applications.decide"|"applications.delete"|"members.manage"|"members.safety","safety_action": "view_card"|"filter_blood_type"|"set_blood_type"|"withdraw_blood_type"
+            "application_status": "new"|"contacted"|"approved"|"rejected","blood_type": "A+"|"A-"|"B+"|"B-"|"AB+"|"AB-"|"0+"|"0-","emergency_relationship": "spouse_partner"|"parent"|"sibling"|"child"|"friend"|"other","group_ride_experience": "none"|"some"|"a_lot","heard_from": "instagram_ad"|"instagram_other"|"friend"|"other","istanbul_side": "asian"|"european","license_class": "a1"|"a2"|"a"|"b"|"none","member_status": "pending"|"probation"|"active"|"inactive"|"deleting","permission": "applications.view"|"applications.review"|"applications.decide"|"applications.delete"|"members.manage"|"members.safety","safety_action": "view_card"|"filter_blood_type"|"set_blood_type"|"withdraw_blood_type"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -393,7 +393,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "application_status": ["new", "contacted", "approved", "rejected"],"blood_type": ["A+", "A-", "B+", "B-", "AB+", "AB-", "0+", "0-"],"emergency_relationship": ["spouse_partner", "parent", "sibling", "child", "friend", "other"],"group_ride_experience": ["none", "some", "a_lot"],"heard_from": ["instagram_ad", "instagram_other", "friend", "other"],"istanbul_side": ["asian", "european"],"license_class": ["a1", "a2", "a", "b", "none"],"member_status": ["pending", "active", "inactive", "deleting"],"permission": ["applications.view", "applications.review", "applications.decide", "applications.delete", "members.manage", "members.safety"],"safety_action": ["view_card", "filter_blood_type", "set_blood_type", "withdraw_blood_type"]
+            "application_status": ["new", "contacted", "approved", "rejected"],"blood_type": ["A+", "A-", "B+", "B-", "AB+", "AB-", "0+", "0-"],"emergency_relationship": ["spouse_partner", "parent", "sibling", "child", "friend", "other"],"group_ride_experience": ["none", "some", "a_lot"],"heard_from": ["instagram_ad", "instagram_other", "friend", "other"],"istanbul_side": ["asian", "european"],"license_class": ["a1", "a2", "a", "b", "none"],"member_status": ["pending", "probation", "active", "inactive", "deleting"],"permission": ["applications.view", "applications.review", "applications.decide", "applications.delete", "members.manage", "members.safety"],"safety_action": ["view_card", "filter_blood_type", "set_blood_type", "withdraw_blood_type"]
           }
         }
 } as const

@@ -14,7 +14,7 @@ export function applyView(
   applicationStatus: Enums<"application_status"> | null,
 ): ApplyView {
   if (profileStatus === "deleting") return "deleting";
-  if (profileStatus === "active") return "alreadyMember";
+  if (profileStatus === "active" || profileStatus === "probation") return "alreadyMember";
   if (profileStatus === "inactive") return "inactive";
   if (profileStatus === "pending" && (applicationStatus === "new" || applicationStatus === "contacted")) {
     return "underReview";

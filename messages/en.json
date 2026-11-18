@@ -116,6 +116,7 @@
     "role": "Role",
     "statuses": {
       "pending": "Awaiting approval",
+      "probation": "Probation",
       "active": "Active member",
       "inactive": "Inactive",
       "deleting": "To be deleted"
@@ -522,6 +523,7 @@
       "title": "Members & access",
       "statuses": {
         "pending": "Pending",
+        "probation": "Probation",
         "active": "Active",
         "inactive": "Inactive"
       },
@@ -537,6 +539,7 @@
       "activate": "Activate",
       "deactivate": "Deactivate",
       "reactivate": "Reactivate",
+      "promote": "Make full member",
       "noEmail": "No email",
       "applied": "Applied",
       "formerMember": "Former member: deleted their account",

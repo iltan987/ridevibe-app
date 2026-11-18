@@ -8,7 +8,7 @@ import { foldSearch, matchesFolded } from "../search-fold.ts";
 export type MemberStatus = Enums<"member_status">;
 /** A status staff can see and set: `deleting` accounts are hidden from staff and never settable. */
 export type StaffStatus = Exclude<MemberStatus, "deleting">;
-export const MEMBER_STATUSES = ["pending", "active", "inactive"] as const satisfies readonly StaffStatus[];
+export const MEMBER_STATUSES = ["pending", "probation", "active", "inactive"] as const satisfies readonly StaffStatus[];
 
 export function isStaffStatus(status: string): status is StaffStatus {
   return MEMBER_STATUSES.some((s) => s === status);
@@ -24,7 +24,7 @@ export function membersView<T extends { status: StaffStatus; search: string }>(
 ) {
   const foldedQuery = foldSearch(query);
   const matched = rows.filter((row) => matchesFolded(row.search, foldedQuery));
-  const counts: Record<StaffStatus, number> = { pending: 0, active: 0, inactive: 0 };
+  const counts: Record<StaffStatus, number> = { pending: 0, probation: 0, active: 0, inactive: 0 };
   for (const row of matched) counts[row.status] += 1;
   return {
     counts,

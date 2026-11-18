@@ -28,6 +28,8 @@ export type MemberRowData = {
 
 const NEXT_STATUS = {
   pending: { status: "active", label: "activate" },
+  // Placeholder until the ön alım UI (promote / back to inactive).
+  probation: { status: "active", label: "promote" },
   active: { status: "inactive", label: "deactivate" },
   inactive: { status: "active", label: "reactivate" },
 } as const;
