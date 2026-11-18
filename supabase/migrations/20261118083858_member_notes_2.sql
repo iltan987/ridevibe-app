@@ -18,10 +18,7 @@ CREATE OR REPLACE FUNCTION private.can_access_member_notes (
         and p.status <> 'deleting'
         and (
           (select private.is_admin())
-          or not (
-            p.status = 'active'
-            and exists (select 1 from public.roles r where r.id = p.role_id and r.is_admin)
-          )
+          or not exists (select 1 from public.roles r where r.id = p.role_id and r.is_admin)
         )
     );
 $function$;

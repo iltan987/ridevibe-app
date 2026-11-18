@@ -601,7 +601,7 @@
         },
         "notes": {
           "label": "Üye notlarını görme ve yazma",
-          "description": "Üyeler hakkındaki iç notları görebilir ve yazabilir; üyenin kendisi göremez. Yönetici hesaplarının notlarını yalnızca yöneticiler görür."
+          "description": "Üyeler hakkındaki iç notları görebilir ve yazabilir; üyenin kendisi göremez. Yöneticiler hakkındaki notları yalnızca yöneticiler görür."
         }
       }
     },

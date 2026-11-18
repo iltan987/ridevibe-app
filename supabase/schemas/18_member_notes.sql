@@ -1,7 +1,7 @@
 -- ---------------------------------------------------------------------------
 -- Staff notes about members (members.notes). Internal: the subject never sees
 -- them, and nobody can edit a note; only admins delete. Notes about an active
--- admin are visible to admins only; never about oneself or a deleting account.
+-- admin-role holder (any status) are visible to admins only; never about oneself or a deleting account.
 -- Deleted by cascade with the subject's profile; the author is nulled when the
 -- author's profile goes.
 -- ---------------------------------------------------------------------------
@@ -35,10 +35,7 @@ as $$
         and p.status <> 'deleting'
         and (
           (select private.is_admin())
-          or not (
-            p.status = 'active'
-            and exists (select 1 from public.roles r where r.id = p.role_id and r.is_admin)
-          )
+          or not exists (select 1 from public.roles r where r.id = p.role_id and r.is_admin)
         )
     );
 $$;

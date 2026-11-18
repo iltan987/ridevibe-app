@@ -325,10 +325,9 @@
 
 ### A new `permission` enum value: split migration, and tests that count permissions
 - **Symptom:** `pnpm db:migration` after adding an enum value (plus a table using it) emits two files (`_1`, `_2`):
-  `ALTER TYPE … ADD VALUE` goes into its own migration (a new value can't be used in the transaction that adds it);
-  `_1` also carries a stray `SELECT cron.unschedule('purge-deleted-accounts')`. `roles.test.sql` then failed on a
-  hardcoded permission count.
-- **Do:** keep both files, delete the `cron.unschedule` line; tests that need "every permission" count with
+  `ALTER TYPE … ADD VALUE` goes into its own migration (a new value can't be used in the transaction that adds it).
+  `roles.test.sql` then failed on a hardcoded permission count.
+- **Do:** keep both files; tests that need "every permission" count with
   `array_length(enum_range(null::public.permission), 1)`, never a literal.
 - **Also:** a planted row (as `postgres`) through a before-insert trigger that sets `author_id := auth.uid()` gets a
   null author; fine for fixtures that only need visibility.

@@ -4,10 +4,11 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(34);
+select plan(42);
 
 -- Fixtures: 0731 admin A, 0732 admin B, 0733 notes holder, 0734 active without the permission, 0735 subject (active),
--- 0736 subject in deleting, 0737 probation member holding a role with members.notes.
+-- 0736 subject in deleting, 0737 probation member holding a role with members.notes, 0738 pending subject,
+-- 0739 probation subject, 073b inactive holder of the admin role.
 -- Roles 073a (members.notes).
 insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-000000000731', 'pgtap-mn-admin-a@pgtap.invalid',  '{"full_name": "Aylin Pgtapyonetici"}'),
@@ -16,7 +17,10 @@ insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-000000000734', 'pgtap-mn-plain@pgtap.invalid',    '{"full_name": "Pelin Pgtapuye"}'),
   ('00000000-0000-0000-0000-000000000735', 'pgtap-mn-subject@pgtap.invalid',  '{"full_name": "Sevgi Pgtapkonu"}'),
   ('00000000-0000-0000-0000-000000000736', 'pgtap-mn-deleting@pgtap.invalid', '{"full_name": "Deniz Pgtapsiliniyor"}'),
-  ('00000000-0000-0000-0000-000000000737', 'pgtap-mn-probation@pgtap.invalid', '{"full_name": "Okan Pgtapaday"}');
+  ('00000000-0000-0000-0000-000000000737', 'pgtap-mn-probation@pgtap.invalid', '{"full_name": "Okan Pgtapaday"}'),
+  ('00000000-0000-0000-0000-000000000738', 'pgtap-mn-pending@pgtap.invalid',   '{"full_name": "Pınar Pgtapbekleyen"}'),
+  ('00000000-0000-0000-0000-000000000739', 'pgtap-mn-onalim@pgtap.invalid',    '{"full_name": "Orhan Pgtaponalim"}'),
+  ('00000000-0000-0000-0000-00000000073b', 'pgtap-mn-inactive-admin@pgtap.invalid', '{"full_name": "Ilker Pgtappasif"}');
 insert into public.roles (id, name) values ('00000000-0000-0000-0000-00000000073a', 'pgtap-mn-notes');
 insert into public.role_permissions (role_id, permission) values
   ('00000000-0000-0000-0000-00000000073a', 'members.notes');
@@ -27,6 +31,9 @@ update public.profiles set status = 'active',
 update public.profiles set status = 'active', role_id = '00000000-0000-0000-0000-00000000073a' where id = '00000000-0000-0000-0000-000000000733';
 update public.profiles set status = 'active' where id in ('00000000-0000-0000-0000-000000000734', '00000000-0000-0000-0000-000000000735');
 update public.profiles set status = 'probation', role_id = '00000000-0000-0000-0000-00000000073a' where id = '00000000-0000-0000-0000-000000000737';
+update public.profiles set status = 'probation' where id = '00000000-0000-0000-0000-000000000739';
+update public.profiles set status = 'inactive', role_id = (select id from public.roles where is_admin)
+  where id = '00000000-0000-0000-0000-00000000073b';
 update public.profiles
   set status = 'deleting', deletion_requested_at = now(), status_before_deletion = 'active'
   where id = '00000000-0000-0000-0000-000000000736';
@@ -40,7 +47,9 @@ $$;
 -- a note by admin B about admin A.
 insert into public.member_notes (profile_id, body) values
   ('00000000-0000-0000-0000-000000000736', 'Silinen hesap notu.'),
-  ('00000000-0000-0000-0000-000000000731', 'Yöneticiye not.');
+  ('00000000-0000-0000-0000-000000000731', 'Yöneticiye not.'),
+  ('00000000-0000-0000-0000-000000000733', 'Notu olan yetkili.'),
+  ('00000000-0000-0000-0000-00000000073b', 'Pasif yöneticiye not.');
 
 -- Grants
 select ok(not has_table_privilege('anon', 'public.member_notes', 'select'), 'anon has no select grant');
@@ -79,6 +88,21 @@ select throws_ok($$ insert into public.member_notes (profile_id, body) values ('
   '23514', null, 'body over 2000 characters refused');
 select is((select count(*) from public.member_notes where profile_id = '00000000-0000-0000-0000-000000000736'), 0::bigint,
   'notes about a deleting account are hidden');
+select lives_ok($$ insert into public.member_notes (profile_id, body) values ('00000000-0000-0000-0000-000000000738', 'Bekleyen üye notu.') $$,
+  'holder adds a note about a pending member');
+select is((select count(*) from public.member_notes where profile_id = '00000000-0000-0000-0000-000000000738'), 1::bigint,
+  'holder reads the note about a pending member');
+select lives_ok($$ insert into public.member_notes (profile_id, body) values ('00000000-0000-0000-0000-000000000739', 'Ön alım üyesi notu.') $$,
+  'holder adds a note about a probation member');
+select is((select count(*) from public.member_notes where profile_id = '00000000-0000-0000-0000-000000000739'), 1::bigint,
+  'holder reads the note about a probation member');
+select is((select count(*) from public.member_notes where profile_id = '00000000-0000-0000-0000-00000000073b'), 0::bigint,
+  'holder reads no notes about an inactive admin-role holder');
+select throws_ok($$ insert into public.member_notes (profile_id, body)
+  values ('00000000-0000-0000-0000-00000000073b', 'x') $$, '42501', null,
+  'holder cannot note an inactive admin-role holder');
+select is((select count(*) from public.member_notes where profile_id = '00000000-0000-0000-0000-000000000733'), 0::bigint,
+  'holder reads no notes about themselves (a note exists)');
 reset role;
 
 -- ---------------------------------------------------------------------------
@@ -100,7 +124,7 @@ reset role;
 
 select pg_temp.login('00000000-0000-0000-0000-000000000735');
 select is((select count(*) from public.member_notes where profile_id = '00000000-0000-0000-0000-000000000735'), 0::bigint,
-  'the subject reads no notes about themselves');
+  'a subject without the permission reads no notes about themselves');
 reset role;
 
 set local role anon;
@@ -119,6 +143,8 @@ select is((select count(*) from public.member_notes where profile_id = '00000000
   'admin reads notes about another admin');
 select is((select count(*) from public.member_notes where profile_id = '00000000-0000-0000-0000-000000000731'), 0::bigint,
   'admin cannot read notes about themselves');
+select is((select count(*) from public.member_notes where profile_id = '00000000-0000-0000-0000-00000000073b'), 1::bigint,
+  'admin reads notes about an inactive admin-role holder');
 select is_empty($$ delete from public.member_notes where profile_id = '00000000-0000-0000-0000-000000000731' returning 1 $$,
   'admin cannot delete a note about themselves');
 select is((select count(*) from public.member_notes where profile_id = '00000000-0000-0000-0000-000000000735'), 1::bigint,
