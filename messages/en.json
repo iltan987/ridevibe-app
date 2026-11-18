@@ -554,6 +554,24 @@
         "cancel": "Cancel"
       }
     },
+    "notes": {
+      "open": "Notes",
+      "openCount": "Notes ({count})",
+      "title": "Notes about {name}",
+      "description": "Only staff who can see notes read these.",
+      "loading": "Loading notes…",
+      "empty": "No notes yet.",
+      "unknownAuthor": "Deleted account",
+      "label": "New note",
+      "hint": "Notes can be shown to the person if they ask for their data; stick to facts.",
+      "add": "Add note",
+      "delete": "Delete",
+      "deleteConfirm": "Delete this note?",
+      "deleteYes": "Yes, delete",
+      "deleteCancel": "Cancel",
+      "close": "Close",
+      "loadError": "Couldn't load the notes. Please try again."
+    },
     "roles": {
       "title": "Roles & permissions",
       "intro": "Roles decide who can do what. Each member has at most one role; members without a role only see the member area. Assign roles on the “Members & access” page.",

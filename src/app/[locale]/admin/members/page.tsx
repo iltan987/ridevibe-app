@@ -4,8 +4,9 @@ import { getFormatter, getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import { ListSkeleton } from "@/components/admin/list-skeleton";
 import { MembersList } from "@/components/admin/members-list";
-import { getPendingApplicationFlags, listAllProfiles, listRoles } from "@/lib/access/queries";
+import { getPendingApplicationFlags, listAllProfiles, listRoles, noteCounts } from "@/lib/access/queries";
 import { daysSince } from "@/lib/access/probation-days";
+import { can } from "@/lib/auth/permissions";
 import { requirePermission } from "@/lib/auth/require-access";
 import { LIST_CEILING } from "@/lib/pagination";
 import { foldSearch } from "@/lib/search-fold";
@@ -43,7 +44,11 @@ async function Members() {
   ]);
   if (overCeiling) console.error("admin members over ceiling", { count: `${LIST_CEILING}+` });
 
-  const flags = await getPendingApplicationFlags(profiles.filter((p) => p.status === "pending").map((p) => p.id));
+  const canNotes = can(me.access, "members.notes");
+  const [flags, notes] = await Promise.all([
+    getPendingApplicationFlags(profiles.filter((p) => p.status === "pending").map((p) => p.id)),
+    canNotes ? noteCounts() : Promise.resolve(null),
+  ]);
 
   const roleLabel = (roleId: string | null) => {
     const role = roles.find((r) => r.id === roleId);
@@ -70,6 +75,8 @@ async function Members() {
       applied: p.status === "pending" ? (flags.get(p.id)?.applied ?? false) : null,
       probationDays:
         p.status === "probation" && p.status_changed_at ? daysSince(new Date(p.status_changed_at), now) : null,
+      // Mirrors the member_notes policies: not about oneself; an admin's notes only for admins.
+      notes: notes && p.id !== me.id && editable ? { count: notes.get(p.id) ?? 0 } : null,
       formerMember: flags.get(p.id)?.formerMember ?? false,
       canChangeStatus: editable,
       canRename: editable,
@@ -83,6 +90,7 @@ async function Members() {
       roles={roleOptions}
       meId={me.id}
       canAssignRole={me.access.isAdmin}
+      canDeleteNotes={me.access.isAdmin}
       overCeiling={overCeiling}
     />
   );
