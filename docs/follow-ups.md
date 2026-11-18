@@ -22,15 +22,6 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 - **No lawyer** (iltan, 2026-11-13) — the "lawyer" questions below are Claude's to research and decide; iltan
   confirms the outcome. Reword them as they are settled.
 
-- **"Ön alım" (probation) stage** (2026-11-12, iltan) — after approval the club moves a new member into a separate
-  "ön alım" WhatsApp group to see how they behave; they can still join some events. If it doesn't work out they leave
-  on their own or are removed. The app has no such stage today (approved = `active`). To discuss before Events: a new
-  status or a membership stage on active profiles, who sets/ends it (permission), what ön alım members can see, and
-  event requirements (e.g. minimum bike cc, membership stage) that organizers set per event. See `docs/PLAN.md` step 3.
-  Facts (iltan, 2026-11-13): ön alım usually lasts only a few days; members ride anything from a 50cc (B licence) to
-  700–1000cc, and some future events will be limited to bike classes (e.g. over 400cc). More in
-  `docs/content/home-page-questions.md`.
-
 - **Dead-code tool?** (2026-11-11, iltan) — which tool, if any, for the dead-code sweep (Tooling). Candidates to
   compare when we talk: `knip` (unused files, exports, dependencies; Next.js plugin), `ts-prune`/`ts-unused-exports`
   (exports only), TypeScript's `noUnusedLocals`/`noUnusedParameters` and ESLint rules (locals only), or no tool (manual
@@ -82,6 +73,16 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   into WhatsApp groups. Risk if left: decision 2018/10 measures only half met.
 
 ## Features
+
+- **Events: "full members only" ride flag** (2026-11-18, ön alım + notes; decided, spec non-goal) — ön alım members may
+  join some rides and not others; the flag comes with Events (PLAN step 3), together with the event requirements.
+- **Notes on the application detail page** (2026-11-18, ön alım + notes; spec non-goal) — notes exist only on
+  `/admin/members`; staff reviewing an application can't see or add notes there. Add if staff ask.
+- **Reminder for long ön alım periods** (2026-11-18, ön alım + notes; spec non-goal) — ön alım usually lasts days, but
+  nothing nudges staff when someone stays in it for weeks (`profiles.status_changed_at` has the date). Add a flag or
+  count in `/admin/members` if people get forgotten.
+- **Warnings, suspend, ban and the ban list** (2026-11-18, ön alım + notes; spec non-goal) — warnings shown to the
+  member, suspend/ban and the ban list stay PLAN step 2b (only the notes part is built).
 
 - **Data download (KVKK m.11)** (2026-11-14, account deletion) — members can delete their account in the app but not
   download their data (PLAN.md KVKK "download and delete"). Today an access request is answered by hand within 30 days
@@ -148,6 +149,14 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ## Parked edge cases (known, judged harmless for now)
 
+- **`profiles.status_changed_at` readable by every active member** (2026-11-18, ön alım + notes) — table-level select
+  grant plus the active-member read policy: it shows when someone became a full member. Low sensitivity, accepted; a
+  column-level grant would close it.
+- **`/members` skeleton vs. the crowd card** (2026-11-18, ön alım + notes) — the skeleton is directory-shaped while an
+  ön alım member gets the small crowd card (layout shift; status is request-time, accepted in the spec). Also: a club
+  overview with total 0 shows "0 üye" and an empty grid; the ön alım status badge on `/account` uses the same variant
+  as inactive.
+
 - **Purge is one transaction for all due accounts** (2026-11-14, account deletion) — `private.purge_deleted_accounts`
   deletes every due account in one statement set: one account that can't be deleted (a future Storage object owner
   blocks `auth.users` deletes) fails the whole run, so nobody is purged and the `cron.job_run_details` pruning doesn't
@@ -176,8 +185,9 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 - **Linked account without a `member_contacts` row** (2026-11-09, final review) — the application page then shows only
   the Google name, no email and no mismatch warning. Every account gets a row from the sign-up trigger, so this
   should not happen.
-- **Approve text for an already-active linked account** (2026-11-09, final review) — still says the account "becomes an
-  active member"; approval changes nothing for it. Cosmetic.
+- **Approve text for an already-active linked account** (2026-11-09, final review; updated 2026-11-18, ön alım +
+  notes) — the approve text says the account goes into ön alım (earlier: "becomes an active member"), which is also
+  wrong for an already-active linked account: approval changes nothing for it. Cosmetic.
 - **Approve text when the linked account is hidden by RLS** (2026-11-09, task 7) — superseded by
   `application_account`, which shows status to every viewer; keep an eye on it if that RPC changes.
 
@@ -205,6 +215,11 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   (`messages/tr.json`); iltan rejected "kahvede" for the home page. Ask iltan whether the form wording should change too.
 
 ### Database / tests
+- **Ön alım + notes test gaps** (2026-11-18, ön alım + notes reviews) — pgTAP: the safety filters (blood type /
+  no_contact) over probation rows are untested; the `club_overview` initials assertions are weak on production (real
+  members can satisfy `= any(initials)`). App: no tests for the notes server actions or dialog (e.g. zero rows deleted
+  → `forbidden`); the client `.catch` fallbacks in the notes dialog don't log. Risk if left: a regression in these
+  paths goes unseen.
 - **Turkish case folding in `linkable_accounts` search** (2026-11-09) — `ilike` doesn't fold `ı/İ`
   (`supabase/schemas/20_applications.sql`). Email search and name-match ordering compensate. Fix: a SQL fold helper
   on both sides of the `like` (`private.search_fold` was dropped 2026-11-13 when directory search moved to the

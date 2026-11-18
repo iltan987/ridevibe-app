@@ -59,6 +59,10 @@ export function PrivacyEn() {
           website.
         </li>
         <li>
+          <strong>Club notes:</strong> short, factual notes the club team keeps about your participation and conduct in
+          the club (the note, who wrote it and when).
+        </li>
+        <li>
           <strong>Session cookie:</strong> a cookie that is strictly necessary for signing in.
         </li>
         <li>
@@ -86,7 +90,11 @@ export function PrivacyEn() {
           With your explicit consent, to publish ride and meet-up photos on our public website to promote the club,
         </li>
         <li>To ensure ride and event safety, reach your relatives in an emergency and inform health teams,</li>
-        <li>With your explicit consent, to find blood donors within the club.</li>
+        <li>With your explicit consent, to find blood donors within the club,</li>
+        <li>
+          To see how newly approved members fit into the club in their first days (the &quot;ön alım&quot; period) and
+          to record this in club team notes.
+        </li>
       </ul>
 
       <h2>4. Legal bases</h2>
@@ -114,6 +122,10 @@ export function PrivacyEn() {
           For your emergency contacts and plates, the club&apos;s legitimate interest (KVKK art. 5/2-f) and, in an
           emergency, protecting the life or bodily integrity of you or another person (KVKK art. 5/2-b).
         </li>
+        <li>
+          For the ön alım period and club notes, the club&apos;s legitimate interest, provided it does not harm your
+          fundamental rights (KVKK art. 5/2-f): ride and event safety and keeping order in the club.
+        </li>
       </ul>
 
       <h2>5. Who we share it with; transfers abroad</h2>
@@ -123,6 +135,19 @@ export function PrivacyEn() {
         directory. Your birthday (day and month only) is shown too; you can turn it off in your profile at any time.
         Your Instagram username is shown only if you turn it on in your profile. Your motorcycle plates are shown in the
         directory too; you can hide them with the &quot;Show my plates&quot; switch on your account page.
+      </p>
+      <p>
+        Ön alım period: after your application is approved, the club first registers you for a short time as an &quot;ön
+        alım&quot; (probationary) member. During this period you do not see other members&apos; information; instead of
+        the member directory you see only the number of members and the initials of full members. Your information is
+        not shown to other members either; only the club team (those allowed to manage members or to see safety
+        information) can see it. When the period ends you become a full member and the rules above apply.
+      </p>
+      <p>
+        Club notes: members of the club team who hold this permission may record factual notes about your participation
+        and conduct in the club. Only people holding this permission can read the notes; notes about people in the admin
+        role can only be seen by admins. You cannot see the notes in the app; you can request their content from us
+        under your rights in section 8. Notes are deleted together with your account.
       </p>
       <p>
         Your emergency contacts and blood type are not shown to everyone in the directory. Only the club&apos;s safety
@@ -176,6 +201,10 @@ export function PrivacyEn() {
           Emergency contacts, blood type and plates: kept for the same period as other member data. You can delete your
           emergency contacts on your account page at any time, and your plates while your membership is active; your
           blood type is deleted when you withdraw your consent.
+        </li>
+        <li>
+          Club notes: kept for the same period as other member data; deleted when your account is deleted (at the end of
+          the 14 days). An incorrect or unnecessary note can be deleted by admins.
         </li>
         <li>
           Account deletion: you can request deletion on your account page at any time; your account is hidden from other
