@@ -5,12 +5,14 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(49);
+select plan(57);
 
 -- Fixtures: 0711 probation; 0712 active (asian); 0713 active with members.safety; 0714 active with members.manage;
 -- 0715 pending; initials fixtures (active) 0716 'Ayşe' (european), 0717 '  ali   veli ', 0718 'irem işık', 0719 '';
 -- 0720 counting fixture (starts pending, asian); 0721 deleting (was probation) with approved application 0722.
--- Roles 071a (members.safety) and 071b (members.manage).
+-- Linking: 0723 active with applications.decide; 0724 probation link target; unlinked applications 0725 (approved),
+-- 0726 (new), 0727 (contacted). 0728 inactive.
+-- Roles 071a (members.safety), 071b (members.manage) and 071c (applications.view + applications.decide).
 insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-000000000711', 'pgtap-pa-probation@pgtap.invalid', '{"full_name": "Pelin Pgtaponalim"}'),
   ('00000000-0000-0000-0000-000000000712', 'pgtap-pa-member@pgtap.invalid',    '{"full_name": "Mert Pgtapuye"}'),
@@ -22,13 +24,19 @@ insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-000000000718', 'pgtap-pa-irem@pgtap.invalid',      '{"full_name": "İrem Işık"}'),
   ('00000000-0000-0000-0000-000000000719', 'pgtap-pa-empty@pgtap.invalid',     '{"full_name": ""}'),
   ('00000000-0000-0000-0000-000000000720', 'pgtap-pa-count@pgtap.invalid',     '{"full_name": "Cem Pgtapsayac"}'),
-  ('00000000-0000-0000-0000-000000000721', 'pgtap-pa-deleting@pgtap.invalid',  '{"full_name": "Defne Pgtapsiliniyor"}');
+  ('00000000-0000-0000-0000-000000000721', 'pgtap-pa-deleting@pgtap.invalid',  '{"full_name": "Defne Pgtapsiliniyor"}'),
+  ('00000000-0000-0000-0000-000000000723', 'pgtap-pa-decider@pgtap.invalid',   '{"full_name": "Deniz Pgtapkarar"}'),
+  ('00000000-0000-0000-0000-000000000724', 'pgtap-pa-linktarget@pgtap.invalid', '{"full_name": "Lale Pgtaphedef"}'),
+  ('00000000-0000-0000-0000-000000000728', 'pgtap-pa-inactive@pgtap.invalid',  '{"full_name": "Irmak Pgtappasif"}');
 insert into public.roles (id, name) values
   ('00000000-0000-0000-0000-00000000071a', 'pgtap-pa-safety'),
-  ('00000000-0000-0000-0000-00000000071b', 'pgtap-pa-manager');
+  ('00000000-0000-0000-0000-00000000071b', 'pgtap-pa-manager'),
+  ('00000000-0000-0000-0000-00000000071c', 'pgtap-pa-decider');
 insert into public.role_permissions (role_id, permission) values
   ('00000000-0000-0000-0000-00000000071a', 'members.safety'),
-  ('00000000-0000-0000-0000-00000000071b', 'members.manage');
+  ('00000000-0000-0000-0000-00000000071b', 'members.manage'),
+  ('00000000-0000-0000-0000-00000000071c', 'applications.view'),
+  ('00000000-0000-0000-0000-00000000071c', 'applications.decide');
 
 update public.profiles set status = 'probation' where id = '00000000-0000-0000-0000-000000000711';
 update public.profiles set status = 'active', side = 'asian' where id = '00000000-0000-0000-0000-000000000712';
@@ -42,6 +50,10 @@ update public.profiles set status = 'active', full_name = '  ali   veli ' where 
 update public.profiles set status = 'active', full_name = 'irem işık' where id = '00000000-0000-0000-0000-000000000718';
 update public.profiles set status = 'active', full_name = '' where id = '00000000-0000-0000-0000-000000000719';
 update public.profiles set side = 'asian' where id = '00000000-0000-0000-0000-000000000720';
+update public.profiles set status = 'active', role_id = '00000000-0000-0000-0000-00000000071c'
+  where id = '00000000-0000-0000-0000-000000000723';
+update public.profiles set status = 'probation' where id = '00000000-0000-0000-0000-000000000724';
+update public.profiles set status = 'inactive' where id = '00000000-0000-0000-0000-000000000728';
 
 -- The pending fixture already has a bike and an emergency contact (planted), to test updates and deletes.
 insert into public.member_motorcycles (id, profile_id, brand, model)
@@ -53,6 +65,23 @@ create function pg_temp.login(uid uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
          set_config('request.jwt.claims', json_build_object('sub', uid, 'role', 'authenticated')::text, true);
 $$;
+
+create function pg_temp.apply(app_id uuid, app_email text, app_status public.application_status, owner uuid)
+returns void language sql as $$
+  insert into public.applications (
+    id, status, profile_id, full_name, phone, email, birth_date, district, side, languages, license_class,
+    riding_years, owns_motorcycle, riding_styles, group_experience, in_other_clubs, heard_from, event_interests,
+    expectations, alienating_behaviors, consent_privacy, consent_rules, privacy_notice_version
+  ) values (
+    app_id, app_status, owner, 'Aday Kişi', '+905321234567', app_email, '1995-05-17', 'Kadıköy', 'asian',
+    array['tr'], 'a2', 3, false, array['city'], 'some', false, 'friend', array['day_rides'],
+    'Güvenli grup sürüşleri.', 'Tehlikeli sürüş.', true, true, 'test'
+  );
+$$;
+
+select pg_temp.apply('00000000-0000-0000-0000-000000000725', 'pgtap-pa-app-approved@pgtap.invalid', 'approved', null);
+select pg_temp.apply('00000000-0000-0000-0000-000000000726', 'pgtap-pa-app-new@pgtap.invalid', 'new', null);
+select pg_temp.apply('00000000-0000-0000-0000-000000000727', 'pgtap-pa-app-contacted@pgtap.invalid', 'contacted', null);
 
 create temp table overview_before (total integer, asian integer, european integer);
 grant all on overview_before to authenticated;
@@ -148,6 +177,10 @@ select is((select model from public.member_motorcycles where id = '00000000-0000
 select is((select name from public.member_emergency_contacts where profile_id = '00000000-0000-0000-0000-000000000715'),
   'Eski Kişi', 'pending does not update own emergency contact');
 
+select pg_temp.login('00000000-0000-0000-0000-000000000728');
+select throws_ok($$ select * from public.club_overview() $$, '42501', null, 'an inactive account cannot call club_overview');
+reset role;
+
 -- ---------------------------------------------------------------------------
 -- 0712 (full member): no crowd view, doesn't see probation members
 -- ---------------------------------------------------------------------------
@@ -198,22 +231,37 @@ select is((select count(*) from public.member_directory() where id = '00000000-0
 reset role;
 
 -- ---------------------------------------------------------------------------
+-- Linking (0723, applications.decide): an approved application may go to a probation account (attach only),
+-- like an active one; an open application may not.
+-- ---------------------------------------------------------------------------
+select pg_temp.login('00000000-0000-0000-0000-000000000723');
+select ok(not exists (select 1 from public.linkable_accounts('pgtap-pa-linktarget')
+  where id = '00000000-0000-0000-0000-000000000724'), 'without include_active a probation account is not linkable');
+select is((select status::text from public.linkable_accounts('pgtap-pa-linktarget', include_active => true)
+  where id = '00000000-0000-0000-0000-000000000724'), 'probation',
+  'with include_active a probation account is listed, with its status');
+select throws_ok($$ select public.link_application('00000000-0000-0000-0000-000000000726',
+  '00000000-0000-0000-0000-000000000724') $$, 'P0002', null, 'a new application cannot be linked to a probation account');
+select throws_ok($$ select public.link_application('00000000-0000-0000-0000-000000000727',
+  '00000000-0000-0000-0000-000000000724') $$, 'P0002', null,
+  'a contacted application cannot be linked to a probation account');
+select lives_ok($$ select public.link_application('00000000-0000-0000-0000-000000000725',
+  '00000000-0000-0000-0000-000000000724') $$, 'an approved application can be linked to a probation account');
+reset role;
+select is((select profile_id from public.applications where id = '00000000-0000-0000-0000-000000000725'),
+  '00000000-0000-0000-0000-000000000724'::uuid, 'the approved application is attached to the probation account');
+select is((select status from public.profiles where id = '00000000-0000-0000-0000-000000000724'),
+  'probation'::public.member_status, 'the probation account stays in probation');
+
+-- ---------------------------------------------------------------------------
 -- Purge: a deleted account that was in probation loses its approved application (only inactive keeps it).
 -- Requested long ago and purged "as of" then, so no real account is due in this run.
 -- ---------------------------------------------------------------------------
 update public.profiles
   set status = 'deleting', deletion_requested_at = '2000-01-01 00:00:00+00', status_before_deletion = 'probation'
   where id = '00000000-0000-0000-0000-000000000721';
-insert into public.applications (
-  id, status, profile_id, full_name, phone, email, birth_date, district, side, languages, license_class,
-  riding_years, owns_motorcycle, riding_styles, group_experience, in_other_clubs, heard_from, event_interests,
-  expectations, alienating_behaviors, consent_privacy, consent_rules, privacy_notice_version
-) values (
-  '00000000-0000-0000-0000-000000000722', 'approved', '00000000-0000-0000-0000-000000000721', 'Defne Aday',
-  '+905321234567', 'pgtap-pa-deleting@pgtap.invalid', '1995-05-17', 'Kadıköy', 'asian', array['tr'], 'a2', 3, false,
-  array['city'], 'some', false, 'friend', array['day_rides'], 'Güvenli grup sürüşleri.', 'Tehlikeli sürüş.',
-  true, true, 'test'
-);
+select pg_temp.apply('00000000-0000-0000-0000-000000000722', 'pgtap-pa-deleting@pgtap.invalid', 'approved',
+  '00000000-0000-0000-0000-000000000721');
 select private.purge_deleted_accounts('2000-01-15 00:00:00+00');
 select is((select count(*) from auth.users where id = '00000000-0000-0000-0000-000000000721'), 0::bigint,
   'the deleted probation account is purged');

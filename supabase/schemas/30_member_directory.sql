@@ -6,11 +6,11 @@
 
 -- Every matching active member, ordered by Turkish name then id (a total order). Callers with members.manage or
 -- members.safety also get ön alım (probation) members, flagged by `probation` (so a safety card opens if they join a
--- ride); everyone else never sees them. There is no limit in SQL: the
--- app reads the result in .range() chunks of 1,000 (PostgREST max_rows) up to its list ceiling and filters/pages in
--- the browser. Safety filters (blood_filter, no_contact) and has_emergency_contact need members.safety. Filtering by
--- blood type is logged, so the function is volatile; the log is written once per call, i.e. once per chunk (one chunk
--- while a blood group has <= 1,000 members).
+-- ride); everyone else never sees them. There is no limit in SQL: the app reads the result in .range() chunks of
+-- 1,000 (PostgREST max_rows) up to its list ceiling and filters/pages in the browser. Safety filters (blood_filter,
+-- no_contact) and has_emergency_contact need members.safety. Filtering by blood type is logged, so the function is
+-- volatile; the log is written once per call, i.e. once per chunk (one chunk while a blood group has <= 1,000
+-- members).
 create or replace function public.member_directory(
   blood_filter public.blood_type default null,
   no_contact boolean default false
