@@ -543,7 +543,7 @@
       "role": "Role",
       "noRole": "Member (no role)",
       "toProbation": "Move to probation",
-      "probationDays": "Probation · {days, plural, one {# day} other {# days}}",
+      "probationDays": "Probation · {days, plural, =0 {today} one {# day} other {# days}}",
       "deactivate": "Deactivate",
       "promote": "Make full member",
       "noEmail": "No email",

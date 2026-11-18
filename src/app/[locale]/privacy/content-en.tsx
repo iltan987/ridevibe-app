@@ -134,20 +134,22 @@ export function PrivacyEn() {
         Within the club: active members can see your name, profile photo, district/side and motorcycles in the member
         directory. Your birthday (day and month only) is shown too; you can turn it off in your profile at any time.
         Your Instagram username is shown only if you turn it on in your profile. Your motorcycle plates are shown in the
-        directory too; you can hide them with the &quot;Show my plates&quot; switch on your account page.
+        directory too; you can hide them with the &quot;Show my plates&quot; switch on your account page. Members in the
+        ön alım period see only the initials of full members and the member counts instead (no names, photos or other
+        information).
       </p>
       <p>
         Ön alım period: after your application is approved, the club first registers you for a short time as an &quot;ön
         alım&quot; (probationary) member. During this period you do not see other members&apos; information; instead of
         the member directory you see only the number of members and the initials of full members. Your information is
-        not shown to other members either; only the club team (those allowed to manage members or to see safety
-        information) can see it. When the period ends you become a full member and the rules above apply.
+        not shown to other members either; only the club team (authorised team members) can see it. If you move on to
+        full membership after the ön alım period, the rules above apply.
       </p>
       <p>
-        Club notes: members of the club team who hold this permission may record factual notes about your participation
-        and conduct in the club. Only people holding this permission can read the notes; notes about people in the admin
-        role can only be seen by admins. You cannot see the notes in the app; you can request their content from us
-        under your rights in section 8. Notes are deleted together with your account.
+        Club notes: club team members who have been given the permission to see member notes may record factual notes
+        about your participation and conduct in the club. Only people with this permission can read the notes; notes
+        about people in the admin role can only be seen by admins. You cannot see the notes in the app; you can request
+        their content from us under your rights in section 8. Notes are deleted together with your account.
       </p>
       <p>
         Your emergency contacts and blood type are not shown to everyone in the directory. Only the club&apos;s safety

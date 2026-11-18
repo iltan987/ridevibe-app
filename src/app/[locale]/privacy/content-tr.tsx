@@ -134,20 +134,22 @@ export function PrivacyTr() {
         motosikletlerinizi görebilir. Doğum gününüz (yalnızca gün ve ay) de gösterilir; dilediğiniz zaman profilinizden
         kapatabilirsiniz. Instagram kullanıcı adınız yalnızca profilinizde açarsanız gösterilir. Motosiklet plakalarınız
         da üye rehberinde gösterilir; hesap sayfanızdaki &quot;Plakalarımı göster&quot; seçeneğini kapatarak
-        gizleyebilirsiniz.
+        gizleyebilirsiniz. Ön alım döneminde olan üyeler bunun yerine yalnızca tam üyelerin adlarının baş harflerini ve
+        üye sayılarını görür (ad, fotoğraf veya başka bilgi görmez).
       </p>
       <p>
         Ön alım dönemi: başvurunuz onaylandıktan sonra kulüp sizi önce kısa bir süre &quot;ön alım&quot; üyesi olarak
         kaydeder. Bu dönemde diğer üyelerin bilgilerini görmezsiniz; üye rehberi yerine yalnızca üye sayısını ve tam
         üyelerin adlarının baş harflerini görürsünüz. Sizin bilgileriniz de diğer üyelere gösterilmez; yalnızca kulüp
-        ekibi (üyeleri yönetme veya güvenlik bilgilerini görme yetkisi olanlar) görebilir. Ön alım dönemi bittiğinde tam
-        üye olursunuz ve yukarıdaki kurallar geçerli olur.
+        ekibi (yetkili ekip üyeleri) görebilir. Ön alım döneminden sonra tam üyeliğe geçerseniz yukarıdaki kurallar
+        geçerli olur.
       </p>
       <p>
-        Kulüp notları: kulüp ekibinde bu yetkiyi taşıyan kişiler, katılımınız ve kulüp içindeki davranışlarınız hakkında
-        olgusal notlar kaydedebilir. Notları yalnızca bu yetkiyi taşıyan kişiler okuyabilir; yönetici rolündeki kişiler
-        hakkındaki notları yalnızca yöneticiler görebilir. Notları siz uygulamada göremezsiniz; içeriğini 8. bölümdeki
-        haklarınız çerçevesinde bizden isteyebilirsiniz. Notlar hesabınız silindiğinde sizinle birlikte silinir.
+        Kulüp notları: üye notlarını görme yetkisi verilen kulüp ekibi üyeleri, katılımınız ve kulüp içindeki
+        davranışlarınız hakkında olgusal notlar kaydedebilir. Notları yalnızca bu yetkiye sahip kişiler okuyabilir;
+        yönetici rolündeki kişiler hakkındaki notları yalnızca yöneticiler görebilir. Notları siz uygulamada
+        göremezsiniz; içeriğini 8. bölümdeki haklarınız çerçevesinde bizden isteyebilirsiniz. Notlar hesabınız
+        silindiğinde sizinle birlikte silinir.
       </p>
       <p>
         Acil durum kişileriniz ve kan grubunuz üye rehberinde herkese gösterilmez. Bunları yalnızca kulübün güvenlik

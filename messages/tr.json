@@ -543,7 +543,7 @@
       "role": "Rol",
       "noRole": "Üye (rolsüz)",
       "toProbation": "Ön alıma al",
-      "probationDays": "Ön alım · {days} gün",
+      "probationDays": "Ön alım · {days, plural, =0 {bugün} other {# gün}}",
       "deactivate": "Pasifleştir",
       "promote": "Tam üye yap",
       "noEmail": "E-posta yok",

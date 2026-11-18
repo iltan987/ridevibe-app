@@ -60,7 +60,6 @@ export function MemberNotesDialog({
 
   function onOpenChange(next: boolean) {
     setOpen(next);
-    setBody("");
     setFailure(null);
     setConfirmId(null);
     if (next) {

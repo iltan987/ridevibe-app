@@ -1,7 +1,8 @@
 -- ---------------------------------------------------------------------------
 -- Staff notes about members (members.notes). Internal: the subject never sees
--- them, and nobody can edit a note; only admins delete. Notes about an active
--- admin-role holder (any status) are visible to admins only; never about oneself or a deleting account.
+-- them, and nobody can edit a note; only admins delete. Notes about an
+-- admin-role holder (any status) are visible to admins only; never about
+-- oneself or a deleting account.
 -- Deleted by cascade with the subject's profile; the author is nulled when the
 -- author's profile goes.
 -- ---------------------------------------------------------------------------
