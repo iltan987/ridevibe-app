@@ -15,7 +15,7 @@ test("applyView: pending applicant", () => {
   assert.equal(applyView("pending", "rejected"), "form");
   assert.equal(applyView("pending", "new"), "underReview");
   assert.equal(applyView("pending", "contacted"), "underReview");
-  // Approval activates the account, so this is transient; the gate has always shown the form here.
+  // Approval moves the account on to ön alım, so this is transient; the gate has always shown the form here.
   assert.equal(applyView("pending", "approved"), "form");
 });
 

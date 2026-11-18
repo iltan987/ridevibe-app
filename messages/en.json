@@ -131,7 +131,9 @@
     "notAppliedBody": "Fill in the application form to become a member. Your details are filled in for you. If you already applied with another email, don't apply again; message us on WhatsApp and we'll link your account.",
     "applyNow": "Apply",
     "underReviewTitle": "Your application is under review",
-    "underReviewBody": "Once it's approved, your account becomes active automatically.",
+    "underReviewBody": "Once it's approved, your account moves into the club's probation period.",
+    "probationTitle": "You're in your probation period",
+    "probationBody": "The club is getting to know you; in a few days you become a full member and the member list opens up.",
     "delete": {
       "title": "Delete account",
       "body": "You can delete your account and your data in this app.",
@@ -175,6 +177,10 @@
     "noResults": "No members match your search.",
     "activeOnlyTitle": "The member list is for active members",
     "activeOnlyBody": "Your membership needs to be active to see other members.",
+    "clubSummary": "{total} members in the club · Asian side {asian} · European side {european}",
+    "clubInitialsLabel": "{total} members in the club.",
+    "clubLocked": "The member list opens once you become a full member.",
+    "probationBadge": "Probation",
     "birthday": "🎂 {date}",
     "instagram": "Instagram: @{handle}",
     "safety": {
@@ -437,13 +443,13 @@
     "successTitle": "Application received!",
     "successBody": "Thank you! We'll review your application and contact you on WhatsApp.",
     "successEmail": "Once approved, you'll sign in with the <b>{email}</b> Google account. If this address is wrong, message us on WhatsApp.",
-    "successSignedIn": "Once approved, this account becomes active automatically.",
+    "successSignedIn": "Once approved, this account enters the club's probation period.",
     "backHome": "Back to home",
     "duplicate": "You already have an open application. Please wait for the result.",
     "genericError": "Something went wrong. Please try again in a moment.",
     "alreadyMember": {
       "title": "You're already a member",
-      "body": "Your account is active, so there's no need to apply again."
+      "body": "You're already a member, so there's no need to apply again."
     },
     "underReview": {
       "title": "Your application is under review",

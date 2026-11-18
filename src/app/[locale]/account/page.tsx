@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { InstallBanner } from "@/components/pwa/install-banner";
 import { DeleteAccountCard } from "@/components/account/delete-account-card";
 import { PendingCard } from "@/components/account/pending-card";
+import { ProbationCard } from "@/components/account/probation-card";
 import { RecoveryCard } from "@/components/account/recovery-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -58,14 +59,16 @@ async function AccountDetails() {
     return <RecoveryCard deletesOn={deletionDate(profile.deletion_requested_at).toISOString()} />;
   }
   const name = profile?.full_name || user.email || "";
-  // Active members edit everything; inactive ones only keep the photo consent
+  // Active and ön alım members edit everything; inactive ones only keep the photo consent
   // (withdrawal must stay possible). Pending accounts have no profile data yet.
-  const myProfile = profile?.status === "active" || profile?.status === "inactive" ? await getMyProfile() : null;
+  const isMember = profile?.status === "active" || profile?.status === "probation";
+  const myProfile = isMember || profile?.status === "inactive" ? await getMyProfile() : null;
 
   return (
     <>
       {profile?.status === "pending" && <PendingCard />}
-      {profile?.status === "active" && myProfile?.emergencyContacts.length === 0 && <EmergencyPrompt />}
+      {profile?.status === "probation" && <ProbationCard />}
+      {isMember && myProfile?.emergencyContacts.length === 0 && <EmergencyPrompt />}
       <Card data-skeleton-result="account">
         <CardHeader className="flex flex-row items-center gap-4">
           <Avatar className="size-14">
@@ -95,7 +98,7 @@ async function AccountDetails() {
       </Card>
       {myProfile && (
         <>
-          {profile?.status === "active" && (
+          {isMember && (
             <>
               <LocationForm city={myProfile.city} district={myProfile.district} />
               <MotorcyclesSection motorcycles={myProfile.motorcycles} />
@@ -125,10 +128,10 @@ async function AccountDetails() {
           <PhotoConsentForm consent={myProfile.consentPhotos} consentAt={myProfile.consentPhotosAt} />
         </>
       )}
-      {(profile?.status === "pending" || profile?.status === "active" || profile?.status === "inactive") && (
+      {(profile?.status === "pending" || isMember || profile?.status === "inactive") && (
         <DeleteAccountCard inactive={profile.status === "inactive"} />
       )}
-      {(profile?.status === "active" || profile?.status === "pending") && <InstallBanner />}
+      {(isMember || profile?.status === "pending") && <InstallBanner />}
     </>
   );
 }

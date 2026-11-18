@@ -131,7 +131,9 @@
     "notAppliedBody": "Üye olmak için başvuru formunu doldur. Bilgilerin hazır gelecek. Başka bir e-postayla başvurduysan tekrar başvurma; bize WhatsApp'tan yaz, hesabını bağlayalım.",
     "applyNow": "Başvur",
     "underReviewTitle": "Başvurun inceleniyor",
-    "underReviewBody": "Onaylandığında hesabın otomatik olarak aktif olur.",
+    "underReviewBody": "Onaylandığında hesabın kulübün ön alım dönemine geçer.",
+    "probationTitle": "Ön alım dönemindesin",
+    "probationBody": "Kulüp seni tanıyor; birkaç gün içinde tam üyeliğe geçersin ve üye listesi açılır.",
     "delete": {
       "title": "Hesabı sil",
       "body": "Hesabını ve bu uygulamadaki bilgilerini silebilirsin.",
@@ -175,6 +177,10 @@
     "noResults": "Aramanla eşleşen üye bulunamadı.",
     "activeOnlyTitle": "Üye listesi aktif üyelere açık",
     "activeOnlyBody": "Üyeleri görmek için üyeliğinin aktif olması gerekiyor.",
+    "clubSummary": "Kulüpte {total} üye var · Anadolu {asian} · Avrupa {european}",
+    "clubInitialsLabel": "Kulüpte {total} üye var.",
+    "clubLocked": "Üye listesi tam üyeliğe geçince açılır.",
+    "probationBadge": "Ön alım",
     "birthday": "🎂 {date}",
     "instagram": "Instagram: @{handle}",
     "safety": {
@@ -437,13 +443,13 @@
     "successTitle": "Başvurun alındı!",
     "successBody": "Teşekkürler! Başvurunu inceleyip WhatsApp üzerinden seninle iletişime geçeceğiz.",
     "successEmail": "Onaylanınca <b>{email}</b> Google hesabınla giriş yapacaksın. Bu adres yanlışsa bize WhatsApp'tan yaz.",
-    "successSignedIn": "Onaylanınca bu hesabın otomatik olarak aktif olur.",
+    "successSignedIn": "Onaylanınca bu hesabınla kulübün ön alım dönemine geçersin.",
     "backHome": "Ana sayfaya dön",
     "duplicate": "Zaten açık bir başvurun var. Lütfen sonucu bekle.",
     "genericError": "Bir şeyler ters gitti. Lütfen biraz sonra tekrar dene.",
     "alreadyMember": {
       "title": "Zaten üyesin",
-      "body": "Hesabın aktif, yeniden başvurman gerekmiyor."
+      "body": "Üyeliğin devam ediyor, yeniden başvurman gerekmiyor."
     },
     "underReview": {
       "title": "Başvurun inceleniyor",

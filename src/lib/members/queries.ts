@@ -1,4 +1,5 @@
 import "server-only";
+import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/user";
 import { readAll, uniqueById } from "@/lib/pagination";
 import { createClient } from "@/lib/supabase/server";
@@ -145,4 +146,20 @@ export async function getMyProfile(): Promise<MyProfile | null> {
     bloodType: health.data?.blood_type ?? null,
     bloodConsent: health.data?.consent_blood_type ?? false,
   };
+}
+
+const clubOverview = z.object({
+  total: z.number(),
+  asian: z.number(),
+  european: z.number(),
+  initials: z.array(z.string()),
+});
+export type ClubOverview = z.infer<typeof clubOverview>;
+
+/** The crowd view for ön alım members: counts and anonymous initials only (the DB refuses everyone else). */
+export async function loadClubOverview(): Promise<ClubOverview> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("club_overview");
+  if (error) throw new Error(`loadClubOverview failed: ${error.code}`);
+  return clubOverview.parse(data[0] ?? { total: 0, asian: 0, european: 0, initials: [] });
 }
