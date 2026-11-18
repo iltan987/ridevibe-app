@@ -133,7 +133,7 @@
     "underReviewTitle": "Your application is under review",
     "underReviewBody": "Once it's approved, your account moves into the club's probation period.",
     "probationTitle": "You're in your probation period",
-    "probationBody": "The club is getting to know you; in a few days you become a full member and the member list opens up.",
+    "probationBody": "The club is getting to know you; the member list opens once you're a full member.",
     "delete": {
       "title": "Delete account",
       "body": "You can delete your account and your data in this app.",
