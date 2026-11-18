@@ -116,6 +116,7 @@
     "role": "Role",
     "statuses": {
       "pending": "Awaiting approval",
+      "probation": "Probation",
       "active": "Active member",
       "inactive": "Inactive",
       "deleting": "To be deleted"
@@ -130,7 +131,9 @@
     "notAppliedBody": "Fill in the application form to become a member. Your details are filled in for you. If you already applied with another email, don't apply again; message us on WhatsApp and we'll link your account.",
     "applyNow": "Apply",
     "underReviewTitle": "Your application is under review",
-    "underReviewBody": "Once it's approved, your account becomes active automatically.",
+    "underReviewBody": "Once it's approved, your account moves into the club's probation period.",
+    "probationTitle": "You're in your probation period",
+    "probationBody": "The club is getting to know you; the member list opens once you're a full member.",
     "delete": {
       "title": "Delete account",
       "body": "You can delete your account and your data in this app.",
@@ -174,6 +177,10 @@
     "noResults": "No members match your search.",
     "activeOnlyTitle": "The member list is for active members",
     "activeOnlyBody": "Your membership needs to be active to see other members.",
+    "clubSummary": "{total} members in the club · Asian side {asian} · European side {european}",
+    "clubInitialsLabel": "{total} members in the club.",
+    "clubLocked": "The member list opens once you become a full member.",
+    "probationBadge": "Probation",
     "birthday": "🎂 {date}",
     "instagram": "Instagram: @{handle}",
     "safety": {
@@ -436,13 +443,13 @@
     "successTitle": "Application received!",
     "successBody": "Thank you! We'll review your application and contact you on WhatsApp.",
     "successEmail": "Once approved, you'll sign in with the <b>{email}</b> Google account. If this address is wrong, message us on WhatsApp.",
-    "successSignedIn": "Once approved, this account becomes active automatically.",
+    "successSignedIn": "Once approved, this account enters the club's probation period.",
     "backHome": "Back to home",
     "duplicate": "You already have an open application. Please wait for the result.",
     "genericError": "Something went wrong. Please try again in a moment.",
     "alreadyMember": {
       "title": "You're already a member",
-      "body": "Your account is active, so there's no need to apply again."
+      "body": "You're already a member, so there's no need to apply again."
     },
     "underReview": {
       "title": "Your application is under review",
@@ -522,10 +529,11 @@
       "title": "Members & access",
       "statuses": {
         "pending": "Pending",
+        "probation": "Probation",
         "active": "Active",
         "inactive": "Inactive"
       },
-      "pendingHint": "People who signed in with Google but aren't approved yet. Activate the ones you know. Link those with an application from the applications page with “Link to account”; if they have none, ask them to fill in the form.",
+      "pendingHint": "People who signed in with Google but aren't approved yet. Move the ones you know into probation with “Move to probation”; they become full members after that. Link those with an application from the applications page with “Link to account”; if they have none, ask them to fill in the form.",
       "search": "Search by name or email",
       "empty": "Nobody in this list.",
       "range": "{from}–{to} of {total, plural, one {# person} other {# people}}",
@@ -534,9 +542,10 @@
       "you": "You",
       "role": "Role",
       "noRole": "Member (no role)",
-      "activate": "Activate",
+      "toProbation": "Move to probation",
+      "probationDays": "Probation · {days, plural, =0 {today} one {# day} other {# days}}",
       "deactivate": "Deactivate",
-      "reactivate": "Reactivate",
+      "promote": "Make full member",
       "noEmail": "No email",
       "applied": "Applied",
       "formerMember": "Former member: deleted their account",
@@ -550,6 +559,24 @@
         "save": "Save",
         "cancel": "Cancel"
       }
+    },
+    "notes": {
+      "open": "Notes",
+      "openCount": "Notes ({count})",
+      "title": "Notes about {name}",
+      "description": "Only staff who can see notes read these.",
+      "loading": "Loading notes…",
+      "empty": "No notes yet.",
+      "unknownAuthor": "Deleted account",
+      "label": "New note",
+      "hint": "Notes can be shown to the person if they ask for their data; stick to facts.",
+      "add": "Add note",
+      "delete": "Delete",
+      "deleteConfirm": "Delete this note?",
+      "deleteYes": "Yes, delete",
+      "deleteCancel": "Cancel",
+      "close": "Close",
+      "loadError": "Couldn't load the notes. Please try again."
     },
     "roles": {
       "title": "Roles & permissions",
@@ -590,11 +617,15 @@
       "members": {
         "manage": {
           "label": "Manage members",
-          "description": "Can see pending sign-ups and activate/deactivate members (except admins)."
+          "description": "Can see pending sign-ups and move members into probation and activate/deactivate them (except admins)."
         },
         "safety": {
           "label": "See safety information",
           "description": "Can see members' emergency contacts, blood type and plates, and search by blood type."
+        },
+        "notes": {
+          "label": "Read and write member notes",
+          "description": "Can read and write internal staff notes about members; the member never sees them. Notes about admin accounts are visible to admins only."
         }
       }
     },
@@ -606,13 +637,13 @@
       "reject": "Reject",
       "reopen": "Undo decision",
       "approveTitle": "Approve this application?",
-      "approveBody": "{name} becomes an active member automatically when they sign in with Google using this email ({email}); if they use another account, link it with “Link to account”. Send the WhatsApp invite after approving.",
-      "approveBodyLinked": "The linked account {account} becomes an active member right away (as {name}). Let them know on WhatsApp after approving.",
-      "approveBodyLinkedUnknown": "{name} becomes an active member right away through the linked account. Let them know on WhatsApp after approving.",
-      "approveBodyLinkedInactive": "The linked account {account} is inactive; approving doesn't reactivate it. Reactivate it on the Members page if needed.",
+      "approveBody": "{name} is moved into probation automatically when they sign in with Google using this email ({email}); if they use another account, link it with “Link to account”. Send the WhatsApp invite after approving.",
+      "approveBodyLinked": "The linked account {account} is moved into probation right away (as {name}). Let them know on WhatsApp after approving.",
+      "approveBodyLinkedUnknown": "{name} is moved into probation right away through the linked account. Let them know on WhatsApp after approving.",
+      "approveBodyLinkedInactive": "The linked account {account} is inactive; approving doesn't move it into probation. Move it there on the Members page if needed.",
       "rejectTitle": "Reject this application?",
       "rejectBody": "{name} can apply again later.",
-      "reopenBody": "The application goes back to “Contacted”. An account that was already activated stays active; deactivate it on the Members page if needed.",
+      "reopenBody": "The application goes back to “Contacted”. An account that is already in probation or active stays as it is; deactivate it on the Members page if needed.",
       "confirm": "Yes",
       "cancel": "Cancel",
       "notes": "Notes",
@@ -626,8 +657,8 @@
       "emailMismatch": "Heads up: the application was made with {appEmail}, but the linked account's email is {accountEmail}. Before approving, confirm that the person uses this account.",
       "emailMismatchDecided": "Heads up: the application was made with {appEmail}, but the linked account's email is {accountEmail}. Make sure this account belongs to the applicant.",
       "linkedUnknown": "Linked to an account",
-      "notLinked": "Hasn't signed in yet. Send the invite; they become active automatically when they sign in with the email from the application. If they signed in with a different Google account, link it with “Link to account”.",
-      "notLinkedNoLink": "Hasn't signed in yet. Send the invite; they become active automatically when they sign in with the email from the application.",
+      "notLinked": "Hasn't signed in yet. Send the invite; they are moved into probation automatically when they sign in with the email from the application. If they signed in with a different Google account, link it with “Link to account”.",
+      "notLinkedNoLink": "Hasn't signed in yet. Send the invite; they are moved into probation automatically when they sign in with the email from the application.",
       "sendInvite": "Send WhatsApp invite",
       "delete": "Delete application",
       "deleteTitle": "Delete this application permanently?",
@@ -644,17 +675,17 @@
     "link": {
       "open": "Link to account",
       "title": "Link the application to an account",
-      "description": "Accounts that aren't active yet and aren't matched to an application. Names like the applicant's come first.",
-      "descriptionApproved": "Pending accounts not matched to an application, and active members without an application. Names like the applicant's come first.",
+      "description": "Accounts that aren't members yet and aren't matched to an application. Names like the applicant's come first.",
+      "descriptionApproved": "Pending accounts not matched to an application, and members in probation or active without an application. Names like the applicant's come first.",
       "search": "Search by name or email",
       "empty": "No pending account to link found.",
-      "emptyApproved": "No pending account or active member without an application found.",
+      "emptyApproved": "No pending account or member without an application found.",
       "more": "More",
       "signedUp": "Signed up: {date}",
       "activeMember": "Active member",
       "confirmTitle": "Link to this account?",
-      "confirm": "Link the application of {application} to the account {account}? If the application is approved, the account becomes active.",
-      "confirmActive": "Link the application of {application} to the account {account}? The account is already active; only the application gets attached to it.",
+      "confirm": "Link the application of {application} to the account {account}? If the application is approved, the account is moved into probation.",
+      "confirmAttach": "Link the application of {application} to the account {account}? The account is already a member (in probation or active); only the application gets attached to it.",
       "submit": "Link",
       "back": "Back",
       "close": "Close",

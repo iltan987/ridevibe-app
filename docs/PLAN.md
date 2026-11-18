@@ -31,6 +31,8 @@ take applications, manage members, publish events/announcements, share event pho
 |---|---|
 | Landing page, public events teaser, apply form, KVKK texts | Public (no login) |
 | Events, RSVP, announcements, galleries, own profile, check-in | Approved members (login) |
+| Member directory (`/members`) | Full members; **ön alım** members see only a crowd view (counts + initials) |
+| Staff notes on members (`/admin/members`) | Staff with `members.notes` (notes about admins: admins only) |
 | Applications, member list, event/announcement management, attendance | Staff roles with the matching permission |
 
 Roles (decided 2026-11-08): admins create custom roles (e.g. "Organizatör", "Ride captain", "Membership team") and
@@ -38,13 +40,19 @@ pick each role's permissions in the app (`/admin/roles`); each member has at mos
 `/admin/members`. Built-in **Admin** (Samet, iltan) has everything and is the only one who can edit/assign roles.
 Members without a role are regular members. Approve/reject is its own permission (approval grants membership).
 
+**Ön alım (decided and built 2026-11-18)** — spec `docs/superpowers/specs/2026-11-18-probation-and-member-notes-design.md`:
+approval and staff manual activation put an account into the status `probation` ("Ön alım"), not `active`. Staff
+(`members.manage`) promote it ("Tam üye yap") or remove it ("Pasifleştir"); the database refuses pending → active.
+Ön alım members may edit their own safety data and bikes but see no other members (only the crowd view), and regular
+members don't see them; staff see them with a badge. Events will get a "full members only" flag (Events step).
+
 Intended staff roles (2026-11-08, iltan):
 
 | Role | Permissions | Who |
 |---|---|---|
 | Yönetici (built-in admin) | everything, incl. editing/assigning roles | iltan (app manager), Samet (founder/owner) |
 | Başvuru Sorumlusu | applications: view, review, approve/reject | people who check and approve applications |
-| Üye Sorumlusu | members.manage (+ `members.notes`, `members.discipline` once built) | people responsible for members' conduct |
+| Üye Sorumlusu | members.manage + `members.notes` (built 2026-11-18; `members.discipline` once built) | people responsible for members' conduct |
 | Organizatör | `members.safety` ("Güvenlik bilgilerini görme": safety cards, blood-type filter); event permissions once Events exist | ride organizers / captains: they need the safety data at the roadside (set 2026-11-13; no separate safety role) |
 
 Who gets which role is decided once the site is ready (iltan, 2026-11-13). Keep Organizatör small (health data).
@@ -112,11 +120,14 @@ Build in this order, one branch each:
    `/members` and can filter by blood type (donor search) and "no emergency contact". Every blood-type operation and
    card view is logged in `safety_access_log` (admins only). Inactive members disappear from staff view. Privacy
    notice updated (version `2026-11-12-draft-3`). Spec: `docs/superpowers/specs/2026-11-12-safety-data-design.md`.
-   2b. **Member conduct** — confidential staff notes, warnings, suspend/ban (see "Member conduct" below).
+   2b. **Member conduct** — confidential staff notes ✅ (2026-11-18: `member_notes`, `members.notes`, "Notlar (n)"
+   dialog on `/admin/members`, together with the ön alım stage), warnings, suspend/ban still to do (see "Member
+   conduct" below). Privacy notice version `2026-11-18-draft-8`.
 3. **Events** — organizers create rides (date, route, capacity); rides have a **route** (path with start, stops,
    finish), not a single meeting point — see spec §6; members RSVP with a waiting list; home page shows upcoming events.
-   Events have **requirements** (e.g. minimum bike cc, membership stage) — depends on the **"ön alım"** probation stage
-   (approved members watched in a separate WhatsApp group first; open decision in `docs/follow-ups.md`, 2026-11-12).
+   Events have **requirements** (e.g. minimum bike cc, membership stage) — the **"ön alım"** probation stage exists
+   since 2026-11-18 (approved members watched in a separate WhatsApp group first); a "full members only" ride flag
+   comes with Events.
 4. **Announcements** — short organizer posts, pinned on the home page.
 5. Right after the MVP: **event photo gallery** (Cloudflare R2).
 
@@ -142,12 +153,13 @@ Decision (iltan, 2026-11-08): **not now** — too much setup for the benefit. If
 admin on/off switch in the app (plus "off" automatically when the API credentials aren't configured), with the
 manual WhatsApp button always available as the fallback. KVKK: Meta as a processor abroad → privacy notice.
 
-## Member conduct: notes, warnings, bans (planned, step 2b)
+## Member conduct: notes, warnings, bans (notes built 2026-11-18; the rest planned, step 2b)
 
 Requested by iltan 2026-11-08: people responsible for members must be able to record behaviour, warn, suspend or ban,
 with notes only they can see.
 
-- **Confidential notes** on a member (`member_notes`: member, author, kind, body, created_at). Readable and writable
+- **Confidential notes** (built 2026-11-18, without `kind`; admin-role holders' notes admin-only, no notes about
+  oneself) on a member (`member_notes`: member, author, body, created_at). Readable and writable
   only with a new permission **`members.notes`**; the member never sees them in the app. Append-only: no editing in
   place (a correction is a new note), author + time always shown; only admins can delete (e.g. KVKK erasure).
 - **Warnings** = notes of kind `warning`, created with **`members.discipline`**; warning count shown in member lists.

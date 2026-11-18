@@ -55,6 +55,10 @@ export function PrivacyTr() {
           gösteren sürüş ve buluşma fotoğrafları.
         </li>
         <li>
+          <strong>Kulüp notları:</strong> kulüp ekibinin, katılımınız ve kulüp içindeki davranışlarınız hakkında tuttuğu
+          kısa ve olgusal notlar (not, yazan kişi ve tarih).
+        </li>
+        <li>
           <strong>Oturum çerezi:</strong> giriş yapabilmeniz için zorunlu çerez.
         </li>
         <li>
@@ -86,7 +90,11 @@ export function PrivacyTr() {
           Sürüş ve etkinlik güvenliğini sağlamak, acil durumda yakınlarınıza ulaşmak ve sağlık ekiplerini
           bilgilendirmek,
         </li>
-        <li>Açık rızanız varsa, kulüp içinde kan bağışçısı bulmak.</li>
+        <li>Açık rızanız varsa, kulüp içinde kan bağışçısı bulmak,</li>
+        <li>
+          Onaylanan üyelerin ilk günlerinde (ön alım dönemi) kulüp düzenine uyumunu izlemek ve bunu kulüp ekibinin
+          notlarıyla kayda geçirmek.
+        </li>
       </ul>
 
       <h2>4. Hukuki sebepler</h2>
@@ -113,6 +121,10 @@ export function PrivacyTr() {
           Acil durum kişileriniz ve plakanız için kulübün meşru menfaati (KVKK m.5/2-f) ve acil durumda sizin veya bir
           başkasının hayatını ya da beden bütünlüğünü korumak (KVKK m.5/2-b).
         </li>
+        <li>
+          Ön alım dönemi ve kulüp notları için, temel hak ve özgürlüklerinize zarar vermemek kaydıyla kulübün meşru
+          menfaati (KVKK m.5/2-f): sürüş ve etkinlik güvenliği ile kulüp düzeninin korunması.
+        </li>
       </ul>
 
       <h2>5. Verileri kimlerle paylaşıyoruz? Yurt dışına aktarım</h2>
@@ -122,7 +134,22 @@ export function PrivacyTr() {
         motosikletlerinizi görebilir. Doğum gününüz (yalnızca gün ve ay) de gösterilir; dilediğiniz zaman profilinizden
         kapatabilirsiniz. Instagram kullanıcı adınız yalnızca profilinizde açarsanız gösterilir. Motosiklet plakalarınız
         da üye rehberinde gösterilir; hesap sayfanızdaki &quot;Plakalarımı göster&quot; seçeneğini kapatarak
-        gizleyebilirsiniz.
+        gizleyebilirsiniz. Ön alım döneminde olan üyeler bunun yerine yalnızca tam üyelerin adlarının baş harflerini ve
+        üye sayılarını görür (ad, fotoğraf veya başka bilgi görmez).
+      </p>
+      <p>
+        Ön alım dönemi: başvurunuz onaylandıktan sonra kulüp sizi önce kısa bir süre &quot;ön alım&quot; üyesi olarak
+        kaydeder. Bu dönemde diğer üyelerin bilgilerini görmezsiniz; üye rehberi yerine yalnızca üye sayısını ve tam
+        üyelerin adlarının baş harflerini görürsünüz. Sizin bilgileriniz de diğer üyelere gösterilmez; yalnızca kulüp
+        ekibi (yetkili ekip üyeleri) görebilir. Ön alım döneminden sonra tam üyeliğe geçerseniz yukarıdaki kurallar
+        geçerli olur.
+      </p>
+      <p>
+        Kulüp notları: üye notlarını görme yetkisi verilen kulüp ekibi üyeleri, katılımınız ve kulüp içindeki
+        davranışlarınız hakkında olgusal notlar kaydedebilir. Notları yalnızca bu yetkiye sahip kişiler okuyabilir;
+        yönetici rolündeki kişiler hakkındaki notları yalnızca yöneticiler görebilir. Notları siz uygulamada
+        göremezsiniz; içeriğini 8. bölümdeki haklarınız çerçevesinde bizden isteyebilirsiniz. Notlar hesabınız
+        silindiğinde sizinle birlikte silinir.
       </p>
       <p>
         Acil durum kişileriniz ve kan grubunuz üye rehberinde herkese gösterilmez. Bunları yalnızca kulübün güvenlik
@@ -178,6 +205,10 @@ export function PrivacyTr() {
           Acil durum kişileri, kan grubu ve plakalar: diğer üye bilgileriyle aynı süre saklanır. Acil durum kişilerinizi
           hesap sayfanızdan istediğiniz zaman, plakalarınızı üyeliğiniz aktif olduğu sürece hesap sayfanızdan
           silebilirsiniz; kan grubunuz rızanızı geri aldığınızda silinir.
+        </li>
+        <li>
+          Kulüp notları: diğer üye bilgileriyle aynı süre saklanır; hesabınız silindiğinde (14 günlük sürenin sonunda)
+          silinir. Yanlış veya gereksiz bir not yöneticiler tarafından silinebilir.
         </li>
         <li>
           Hesap silme: hesap sayfanızdan istediğiniz zaman hesabınızın silinmesini talep edebilirsiniz; hesabınız diğer

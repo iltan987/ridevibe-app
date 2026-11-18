@@ -3,6 +3,7 @@ import { useTranslations } from "next-intl";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import { PendingCard } from "@/components/account/pending-card";
+import { ClubOverview } from "@/components/members/club-overview";
 import { DirectoryList } from "@/components/members/directory-list";
 import { DirectorySkeleton } from "@/components/members/directory-skeleton";
 import { SafetyFilters } from "@/components/members/safety-filters";
@@ -12,7 +13,7 @@ import { getPathname, redirect } from "@/i18n/navigation";
 import { can } from "@/lib/auth/permissions";
 import { getCurrentUser } from "@/lib/auth/user";
 import { parseBloodTypeParam } from "@/lib/members/blood-type";
-import { loadDirectory } from "@/lib/members/queries";
+import { loadClubOverview, loadDirectory } from "@/lib/members/queries";
 import { LIST_CEILING } from "@/lib/pagination";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -39,6 +40,15 @@ async function Directory({ searchParams }: { searchParams: PageProps<"/[locale]/
   if (!user) {
     const next = getPathname({ href: "/members", locale });
     return redirect({ href: { pathname: "/sign-in", query: { next } }, locale });
+  }
+
+  if (user.profile?.status === "probation") {
+    return (
+      <>
+        <ClubOverview overview={await loadClubOverview()} />
+        <InstallBanner />
+      </>
+    );
   }
 
   if (user.profile?.status !== "active") {

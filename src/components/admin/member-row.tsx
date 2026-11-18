@@ -9,6 +9,8 @@ import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { type AccessActionResult, setMemberRole, setMemberStatus } from "@/lib/access/actions";
 import type { StaffStatus } from "@/lib/access/members-view";
 import { MemberNameDialog } from "@/components/admin/member-name-dialog";
+import { MemberNotesDialog } from "@/components/admin/member-notes-dialog";
+import { statusActions } from "@/lib/access/status-actions";
 import { initials } from "@/lib/initials";
 
 export type MemberRowData = {
@@ -24,13 +26,13 @@ export type MemberRowData = {
   /** Pending tab only: has an open application. null/undefined = not shown. */
   applied?: boolean | null;
   formerMember?: boolean;
+  /** Ön alım tab only: whole Istanbul calendar days since the status changed. null/undefined = not shown. */
+  probationDays?: number | null;
+  /** Staff notes: null/undefined = no button (viewer lacks members.notes, own row, or an admin's row for non-admins). */
+  notes?: { count: number } | null;
 };
 
-const NEXT_STATUS = {
-  pending: { status: "active", label: "activate" },
-  active: { status: "inactive", label: "deactivate" },
-  inactive: { status: "active", label: "reactivate" },
-} as const;
+const NOTICE_BADGE = "mt-1 border-sun/40 bg-sun/10";
 
 export function MemberRow({
   member,
@@ -39,6 +41,7 @@ export function MemberRow({
   canAssignRole,
   canChangeStatus,
   canRename,
+  canDeleteNotes,
 }: {
   member: MemberRowData;
   roles: { id: string; label: string }[];
@@ -46,6 +49,7 @@ export function MemberRow({
   canAssignRole: boolean;
   canChangeStatus: boolean;
   canRename: boolean;
+  canDeleteNotes: boolean;
 }) {
   const t = useTranslations("Admin");
   const [isPending, startTransition] = useTransition();
@@ -58,8 +62,6 @@ export function MemberRow({
       if (result.status !== "ok") setError(result.status);
     });
   }
-
-  const next = NEXT_STATUS[member.status];
 
   return (
     <li
@@ -80,8 +82,13 @@ export function MemberRow({
           <p className="truncate text-xs text-muted-foreground">{member.email ?? t("members.noEmail")}</p>
           <p className="text-xs text-muted-foreground">{member.joinedLabel}</p>
           {member.formerMember && (
-            <Badge variant="outline" className="mt-1 border-sun/40 bg-sun/10">
+            <Badge variant="outline" className={NOTICE_BADGE}>
               {t("members.formerMember")}
+            </Badge>
+          )}
+          {member.status === "probation" && member.probationDays != null && (
+            <Badge variant="outline" className={NOTICE_BADGE}>
+              {t("members.probationDays", { days: member.probationDays })}
             </Badge>
           )}
           {member.applied != null && (
@@ -93,7 +100,7 @@ export function MemberRow({
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        {/* Roles only matter for active members: activate first, then assign. */}
+        {/* Roles only matter for active (full) members: promote from ön alım first, then assign. */}
         {canAssignRole && !isSelf && member.status === "active" ? (
           <NativeSelect
             key={member.roleId ?? "none"}
@@ -119,16 +126,28 @@ export function MemberRow({
 
         {canRename && <MemberNameDialog memberId={member.id} currentName={member.name} />}
 
-        {canChangeStatus && !isSelf && (
-          <Button
-            size="sm"
-            variant={next.status === "active" ? "default" : "outline"}
-            disabled={isPending}
-            onClick={() => run(() => setMemberStatus(member.id, next.status))}
-          >
-            {t(`members.${next.label}`)}
-          </Button>
+        {member.notes && (
+          <MemberNotesDialog
+            memberId={member.id}
+            memberName={member.name}
+            count={member.notes.count}
+            canDelete={canDeleteNotes}
+          />
         )}
+
+        {canChangeStatus &&
+          !isSelf &&
+          statusActions(member.status).map((action) => (
+            <Button
+              key={action.status}
+              size="sm"
+              variant={action.primary ? "default" : "outline"}
+              disabled={isPending}
+              onClick={() => run(() => setMemberStatus(member.id, action.status))}
+            >
+              {t(`members.${action.label}`)}
+            </Button>
+          ))}
       </div>
 
       {error && (

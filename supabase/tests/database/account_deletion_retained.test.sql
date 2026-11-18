@@ -119,8 +119,8 @@ insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-0000000007c8', 'pgtap-ret-normal@pgtap.invalid', '{"full_name": "Normal Kisi"}');
 select is(
   (select status::text from public.profiles where id = '00000000-0000-0000-0000-0000000007c8'),
-  'active',
-  'an approved application without a deadline still activates a matching sign-up'
+  'probation',
+  'an approved application without a deadline still starts ön alım for a matching sign-up'
 );
 select pg_temp.login('00000000-0000-0000-0000-0000000007c8');
 select is(public.my_application_status()::text, 'approved', 'and shows its status');

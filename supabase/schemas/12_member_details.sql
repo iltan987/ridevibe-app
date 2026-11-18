@@ -73,7 +73,7 @@ using (
 -- Members activated without an application have no birth date. They may enter it once
 -- (a column grant can't say "only while null"); later changes go through the club team.
 -- Same rules as the application form: after 1920-01-01 and 18+ by the Istanbul date.
--- 42501: not an active member, or a birth date is already stored. 23514: invalid date.
+-- 42501: not an active or ön alım member, or a birth date is already stored. 23514: invalid date.
 create or replace function public.set_my_birth_date(new_date date)
 returns void
 language plpgsql
@@ -81,8 +81,8 @@ security definer
 set search_path = ''
 as $$
 begin
-  if not private.is_active_member() then
-    raise exception 'only active members can set a birth date' using errcode = '42501';
+  if not private.is_club_member() then
+    raise exception 'only club members can set a birth date' using errcode = '42501';
   end if;
 
   perform 1 from public.member_details d

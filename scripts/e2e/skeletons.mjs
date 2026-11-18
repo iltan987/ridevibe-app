@@ -1,6 +1,6 @@
 // Measures Suspense fallbacks against the content that replaces them.
 // Usage: node skeletons.mjs <baseUrl> <out.md> [routes…]      (default routes: / /sign-in /apply /account)
-// Env:   STATES=signed-out,member,admin (default; also available: pending-noapp,pending-app, which need those users)
+// Env:   STATES=signed-out,member,admin (default; also available: pending-noapp,pending-app,probation, which need those users)
 //        VIEWPORTS=390,1280        THEMES=dark,light
 //        SWITCH_BACK=1: also switch the language twice (JS on, throttled) and log the fallbacks shown during the
 //        switch back (a language switch remounts the [locale] layout and re-shows them; CLAUDE.md "Loading states")
@@ -25,6 +25,7 @@ const ALL_STATES = {
   "pending-noapp": "pending-noapp@test.local",
   "pending-app": "pending-app@test.local",
   member: "member@test.local",
+  probation: "probation@test.local",
   admin: "admin@test.local",
 };
 const states = (process.env.STATES ?? "signed-out,member,admin").split(",");

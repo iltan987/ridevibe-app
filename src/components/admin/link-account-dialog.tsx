@@ -134,7 +134,7 @@ export function LinkAccountDialog({
             <DialogHeader>
               <DialogTitle>{t("link.confirmTitle")}</DialogTitle>
               <DialogDescription>
-                {t(selected.status === "active" ? "link.confirmActive" : "link.confirm", {
+                {t(selected.status === "pending" ? "link.confirm" : "link.confirmAttach", {
                   application: applicationName,
                   account: accountName(selected),
                 })}
@@ -189,9 +189,9 @@ export function LinkAccountDialog({
                         <span className="flex min-w-0 flex-col">
                           <span className="flex min-w-0 items-center gap-2">
                             <span className="truncate font-medium">{account.full_name || "—"}</span>
-                            {account.status === "active" && (
+                            {account.status !== "pending" && (
                               <Badge variant="secondary" className="shrink-0">
-                                {t("link.activeMember")}
+                                {t(account.status === "active" ? "link.activeMember" : "members.statuses.probation")}
                               </Badge>
                             )}
                           </span>

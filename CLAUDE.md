@@ -123,7 +123,8 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   granted to `authenticated` only (example: `set_my_birth_date`).
 - A function that checks rows and then acts on them in later statements (purges, last-admin guards) locks the set
   first (`select … order by id for update` into an array, then filter by it); lock in one global order (by id).
-- **Member data:** `profiles` is readable by every active member (no private columns there); `member_details`
+- **Member data:** `profiles` is readable by active members only (no private columns there; ön alım members see the
+  crowd view from `public.club_overview()` instead); `member_details`
   (birth date, Instagram, visibility flags, photo consent) and `member_motorcycles` are own row + `members.manage` only;
   other members' data only via the `public.member_directory` RPC. Birth date is read-only; members without one enter it
   once via `public.set_my_birth_date`. Directory visibility: birthday opt-out (iltan's decision), Instagram opt-in.
@@ -142,11 +143,20 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
 - **Roles & permissions** (`supabase/schemas/05_roles.sql`): admins create roles and tick permissions
   (`public.permission` enum); each profile has at most one `role_id` (null = regular member). The built-in admin role
   (`roles.is_admin`) has every permission plus admin-only powers (editing roles, assigning roles). Only **active**
-  members have rights. Helpers: `private.has_permission(p)`, `private.is_admin()`, `private.is_active_member()`.
+  members have rights. Helpers: `private.has_permission(p)`, `private.is_admin()`, `private.is_active_member()` (= full
+  member: guards everything that exposes others), `private.is_club_member()` (active or probation: own-row writes
+  only: bikes, emergency contacts, birth date once, blood type). A new feature must decide whether ön alım members
+  get it (closed by default).
   Role changes only via `public.set_member_role()` (admins), status via `public.set_member_status()`
   (`members.manage`). App side: `can(user.access, p)`, `requirePermission()` / `requireAdmin()` in
   `src/lib/auth/`. A new permission = enum value + policy/RPC check + pgTAP test + `Admin.permissions.*` messages.
-- Status: `pending` / `active` / `inactive` / `deleting`. **Self-service deletion:** `request_my_account_deletion()`
+- **Staff notes** (`public.member_notes`, permission `members.notes`): append-only, author forced, 1–2,000 chars; read/add
+  on non-deleting others; notes about admin-role holders: admins only; delete: admins only, never about oneself;
+  nobody reads notes about themselves. Counts via the security-invoker view `member_note_counts`.
+- Status: `pending` / `probation` ("Ön alım") / `active` / `inactive` / `deleting`. Approval and staff manual
+  activation start in `probation`; staff promote via `set_member_status` ("Tam üye yap"); the DB refuses
+  pending → active. `profiles.status_changed_at` records the last change (moves into/out of `deleting` keep it).
+  **Self-service deletion:** `request_my_account_deletion()`
   (refuses the last active admin, `hint = 'last_admin'`) saves `status_before_deletion` + `deletion_requested_at` and
   sets `deleting`: no rights, hidden from members **and staff** (every `members.manage` / `applications.view` path
   filters it; rejected applications stay visible); `cancel_my_account_deletion()` restores it. A new staff read path
@@ -158,7 +168,7 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   email) and the person's `auth.audit_log_entries` rows (no FK; matched on `payload->>'actor_id'`; rows also hold the
   email in `actor_username` and the IP in `ip_address`).
   Approved applications of accounts that were `inactive` are kept unlinked with `applications.retained_until`
-  (request + 1 year) and then deleted; a kept row never matches, links or activates anyone (every email-matching path
+  (request + 1 year) and then deleted; a deleted ön alım account is handled like an active one (its approved application is deleted; only `inactive` keeps it for a year); a kept row never matches, links or activates anyone (every email-matching path
   skips `retained_until is not null`); `/admin/members` flags a returning pending account as `former_member`. The
   schedule is DML: a hand-written idempotent migration (`docs/learnings/supabase.md`).
   Generated migrations touching `90_ops.sql` may emit `cron.unschedule(...)`: delete that line.
@@ -307,7 +317,7 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   its own `theme` key.
 - PWA: manifest only, no service worker yet (Web Push comes with Events). Own install prompt: `src/lib/pwa/` +
   `src/components/pwa/`; `<InstallBanner />` floats (its spacer is portaled after the footer) on `/account`
-  (active/pending) and `/members` (active): add it to a member home page when one exists.
+  (active/pending/probation) and `/members` (active/probation): add it to a member home page when one exists.
 - Primary nav items live in `src/components/layout/nav-items.ts`. "Başvur" is shown only when `/apply` would show the
   form (`applyView` / `getApplyView`); nav and the home hero/closing buttons (`HomeApplyButton`; E2E anchors
   `data-home-hero` / `data-home-closing`) guess from the session cookie + `rv-apply-hidden` until the

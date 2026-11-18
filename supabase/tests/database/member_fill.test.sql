@@ -88,7 +88,7 @@ select is(
   'true|2026-01-01 10:00:00+00|v-app', 'approval copies photo consent with the application time and notice version');
 select is(pg_temp.bikes('00000000-0000-0000-0000-000000000161'), 'Yamaha MT-07 689', 'approval adds the bike');
 select is((select status::text from public.profiles where id = '00000000-0000-0000-0000-000000000161'),
-  'active', 'the account is active');
+  'probation', 'the account is in ön alım');
 
 -- 2. Idempotent, and never overwrites member edits
 update public.member_details set instagram = 'edited.one' where profile_id = '00000000-0000-0000-0000-000000000161';
@@ -123,7 +123,7 @@ select is(pg_temp.bikes('00000000-0000-0000-0000-000000000163'), 'none', 'a blan
 insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-000000000166', 'fill-signin@pgtap.invalid', '{"full_name": "Altı Üye"}');
 select is((select status::text from public.profiles where id = '00000000-0000-0000-0000-000000000166'),
-  'active', 'sign-in matched the approved application');
+  'probation', 'sign-in matched the approved application');
 select is(
   (select birth_date::text || '|' || instagram || '|' || consent_photos::text from public.member_details
     where profile_id = '00000000-0000-0000-0000-000000000166'),

@@ -41,7 +41,11 @@ export async function UserMenu() {
         showApplications={can(user.access, "applications.view")}
         showMembers={can(user.access, "members.manage")}
         showRoles={user.access.isAdmin}
-        showInstall={user.profile?.status === "active" || user.profile?.status === "pending"}
+        showInstall={
+          user.profile?.status === "active" ||
+          user.profile?.status === "probation" ||
+          user.profile?.status === "pending"
+        }
       />
     </>
   );

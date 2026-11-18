@@ -288,3 +288,18 @@
 - **Do:** `declare` optional fields a test must be able to leave out (`BeforeInstallPromptEvent` in
   `src/lib/pwa/install-store.test.ts`).
 - **Source:** checked with `node` 24 (2026-11-15).
+
+### Fetching an RSC payload in E2E: replay a captured request; district names also sit in public messages (2026-11-18)
+- **Symptom:** `fetch(url, { headers: { RSC: "1", Cookie } })` returned 200 only because `fetch` followed a 307 to
+  `/members?_rsc`; with `redirect: "manual"` the answer is 307 with an empty body, so a "no names in the payload"
+  check could pass without having read the page. Also, the words "Kadıköy"/"Beşiktaş" appear in every page's HTML:
+  the home-page copy ships as client messages.
+- **Cause:** Next derives the `_rsc` cache-busting hash from the router headers and redirects a hand-made request.
+  Public copy is not member data.
+- **Do:** capture a real RSC request in the page (`page.on("request")` while `window.next.router.refresh()` runs),
+  replay its URL and `rsc` / `next-router-*` headers with the session cookie and `redirect: "manual"`, and assert
+  status 200, `text/x-component` and a string only that render holds. Prove an absence check can fail with a positive
+  control (an allowed user's fetch must contain the names). Match member data by key (`district":"Beşiktaş`), not by
+  the bare word (`scripts/e2e/probation-e2e.mjs`).
+- **Source:** found while fixing the review of the probation E2E.
+

@@ -22,15 +22,6 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 - **No lawyer** (iltan, 2026-11-13) — the "lawyer" questions below are Claude's to research and decide; iltan
   confirms the outcome. Reword them as they are settled.
 
-- **"Ön alım" (probation) stage** (2026-11-12, iltan) — after approval the club moves a new member into a separate
-  "ön alım" WhatsApp group to see how they behave; they can still join some events. If it doesn't work out they leave
-  on their own or are removed. The app has no such stage today (approved = `active`). To discuss before Events: a new
-  status or a membership stage on active profiles, who sets/ends it (permission), what ön alım members can see, and
-  event requirements (e.g. minimum bike cc, membership stage) that organizers set per event. See `docs/PLAN.md` step 3.
-  Facts (iltan, 2026-11-13): ön alım usually lasts only a few days; members ride anything from a 50cc (B licence) to
-  700–1000cc, and some future events will be limited to bike classes (e.g. over 400cc). More in
-  `docs/content/home-page-questions.md`.
-
 - **Dead-code tool?** (2026-11-11, iltan) — which tool, if any, for the dead-code sweep (Tooling). Candidates to
   compare when we talk: `knip` (unused files, exports, dependencies; Next.js plugin), `ts-prune`/`ts-unused-exports`
   (exports only), TypeScript's `noUnusedLocals`/`noUnusedParameters` and ESLint rules (locals only), or no tool (manual
@@ -83,6 +74,24 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ## Features
 
+- **Events: "full members only" ride flag** (2026-11-18, ön alım + notes; decided, spec non-goal) — ön alım members may
+  join some rides and not others; the flag comes with Events (PLAN step 3), together with the event requirements.
+- **Probation E2E gaps** (2026-11-18, ön alım + notes, final review) — `scripts/e2e/probation-e2e.mjs`: the district
+  check matches only `district":` keys (a district printed as plain text in the crowd card would pass; idea: compare
+  bare-word counts with the signed-out page); the HTML render check asserts only the locked sentence (add the summary);
+  the RSC capture could pick a prefetch request (filter on path `/members` / no `next-router-prefetch`). Risk: a leak
+  or a wrong capture goes unnoticed.
+- **`/admin/members` skeleton not re-measured** (2026-11-18, ön alım + notes, final review) — rows gained the "Notlar"
+  button and two status buttons on probation/inactive rows; `ListSkeleton` (`h-36.75` at 390px) not re-checked. Run
+  `scripts/e2e/skeletons.mjs`. Risk: layout shift on load.
+- **Notes on the application detail page** (2026-11-18, ön alım + notes; spec non-goal) — notes exist only on
+  `/admin/members`; staff reviewing an application can't see or add notes there. Add if staff ask.
+- **Reminder for long ön alım periods** (2026-11-18, ön alım + notes; spec non-goal) — ön alım usually lasts days, but
+  nothing nudges staff when someone stays in it for weeks (`profiles.status_changed_at` has the date). Add a flag or
+  count in `/admin/members` if people get forgotten.
+- **Warnings, suspend, ban and the ban list** (2026-11-18, ön alım + notes; spec non-goal) — warnings shown to the
+  member, suspend/ban and the ban list stay PLAN step 2b (only the notes part is built).
+
 - **Data download (KVKK m.11)** (2026-11-14, account deletion) — members can delete their account in the app but not
   download their data (PLAN.md KVKK "download and delete"). Today an access request is answered by hand within 30 days
   (notice §9). An export of own profile, contacts, bikes, safety data and application (JSON or a printable page) on
@@ -91,7 +100,7 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   deleted 6 months after the decision and member data deleted/anonymised 1 year after membership ends, but no job does
   it yet (the account-deletion purge only covers self-deleted accounts and their kept applications). Natural home:
   another step in `private.purge_deleted_accounts`'s nightly job (or a sibling job), with "membership ended" needing a
-  date (`inactive` has none today). Also the retention of pending accounts that never apply (item below).
+  date (`profiles.status_changed_at` now records when a member became `inactive`; null for changes before 2026-11-18). Also the retention of pending accounts that never apply (item below).
 - **"Etkinlikleri Gör" back in the hero** (2026-11-13, home content) — removed while Events has no content; restore the
   secondary hero button when Events ships.
 - **Gallery candidates** (2026-11-13, home content) — Glob Coffee and small-café photos, not committed; the small-café
@@ -148,6 +157,14 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ## Parked edge cases (known, judged harmless for now)
 
+- **`profiles.status_changed_at` readable by every active member** (2026-11-18, ön alım + notes) — table-level select
+  grant plus the active-member read policy: it shows when someone became a full member. Low sensitivity, accepted; a
+  column-level grant would close it.
+- **`/members` skeleton vs. the crowd card** (2026-11-18, ön alım + notes) — the skeleton is directory-shaped while an
+  ön alım member gets the small crowd card (layout shift; status is request-time, accepted in the spec). Also: a club
+  overview with total 0 shows "0 üye" and an empty grid; the ön alım status badge on `/account` uses the same variant
+  as inactive.
+
 - **Purge is one transaction for all due accounts** (2026-11-14, account deletion) — `private.purge_deleted_accounts`
   deletes every due account in one statement set: one account that can't be deleted (a future Storage object owner
   blocks `auth.users` deletes) fails the whole run, so nobody is purged and the `cron.job_run_details` pruning doesn't
@@ -176,8 +193,9 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 - **Linked account without a `member_contacts` row** (2026-11-09, final review) — the application page then shows only
   the Google name, no email and no mismatch warning. Every account gets a row from the sign-up trigger, so this
   should not happen.
-- **Approve text for an already-active linked account** (2026-11-09, final review) — still says the account "becomes an
-  active member"; approval changes nothing for it. Cosmetic.
+- **Approve text for an already-active linked account** (2026-11-09, final review; updated 2026-11-18, ön alım +
+  notes) — the approve text says the account goes into ön alım (earlier: "becomes an active member"), which is also
+  wrong for an already-active linked account: approval changes nothing for it. Cosmetic.
 - **Approve text when the linked account is hidden by RLS** (2026-11-09, task 7) — superseded by
   `application_account`, which shows status to every viewer; keep an eye on it if that RPC changes.
 
@@ -205,6 +223,11 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   (`messages/tr.json`); iltan rejected "kahvede" for the home page. Ask iltan whether the form wording should change too.
 
 ### Database / tests
+- **Ön alım + notes test gaps** (2026-11-18, ön alım + notes reviews) — pgTAP: the safety filters (blood type /
+  no_contact) over probation rows are untested; the `club_overview` initials assertions are weak on production (real
+  members can satisfy `= any(initials)`). App: no tests for the notes server actions or dialog (e.g. zero rows deleted
+  → `forbidden`); the client `.catch` fallbacks in the notes dialog don't log. Risk if left: a regression in these
+  paths goes unseen.
 - **Turkish case folding in `linkable_accounts` search** (2026-11-09) — `ilike` doesn't fold `ı/İ`
   (`supabase/schemas/20_applications.sql`). Email search and name-match ordering compensate. Fix: a SQL fold helper
   on both sides of the `like` (`private.search_fold` was dropped 2026-11-13 when directory search moved to the
@@ -563,3 +586,19 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   Code session start here and before every backup; with neither for over two weeks, the newest backup outlives the
   notice's 14 days. A Windows scheduled task (`wsl … production.mts prune`) would close the gap; open Claude Code here
   every two weeks meanwhile (runbook).
+- **Probation `/members` fallback shows the list skeleton** (2026-11-18, ön alım Task 8 E2E) — `skeletons.mjs
+  STATES=probation /members` finds the members fallbacks (total, search, chips, row, pager) but no matching
+  `data-skeleton-result`: the page streams in the crowd card (`ClubOverview`), so a probation member first sees a list
+  skeleton that is replaced by a different card (layout shift). Give the card its own `data-skeleton-result` and let the
+  fallback follow `hasSessionCookie()`/a stored hint, or accept it (one-off view for people in their first weeks).
+- **`/account` visibility skeleton for members without a birth date** (2026-11-18, ön alım Task 8 E2E) — `profile-visibility`
+  measures -208px at 390px for `admin@test.local` and `probation@test.local` (no birth date: the form also holds the
+  one-time birth-date block) and 0 for `member@test.local`. Not caused by the probation work; skeleton mirrors the
+  with-birth-date form.
+- **`apply-nav-e2e.mjs` "second load, one layout" fails every run** (2026-11-18, ön alım Task 8) — "visitor phone TR"
+  and/or "pending-noapp phone TR" see the 4-tab guess before the 5-tab layout (4 of 4 runs, 1-2 FAILs each); the same two
+  FAIL on a clean build of `main` (b7682f9) on the same stack (control run output, verbatim:
+  `FAIL visitor phone TR: second load, one layout from first paint to settled — guess:4tabs@0/75/150/225 hero=1 end=1 desk=0 → guess:5tabs+B@0/75/150/225/300 hero=1 end=1 desk=0 → real:5tabs+B@0/75/150/225/300 hero=1 end=1 desk=0`,
+  `FAIL pending-noapp phone TR: second load, one layout from first paint to settled — guess:4tabs@0/75/150/225 hero=1 end=1 desk=0 → guess:5tabs+B@0/75/150/225/300 hero=1 end=1 desk=0 → real:5tabs+B@0/75/150/225/300 hero=1 end=1 desk=0`,
+  `2 FAILED`, 49 PASS), so not a regression of this branch. Earlier seen as a
+  one-off flake (above); now consistent: investigate the stored-hint timing on the second load.

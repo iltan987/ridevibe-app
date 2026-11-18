@@ -9,6 +9,8 @@ export type AdminProfile = {
   avatar_url: string | null;
   status: StaffStatus;
   created_at: string;
+  /** When the status last changed; null = before the column existed. */
+  status_changed_at: string | null;
   role_id: string | null;
   email: string | null;
 };
@@ -23,7 +25,7 @@ export async function listAllProfiles(): Promise<{ profiles: AdminProfile[]; ove
   const { items, overCeiling } = await readAll(async (from, to) => {
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, full_name, avatar_url, status, created_at, role_id, member_contacts(email)")
+      .select("id, full_name, avatar_url, status, created_at, status_changed_at, role_id, member_contacts(email)")
       .neq("status", "deleting")
       .order("created_at", { ascending: false })
       .order("id", { ascending: false })
@@ -79,4 +81,22 @@ export async function listRoles() {
     permissions: r.role_permissions.map((p) => p.permission),
     holders: r.profiles[0]?.count ?? 0,
   }));
+}
+
+/**
+ * Notes per person (staff with members.notes; the caller's RLS decides which rows are counted). One view row per
+ * person, so LIST_CEILING applies like the members list.
+ */
+export async function noteCounts(): Promise<{ counts: Map<string, number>; overCeiling: boolean }> {
+  const supabase = await createClient();
+  const { items, overCeiling } = await readAll(async (from, to) => {
+    const { data, error } = await supabase
+      .from("member_note_counts")
+      .select("profile_id, notes")
+      .order("profile_id")
+      .range(from, to);
+    if (error) throw new Error(`noteCounts failed: ${error.code}`);
+    return data;
+  });
+  return { counts: new Map(items.map((row) => [row.profile_id, row.notes ?? 0])), overCeiling };
 }

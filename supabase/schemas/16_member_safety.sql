@@ -62,26 +62,26 @@ for select
 to authenticated
 using (profile_id = (select auth.uid()));
 
-create policy "member_emergency_contacts: insert own while active"
+create policy "member_emergency_contacts: insert own while active or probation"
 on public.member_emergency_contacts
 for insert
 to authenticated
 with check (
   profile_id = (select auth.uid())
-  and (select private.is_active_member())
+  and (select private.is_club_member())
 );
 
-create policy "member_emergency_contacts: update own while active"
+create policy "member_emergency_contacts: update own while active or probation"
 on public.member_emergency_contacts
 for update
 to authenticated
 using (
   profile_id = (select auth.uid())
-  and (select private.is_active_member())
+  and (select private.is_club_member())
 )
 with check (
   profile_id = (select auth.uid())
-  and (select private.is_active_member())
+  and (select private.is_club_member())
 );
 
 -- Delete in any status: leaving members can still erase their data (KVKK).
@@ -181,8 +181,8 @@ as $$
 declare
   uid uuid := (select auth.uid());
 begin
-  if not private.is_active_member() then
-    raise exception 'only active members can set a blood type' using errcode = '42501';
+  if not private.is_club_member() then
+    raise exception 'only club members can set a blood type' using errcode = '42501';
   end if;
   if new_type is null then
     raise exception 'blood type is required' using errcode = '23514';
@@ -240,7 +240,7 @@ $$;
 revoke all on function public.withdraw_my_blood_type_consent() from public, anon;
 grant execute on function public.withdraw_my_blood_type_consent() to authenticated;
 
--- Safety card: what staff with members.safety see of an active member in an emergency (contacts,
+-- Safety card: what staff with members.safety see of an active or ön alım member in an emergency (contacts,
 -- blood type, bikes with plates whatever the directory switch says). Every call is logged.
 create or replace function public.member_safety_card(target uuid)
 returns table (full_name text, contacts jsonb, blood_type public.blood_type, motorcycles jsonb)
@@ -254,7 +254,7 @@ begin
     raise exception 'members.safety required' using errcode = '42501';
   end if;
 
-  if not exists (select 1 from public.profiles p where p.id = target and p.status = 'active') then
+  if not exists (select 1 from public.profiles p where p.id = target and p.status in ('active', 'probation')) then
     raise exception 'member not found' using errcode = 'P0002';
   end if;
 

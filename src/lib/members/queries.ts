@@ -1,4 +1,5 @@
 import "server-only";
+import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/user";
 import { readAll, uniqueById } from "@/lib/pagination";
 import { createClient } from "@/lib/supabase/server";
@@ -22,6 +23,8 @@ export type DirectoryMember = {
   motorcycles: Motorcycle[];
   /** null unless the viewer may see safety data (members.safety). */
   hasEmergencyContact: boolean | null;
+  /** In ön alım; only members.manage / members.safety viewers receive such members at all. */
+  probation: boolean;
 };
 
 export type EmergencyContact = {
@@ -58,9 +61,9 @@ type DirectoryRow = Omit<GeneratedDirectoryRow, NullableDirectoryColumn> & {
 };
 
 /**
- * Every active member for the directory (the DB sorts by Turkish name and hides opted-out fields), read in
- * CHUNK_SIZE pages up to LIST_CEILING. The browser filters and pages; the safety filters stay here because a blood
- * filter is logged per call.
+ * Every active member for the directory (plus ön alım members for members.manage / members.safety viewers; the DB
+ * sorts by Turkish name and hides opted-out fields), read in CHUNK_SIZE pages up to LIST_CEILING. The browser filters
+ * and pages; the safety filters stay here because a blood filter is logged per call.
  */
 export async function loadDirectory({
   bloodType,
@@ -89,6 +92,7 @@ export async function loadDirectory({
     instagram: row.instagram,
     motorcycles: parseMotorcycles(row.motorcycles),
     hasEmergencyContact: row.has_emergency_contact,
+    probation: row.probation,
   }));
   return { members, overCeiling };
 }
@@ -142,4 +146,20 @@ export async function getMyProfile(): Promise<MyProfile | null> {
     bloodType: health.data?.blood_type ?? null,
     bloodConsent: health.data?.consent_blood_type ?? false,
   };
+}
+
+const clubOverview = z.object({
+  total: z.number(),
+  asian: z.number(),
+  european: z.number(),
+  initials: z.array(z.string()),
+});
+export type ClubOverview = z.infer<typeof clubOverview>;
+
+/** The crowd view for ön alım members: counts and anonymous initials only (the DB refuses everyone else). */
+export async function loadClubOverview(): Promise<ClubOverview> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("club_overview");
+  if (error) throw new Error(`loadClubOverview failed: ${error.code}`);
+  return clubOverview.parse(data[0] ?? { total: 0, asian: 0, european: 0, initials: [] });
 }

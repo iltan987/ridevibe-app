@@ -198,8 +198,8 @@ reset role;
 -- Activation by account
 -- ---------------------------------------------------------------------------
 select pg_temp.approve(pg_temp.app_id('form@pgtap.invalid'));
-select is(pg_temp.profile_of('signed@pgtap.invalid'), 'active|Form Adı',
-  'approving an application submitted while signed in activates that account (other email) and copies the name');
+select is(pg_temp.profile_of('signed@pgtap.invalid'), 'probation|Form Adı',
+  'approving an application submitted while signed in starts ön alım for that account (other email) and copies the name');
 
 -- Approved under a wrong email, then corrected to the sign-in email.
 set local role anon;
@@ -226,8 +226,8 @@ reset role;
 select is(
   pg_temp.profile_of('right@pgtap.invalid') || '|' ||
     coalesce((select profile_id::text from public.applications where email = 'right@pgtap.invalid'), '-'),
-  'active|Doğru Kişi|00000000-0000-0000-0000-0000000003a3',
-  'correcting an approved application''s email to the sign-in email activates and links that account'
+  'probation|Doğru Kişi|00000000-0000-0000-0000-0000000003a3',
+  'correcting an approved application''s email to the sign-in email starts ön alım for and links that account'
 );
 
 -- Inactive (suspended) accounts are never re-activated or renamed.

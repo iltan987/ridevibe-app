@@ -308,3 +308,27 @@
 - **Do:** match on text both formats share (`/up to date/i` in `production.mts`), or pass `--output-format` /
   `--agent no` explicitly when parsing. `db dump` still writes plain SQL to stdout (status lines go to stderr).
 - **Source:** found by testing (CLI 3.0.0).
+
+### Turkish upper-casing via the ICU collation; splitting names into words (2026-11-18)
+- **Need:** initials for the ön alım crowd view (`club_overview`), Turkish casing (`i → İ`), every name shape.
+- **Found (local PG 17, scratch query):** `upper('i' collate "tr-x-icu")` = `İ`, `upper('ı' collate "tr-x-icu")` =
+  `I`, `upper('işık' collate "tr-x-icu")` = `İŞIK`; plain `upper('i')` = `I`. `upper('ß' collate "tr-x-icu")` = `SS`
+  (the result can be longer than the input). `regexp_split_to_array('', '\s+')` = `{""}` (one empty element, not an
+  empty array), and leading/trailing spaces also yield `""` elements.
+- **Do:** for a Turkish-only upper-casing, `upper(x collate "tr-x-icu")` is simpler than the `translate()` recipe
+  above (that one stays for `tidy_name`, which must also handle non-Turkish names). Split words with
+  `array_remove(regexp_split_to_array(s, '\s+'), '')` and treat `cardinality(...) = 0` as "no name". The collation
+  already exists on production (`member_directory` sorts with it).
+- **Also:** adding a column to a `returns table` function makes the declarative diff emit `DROP FUNCTION` + `CREATE`
+  + fresh grants (a return type can't be replaced in place); check the grants at the end of the generated file.
+- **Source:** `supabase/schemas/30_member_directory.sql` (`club_overview`), probation Task 2.
+
+### A new `permission` enum value: split migration, and tests that count permissions
+- **Symptom:** `pnpm db:migration` after adding an enum value (plus a table using it) emits two files (`_1`, `_2`):
+  `ALTER TYPE … ADD VALUE` goes into its own migration (a new value can't be used in the transaction that adds it).
+  `roles.test.sql` then failed on a hardcoded permission count.
+- **Do:** keep both files; tests that need "every permission" count with
+  `array_length(enum_range(null::public.permission), 1)`, never a literal.
+- **Also:** a planted row (as `postgres`) through a before-insert trigger that sets `author_id := auth.uid()` gets a
+  null author; fine for fixtures that only need visibility.
+- **Source:** `supabase/schemas/18_member_notes.sql`, probation Task 3.

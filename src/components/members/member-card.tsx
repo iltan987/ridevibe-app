@@ -27,7 +27,10 @@ export function MemberCard({ member, safety = false }: { member: DirectoryMember
         <AvatarFallback>{initials(member.fullName)}</AvatarFallback>
       </Avatar>
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <p className="truncate font-medium">{member.fullName}</p>
+        <div className="flex items-center gap-2">
+          <p className="truncate font-medium">{member.fullName}</p>
+          {member.probation && <Badge variant="secondary">{t("probationBadge")}</Badge>}
+        </div>
         {location && <p className="truncate text-xs text-muted-foreground">{location}</p>}
         {member.motorcycles.length > 0 && (
           <ul className="flex flex-col text-sm">

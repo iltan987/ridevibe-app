@@ -116,6 +116,7 @@
     "role": "Rol",
     "statuses": {
       "pending": "Onay bekliyor",
+      "probation": "Ön alım",
       "active": "Aktif üye",
       "inactive": "Pasif",
       "deleting": "Silinecek"
@@ -130,7 +131,9 @@
     "notAppliedBody": "Üye olmak için başvuru formunu doldur. Bilgilerin hazır gelecek. Başka bir e-postayla başvurduysan tekrar başvurma; bize WhatsApp'tan yaz, hesabını bağlayalım.",
     "applyNow": "Başvur",
     "underReviewTitle": "Başvurun inceleniyor",
-    "underReviewBody": "Onaylandığında hesabın otomatik olarak aktif olur.",
+    "underReviewBody": "Onaylandığında hesabın kulübün ön alım dönemine geçer.",
+    "probationTitle": "Ön alım dönemindesin",
+    "probationBody": "Kulüp seninle tanışıyor; tam üyeliğe geçtiğinde üye listesi açılır.",
     "delete": {
       "title": "Hesabı sil",
       "body": "Hesabını ve bu uygulamadaki bilgilerini silebilirsin.",
@@ -174,6 +177,10 @@
     "noResults": "Aramanla eşleşen üye bulunamadı.",
     "activeOnlyTitle": "Üye listesi aktif üyelere açık",
     "activeOnlyBody": "Üyeleri görmek için üyeliğinin aktif olması gerekiyor.",
+    "clubSummary": "Kulüpte {total} üye var · Anadolu {asian} · Avrupa {european}",
+    "clubInitialsLabel": "Kulüpte {total} üye var.",
+    "clubLocked": "Üye listesi tam üyeliğe geçince açılır.",
+    "probationBadge": "Ön alım",
     "birthday": "🎂 {date}",
     "instagram": "Instagram: @{handle}",
     "safety": {
@@ -436,13 +443,13 @@
     "successTitle": "Başvurun alındı!",
     "successBody": "Teşekkürler! Başvurunu inceleyip WhatsApp üzerinden seninle iletişime geçeceğiz.",
     "successEmail": "Onaylanınca <b>{email}</b> Google hesabınla giriş yapacaksın. Bu adres yanlışsa bize WhatsApp'tan yaz.",
-    "successSignedIn": "Onaylanınca bu hesabın otomatik olarak aktif olur.",
+    "successSignedIn": "Onaylanınca bu hesabınla kulübün ön alım dönemine geçersin.",
     "backHome": "Ana sayfaya dön",
     "duplicate": "Zaten açık bir başvurun var. Lütfen sonucu bekle.",
     "genericError": "Bir şeyler ters gitti. Lütfen biraz sonra tekrar dene.",
     "alreadyMember": {
       "title": "Zaten üyesin",
-      "body": "Hesabın aktif, yeniden başvurman gerekmiyor."
+      "body": "Üyeliğin devam ediyor, yeniden başvurman gerekmiyor."
     },
     "underReview": {
       "title": "Başvurun inceleniyor",
@@ -522,10 +529,11 @@
       "title": "Üyeler ve erişim",
       "statuses": {
         "pending": "Onay bekleyen",
+        "probation": "Ön alım",
         "active": "Aktif",
         "inactive": "Pasif"
       },
-      "pendingHint": "Google ile giriş yapmış ama henüz onaylanmamış kişiler. Tanıdığın kişileri aktifleştir. Başvurusu olanları başvuru sayfasından “Hesaba bağla” ile bağla; başvurusu yoksa kişiden formu doldurmasını iste.",
+      "pendingHint": "Google ile giriş yapmış ama henüz onaylanmamış kişiler. Tanıdığın kişileri “Ön alıma al” ile ön alıma geçir; tam üyelik ön alımdan sonra gelir. Başvurusu olanları başvuru sayfasından “Hesaba bağla” ile bağla; başvurusu yoksa kişiden formu doldurmasını iste.",
       "search": "İsim ya da e-postayla ara",
       "empty": "Bu listede kimse yok.",
       "range": "{from}–{to} / {total} kişi",
@@ -534,9 +542,10 @@
       "you": "Sen",
       "role": "Rol",
       "noRole": "Üye (rolsüz)",
-      "activate": "Aktifleştir",
+      "toProbation": "Ön alıma al",
+      "probationDays": "Ön alım · {days, plural, =0 {bugün} other {# gün}}",
       "deactivate": "Pasifleştir",
-      "reactivate": "Yeniden aktifleştir",
+      "promote": "Tam üye yap",
       "noEmail": "E-posta yok",
       "applied": "Başvurdu",
       "notApplied": "Başvurusu yok",
@@ -550,6 +559,24 @@
         "save": "Kaydet",
         "cancel": "Vazgeç"
       }
+    },
+    "notes": {
+      "open": "Notlar",
+      "openCount": "Notlar ({count})",
+      "title": "{name} için notlar",
+      "description": "Bu notları yalnızca yetkili ekip üyeleri görür.",
+      "loading": "Notlar yükleniyor…",
+      "empty": "Henüz not yok.",
+      "unknownAuthor": "Silinmiş hesap",
+      "label": "Yeni not",
+      "hint": "Kişi verilerini isterse notlar kendisine gösterilebilir; olguları yaz.",
+      "add": "Not ekle",
+      "delete": "Sil",
+      "deleteConfirm": "Bu not silinsin mi?",
+      "deleteYes": "Evet, sil",
+      "deleteCancel": "Vazgeç",
+      "close": "Kapat",
+      "loadError": "Notlar yüklenemedi. Lütfen tekrar dene."
     },
     "roles": {
       "title": "Roller ve yetkiler",
@@ -590,11 +617,15 @@
       "members": {
         "manage": {
           "label": "Üyeleri yönetme",
-          "description": "Onay bekleyenleri görebilir, üyeleri aktif/pasif yapabilir (yöneticiler hariç)."
+          "description": "Onay bekleyenleri görebilir, üyeleri ön alıma alabilir, aktif/pasif yapabilir (yöneticiler hariç)."
         },
         "safety": {
           "label": "Güvenlik bilgilerini görme",
           "description": "Üyelerin acil durum kişilerini, kan grubunu ve plakalarını görebilir; kan grubuna göre arayabilir."
+        },
+        "notes": {
+          "label": "Üye notlarını görme ve yazma",
+          "description": "Üyeler hakkındaki iç notları görebilir ve yazabilir; üyenin kendisi göremez. Yöneticiler hakkındaki notları yalnızca yöneticiler görür."
         }
       }
     },
@@ -606,13 +637,13 @@
       "reject": "Reddet",
       "reopen": "Kararı geri al",
       "approveTitle": "Başvuru onaylansın mı?",
-      "approveBody": "{name} bu e-postayla ({email}) Google ile giriş yaptığında otomatik olarak aktif üye olur; başka bir hesapla girerse “Hesaba bağla” ile bağla. Onaydan sonra WhatsApp davetini gönder.",
-      "approveBodyLinked": "Başvuruya bağlı {account} hesabı hemen aktif üye olur ({name} adıyla). Onaydan sonra WhatsApp'tan haber ver.",
-      "approveBodyLinkedUnknown": "{name} başvuruya bağlı hesabıyla hemen aktif üye olur. Onaydan sonra WhatsApp'tan haber ver.",
-      "approveBodyLinkedInactive": "Başvuruya bağlı {account} hesabı pasif; onay hesabı aktifleştirmez. Gerekirse Üyeler sayfasından yeniden aktifleştir.",
+      "approveBody": "{name} bu e-postayla ({email}) Google ile giriş yaptığında otomatik olarak ön alıma alınır; başka bir hesapla girerse “Hesaba bağla” ile bağla. Onaydan sonra WhatsApp davetini gönder.",
+      "approveBodyLinked": "Başvuruya bağlı {account} hesabı hemen ön alıma alınır ({name} adıyla). Onaydan sonra WhatsApp'tan haber ver.",
+      "approveBodyLinkedUnknown": "{name} başvuruya bağlı hesabıyla hemen ön alıma alınır. Onaydan sonra WhatsApp'tan haber ver.",
+      "approveBodyLinkedInactive": "Başvuruya bağlı {account} hesabı pasif; onay hesabı ön alıma almaz. Gerekirse Üyeler sayfasından ön alıma al.",
       "rejectTitle": "Başvuru reddedilsin mi?",
       "rejectBody": "{name} daha sonra yeniden başvurabilir.",
-      "reopenBody": "Başvuru “İletişime geçildi” durumuna döner. Zaten aktifleşmiş bir hesap aktif kalır; gerekirse Üyeler sayfasından pasifleştir.",
+      "reopenBody": "Başvuru “İletişime geçildi” durumuna döner. Zaten ön alıma ya da aktif üyeliğe geçmiş bir hesap olduğu gibi kalır; gerekirse Üyeler sayfasından pasifleştir.",
       "confirm": "Evet",
       "cancel": "Vazgeç",
       "notes": "Notlar",
@@ -626,8 +657,8 @@
       "emailMismatch": "Dikkat: Başvuru {appEmail} ile yapıldı ama bağlı hesabın e-postası {accountEmail}. Onaylamadan önce kişinin bu hesabı kullandığını doğrula.",
       "emailMismatchDecided": "Dikkat: Başvuru {appEmail} ile yapıldı ama bağlı hesabın e-postası {accountEmail}. Bu hesabın başvuran kişiye ait olduğundan emin ol.",
       "linkedUnknown": "Bir hesaba bağlı",
-      "notLinked": "Henüz giriş yapmadı. Davet mesajını gönder; başvurudaki e-postayla giriş yaptığında otomatik olarak aktif olur. Farklı bir Google hesabıyla girdiyse “Hesaba bağla” ile bağla.",
-      "notLinkedNoLink": "Henüz giriş yapmadı. Davet mesajını gönder; başvurudaki e-postayla giriş yaptığında otomatik olarak aktif olur.",
+      "notLinked": "Henüz giriş yapmadı. Davet mesajını gönder; başvurudaki e-postayla giriş yaptığında otomatik olarak ön alıma alınır. Farklı bir Google hesabıyla girdiyse “Hesaba bağla” ile bağla.",
+      "notLinkedNoLink": "Henüz giriş yapmadı. Davet mesajını gönder; başvurudaki e-postayla giriş yaptığında otomatik olarak ön alıma alınır.",
       "sendInvite": "WhatsApp daveti gönder",
       "delete": "Başvuruyu sil",
       "deleteTitle": "Başvuru kalıcı olarak silinsin mi?",
@@ -644,17 +675,17 @@
     "link": {
       "open": "Hesaba bağla",
       "title": "Başvuruyu bir hesaba bağla",
-      "description": "Henüz aktif olmayan ve başvuruyla eşleşmemiş hesaplar. Adı başvurudakine benzeyenler üstte.",
-      "descriptionApproved": "Başvuruyla eşleşmemiş bekleyen hesaplar ve başvurusu olmayan aktif üyeler. Adı başvurudakine benzeyenler üstte.",
+      "description": "Henüz üye olmayan ve başvuruyla eşleşmemiş hesaplar. Adı başvurudakine benzeyenler üstte.",
+      "descriptionApproved": "Başvuruyla eşleşmemiş bekleyen hesaplar ve başvurusu olmayan ön alımdaki ya da aktif üyeler. Adı başvurudakine benzeyenler üstte.",
       "search": "Ad veya e-posta ile ara",
       "empty": "Bağlanabilecek bekleyen hesap bulunamadı.",
-      "emptyApproved": "Bağlanabilecek bekleyen hesap ya da başvurusu olmayan aktif üye bulunamadı.",
+      "emptyApproved": "Bağlanabilecek bekleyen hesap ya da başvurusu olmayan üye bulunamadı.",
       "more": "Daha fazla",
       "signedUp": "Kayıt: {date}",
       "activeMember": "Aktif üye",
       "confirmTitle": "Hesaba bağlansın mı?",
-      "confirm": "{application} başvurusu {account} hesabına bağlansın mı? Başvuru onaylıysa hesap aktif olur.",
-      "confirmActive": "{application} başvurusu {account} hesabına bağlansın mı? Hesap zaten aktif; yalnızca başvuru bu hesaba bağlanır.",
+      "confirm": "{application} başvurusu {account} hesabına bağlansın mı? Başvuru onaylıysa hesap ön alıma alınır.",
+      "confirmAttach": "{application} başvurusu {account} hesabına bağlansın mı? Hesap zaten üye (ön alımda ya da aktif); yalnızca başvuru bu hesaba bağlanır.",
       "submit": "Bağla",
       "back": "Geri",
       "close": "Kapat",

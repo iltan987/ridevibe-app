@@ -4,7 +4,9 @@ import { getFormatter, getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import { ListSkeleton } from "@/components/admin/list-skeleton";
 import { MembersList } from "@/components/admin/members-list";
-import { getPendingApplicationFlags, listAllProfiles, listRoles } from "@/lib/access/queries";
+import { getPendingApplicationFlags, listAllProfiles, listRoles, noteCounts } from "@/lib/access/queries";
+import { daysSince } from "@/lib/access/probation-days";
+import { can } from "@/lib/auth/permissions";
 import { requirePermission } from "@/lib/auth/require-access";
 import { LIST_CEILING } from "@/lib/pagination";
 import { foldSearch } from "@/lib/search-fold";
@@ -33,16 +35,23 @@ export default function MembersPage() {
 async function Members() {
   const me = await requirePermission("members.manage", "/admin/members");
 
-  const [{ profiles, overCeiling }, roles, t, tAccount, format] = await Promise.all([
+  const [{ profiles, overCeiling: profilesOver }, roles, t, tAccount, format] = await Promise.all([
     listAllProfiles(),
     listRoles(),
     getTranslations("Admin.members"),
     getTranslations("Account"),
     getFormatter(),
   ]);
-  if (overCeiling) console.error("admin members over ceiling", { count: `${LIST_CEILING}+` });
 
-  const flags = await getPendingApplicationFlags(profiles.filter((p) => p.status === "pending").map((p) => p.id));
+  const canNotes = can(me.access, "members.notes");
+  const [flags, noteResult] = await Promise.all([
+    getPendingApplicationFlags(profiles.filter((p) => p.status === "pending").map((p) => p.id)),
+    canNotes ? noteCounts() : Promise.resolve(null),
+  ]);
+
+  const notes = noteResult?.counts ?? null;
+  const overCeiling = profilesOver || (noteResult?.overCeiling ?? false);
+  if (overCeiling) console.error("admin members over ceiling", { count: `${LIST_CEILING}+` });
 
   const roleLabel = (roleId: string | null) => {
     const role = roles.find((r) => r.id === roleId);
@@ -51,6 +60,8 @@ async function Members() {
   };
   const roleOptions = roles.map((r) => ({ id: r.id, label: r.isAdmin ? tAccount("roles.admin") : r.name }));
   const adminRoleIds = new Set(roles.filter((r) => r.isAdmin).map((r) => r.id));
+
+  const now = new Date();
 
   const rows = profiles.map((p) => {
     // Mirrors set_member_status() and set_member_name(): only admins change an admin's status or name.
@@ -65,6 +76,10 @@ async function Members() {
       roleId: p.role_id,
       roleLabel: roleLabel(p.role_id),
       applied: p.status === "pending" ? (flags.get(p.id)?.applied ?? false) : null,
+      probationDays:
+        p.status === "probation" && p.status_changed_at ? daysSince(new Date(p.status_changed_at), now) : null,
+      // Mirrors the member_notes policies: not about oneself; an admin's notes only for admins.
+      notes: notes && p.id !== me.id && editable ? { count: notes.get(p.id) ?? 0 } : null,
       formerMember: flags.get(p.id)?.formerMember ?? false,
       canChangeStatus: editable,
       canRename: editable,
@@ -78,6 +93,7 @@ async function Members() {
       roles={roleOptions}
       meId={me.id}
       canAssignRole={me.access.isAdmin}
+      canDeleteNotes={me.access.isAdmin}
       overCeiling={overCeiling}
     />
   );

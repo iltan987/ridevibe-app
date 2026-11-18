@@ -109,8 +109,8 @@ export type LinkableAccount = {
   /** Sign-in email; null if the account has none on file. */
   email: string | null;
   created_at: string;
-  /** "active" only when active accounts were requested (approved applications). */
-  status: "pending" | "active";
+  /** "probation" / "active" only when those accounts were requested (approved applications). */
+  status: "pending" | "probation" | "active";
 };
 
 type GeneratedLinkableRow = Database["public"]["Functions"]["linkable_accounts"]["Returns"][number];
@@ -121,7 +121,7 @@ type LinkableAccountRow = Omit<GeneratedLinkableRow, "avatar_url" | "email"> & {
 
 /**
  * Pending accounts an application can be linked to, newest first, one page (applications.decide). With
- * `includeActive` (approved applications only) also active accounts that have no application yet.
+ * `includeActive` (approved applications only) also active and ön alım accounts that have no application yet.
  */
 export async function findLinkableAccounts(input: {
   search?: string;
@@ -153,9 +153,12 @@ export async function findLinkableAccounts(input: {
   }
   // Generated types claim avatar_url/email are non-null; they can be null.
   const rows: LinkableAccountRow[] = data;
-  // The RPC returns pending accounts, plus active ones only when requested.
+  // The RPC returns pending accounts, plus active and ön alım ones only when requested.
   return toPage(
-    rows.map((row): LinkableAccount => ({ ...row, status: row.status === "active" ? "active" : "pending" })),
+    rows.map((row): LinkableAccount => ({
+      ...row,
+      status: row.status === "active" || row.status === "probation" ? row.status : "pending",
+    })),
   );
 }
 

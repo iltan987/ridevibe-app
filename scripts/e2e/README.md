@@ -58,6 +58,17 @@ Run against a **local** stack only (local Supabase + a server on port 3123); nev
   header. It plants and deletes contacts, blood types, bikes and access-log rows of these four users through `docker
   exec … psql` (`DB_CONTAINER`, local only), before and after the run. Works on a DB with other active members.
   Screenshots go to `OUT_DIR`.
+- `probation-e2e.mjs` — ön alım and staff notes (PASS/FAIL lines, exit code != 0 on failure; 390px and 1280px). As
+  `probation@test.local`: `/members` shows the crowd card with the active total/sides from the DB, the initials grid
+  (`aria-hidden`, one chip per member) and the sr-only total, and holds no fixture full name in `page.content()` nor in the
+  RSC payload (`fetch` with `RSC: 1` and the session cookies); `/account` shows the probation card, badge and the profile
+  sections; `/apply` says "Zaten üyesin"; no "Başvur" in the nav. As `admin@test.local`: the "Ön alım" tab lists the
+  fixture with "Ön alım · 5 gün" and the right buttons, the notes dialog adds a note (author "Test Admin"), deletes it
+  with confirm, the button shows "Notlar (1)" after a reload, and "Tam üye yap" moves the fixture to "Aktif". Needs
+  `pnpm start -p 3123`, local email sign-in and `admin@test.local` (admin role), `member@test.local`, `second@test.local`
+  (active) and `probation@test.local` (status `probation`, `status_changed_at` 5 days ago, "Ön Alım Fixture"); recipe in
+  the script header. Resets the fixture and deletes its notes through `docker exec … psql` (`DB_CONTAINER`, local only)
+  before and after. Works on a DB with other active members. Screenshots go to `OUT_DIR`.
 - `header-e2e.mjs` — `<head>` theme script across a language switch and an unknown path (theme kept, client-created
   script inert, no React "script tag" warning), theme sync to other tabs, no colour transitions on a theme switch, the
   user-menu skeleton (signed out: button; signed in: the avatar, photo kept on a language switch; language button
@@ -126,8 +137,8 @@ Run against a **local** stack only (local Supabase + a server on port 3123); nev
     npm install --prefix ~/e2e-tools puppeteer-core
     PUPPETEER_DIR=~/e2e-tools node scripts/e2e/nav-e2e.mjs
 
-The pending states of `skeletons.mjs` (`STATES=pending-noapp,pending-app`) need `pending-noapp@test.local` and
-`pending-app@test.local`: create them like the other users (`docs/learnings/testing.md`, "Testing as a signed-in user
+The extra states of `skeletons.mjs` (`STATES=pending-noapp,pending-app,probation`) need `pending-noapp@test.local`,
+`pending-app@test.local` and `probation@test.local` (see `probation-e2e.mjs`): create them like the other users (`docs/learnings/testing.md`, "Testing as a signed-in user
 locally"), keep `profiles.status = 'pending'`, and link one application to `pending-app` via `applications.profile_id`.
 
 Prerequisites (test users `admin@test.local` / `member@test.local`, seeded applications, email sign-in enabled locally):

@@ -29,12 +29,14 @@ export function MembersList({
   roles,
   meId,
   canAssignRole,
+  canDeleteNotes,
   overCeiling,
 }: {
   rows: MembersListRow[];
   roles: { id: string; label: string }[];
   meId: string;
   canAssignRole: boolean;
+  canDeleteNotes: boolean;
   overCeiling: boolean;
 }) {
   const t = useTranslations("Admin.members");
@@ -118,6 +120,7 @@ export function MembersList({
                 canAssignRole={canAssignRole}
                 canChangeStatus={row.canChangeStatus}
                 canRename={row.canRename}
+                canDeleteNotes={canDeleteNotes}
               />
             ))}
           </ul>
