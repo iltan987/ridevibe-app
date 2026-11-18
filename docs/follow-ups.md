@@ -335,11 +335,6 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   `string | null`; `visibility-form.tsx` indentation. All cosmetic or harmless today.
 
 ### UI / accessibility
-- **Link dialog calls an ön alım account "Aktif üye"** (2026-11-18, probation Task 2) — `linkable_accounts` now also
-  returns `probation` accounts for approved applications; `findLinkableAccounts` maps them to `"active"` (same
-  attach-only behaviour), so `link-account-dialog.tsx` shows the "Aktif üye" badge and `link.confirmActive` ("Hesap
-  zaten aktif") for them. Harmless (the action is right), only the wording. Fix: pass the real status through and add
-  an "Ön alım" badge/confirm text. Deferred: the task's interface kept `"pending" | "active"`.
 - **Pager accessibility** (2026-11-13, list UX final review) — pressing "›" to reach the last page swaps the focused
   button for a `span`, so focus falls to `<body>`; after a page change the view scrolls to the list top but focus stays
   on the pager; the disabled end `<span aria-label>` has no role (ARIA forbids `aria-label` on generic elements). Fix:

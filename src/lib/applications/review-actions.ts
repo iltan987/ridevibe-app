@@ -109,11 +109,8 @@ export type LinkableAccount = {
   /** Sign-in email; null if the account has none on file. */
   email: string | null;
   created_at: string;
-  /**
-   * "active" only when active accounts were requested (approved applications); an ön alım account counts as
-   * "active" here (it only gets the application attached, like an active one).
-   */
-  status: "pending" | "active";
+  /** "probation" / "active" only when those accounts were requested (approved applications). */
+  status: "pending" | "probation" | "active";
 };
 
 type GeneratedLinkableRow = Database["public"]["Functions"]["linkable_accounts"]["Returns"][number];
@@ -160,7 +157,7 @@ export async function findLinkableAccounts(input: {
   return toPage(
     rows.map((row): LinkableAccount => ({
       ...row,
-      status: row.status === "active" || row.status === "probation" ? "active" : "pending",
+      status: row.status === "active" || row.status === "probation" ? row.status : "pending",
     })),
   );
 }

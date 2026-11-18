@@ -9,6 +9,8 @@ export type AdminProfile = {
   avatar_url: string | null;
   status: StaffStatus;
   created_at: string;
+  /** When the status last changed; null = before the column existed. */
+  status_changed_at: string | null;
   role_id: string | null;
   email: string | null;
 };
@@ -23,7 +25,7 @@ export async function listAllProfiles(): Promise<{ profiles: AdminProfile[]; ove
   const { items, overCeiling } = await readAll(async (from, to) => {
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, full_name, avatar_url, status, created_at, role_id, member_contacts(email)")
+      .select("id, full_name, avatar_url, status, created_at, status_changed_at, role_id, member_contacts(email)")
       .neq("status", "deleting")
       .order("created_at", { ascending: false })
       .order("id", { ascending: false })

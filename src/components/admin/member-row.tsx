@@ -9,6 +9,7 @@ import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { type AccessActionResult, setMemberRole, setMemberStatus } from "@/lib/access/actions";
 import type { StaffStatus } from "@/lib/access/members-view";
 import { MemberNameDialog } from "@/components/admin/member-name-dialog";
+import { statusActions } from "@/lib/access/status-actions";
 import { initials } from "@/lib/initials";
 
 export type MemberRowData = {
@@ -24,15 +25,9 @@ export type MemberRowData = {
   /** Pending tab only: has an open application. null/undefined = not shown. */
   applied?: boolean | null;
   formerMember?: boolean;
+  /** Ön alım tab only: whole Istanbul calendar days since the status changed. null/undefined = not shown. */
+  probationDays?: number | null;
 };
-
-const NEXT_STATUS = {
-  pending: { status: "active", label: "activate" },
-  // Placeholder until the ön alım UI (promote / back to inactive).
-  probation: { status: "active", label: "promote" },
-  active: { status: "inactive", label: "deactivate" },
-  inactive: { status: "active", label: "reactivate" },
-} as const;
 
 export function MemberRow({
   member,
@@ -61,8 +56,6 @@ export function MemberRow({
     });
   }
 
-  const next = NEXT_STATUS[member.status];
-
   return (
     <li
       data-skeleton-result="admin-row"
@@ -84,6 +77,11 @@ export function MemberRow({
           {member.formerMember && (
             <Badge variant="outline" className="mt-1 border-sun/40 bg-sun/10">
               {t("members.formerMember")}
+            </Badge>
+          )}
+          {member.status === "probation" && member.probationDays != null && (
+            <Badge variant="outline" className="mt-1 border-sun/40 bg-sun/10">
+              {t("members.probationDays", { days: member.probationDays })}
             </Badge>
           )}
           {member.applied != null && (
@@ -121,16 +119,19 @@ export function MemberRow({
 
         {canRename && <MemberNameDialog memberId={member.id} currentName={member.name} />}
 
-        {canChangeStatus && !isSelf && (
-          <Button
-            size="sm"
-            variant={next.status === "active" ? "default" : "outline"}
-            disabled={isPending}
-            onClick={() => run(() => setMemberStatus(member.id, next.status))}
-          >
-            {t(`members.${next.label}`)}
-          </Button>
-        )}
+        {canChangeStatus &&
+          !isSelf &&
+          statusActions(member.status).map((action) => (
+            <Button
+              key={action.status}
+              size="sm"
+              variant={action.primary ? "default" : "outline"}
+              disabled={isPending}
+              onClick={() => run(() => setMemberStatus(member.id, action.status))}
+            >
+              {t(`members.${action.label}`)}
+            </Button>
+          ))}
       </div>
 
       {error && (

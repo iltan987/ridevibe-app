@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { ListSkeleton } from "@/components/admin/list-skeleton";
 import { MembersList } from "@/components/admin/members-list";
 import { getPendingApplicationFlags, listAllProfiles, listRoles } from "@/lib/access/queries";
+import { daysSince } from "@/lib/access/probation-days";
 import { requirePermission } from "@/lib/auth/require-access";
 import { LIST_CEILING } from "@/lib/pagination";
 import { foldSearch } from "@/lib/search-fold";
@@ -52,6 +53,8 @@ async function Members() {
   const roleOptions = roles.map((r) => ({ id: r.id, label: r.isAdmin ? tAccount("roles.admin") : r.name }));
   const adminRoleIds = new Set(roles.filter((r) => r.isAdmin).map((r) => r.id));
 
+  const now = new Date();
+
   const rows = profiles.map((p) => {
     // Mirrors set_member_status() and set_member_name(): only admins change an admin's status or name.
     const editable = me.access.isAdmin || !adminRoleIds.has(p.role_id ?? "");
@@ -65,6 +68,8 @@ async function Members() {
       roleId: p.role_id,
       roleLabel: roleLabel(p.role_id),
       applied: p.status === "pending" ? (flags.get(p.id)?.applied ?? false) : null,
+      probationDays:
+        p.status === "probation" && p.status_changed_at ? daysSince(new Date(p.status_changed_at), now) : null,
       formerMember: flags.get(p.id)?.formerMember ?? false,
       canChangeStatus: editable,
       canRename: editable,
