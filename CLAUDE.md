@@ -153,6 +153,7 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
 - **Staff notes** (`public.member_notes`, permission `members.notes`): append-only, author forced, 1–2,000 chars; read/add
   on non-deleting others; notes about admin-role holders: admins only; delete: admins only, never about oneself;
   nobody reads notes about themselves. Counts via the security-invoker view `member_note_counts`.
+  KVKK art. 11 request: content + date by hand, never the author's name (PLAN.md "Access requests and staff notes").
 - Status: `pending` / `probation` ("Ön alım") / `active` / `inactive` / `deleting`. Approval and staff manual
   activation start in `probation`; staff promote via `set_member_status` ("Tam üye yap"); the DB refuses
   pending → active. `profiles.status_changed_at` records the last change (moves into/out of `deleting` keep it).
@@ -172,6 +173,8 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   skips `retained_until is not null`); `/admin/members` flags a returning pending account as `former_member`. The
   schedule is DML: a hand-written idempotent migration (`docs/learnings/supabase.md`).
   Generated migrations touching `90_ops.sql` may emit `cron.unschedule(...)`: delete that line.
+  Drift check (after hand-editing an unpushed migration or a schema comment): `pnpm db:migration drift_check` must
+  produce only that `cron.unschedule` noise; delete the generated file.
 - Anything that decides which account becomes active (approve, `link_application`, editing the email of an approved
   application) requires `applications.decide`; `applications.profile_id` = the account an application belongs to.
   Linking targets pending accounts; approved applications may also go to an active account without one (attach only).
@@ -193,7 +196,7 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   `~/ridevibe-backups/`, 14 days), shows the dry-run, pushes after a y/N (Claude: `--yes` once iltan said go), then
   runs pgTAP against production. A bare remote `supabase db push` is blocked for Claude by a hook (dry-run allowed).
   Backups, the key and restoring: `docs/runbooks/database-backup.md`. Other tools needing the URL: `vercel env pull
-  --environment=production <file outside the repo>` and delete the file afterwards.
+  --environment=production <file outside the repo>` (`POSTGRES_URL_NON_POOLING`) and delete the file afterwards.
   Decrypting a backup needs iltan's gpg passphrase cached first (iltan runs one `gpg --decrypt` in their terminal).
 - Changing app data on production (e.g. role permissions): an idempotent hand-written data migration, never ad-hoc SQL.
 - **Investigating production data:** read-only psql only (`set default_transaction_read_only = on`, see below), select
@@ -239,7 +242,8 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   `purge-deleted-accounts` / `0 2 * * *`) and `select status, return_message, start_time from cron.job_run_details
   order by start_time desc limit 5` (the purge also prunes run history older than 30 days).
 - After a `db push` that adds functions: run a read-only `has_function_privilege('anon' / 'authenticated', …)` check
-  on production.
+  on production. Column-level grants (e.g. `insert (profile_id, body)`) read `false` in `has_table_privilege`: use
+  `has_column_privilege`.
 - Before `db push`, run read-only checks for anything a new constraint/unique index could reject:
   `docker run --rm postgres:17-alpine psql "$URL" -c "set default_transaction_read_only = on" -c "<query>"`.
 - A migration that rewrites production data gets a read-only preview in `scripts/sql/` (pg_temp copies of new
