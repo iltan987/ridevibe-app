@@ -194,14 +194,14 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   Local dev always uses the Docker stack. Preview deployments share the production database.
 - **Migrations:** `pnpm db:push` (needs Docker, `vercel login`, gpg): backs up first (encrypted,
   `~/ridevibe-backups/`, 14 days), shows the dry-run, pushes after a y/N (Claude: `--yes` once iltan said go), then
-  runs pgTAP against production. Remote CLI writes (bare `db push`, `db reset`, `migration up/down/repair/squash`, `seed`) are blocked for
-  Claude by a hook (`db push --dry-run` allowed).
+  runs pgTAP against production. Remote CLI writes (`db push`, `db reset`, `db query`, `db pull`, `migration up/down/repair/squash`, `seed`)
+  are blocked for Claude by a hook (`db push --dry-run`, `db query --read-only` allowed).
   Backups, the key and restoring: `docs/runbooks/database-backup.md`. Other tools needing the URL: `vercel env pull
   --environment=production <file outside the repo>` (`POSTGRES_URL_NON_POOLING`) and delete the file afterwards.
   Decrypting a backup needs iltan's gpg passphrase cached first (iltan runs one `gpg --decrypt` in their terminal).
 - Changing app data on production (e.g. role permissions): an idempotent hand-written data migration, never ad-hoc SQL.
-- **Investigating production data:** read-only psql only (`set default_transaction_read_only = on`, see below), select
-  the fewest columns (mask emails), never write personal data into the repo or logs.
+- **Investigating production data:** read-only psql only (`set default_transaction_read_only = on`, see below)
+  or `supabase db query --remote=<url> --read-only`, select the fewest columns (mask emails), never write personal data into the repo or logs.
 - **Deleting an account:** members delete their own account on `/account` (14-day grace, purge job above). The manual
   path below is for staff-requested deletions only: only on iltan's explicit OK; `pnpm db:backup` first; check
   status/role/linked application and `applications.reviewed_by`, then delete the person's non-rejected applications

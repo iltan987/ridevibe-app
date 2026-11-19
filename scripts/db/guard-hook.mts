@@ -1,5 +1,5 @@
 // Claude Code PreToolUse hook (Bash, registered in `.claude/settings.json`): blocks Supabase CLI writes to a remote
-// database that bypass `pnpm db:push` (`db push`, `db reset`, `migration up/down/repair/squash`, `seed`). Exit 2
+// database that bypass `pnpm db:push` (rules in `push-guard.mts`). Exit 2
 // blocks the call and shows stderr to Claude; anything unexpected exits 0, so the hook never breaks unrelated tool
 // calls.
 import { text } from "node:stream/consumers";

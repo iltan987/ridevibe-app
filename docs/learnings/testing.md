@@ -303,7 +303,6 @@
   the bare word (`scripts/e2e/probation-e2e.mjs`).
 - **Source:** found while fixing the review of the probation E2E.
 
-
 ### Per-frame layout logs see half-parsed HTML on throttled loads (2026-11-19)
 - **Symptom:** `apply-nav-e2e.mjs` "second load, one layout" failed every run for phone TR fixtures that show
   "Başvur": `guess:4tabs@0/75/150/225 → guess:5tabs+B@0/75/150/225/300`, although the guess was right.

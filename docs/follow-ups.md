@@ -325,8 +325,7 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   E2E, each passed on the rerun): install's `/account` scenario failed all four banner checks ("Yükle" not shown,
   `prompt()` calls=0) while `/members` just before passed (a late or missing install event?). (Apply-nav's "second
   load, one layout" FAILs were a half-parsed tab bar, fixed 2026-11-19: `docs/learnings/testing.md`.) From the
-  fix-wave re-review: the
-  iPhone "installed flag still set" check is near-tautological (`initScript` sets the flag on every document; the real
+  fix-wave re-review: the iPhone "installed flag still set" check is near-tautological (`initScript` sets the flag on every document; the real
   assertions there are "no banner / no menu entry"); the language-switch scenario doesn't assert exactly one spacer
   after the switch; the comment near line 39 still states "Chrome ignores a re-dispatched real event" as fact (see the
   verify-or-drop item below). Deferred: test-only, all green today; risk: a confusing cascade of FAILs or a rare flake.
@@ -572,8 +571,10 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   in another tab (profile, apply); the rows are hidden and purged, or return on restore: harmless, noted.
 - **Pre-push backup review minors** (2026-11-18, final review) — (a) guard: text that merely mentions a guarded
   command with a remote flag (a `git commit -m` message, `grep`, a hook smoke test) is blocked (recoverable; rephrase
-  or put it in a file); other Supabase CLI remote writes (`storage`, `functions`, `secrets`, `config push`) are not
-  guarded (no Storage or Edge Functions yet; `config push` has its own diff-first rule). (b) `production.mts`:
+  or put it in a file); the splitter ignores quotes, so a quoted `;`/`&` before the remote flag hides it
+  (`… --password 'p;q' --remote` passes; contrived); other Supabase CLI remote writes (`storage`, `functions`,
+  `secrets`, `config push`) are not guarded (no Storage or Edge Functions yet; `config push` has its own diff-first
+  rule). (b) `production.mts`:
   SIGTERM/SIGHUP (terminal closed) skip the `exit` handler, so the private temp `.env` with every production secret
   can stay in `os.tmpdir()` (handle them like SIGINT); `/up to date/i` is correct for CLI 3.0.0 (stdout only when
   nothing is pending) but should be re-checked on CLI upgrades or replaced by `--output-format json` + `upToDate`;
