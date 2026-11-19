@@ -10,12 +10,15 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ## Next up (iltan asked for these; in priority order; start in a new session)
 
-- **The repo is public now** (2026-11-18, iltan made `iltan987/ridevibe-app` public) — (a) scan the whole git history
-  for what must not be public: secrets/keys, personal data in docs, fixtures, SQL previews or learnings, photo files
-  ever committed (incl. removed ones); decide per find (rewrite history with `git filter-repo` + force-push, rotate a
-  secret, or accept). (b) Rework CLAUDE.md "Removing or replacing a website photo": step 2 accepts orphaned commits
-  reachable by SHA because the repo was private; public changes that (GitHub Support purge, or keep the repo private
-  again). Also re-check other places that assumed a private repo.
+- **The repo is public now** (2026-11-18, iltan made `iltan987/ridevibe-app` public) — the history audit is done
+  (2026-11-19: gitleaks 8.30.1 + manual scans, no secrets, no removed photos; a production company name, a member's
+  name and an unknown person's phone number were scrubbed from all history with `git filter-repo` and force-pushed).
+  Left: rework CLAUDE.md "Removing or replacing a website photo": step 2 accepts orphaned commits reachable by SHA
+  because the repo was private; public changes that (Claude's recommendation: stay public, make a GitHub Support purge
+  a standard step and say clones can't be recalled; or move website photos out of git, e.g. R2 with the gallery; or
+  private again). Also fix the "private repo" line in `docs/superpowers/specs/2026-11-13-home-content-design.md`. The
+  pre-scrub commits stay reachable by SHA on GitHub until its GC (0 forks/stars at the rewrite; ask GitHub Support to
+  purge if that matters).
 
 ## Open decisions (need iltan)
 

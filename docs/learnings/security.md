@@ -38,3 +38,14 @@
   status/name/role change; new/contacted still pending-only; inactive never). When a rule protects a state change,
   check what happens if staff reach the end state another way.
 - **Source:** found by investigating production (read-only queries), 2026-11-10.
+
+### Real people's data copied into docs and tests ended up in the public history (2026-11-19)
+- **Symptom:** the history audit after the repo went public found a company name staff had typed on
+  production, a real member's name (in the name-tidy examples, pgTAP tests and an invite example) and an
+  unknown person's mobile number (the "valid mobile" test value) in learnings, specs, schema comments and tests.
+- **Cause:** a bug report or a hand fix was quoted verbatim into a learning/spec, and the example then spread into
+  tests and comments; a "realistic" phone number was typed from memory.
+- **Do:** never copy a value from production or from a user's message into the repo: rewrite it as a placeholder
+  before writing (names: Ali Veli / Ayşe Yılmaz; phones: `+90532 123 45 67`-style or `+90500…`; emails: `.invalid`).
+  If one slips in, scrub history (`docs/learnings/tooling.md`, "Scrubbing text from history").
+- **Source:** public-repo audit, 2026-11-19 (gitleaks + manual scans).

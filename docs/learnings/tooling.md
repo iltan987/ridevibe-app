@@ -111,3 +111,17 @@
   ask iltan to commit or set aside their edit instead. Stage only your lines in that file with `git hash-object -w` +
   `git update-index --cacheinfo` (see the pre-push backup plan, Task 1).
 - **Source:** found while merging `chore/pre-push-backup`.
+
+### Scrubbing text from history: filter-repo in a fresh clone, then `reset --keep` (2026-11-19)
+- **Symptom:** a value must leave every commit (blobs **and** commit messages), but `git filter-repo` refuses to run
+  in a non-fresh clone and its `--force` would rewrite the working repo in place (iltan's local edits).
+- **Cause:** filter-repo is meant for fresh clones; `--replace-text` touches blobs only, messages need
+  `--replace-message`.
+- **Do:** `git clone --no-local <repo> <scratchpad>/rewrite`; write `old==>new` lines (literal, longest first: a short
+  pattern that is a prefix of a longer one must come after it); run `git filter-repo --replace-text f
+  --replace-message f` there. Verify: grep every old value in `git log --all -p -a` and `--format=%B` (expect 0),
+  compare the binary blobs' ids with `ls-tree`, `git diff --stat` old vs new HEAD. Then in the real repo: fetch the
+  new `main` into a temp ref, keep the old tip as another ref, `git reset --keep <new>` (refuses instead of
+  overwriting local changes), run the tests, force-push with iltan's OK, delete the temp refs. GitHub still serves old
+  commits by SHA until its GC (Support can purge); clones/forks keep them.
+- **Source:** public-repo audit, 2026-11-19.
