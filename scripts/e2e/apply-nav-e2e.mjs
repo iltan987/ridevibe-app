@@ -41,12 +41,20 @@ async function fresh(who, viewport, { before } = {}) {
 }
 
 // Logs, on every animation frame where it changes, what is visible: the bottom-nav tabs (count, x of each, whether
-// "Başvur" is among them), the hero's "Başvur" and the desktop "Başvur". Frames before the nav and the hero are parsed
-// are skipped. `guess` = the visible nav is the static-shell guess (starting with its apply-hint script), not the
-// streamed nav.
+// "Başvur" is among them), the hero's "Başvur" and the desktop "Başvur". Frames before the nav and the closing section
+// are fully parsed are skipped: on a slow connection the HTML can arrive cut inside the tab bar (it follows <main>),
+// and the browser paints the first tabs before the last one ("Başvur") is parsed; its grid slot is already reserved,
+// so nothing moves. `guess` = the visible nav is the static-shell guess (starting with its apply-hint script), not
+// the streamed nav.
 function frameLogger() {
   window.__frames = [];
   let last = "";
+  // The parser has moved past `e`: some node follows it (or an ancestor), or the document is complete.
+  const parsed = (e) => {
+    let n = e;
+    while (n && !n.nextSibling) n = n.parentNode;
+    return !!n || document.readyState !== "loading";
+  };
   const tick = () => {
     const vis = (e) => !!e && e.getBoundingClientRect().width > 0;
     const bottom = [...document.querySelectorAll("nav.fixed")].find(vis);
@@ -55,7 +63,7 @@ function frameLogger() {
     const hero = [...document.querySelectorAll("main [data-home-hero]")].find(vis);
     const closing = [...document.querySelectorAll("main [data-home-closing]")].find(vis);
     // (the closing section is the page's last: once parsed, the hero and both buttons' guesses are in the document)
-    if (nav && hero && closing) {
+    if (nav && hero && closing && parsed(nav) && parsed(closing)) {
       const tabs = bottom ? [...bottom.querySelectorAll("a")].filter(vis) : [];
       const f = {
         tabs: tabs.length,

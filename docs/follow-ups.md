@@ -323,9 +323,9 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   fallback `page.mouse.click(195, 400)` in `open()` (user activation when the event is late) can hit real UI; the
   `apply-nav-e2e.mjs` "showed the guess first" check flaked once (passed on rerun). Seen 2026-11-15 (lint-format final
   E2E, each passed on the rerun): install's `/account` scenario failed all four banner checks ("Yükle" not shown,
-  `prompt()` calls=0) while `/members` just before passed (a late or missing install event?), and apply-nav's
-  "pending-noapp phone TR: second load, one layout" started with the hidden guess (4 tabs) before 5 (the first
-  load's stored hint not yet written?). From the fix-wave re-review: the
+  `prompt()` calls=0) while `/members` just before passed (a late or missing install event?). (Apply-nav's "second
+  load, one layout" FAILs were a half-parsed tab bar, fixed 2026-11-19: `docs/learnings/testing.md`.) From the
+  fix-wave re-review: the
   iPhone "installed flag still set" check is near-tautological (`initScript` sets the flag on every document; the real
   assertions there are "no banner / no menu entry"); the language-switch scenario doesn't assert exactly one spacer
   after the switch; the comment near line 39 still states "Chrome ignores a re-dispatched real event" as fact (see the
@@ -594,10 +594,3 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   measures -208px at 390px for `admin@test.local` and `probation@test.local` (no birth date: the form also holds the
   one-time birth-date block) and 0 for `member@test.local`. Not caused by the probation work; skeleton mirrors the
   with-birth-date form.
-- **`apply-nav-e2e.mjs` "second load, one layout" fails every run** (2026-11-18, ön alım Task 8) — "visitor phone TR"
-  and/or "pending-noapp phone TR" see the 4-tab guess before the 5-tab layout (4 of 4 runs, 1-2 FAILs each); the same two
-  FAIL on a clean build of `main` (b7682f9) on the same stack (control run output, verbatim:
-  `FAIL visitor phone TR: second load, one layout from first paint to settled — guess:4tabs@0/75/150/225 hero=1 end=1 desk=0 → guess:5tabs+B@0/75/150/225/300 hero=1 end=1 desk=0 → real:5tabs+B@0/75/150/225/300 hero=1 end=1 desk=0`,
-  `FAIL pending-noapp phone TR: second load, one layout from first paint to settled — guess:4tabs@0/75/150/225 hero=1 end=1 desk=0 → guess:5tabs+B@0/75/150/225/300 hero=1 end=1 desk=0 → real:5tabs+B@0/75/150/225/300 hero=1 end=1 desk=0`,
-  `2 FAILED`, 49 PASS), so not a regression of this branch. Earlier seen as a
-  one-off flake (above); now consistent: investigate the stored-hint timing on the second load.
