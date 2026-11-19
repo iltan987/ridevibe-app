@@ -3,6 +3,8 @@
 ### CLI v3 (released 2026-11-02) differences that matter (2026-11-07)
 - Local stack by default; every hosted change asks for confirmation (default **No**) → pass `--yes` non-interactively.
 - `--db-url` is deprecated → `--remote=<postgres-url>` or `--remote=<project-ref>` (ref needs `supabase login`).
+  `--linked` is deprecated → bare `--remote` (the linked project). Both still work in 3.0.0 with a warning, removed
+  in v4; the remote-write guard (`scripts/db/push-guard.mts`) matches all three (checked 2026-11-19).
 - **`SUPABASE_*` env vars override every config value, including `[remotes.*]` blocks** → never name our config env
   vars `SUPABASE_*` (we use `GOOGLE_LOCAL_*` / `GOOGLE_PROD_*`), or `config push` sends local values to production.
 - `env()` in `config.toml` reads the **root** `.env` (not `.env.local`, not `supabase/.env`).

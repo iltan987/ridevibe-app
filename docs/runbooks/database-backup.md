@@ -6,8 +6,11 @@ Spec: `docs/superpowers/specs/2026-11-15-pre-push-backup-design.md`. Code: `scri
 
 - `pnpm db:push` — the only way to push migrations to production: backup → `db push --dry-run` (shown) → confirm
   (y/N in a terminal, `--yes` otherwise) → push → pgTAP against production. "Remote database is up to date" → it
-  stops after the backup. A bare remote `supabase db push` is blocked for Claude Code by a hook
-  (`scripts/db/guard-hook.mts`); `--dry-run` stays allowed.
+  stops after the backup. Claude Code is blocked by a hook (`scripts/db/guard-hook.mts`) from every Supabase CLI
+  write to a remote database: a bare `db push` (`--dry-run` stays allowed), `db reset` (never on production),
+  `migration up/down/repair/squash` and `seed`. If one of those is really needed on production (e.g. a `migration
+  repair`), iltan runs `pnpm db:backup` and then the command in their own terminal. Read-only remote commands
+  (`db dump`, `migration list/fetch`, `db diff`, `test db`) pass.
 - `pnpm db:backup` — the backup alone, before other risky production work (e.g. a manual account deletion).
   `pnpm db:backup --local` backs up the local stack (for testing).
 

@@ -570,13 +570,10 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   `countApplicationsByStatus` (`src/lib/applications/queries.ts`); extract a helper.
 - **Forms already open in another tab** (2026-11-14, account deletion) — a `deleting` user can still submit forms open
   in another tab (profile, apply); the rows are hidden and purged, or return on restore: harmless, noted.
-- **Guard other destructive remote commands** (2026-11-18, pre-push backup final review) — the Claude Code guard
-  (`scripts/db/push-guard.mts`) blocks only `supabase db push` to a remote; `supabase db reset --remote` (wipes
-  production) and `supabase migration up --remote` pass unguarded. Block `db reset` with a remote target outright and
-  route other remote writes through `pnpm db:push`. Risk if left: a mistaken Claude command with no backup first.
-- **Pre-push backup review minors** (2026-11-18, final review) — (a) guard: a single `&` isn't a separator and
-  `--dry-run` anywhere in a segment allows it (`… --dry-run & supabase db push --remote` passes); text that merely
-  mentions the command (a `git commit -m` message, `grep`) is blocked (recoverable; rephrase). (b) `production.mts`:
+- **Pre-push backup review minors** (2026-11-18, final review) — (a) guard: text that merely mentions a guarded
+  command with a remote flag (a `git commit -m` message, `grep`, a hook smoke test) is blocked (recoverable; rephrase
+  or put it in a file); other Supabase CLI remote writes (`storage`, `functions`, `secrets`, `config push`) are not
+  guarded (no Storage or Edge Functions yet; `config push` has its own diff-first rule). (b) `production.mts`:
   SIGTERM/SIGHUP (terminal closed) skip the `exit` handler, so the private temp `.env` with every production secret
   can stay in `os.tmpdir()` (handle them like SIGINT); `/up to date/i` is correct for CLI 3.0.0 (stdout only when
   nothing is pending) but should be re-checked on CLI upgrades or replaced by `--output-format json` + `upToDate`;

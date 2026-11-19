@@ -194,7 +194,8 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   Local dev always uses the Docker stack. Preview deployments share the production database.
 - **Migrations:** `pnpm db:push` (needs Docker, `vercel login`, gpg): backs up first (encrypted,
   `~/ridevibe-backups/`, 14 days), shows the dry-run, pushes after a y/N (Claude: `--yes` once iltan said go), then
-  runs pgTAP against production. A bare remote `supabase db push` is blocked for Claude by a hook (dry-run allowed).
+  runs pgTAP against production. Remote CLI writes (bare `db push`, `db reset`, `migration up/down/repair/squash`, `seed`) are blocked for
+  Claude by a hook (`db push --dry-run` allowed).
   Backups, the key and restoring: `docs/runbooks/database-backup.md`. Other tools needing the URL: `vercel env pull
   --environment=production <file outside the repo>` (`POSTGRES_URL_NON_POOLING`) and delete the file afterwards.
   Decrypting a backup needs iltan's gpg passphrase cached first (iltan runs one `gpg --decrypt` in their terminal).
