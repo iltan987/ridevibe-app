@@ -56,7 +56,7 @@ privacy notice covers photos on the public website.
 - **Member count is fixed text** ("140+"), updated by hand. A live count would need a cached read that bypasses RLS
   (the anon key can't count members) for little gain; "140+" stays true while the club grows.
 - **"Etkinlikleri Gör" leaves the hero.** `/events` is an empty `noindex` page; it comes back with Events.
-- **Photos live in the repo** (`src/assets/home/`, private repo) as static imports for `next/image` (responsive
+- **Photos live in the repo** (`src/assets/home/`; private repo then, public since 2026-11-18: removal steps in CLAUDE.md) as static imports for `next/image` (responsive
   sizes, automatic blur placeholder, `preload` for the hero). Prepared once with sharp from Next's own dependency:
   `.rotate()` (apply EXIF orientation), longest side unchanged (the WhatsApp originals are 1600 × 1200, 1200 × 1600
   and 1536 × 2048 for the terrace photo; never upscale), JPEG quality ~85, metadata stripped (sharp's default). Not

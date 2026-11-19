@@ -10,15 +10,7 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ## Next up (iltan asked for these; in priority order; start in a new session)
 
-- **The repo is public now** (2026-11-18, iltan made `iltan987/ridevibe-app` public) — the history audit is done
-  (2026-11-19: gitleaks 8.30.1 + manual scans, no secrets, no removed photos; a production company name, a member's
-  name and an unknown person's phone number were scrubbed from all history with `git filter-repo` and force-pushed).
-  Left: rework CLAUDE.md "Removing or replacing a website photo": step 2 accepts orphaned commits reachable by SHA
-  because the repo was private; public changes that (Claude's recommendation: stay public, make a GitHub Support purge
-  a standard step and say clones can't be recalled; or move website photos out of git, e.g. R2 with the gallery; or
-  private again). Also fix the "private repo" line in `docs/superpowers/specs/2026-11-13-home-content-design.md`. The
-  pre-scrub commits stay reachable by SHA on GitHub until its GC (0 forks/stars at the rewrite; ask GitHub Support to
-  purge if that matters).
+- Nothing queued; pick from the lists below.
 
 ## Open decisions (need iltan)
 
@@ -159,6 +151,13 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   are ineligible for Google's Event rich results; add `Event` JSON-LD only if such events appear.
 
 ## Parked edge cases (known, judged harmless for now)
+
+- **Pre-scrub commits still fetchable by SHA on GitHub** (2026-11-19, public-repo audit) — the history rewrite
+  removed a production company name, a member's name and an unknown phone number, but GitHub serves the orphaned
+  commits by SHA until its GC (0 forks/stars at the rewrite, the SHAs were never published elsewhere). If it matters:
+  Support ticket per CLAUDE.md photo-removal step 3, 0 PRs; the First Changed Commit is the old
+  "docs(plan): application gaps implementation plan" commit (2026-11-09): recompute it from the reflog on iltan's PC
+  (`docs/learnings/tooling.md`), never write an old SHA into this public repo (it points straight at the old data).
 
 - **`profiles.status_changed_at` readable by every active member** (2026-11-18, ön alım + notes) — table-level select
   grant plus the active-member read policy: it shows when someone became a full member. Low sensitivity, accepted; a

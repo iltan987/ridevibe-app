@@ -215,14 +215,19 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   row is gone (`getCurrentUser`). Use `getCurrentUser()`, not bare `getClaims()`, wherever "who is signed in" matters.
 - **Removing or replacing a website photo** (consent withdrawn, or replaced for editorial reasons): (1) remove/replace
   the file in `src/assets/home/` and its use, merge, deploy; a replacement always gets a NEW file name; (2) purge the
-  old path from history: `git filter-repo --path src/assets/home/<old-file> --invert-paths` (a same-named replacement
-  would be deleted too), force-push `main` (one-off exception to merge-only, iltan approves; other clones re-clone);
-  GitHub keeps orphaned commits reachable by SHA until its GC: private repo, accepted; if needed ask GitHub Support to
-  purge cached views; (3) old Vercel deployments: checked
+  old path from history in a fresh clone (recipe: `docs/learnings/tooling.md`, "Scrubbing text from history"):
+  `git filter-repo --path src/assets/home/<old-file> --invert-paths` (a same-named replacement would be deleted too);
+  save its "NOTE: First Changed Commit(s)" lines; check for forks (`gh api repos/iltan987/ridevibe-app --jq
+  .forks_count`: forks keep the photo, only their owners can remove it), force-push `main` (one-off exception to
+  merge-only, iltan approves; other clones re-clone); (3) the repo is **public**: GitHub serves the orphaned commits by
+  SHA until purged, so iltan opens a ticket at support.github.com (removing sensitive data: personal data, consent
+  withdrawn) with owner/repo, the number of affected pull requests (0: we merge locally) and the First Changed
+  Commit(s); Support garbage-collects the orphaned commits and cached views. Clones made while the photo was public
+  can't be recalled; (4) old Vercel deployments: checked
   2026-11-13, `*.vercel.app` URLs redirect to Vercel login (Protection on), so no action; re-check a production and a
-  preview URL (`curl -sI`, 302 = protected; may differ per environment); (4) if the old image URL still loads on
-  ridevibe.com.tr, purge the cached image (`invalidate_by_src_images` / dashboard); (5) Search Console → "Remove
-  outdated content"; (6) originals and unused photos never enter the repo. Consent proof (WhatsApp message) stays with
+  preview URL (`curl -sI`, 302 = protected; may differ per environment); (5) if the old image URL still loads on
+  ridevibe.com.tr, purge the cached image (`invalidate_by_src_images` / dashboard); (6) Search Console → "Remove
+  outdated content"; (7) originals and unused photos never enter the repo. Consent proof (WhatsApp message) stays with
   the club, outside the repo.
 - **Auth/config as code:** production overrides live in `[remotes.production]` in `supabase/config.toml`. Always run
   `pnpm exec supabase config diff --remote=igqqicbfejhnsggfuydh` and review before `config push --remote=… --yes`.

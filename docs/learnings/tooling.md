@@ -123,5 +123,8 @@
   compare the binary blobs' ids with `ls-tree`, `git diff --stat` old vs new HEAD. Then in the real repo: fetch the
   new `main` into a temp ref, keep the old tip as another ref, `git reset --keep <new>` (refuses instead of
   overwriting local changes), run the tests, force-push with iltan's OK, delete the temp refs. GitHub still serves old
-  commits by SHA until its GC (Support can purge); clones/forks keep them.
+  commits by SHA until its GC; clones/forks keep them. Save filter-repo's "NOTE: First Changed Commit(s)" lines before
+  deleting the clone: a GitHub Support purge needs them (CLAUDE.md, photo removal step 3). Lost them? The old tip
+  stays in the reflog: the earliest commit introducing a value (`git log <old> --reverse -S'<value>'`) is it. Never
+  write an old SHA into the repo: it points straight at the scrubbed data.
 - **Source:** public-repo audit, 2026-11-19.
