@@ -153,11 +153,13 @@ limit is set, status pill.
 ## 9. Delivery
 
 Two branches, one plan each, same spec:
-1. **Organiser side:** `events.manage`, schema (events, places, change log), RLS + pgTAP, link parser (spike first),
-   create/edit/cancel/delete, `/events` list and detail without joining, visitor teaser, home section, WhatsApp
-   share.
+1. **Organiser side:** `events.manage`, schema (events, places), RLS + pgTAP, link parser (spike first),
+   create/edit/cancel/delete, `/events` list (+ past) and detail without joining, place actions, WhatsApp share.
 2. **Joining:** sign-ups, the join RPC (limits, `min_cc`, full members only, closing time), counts, rosters per role,
-   safety-card links, "Katıldıklarım", emergency-contact nudge; then the release: SEO, notice, hero button.
+   safety-card links, "Katıldıklarım", emergency-contact nudge, the change log (it records only events with sign-ups,
+   so it needs them); then the release: visitor teaser, home section, hero button, SEO, notice.
+   (Sequencing changed while planning branch 1, 2026-11-20: the teaser, home section and change log would have been
+   hidden or inert code until branch 2.)
 
 **Release gate (iltan, option A):** after branch 1 is merged and deployed, only `events.manage` holders see events
 (the list, details and the teaser); everyone else, visitors included, still gets the "coming soon" page, the home
