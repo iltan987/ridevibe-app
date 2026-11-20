@@ -303,3 +303,14 @@
   the bare word (`scripts/e2e/probation-e2e.mjs`).
 - **Source:** found while fixing the review of the probation E2E.
 
+### Per-frame layout logs see half-parsed HTML on throttled loads (2026-11-19)
+- **Symptom:** `apply-nav-e2e.mjs` "second load, one layout" failed every run for phone TR fixtures that show
+  "Başvur": `guess:4tabs@0/75/150/225 → guess:5tabs+B@0/75/150/225/300`, although the guess was right.
+- **Cause:** with throttling the document arrives in network chunks, and the browser paints between them. A chunk
+  ended inside the bottom tab bar (it follows `<main>` and the footer): 4 of 5 `<li>` parsed into a 5-column grid
+  (a real 4-tab bar sits at 0/94/188/281). Only TR, because that is where the byte boundary fell on the current home
+  page. The logger waited for the closing section and assumed everything else was parsed by then.
+- **Do:** count a frame only once each element it reads is fully parsed: some node follows it or an ancestor, or
+  `document.readyState !== "loading"` (`parsed()` in the frame logger). Before calling a layout check a product bug,
+  log the element's child count and whether anything follows it.
+- **Source:** found by instrumenting the frame logger (`<li>` count, grid columns, next sibling).

@@ -1,9 +1,10 @@
-// Claude Code PreToolUse hook (Bash, registered in `.claude/settings.json`): blocks a production `supabase db push`
-// that bypasses `pnpm db:push`. Exit 2 blocks the call and shows stderr to Claude; anything unexpected exits 0, so
-// the hook never breaks unrelated tool calls.
+// Claude Code PreToolUse hook (Bash, registered in `.claude/settings.json`): blocks Supabase CLI writes to a remote
+// database that bypass `pnpm db:push` (rules in `push-guard.mts`). Exit 2
+// blocks the call and shows stderr to Claude; anything unexpected exits 0, so the hook never breaks unrelated tool
+// calls.
 import { text } from "node:stream/consumers";
 import { z } from "zod";
-import { GUARD_MESSAGE, isUnguardedDbPush } from "./push-guard.mts";
+import { remoteWriteBlock } from "./push-guard.mts";
 
 const hookInput = z.object({ tool_input: z.object({ command: z.string() }) });
 
@@ -15,7 +16,8 @@ try {
 }
 
 const parsed = hookInput.safeParse(input);
-if (parsed.success && isUnguardedDbPush(parsed.data.tool_input.command)) {
-  process.stderr.write(`${GUARD_MESSAGE}\n`);
+const message = parsed.success ? remoteWriteBlock(parsed.data.tool_input.command) : null;
+if (message !== null) {
+  process.stderr.write(`${message}\n`);
   process.exit(2);
 }

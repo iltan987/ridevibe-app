@@ -323,10 +323,9 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   fallback `page.mouse.click(195, 400)` in `open()` (user activation when the event is late) can hit real UI; the
   `apply-nav-e2e.mjs` "showed the guess first" check flaked once (passed on rerun). Seen 2026-11-15 (lint-format final
   E2E, each passed on the rerun): install's `/account` scenario failed all four banner checks ("Yükle" not shown,
-  `prompt()` calls=0) while `/members` just before passed (a late or missing install event?), and apply-nav's
-  "pending-noapp phone TR: second load, one layout" started with the hidden guess (4 tabs) before 5 (the first
-  load's stored hint not yet written?). From the fix-wave re-review: the
-  iPhone "installed flag still set" check is near-tautological (`initScript` sets the flag on every document; the real
+  `prompt()` calls=0) while `/members` just before passed (a late or missing install event?). (Apply-nav's "second
+  load, one layout" FAILs were a half-parsed tab bar, fixed 2026-11-19: `docs/learnings/testing.md`.) From the
+  fix-wave re-review: the iPhone "installed flag still set" check is near-tautological (`initScript` sets the flag on every document; the real
   assertions there are "no banner / no menu entry"); the language-switch scenario doesn't assert exactly one spacer
   after the switch; the comment near line 39 still states "Chrome ignores a re-dispatched real event" as fact (see the
   verify-or-drop item below). Deferred: test-only, all green today; risk: a confusing cascade of FAILs or a rare flake.
@@ -570,13 +569,12 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   `countApplicationsByStatus` (`src/lib/applications/queries.ts`); extract a helper.
 - **Forms already open in another tab** (2026-11-14, account deletion) — a `deleting` user can still submit forms open
   in another tab (profile, apply); the rows are hidden and purged, or return on restore: harmless, noted.
-- **Guard other destructive remote commands** (2026-11-18, pre-push backup final review) — the Claude Code guard
-  (`scripts/db/push-guard.mts`) blocks only `supabase db push` to a remote; `supabase db reset --remote` (wipes
-  production) and `supabase migration up --remote` pass unguarded. Block `db reset` with a remote target outright and
-  route other remote writes through `pnpm db:push`. Risk if left: a mistaken Claude command with no backup first.
-- **Pre-push backup review minors** (2026-11-18, final review) — (a) guard: a single `&` isn't a separator and
-  `--dry-run` anywhere in a segment allows it (`… --dry-run & supabase db push --remote` passes); text that merely
-  mentions the command (a `git commit -m` message, `grep`) is blocked (recoverable; rephrase). (b) `production.mts`:
+- **Pre-push backup review minors** (2026-11-18, final review) — (a) guard: text that merely mentions a guarded
+  command with a remote flag (a `git commit -m` message, `grep`, a hook smoke test) is blocked (recoverable; rephrase
+  or put it in a file); the splitter ignores quotes, so a quoted `;`/`&` before the remote flag hides it
+  (`… --password 'p;q' --remote` passes; contrived); other Supabase CLI remote writes (`storage`, `functions`,
+  `secrets`, `config push`) are not guarded (no Storage or Edge Functions yet; `config push` has its own diff-first
+  rule). (b) `production.mts`:
   SIGTERM/SIGHUP (terminal closed) skip the `exit` handler, so the private temp `.env` with every production secret
   can stay in `os.tmpdir()` (handle them like SIGINT); `/up to date/i` is correct for CLI 3.0.0 (stdout only when
   nothing is pending) but should be re-checked on CLI upgrades or replaced by `--output-format json` + `upToDate`;
@@ -597,10 +595,3 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   measures -208px at 390px for `admin@test.local` and `probation@test.local` (no birth date: the form also holds the
   one-time birth-date block) and 0 for `member@test.local`. Not caused by the probation work; skeleton mirrors the
   with-birth-date form.
-- **`apply-nav-e2e.mjs` "second load, one layout" fails every run** (2026-11-18, ön alım Task 8) — "visitor phone TR"
-  and/or "pending-noapp phone TR" see the 4-tab guess before the 5-tab layout (4 of 4 runs, 1-2 FAILs each); the same two
-  FAIL on a clean build of `main` (b7682f9) on the same stack (control run output, verbatim:
-  `FAIL visitor phone TR: second load, one layout from first paint to settled — guess:4tabs@0/75/150/225 hero=1 end=1 desk=0 → guess:5tabs+B@0/75/150/225/300 hero=1 end=1 desk=0 → real:5tabs+B@0/75/150/225/300 hero=1 end=1 desk=0`,
-  `FAIL pending-noapp phone TR: second load, one layout from first paint to settled — guess:4tabs@0/75/150/225 hero=1 end=1 desk=0 → guess:5tabs+B@0/75/150/225/300 hero=1 end=1 desk=0 → real:5tabs+B@0/75/150/225/300 hero=1 end=1 desk=0`,
-  `2 FAILED`, 49 PASS), so not a regression of this branch. Earlier seen as a
-  one-off flake (above); now consistent: investigate the stored-hint timing on the second load.
