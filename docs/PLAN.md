@@ -123,11 +123,13 @@ Build in this order, one branch each:
    2b. **Member conduct** — confidential staff notes ✅ (2026-11-18: `member_notes`, `members.notes`, "Notlar (n)"
    dialog on `/admin/members`, together with the ön alım stage), warnings, suspend/ban still to do (see "Member
    conduct" below). Privacy notice version `2026-11-18-draft-8`.
-3. **Events** — organizers create rides (date, route, capacity); rides have a **route** (path with start, stops,
-   finish), not a single meeting point — see spec §6; members RSVP with a waiting list; home page shows upcoming events.
-   Events have **requirements** (e.g. minimum bike cc, membership stage) — the **"ön alım"** probation stage exists
-   since 2026-11-18 (approved members watched in a separate WhatsApp group first); a "full members only" ride flag
-   comes with Events.
+3. **Events** — designed 2026-11-20, spec `docs/superpowers/specs/2026-11-20-events-design.md`. Organizers
+   (`events.manage`) create meet-ups (one place) and rides (start, stops, finish); every place opens in Google Maps,
+   Apple Maps or Yandex; members join as rider or passenger with up to 3 guests; optional limits on people and bikes;
+   requirements: minimum cc (riders) and "full members only" (ön alım stage, 2026-11-18); a change log and WhatsApp
+   share instead of notifications; visitors see a ride teaser (area line only). Built in two branches (organizer
+   side behind an organizers-only gate, then joining + release). Later: the map (iteration 2), Web Push with
+   reminders and the waiting list (iteration 3).
 4. **Announcements** — short organizer posts, pinned on the home page.
 5. Right after the MVP: **event photo gallery** (Cloudflare R2).
 

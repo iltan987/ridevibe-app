@@ -70,7 +70,8 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 ## Features
 
 - **Events: "full members only" ride flag** (2026-11-18, ön alım + notes; decided, spec non-goal) — ön alım members may
-  join some rides and not others; the flag comes with Events (PLAN step 3), together with the event requirements.
+  join some rides and not others; specified in the events spec (2026-11-20, `full_members_only`), built in the
+  joining branch.
 - **Probation E2E gaps** (2026-11-18, ön alım + notes, final review) — `scripts/e2e/probation-e2e.mjs`: the district
   check matches only `district":` keys (a district printed as plain text in the crowd card would pass; idea: compare
   bare-word counts with the signed-out page); the HTML render check asserts only the locked sentence (add the summary);
@@ -132,10 +133,19 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 - **Web Install API / `<install>` element: switch when stable** (2026-11-12, install prompt) — Chrome's declarative
   install element is in an origin trial (2026), not stable. When it ships broadly, replace our `beforeinstallprompt`
   capture/banner plumbing (`src/lib/pwa/`) with it. Source: developer.chrome.com/blog/install-element-ot.
-- **Emergency contact required to join a ride** (2026-11-13, safety data) — decide with Events whether joining a ride
-  needs at least one emergency contact (today only a gentle prompt on `/account`).
-- **Organizers see their ride participants' safety cards** (2026-11-13, safety data) — with Events, a ride's
-  organizers get the participants' safety cards without `members.safety`; needs its own access rule and log entries.
+- **Emergency contact required to join a ride?** (2026-11-13, safety data; decided 2026-11-20, events spec) — not
+  required for now (iltan): joining nudges, the organiser's roster marks "acil durum kişisi yok". Revisit if
+  organisers keep missing contacts.
+- **Organisers without `members.safety`** (2026-11-13, safety data; updated 2026-11-20) — the events spec links the
+  roster to the existing safety card for `members.safety` holders (the Organizatör role has it, PLAN). An organiser
+  role *without* it would see no cards; a per-event access rule (own log entries) only if such a role appears.
+- **Several roles per person** (2026-11-20, iltan asked during the events design) — each profile has one `role_id`;
+  combinations are made as combined roles ("Organizatör + Üye Sorumlusu"). If combined roles pile up: a
+  `profile_roles` table, `private.has_permission` over all roles, a multi-select on `/admin/members`, pgTAP.
+- **Events: map, notifications, waiting list** (2026-11-20, events spec non-goals) — iteration 2: a real map
+  (MapLibre + tiles, picking points, place search; coordinates already stored); iteration 3: Web Push (service
+  worker, opt-in, reminders via pg_cron, `web-push` package after iltan approves) and the waiting list (only with
+  notifications, so the person who moves up is told). Spec: `docs/superpowers/specs/2026-11-20-events-design.md`.
 - **Access-log viewer for admins** (2026-11-13, safety data) — `safety_access_log` is written but only readable via
   SQL. Add an admin screen (paginated). Risk if left: the log exists but nobody can audit it in the app.
 - **Search on `/admin/applications`** (2026-11-13, list UX spec) — the list has status tabs and numbered server pages
