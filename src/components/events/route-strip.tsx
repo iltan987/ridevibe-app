@@ -21,15 +21,27 @@ const MARKER: Record<Role, string> = {
 /**
  * The route strip of the design system (no map base): start ring, stop dots, orange finish on an orange line with a
  * soft glow; a meet-up's single place is one orange dot. Under the markers the start and finish names (a meet-up's
- * one name); stop names are for screen readers only (a phone has no room for them).
+ * one name); stop names are for screen readers only (a phone has no room for them). `labels={false}`: markers only,
+ * pure decoration hidden from screen readers (the event card names the places in its meta line).
  */
-export function RouteStrip({ places, className }: { places: EventPlace[]; className?: string }) {
+export function RouteStrip({
+  places,
+  labels = true,
+  className,
+}: {
+  places: EventPlace[];
+  labels?: boolean;
+  className?: string;
+}) {
   const t = useTranslations("Events");
   if (places.length === 0) return null;
   const single = places.length === 1;
 
   return (
-    <div className={cn("flex h-24 flex-col justify-center gap-2 bg-muted/40 px-4", className)}>
+    <div
+      aria-hidden={labels ? undefined : true}
+      className={cn("flex h-24 flex-col justify-center gap-2 bg-muted/40 px-4", className)}
+    >
       <div aria-hidden className={cn("relative flex h-4 items-center", single ? "justify-center" : "justify-between")}>
         {!single && (
           <>
@@ -43,27 +55,29 @@ export function RouteStrip({ places, className }: { places: EventPlace[]; classN
           </span>
         ))}
       </div>
-      <ol
-        aria-label={t("route")}
-        className={cn("flex gap-3 text-sm font-medium", single ? "justify-center" : "justify-between")}
-      >
-        {places.map((place, i) => {
-          const role = roleOf(i, places.length);
-          return (
-            <li
-              key={i}
-              className={cn(
-                role === "stop" ? "sr-only" : "min-w-0 truncate",
-                role === "finish" && "text-right",
-                role === "meetup" && "text-center",
-              )}
-            >
-              <span className="sr-only">{t(`placeRoles.${role}`)} </span>
-              {place.name}
-            </li>
-          );
-        })}
-      </ol>
+      {labels && (
+        <ol
+          aria-label={t("route")}
+          className={cn("flex gap-3 text-sm font-medium", single ? "justify-center" : "justify-between")}
+        >
+          {places.map((place, i) => {
+            const role = roleOf(i, places.length);
+            return (
+              <li
+                key={i}
+                className={cn(
+                  role === "stop" ? "sr-only" : "min-w-0 truncate",
+                  role === "finish" && "text-right",
+                  role === "meetup" && "text-center",
+                )}
+              >
+                <span className="sr-only">{t(`placeRoles.${role}`)} </span>
+                {place.name}
+              </li>
+            );
+          })}
+        </ol>
+      )}
     </div>
   );
 }

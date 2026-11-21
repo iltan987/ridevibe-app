@@ -71,36 +71,40 @@ export function EventsList({ events, overCeiling }: { events: EventSummary[]; ov
         role="group"
         aria-label={t("filtersLabel")}
         data-skeleton-result="events-chips"
-        className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1"
+        className="flex flex-wrap gap-x-4 gap-y-2"
       >
-        <ListChip
-          pressed={side === null && kind === null}
-          count={view.counts.all}
-          onClick={() => onFilter({ side: null, kind: null })}
-        >
-          {tSides("all")}
-        </ListChip>
-        {SIDES.map((s) => (
+        {/* Two groups that wrap as a whole: one row on wide screens, sides above kinds on a phone (no hidden chips). */}
+        <div className="flex flex-wrap gap-2">
           <ListChip
-            key={s}
-            pressed={side === s}
-            count={view.counts[s]}
-            onClick={() => onFilter({ side: side === s ? null : s, kind })}
+            pressed={side === null && kind === null}
+            count={view.counts.all}
+            onClick={() => onFilter({ side: null, kind: null })}
           >
-            {tSides(s)}
+            {tSides("all")}
           </ListChip>
-        ))}
-        <span aria-hidden className="w-px shrink-0 self-stretch bg-border" />
-        {KINDS.map((k) => (
-          <ListChip
-            key={k}
-            pressed={kind === k}
-            count={view.counts[k]}
-            onClick={() => onFilter({ side, kind: kind === k ? null : k })}
-          >
-            {t(`kinds.${k}`)}
-          </ListChip>
-        ))}
+          {SIDES.map((s) => (
+            <ListChip
+              key={s}
+              pressed={side === s}
+              count={view.counts[s]}
+              onClick={() => onFilter({ side: side === s ? null : s, kind })}
+            >
+              {tSides(s)}
+            </ListChip>
+          ))}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {KINDS.map((k) => (
+            <ListChip
+              key={k}
+              pressed={kind === k}
+              count={view.counts[k]}
+              onClick={() => onFilter({ side, kind: kind === k ? null : k })}
+            >
+              {t(`kinds.${k}`)}
+            </ListChip>
+          ))}
+        </div>
       </div>
 
       <div ref={listTop} className="scroll-mt-20">
