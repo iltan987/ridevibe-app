@@ -15,7 +15,7 @@ const NAME_MAX = 80;
 export type PlaceError = "unreadable" | "forbidden" | "error";
 
 export type PlaceDraft = {
-  /** React key and element ids; the async paste result finds its place by it (a removed place ignores it). */
+  /** React key and element ids; the async read finds its place by it (a removed place ignores the answer). */
   key: string;
   name: string;
   point: LatLng | null;
@@ -25,8 +25,14 @@ export type PlaceDraft = {
    * box), is cleared once it resolves and never goes into the event.
    */
   paste: string;
-  pending: boolean;
+  /**
+   * Token of the read in flight (null: none). Kept in form state, not in the component, so it survives a remount:
+   * only the answer carrying the current token lands (`settleResolve`); typing clears it.
+   */
+  pending: number | null;
   error: PlaceError | null;
+  /** The slot the last read filled, for the place's live announcement ("İğne: …" / "Mekân: …"). */
+  filled: "point" | "venue" | null;
 };
 
 export type EventFormState = {
@@ -70,7 +76,7 @@ export type StoredEvent = {
 };
 
 export function emptyPlace(key: string): PlaceDraft {
-  return { key, name: "", point: null, venue: null, paste: "", pending: false, error: null };
+  return { key, name: "", point: null, venue: null, paste: "", pending: null, error: null, filled: null };
 }
 
 /** The create form: a ride (the club's main event) with an empty start and finish. */
@@ -192,7 +198,7 @@ export function placesStatus(s: EventFormState): { missing: boolean; pending: bo
   const shown = shownPlaces(s).map(({ place }) => place);
   return {
     missing: shown.some((p) => p.point === null && p.venue === null),
-    pending: shown.some((p) => p.pending),
+    pending: shown.some((p) => p.pending !== null),
   };
 }
 
@@ -216,11 +222,14 @@ export function moveStop(s: EventFormState, key: string, delta: -1 | 1): EventFo
 }
 
 /**
- * Ticked: the start stands in for the finish. Unticked: the finish starts as a copy of the start (under a new key,
- * so a paste still being read for the old finish can't land in it).
+ * Ticked: the start stands in for the finish (the finish is kept, hidden). Unticked: the kept finish comes back when
+ * it has a name or a slot; an empty one starts as a copy of the start, under a new key (a read still in flight for
+ * the old finish can't land in it).
  */
 export function setLoop(s: EventFormState, on: boolean, key: string): EventFormState {
   if (on) return { ...s, loop: true };
+  const { finish } = s;
+  if (finish.name.trim() !== "" || finish.point !== null || finish.venue !== null) return { ...s, loop: false };
   const { name, point, venue } = s.start;
   return { ...s, loop: false, finish: { ...emptyPlace(key), name, point, venue } };
 }
@@ -235,19 +244,38 @@ export function updatePlace(s: EventFormState, key: string, fn: (p: PlaceDraft) 
   return s;
 }
 
+/** A read of `text` starts under `token`; an earlier read's answer will be ignored. */
+export function startResolve(p: PlaceDraft, text: string, token: number): PlaceDraft {
+  return { ...p, paste: text, pending: token, error: null, filled: null };
+}
+
+/** The box is edited: a read in flight no longer matches it (its answer is dropped); the new text waits for blur. */
+export function typePaste(p: PlaceDraft, text: string): PlaceDraft {
+  return { ...p, paste: text, pending: null, error: null, filled: null };
+}
+
 /**
- * Puts a read place into its slot (a new pin replaces the old one, likewise a venue) and empties the paste box. An
- * empty name takes the venue's own name (a Google label's part before the first comma).
+ * The answer to the read under `token`; ignored unless it is still the current one. A place goes into its slot (a new
+ * pin replaces the old one, likewise a venue) and the box is emptied; an empty name takes the venue's own name (a
+ * Google label's part before the first comma). A failure keeps the text for fixing.
  */
-export function withResolved(p: PlaceDraft, parsed: ParsedPlace): PlaceDraft {
-  const done = { ...p, paste: "", pending: false, error: null };
-  if (parsed.kind === "point") return { ...done, point: parsed.point };
-  const venueName = parsed.label?.split(",")[0]?.trim().slice(0, NAME_MAX) ?? "";
+export function settleResolve(p: PlaceDraft, token: number, outcome: ParsedPlace | PlaceError): PlaceDraft {
+  if (p.pending !== token) return p;
+  if (typeof outcome === "string") return { ...p, pending: null, error: outcome, filled: null };
+  const done = { ...p, paste: "", pending: null, error: null, filled: outcome.kind };
+  if (outcome.kind === "point") return { ...done, point: outcome.point };
+  const venueName = outcome.label?.split(",")[0]?.trim().slice(0, NAME_MAX) ?? "";
   return {
     ...done,
-    venue: { url: parsed.url, label: parsed.label },
+    venue: { url: outcome.url, label: outcome.label },
     name: p.name.trim() === "" ? venueName : p.name,
   };
+}
+
+/** Empties a slot; the announcement goes too when it was about that slot. */
+export function removeSlot(p: PlaceDraft, slot: "point" | "venue"): PlaceDraft {
+  const filled = p.filled === slot ? null : p.filled;
+  return slot === "point" ? { ...p, point: null, filled } : { ...p, venue: null, filled };
 }
 
 const PLACE_BOX = /^places\.\d+$/;
@@ -260,6 +288,34 @@ export function errorAt(map: Readonly<Partial<Record<string, string>>>, key: str
   if (map[key] !== undefined || !PLACE_BOX.test(key)) return map[key];
   const sub = Object.keys(map).find((k) => k.startsWith(`${key}.`) && k !== `${key}.name`);
   return sub === undefined ? undefined : map[sub];
+}
+
+export type ErrorMessageKey =
+  | "required"
+  | "requiredDate"
+  | "tooLong"
+  | "limitRange"
+  | "ccRange"
+  | "invalidDate"
+  | "endsBeforeStart"
+  | "placeRequired"
+  | "placeInvalid"
+  | "other";
+
+/**
+ * Which `Events.form.errors` text a field's code gets. A place's box (`places.<i>`) answers for its slots: anything but
+ * "no location" there means the read slot is unusable (`placeInvalid`), never a number-range text.
+ */
+export function errorMessageKey(field: string, code: string): ErrorMessageKey {
+  if (PLACE_BOX.test(field)) return code === "placeRequired" ? "placeRequired" : "placeInvalid";
+  if (field.startsWith("places.")) return code === "required" || code === "tooLong" ? code : "other";
+  if (code === "invalidNumber") {
+    if (field === "minCc") return "ccRange";
+    return field === "limitPeople" || field === "limitBikes" ? "limitRange" : "other";
+  }
+  if (code === "required" && field === "startsAt") return "requiredDate";
+  if (code === "required" || code === "tooLong" || code === "invalidDate" || code === "endsBeforeStart") return code;
+  return "other";
 }
 
 /** Schema issues → the first message (an error code) per dotted path ("places.2.name"). */

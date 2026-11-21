@@ -24,6 +24,7 @@ import { saveEvent, type SaveEventResult } from "@/lib/events/actions";
 import {
   addStop,
   errorAt,
+  errorMessageKey,
   eventToForm,
   type EventFormState,
   issueMap,
@@ -46,8 +47,6 @@ import { PlaceField } from "./place-field";
 
 const KINDS = ["meetup", "ride"] as const;
 const SIDES = ["asian", "european", "none"] as const;
-/** Codes with a message of their own; anything else (rules the form can't break) reads "check this field". */
-const CODES = ["required", "tooLong", "invalidDate", "endsBeforeStart", "placeRequired"] as const;
 
 type Failure = Exclude<SaveEventResult["status"], "ok">;
 
@@ -86,7 +85,6 @@ function EventFormFields({ event, onSaved }: { event: (StoredEvent & { id: strin
   // Ids stay unique when Next keeps another form page hidden in the DOM.
   const uid = useId();
   const formRef = useRef<HTMLFormElement>(null);
-  const addStopRef = useRef<HTMLButtonElement>(null);
   const nextKey = useRef(0);
   const [state, setState] = useState<EventFormState>(() => (event ? eventToForm(event) : newEventForm()));
   // Errors show after the first save attempt and then follow every change.
@@ -109,15 +107,9 @@ function EventFormFields({ event, onSaved }: { event: (StoredEvent & { id: strin
   const shown = shownPlaces(state);
   const ride = state.kind === "ride";
 
-  function message(field: string, code: string): string {
-    if (code === "invalidNumber") return field === "minCc" ? tf("errors.ccRange") : tf("errors.limitRange");
-    if (code === "required" && field === "startsAt") return tf("errors.requiredDate");
-    const known = oneOf(CODES, code);
-    return known === undefined ? tf("errors.other") : tf(`errors.${known}`);
-  }
   const error = (key: string) => {
     const code = errorAt(errors, key);
-    return code === undefined ? undefined : message(key, code);
+    return code === undefined ? undefined : tf(`errors.${errorMessageKey(key, code)}`);
   };
 
   /** Focuses the first field (in page order) with an error. */
@@ -217,7 +209,8 @@ function EventFormFields({ event, onSaved }: { event: (StoredEvent & { id: strin
                 aria-label={tf("removeStop", { n: stop })}
                 onClick={() => {
                   setState((s) => removeStop(s, place.key));
-                  addStopRef.current?.focus();
+                  // Next frame: at the 10-stop cap the button is still disabled until this removal renders.
+                  focusSoon(id("add-stop"));
                 }}
               >
                 <Trash2 aria-hidden />
@@ -353,7 +346,7 @@ function EventFormFields({ event, onSaved }: { event: (StoredEvent & { id: strin
           <>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
               <Button
-                ref={addStopRef}
+                id={id("add-stop")}
                 type="button"
                 variant="outline"
                 disabled={state.stops.length >= MAX_STOPS}
@@ -406,10 +399,12 @@ function EventFormFields({ event, onSaved }: { event: (StoredEvent & { id: strin
           onChange={(e) => set("description", e.target.value)}
           maxLength={2000}
           aria-invalid={!!error("description")}
-          aria-describedby={`${id("description")}-hint`}
+          aria-describedby={[`${id("description")}-hint`, error("description") ? `${id("description")}-error` : null]
+            .filter(Boolean)
+            .join(" ")}
         />
         <FieldDescription id={`${id("description")}-hint`}>{tf("descriptionHint")}</FieldDescription>
-        <FieldError>{error("description")}</FieldError>
+        <FieldError id={`${id("description")}-error`}>{error("description")}</FieldError>
       </Field>
 
       <FieldSet data-skeleton-result="event-form-requirements" className="gap-4">

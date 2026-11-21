@@ -129,3 +129,14 @@
   bump a `key` on the inner form (`EventForm` in `src/components/events/event-form.tsx`). Keep the submit disabled
   from success until the page is hidden (no second request from a double tap). An abandoned draft stays, as intended.
 - **Source:** Next guide above; verified in the browser (back after create: empty title).
+
+### An async read inside a list item: keep its request token in form state, not in a ref (2026-11-21)
+- **Symptom (risk, review):** a "newest request wins" counter in a `useRef` of `PlaceField` restarts when the field
+  remounts (the loop box hides and shows the finish, a key changes), so a late answer for text the organiser had
+  already replaced could land; typing in the box didn't cancel the read in flight either.
+- **Cause:** refs live and die with the component instance; the place lives in the form's state.
+- **Do:** store the token with the item (`PlaceDraft.pending: number | null`): `startResolve` sets it, the answer goes
+  through `settleResolve(p, token, …)`, which ignores a token that is no longer current, and typing (`typePaste`)
+  clears it. Pure and unit-tested in `src/lib/events/form-state.ts`. Announce outcomes in one always-mounted polite
+  status line per item; don't also render the error as `role="alert"` (it would be read twice).
+- **Source:** events Task 7 review.

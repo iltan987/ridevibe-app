@@ -332,7 +332,7 @@
       "create": "Oluştur",
       "save": "Kaydet",
       "saving": "Kaydediliyor…",
-      "needsPlaces": "Kaydetmek için her yere bir konum ekle: harita linki, iğne ya da koordinat.",
+      "needsPlaces": "Kaydetmek için her yerin konumunu ekle: harita linki, iğne ya da koordinat.",
       "waitResolving": "Konum okunuyor; bitince kaydedebilirsin.",
       "hasErrors": "Kaydedilemedi: işaretli alanları düzelt.",
       "deleted": "Bu etkinlik sen düzenlerken silinmiş.",
@@ -345,6 +345,7 @@
         "invalidDate": "Geçerli bir tarih ve saat seç.",
         "endsBeforeStart": "Bitiş, başlangıçtan sonra olmalı.",
         "placeRequired": "Bir konum ekle: harita linki, iğne ya da koordinat.",
+        "placeInvalid": "Bu konum kullanılamıyor; kaldırıp yeniden ekle.",
         "other": "Bu alanı kontrol et."
       }
     }

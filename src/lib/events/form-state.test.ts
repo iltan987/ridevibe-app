@@ -5,6 +5,7 @@ import {
   addStop,
   emptyPlace,
   errorAt,
+  errorMessageKey,
   eventToForm,
   type EventFormState,
   issueMap,
@@ -13,12 +14,15 @@ import {
   newEventForm,
   type PlaceDraft,
   placesStatus,
+  removeSlot,
   removeStop,
   setLoop,
+  settleResolve,
   shownPlaces,
+  startResolve,
   toEventInput,
+  typePaste,
   updatePlace,
-  withResolved,
 } from "./form-state.ts";
 import { eventInputSchema } from "./schema.ts";
 
@@ -56,8 +60,9 @@ test("a new form is an empty ride with a start and a finish", () => {
     point: null,
     venue: null,
     paste: "",
-    pending: false,
+    pending: null,
     error: null,
+    filled: null,
   });
 });
 
@@ -112,11 +117,22 @@ test("toEventInput: a loop sends the start again as the finish", () => {
   assert.deepEqual(input.places[1], input.places[0]);
 });
 
-test("setLoop: unticking copies the start into a fresh finish slot", () => {
+test("setLoop: unticking keeps a finish that has a name or a slot", () => {
   const on = setLoop(filledRide(), true, "unused");
   assert.equal(on.loop, true);
-  const off = setLoop({ ...on, start: { ...on.start, pending: true, paste: "x", error: "unreadable" } }, false, "f2");
+  const off = setLoop(on, false, "f2");
   assert.equal(off.loop, false);
+  assert.deepEqual(off.finish, filledRide().finish);
+  const named = { ...on, finish: { ...emptyPlace("finish"), name: "Ağva" } };
+  assert.deepEqual(setLoop(named, false, "f2").finish, named.finish);
+  const pinned = { ...on, finish: { ...emptyPlace("finish"), point: POINT } };
+  assert.deepEqual(setLoop(pinned, false, "f2").finish, pinned.finish);
+});
+
+test("setLoop: unticking over an empty finish copies the start into a fresh slot", () => {
+  const on = setLoop({ ...filledRide(), finish: { ...emptyPlace("finish"), name: "  " } }, true, "unused");
+  const start = { ...on.start, pending: 7, paste: "x", error: "unreadable" as const, filled: "point" as const };
+  const off = setLoop({ ...on, start }, false, "f2");
   assert.deepEqual(off.finish, { ...emptyPlace("f2"), name: "Kız Kulesi", point: POINT });
 });
 
@@ -178,27 +194,57 @@ test("placesStatus: a shown place without a slot or a pending paste blocks savin
   const meetup = { ...filledRide(), kind: "meetup" as const, finish: emptyPlace("finish") };
   assert.deepEqual(placesStatus(meetup), { missing: false, pending: false });
   assert.deepEqual(placesStatus(setLoop(meetup, true, "x")), { missing: false, pending: false });
-  const pending = updatePlace(filledRide(), "finish", (p) => ({ ...p, pending: true }));
+  const pending = updatePlace(filledRide(), "finish", (p) => ({ ...p, pending: 3 }));
   assert.deepEqual(placesStatus(pending), { missing: false, pending: true });
 });
 
-test("withResolved fills one slot, clears the paste box and the error", () => {
-  const typing: PlaceDraft = { ...emptyPlace("p"), paste: "41.0322, 29.0229", pending: true, error: "unreadable" };
-  const pinned = withResolved(typing, { kind: "point", point: POINT });
-  assert.deepEqual(pinned, { ...emptyPlace("p"), point: POINT });
+/** Reads `outcome` into `p` as the newest request. */
+const read = (p: PlaceDraft, outcome: Parameters<typeof settleResolve>[2]) =>
+  settleResolve(startResolve(p, "pasted", 9), 9, outcome);
+
+test("settleResolve fills one slot, clears the paste box and the error, remembers what it filled", () => {
+  const typing: PlaceDraft = { ...emptyPlace("p"), paste: "41.0322, 29.0229", pending: 1, error: "unreadable" };
+  const pinned = settleResolve(typing, 1, { kind: "point", point: POINT });
+  assert.deepEqual(pinned, { ...emptyPlace("p"), point: POINT, filled: "point" });
   // A venue fills its own slot and keeps the point; an empty name takes the venue's name.
-  const both = withResolved(pinned, { kind: "venue", url: VENUE.url, label: "İBB Paşalimanı Sosyal Tesisi, Üsküdar" });
+  const both = read(pinned, { kind: "venue", url: VENUE.url, label: "İBB Paşalimanı Sosyal Tesisi, Üsküdar" });
   assert.deepEqual(both.point, POINT);
   assert.deepEqual(both.venue, { url: VENUE.url, label: "İBB Paşalimanı Sosyal Tesisi, Üsküdar" });
   assert.equal(both.name, "İBB Paşalimanı Sosyal Tesisi");
+  assert.equal(both.filled, "venue");
   // A typed name stays; a new pin replaces the old one.
-  const named = withResolved({ ...pinned, name: "Paşalimanı" }, { kind: "venue", url: VENUE.url, label: "X, Y" });
+  const named = read({ ...pinned, name: "Paşalimanı" }, { kind: "venue", url: VENUE.url, label: "X, Y" });
   assert.equal(named.name, "Paşalimanı");
-  assert.deepEqual(withResolved(both, { kind: "point", point: { lat: 1, lng: 2 } }).point, { lat: 1, lng: 2 });
+  assert.deepEqual(read(both, { kind: "point", point: { lat: 1, lng: 2 } }).point, { lat: 1, lng: 2 });
   // Yandex venues have no label: the name stays empty; a long label is cut to the 80-char name limit.
-  assert.equal(withResolved(emptyPlace("p"), { kind: "venue", url: VENUE.url, label: null }).name, "");
-  const long = withResolved(emptyPlace("p"), { kind: "venue", url: VENUE.url, label: "x".repeat(120) });
+  assert.equal(read(emptyPlace("p"), { kind: "venue", url: VENUE.url, label: null }).name, "");
+  const long = read(emptyPlace("p"), { kind: "venue", url: VENUE.url, label: "x".repeat(120) });
   assert.equal(long.name.length, 80);
+});
+
+test("settleResolve: only the answer to the newest request lands; typing drops a pending one", () => {
+  const first = startResolve({ ...emptyPlace("p"), error: "error", filled: "venue" }, "41.1, 29.1", 1);
+  assert.deepEqual(first, { ...emptyPlace("p"), paste: "41.1, 29.1", pending: 1 });
+  const second = startResolve(first, "41.2, 29.2", 2);
+  // The older answer arrives late: ignored.
+  assert.equal(settleResolve(second, 1, { kind: "point", point: POINT }), second);
+  assert.deepEqual(settleResolve(second, 2, { kind: "point", point: POINT }).point, POINT);
+  // Typing clears the token: the answer to the text before is dropped, the new text waits for blur.
+  const typed = typePaste({ ...first, error: "unreadable" }, "41.3, 29.3");
+  assert.deepEqual(typed, { ...emptyPlace("p"), paste: "41.3, 29.3" });
+  assert.equal(settleResolve(typed, 1, { kind: "point", point: POINT }), typed);
+  // A failure keeps the text for fixing and shows the error.
+  assert.deepEqual(settleResolve(first, 1, "unreadable"), {
+    ...emptyPlace("p"),
+    paste: "41.1, 29.1",
+    error: "unreadable",
+  });
+});
+
+test("removeSlot clears the slot and forgets the announcement of that slot only", () => {
+  const p: PlaceDraft = { ...emptyPlace("p"), point: POINT, venue: VENUE, filled: "point" };
+  assert.deepEqual(removeSlot(p, "point"), { ...p, point: null, filled: null });
+  assert.deepEqual(removeSlot(p, "venue"), { ...p, venue: null });
 });
 
 test("eventToForm: a ride with stops, Istanbul wall times, numbers as text", () => {
@@ -276,6 +322,24 @@ test("errorAt: a field's own code; a place's box also shows its slot issues, nev
   assert.equal(errorAt(map, "places.2"), "invalidVenue");
   assert.equal(errorAt(map, "places.3"), "placeRequired");
   assert.equal(errorAt({ "places.12.point.lat": "invalidNumber" }, "places.1"), undefined);
+});
+
+test("errorMessageKey: field-specific texts; a place's slot issue never gets a number-range text", () => {
+  assert.equal(errorMessageKey("title", "required"), "required");
+  assert.equal(errorMessageKey("startsAt", "required"), "requiredDate");
+  assert.equal(errorMessageKey("limitPeople", "invalidNumber"), "limitRange");
+  assert.equal(errorMessageKey("limitBikes", "invalidNumber"), "limitRange");
+  assert.equal(errorMessageKey("minCc", "invalidNumber"), "ccRange");
+  assert.equal(errorMessageKey("endsAt", "endsBeforeStart"), "endsBeforeStart");
+  assert.equal(errorMessageKey("area", "noAreaForMeetup"), "other");
+  assert.equal(errorMessageKey("places.1.name", "required"), "required");
+  assert.equal(errorMessageKey("places.1.name", "tooLong"), "tooLong");
+  assert.equal(errorMessageKey("places.1", "placeRequired"), "placeRequired");
+  // `errorAt` hands the box a slot's code (`places.1.point.lat` → invalidNumber, `places.1.venueUrl` → invalidVenue).
+  assert.equal(errorMessageKey("places.1", "invalidNumber"), "placeInvalid");
+  assert.equal(errorMessageKey("places.1", "invalidVenue"), "placeInvalid");
+  assert.equal(errorMessageKey("places.1", "tooLong"), "placeInvalid");
+  assert.equal(errorMessageKey("places", "placeCount"), "other");
 });
 
 test("issueMap keys the first code per dotted path", () => {

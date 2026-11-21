@@ -7,10 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { resolvePlaceLink } from "@/lib/events/actions";
-import { type PlaceDraft, type PlaceError, withResolved } from "@/lib/events/form-state";
+import { type PlaceDraft, removeSlot, settleResolve, startResolve, typePaste } from "@/lib/events/form-state";
 import { navLinks } from "@/lib/events/nav-links";
 
 type Update = (key: string, fn: (place: PlaceDraft) => PlaceDraft) => void;
+
+/** Read tokens, unique per page load: the token lives in form state, so a remounted field still matches its answer. */
+let lastToken = 0;
 
 /**
  * One place of the event form: a name and one paste box for a map link, a dropped pin or coordinates. The paste is
@@ -44,8 +47,6 @@ export function PlaceField({
   const t = useTranslations("Events.form");
   const tDetail = useTranslations("Events.detail");
   const pasteRef = useRef<HTMLInputElement>(null);
-  // Only the newest read may land: an older answer arriving late is dropped.
-  const request = useRef(0);
   const { key } = place;
 
   const ids = {
@@ -61,26 +62,27 @@ export function PlaceField({
   async function resolve(text: string) {
     const trimmed = text.trim();
     if (trimmed === "") return;
-    const current = ++request.current;
-    onUpdate(key, (p) => ({ ...p, paste: text, pending: true, error: null }));
+    const token = ++lastToken;
+    onUpdate(key, (p) => startResolve(p, text, token));
     const result = await resolvePlaceLink(trimmed).catch(() => ({ status: "error" as const }));
-    if (current !== request.current) return;
-    if (result.status === "ok") {
-      onUpdate(key, (p) => withResolved(p, result.place));
-      return;
-    }
-    const error: PlaceError =
-      result.status === "forbidden" ? "forbidden" : result.status === "error" ? "error" : "unreadable";
-    onUpdate(key, (p) => ({ ...p, pending: false, error }));
+    const outcome =
+      result.status === "ok"
+        ? result.place
+        : result.status === "forbidden" || result.status === "error"
+          ? result.status
+          : "unreadable";
+    // Lands only while this is still the place's current read (`settleResolve`).
+    onUpdate(key, (p) => settleResolve(p, token, outcome));
   }
 
-  function removeSlot(slot: "point" | "venue") {
-    onUpdate(key, (p) => (slot === "point" ? { ...p, point: null } : { ...p, venue: null }));
+  function remove(slot: "point" | "venue") {
+    onUpdate(key, (p) => removeSlot(p, slot));
     // The button goes away with its slot: keep the focus in the place.
     pasteRef.current?.focus();
   }
 
-  const pasteErrorText = place.error === null ? placeError : t(`placeErrors.${place.error}`);
+  const readError = place.error === null ? null : t(`placeErrors.${place.error}`);
+  const pasteErrorText = readError ?? placeError;
   const venueText = place.venue
     ? place.venue.label !== null || place.name.trim() !== ""
       ? t("venue", { label: place.venue.label ?? place.name.trim() })
@@ -90,6 +92,12 @@ export function PlaceField({
     place.point && navLinks({ name: place.name, point: place.point, venueUrl: null, venueLabel: null });
   const venueLinks =
     place.venue && navLinks({ name: place.name, point: null, venueUrl: place.venue.url, venueLabel: null });
+  const pinText = pointLinks ? t("pin", { coords: pointLinks.coords ?? "" }) : null;
+  // The place's one status line for screen readers: reading, the slot just filled, or why it failed.
+  const status =
+    place.pending !== null
+      ? t("resolving")
+      : (readError ?? (place.filled === "point" ? pinText : place.filled === "venue" ? venueText : null) ?? "");
 
   return (
     <div
@@ -131,7 +139,7 @@ export function PlaceField({
             id={ids.paste}
             data-error-key={`places.${index}`}
             value={place.paste}
-            onChange={(event) => onUpdate(key, (p) => ({ ...p, paste: event.target.value, error: null }))}
+            onChange={(event) => onUpdate(key, (p) => typePaste(p, event.target.value))}
             onPaste={(event) => {
               const text = event.clipboardData.getData("text");
               if (text.trim() === "") return;
@@ -142,11 +150,11 @@ export function PlaceField({
               // Enter reads the box; it must not submit the form.
               if (event.key !== "Enter") return;
               event.preventDefault();
-              if (!place.pending) void resolve(place.paste);
+              if (place.pending === null) void resolve(place.paste);
             }}
             onBlur={() => {
               // A failed text is read again only after it changes (the change clears the error).
-              if (!place.pending && place.error === null) void resolve(place.paste);
+              if (place.pending === null && place.error === null) void resolve(place.paste);
             }}
             autoComplete="off"
             autoCapitalize="none"
@@ -154,11 +162,11 @@ export function PlaceField({
             spellCheck={false}
             enterKeyHint="done"
             aria-invalid={!!pasteErrorText}
-            aria-busy={place.pending}
+            aria-busy={place.pending !== null}
             aria-describedby={[ids.hint, pasteErrorText ? ids.error : null].filter(Boolean).join(" ")}
             className="h-10 pr-9 md:h-9"
           />
-          {place.pending && (
+          {place.pending !== null && (
             <LoaderCircle
               aria-hidden
               className="absolute top-1/2 right-2.5 size-4 -translate-y-1/2 animate-spin text-muted-foreground"
@@ -166,23 +174,28 @@ export function PlaceField({
           )}
         </div>
         <p aria-live="polite" className="sr-only">
-          {place.pending ? t("resolving") : ""}
+          {status}
         </p>
         <FieldDescription id={ids.hint}>{t("placeLinkHint")}</FieldDescription>
-        <FieldError id={ids.error}>{pasteErrorText}</FieldError>
+        {/* Not an alert: a read failure is announced by the status line, a save failure by the form's summary. */}
+        {pasteErrorText && (
+          <p id={ids.error} className="text-sm text-destructive">
+            {pasteErrorText}
+          </p>
+        )}
       </Field>
 
       {(pointLinks || venueLinks) && (
-        <ul aria-live="polite" className="flex flex-col gap-2">
-          {place.point && pointLinks && (
+        <ul className="flex flex-col gap-2">
+          {place.point && pointLinks && pinText && (
             <Slot
               id={ids.pin}
               icon={<MapPin aria-hidden className="size-4 shrink-0 text-muted-foreground" />}
-              text={t("pin", { coords: pointLinks.coords ?? "" })}
+              text={pinText}
               href={pointLinks.open.google}
               openLabel={tDetail("openPlace")}
               removeLabel={t("removePin")}
-              onRemove={() => removeSlot("point")}
+              onRemove={() => remove("point")}
             />
           )}
           {venueLinks && venueText && (
@@ -193,7 +206,7 @@ export function PlaceField({
               href={venueLinks.open.google}
               openLabel={tDetail("openPlace")}
               removeLabel={t("removeVenue")}
-              onRemove={() => removeSlot("venue")}
+              onRemove={() => remove("venue")}
             />
           )}
         </ul>

@@ -332,7 +332,7 @@
       "create": "Create",
       "save": "Save",
       "saving": "Saving…",
-      "needsPlaces": "To save, add a location to every place: a map link, a pin or coordinates.",
+      "needsPlaces": "To save, add the location of every place: a map link, a pin or coordinates.",
       "waitResolving": "Reading a location; you can save once it's done.",
       "hasErrors": "Not saved: fix the highlighted fields.",
       "deleted": "This event was deleted while you were editing it.",
@@ -345,6 +345,7 @@
         "invalidDate": "Pick a valid date and time.",
         "endsBeforeStart": "The end must be after the start.",
         "placeRequired": "Add a location: a map link, a pin or coordinates.",
+        "placeInvalid": "This location can't be used; remove it and add it again.",
         "other": "Check this field."
       }
     }
