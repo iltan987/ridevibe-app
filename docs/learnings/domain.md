@@ -37,3 +37,20 @@
 - **Do:** group = badge filling the square on its ring colour; community = badge with margin on a real background
   (files and recipe: `docs/design/README.md`). Test in a throwaway group/community before asking Samet to change it.
 - **Source:** found by testing (iltan's test group).
+
+### Map link formats: what each share link carries (2026-11-21)
+- **Symptom:** pasted map links do not all contain the place's coordinates; a route link even contains the sharer's own
+  position.
+- **Cause (spike, 2026-11-21):** Google short links (`maps.app.goo.gl/…?g_st=ac`) redirect once to (a) a place
+  `/maps/place/<name, address>/data=!4m2!3m1!1s<feature id>…` with **no coordinates**, (b) a route
+  `/maps/dir/<origin lat,lng>/<name>/data=…!3d<lat>!4d<lng>…` (destination in `!3d!4d`, the sharer's position as
+  origin), or (c) a dropped pin `/maps/place/<name>/data=…!8m2!3d<lat>!4d<lng>…`. The `@lat,lng,17z` part is only the
+  map viewport. Yandex `navi/org/<slug>/<id>` redirects to `maps/org/<slug>/<id>` (no coordinates); a Yandex route is
+  `navi?rtext=<lat,lng>~<lat,lng>&…` (lat first, destination last); a Yandex pin (long-press, share) is
+  `navi?whatshere[point]=<lng>,<lat>&ll=<lng>,<lat>&si=<id>`: **longitude first**, `ll` is only the map view, `si` is a
+  sharing id. Place pages and OSM Nominatim do not give a venue's point reliably.
+- **Do:** read a point only from a destination (`!3d!4d`, `rtext` last, `whatshere[point]`, `q`/`ll`/`coordinate`);
+  never from `@` or a route origin (privacy: it is where the sharer stood). A link with no point becomes a venue link
+  (normalised to the place path up to the `!1s` feature id; Yandex `maps/org/<slug>/<id>/`). Short links need a
+  server-side redirect first, host-checked on every hop (`src/lib/events/place-input.ts`).
+- **Source:** found by testing real share links.
