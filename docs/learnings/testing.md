@@ -326,3 +326,11 @@
   docker exec -i supabase_db_ridevibe psql -U postgres -At | grep -E "not ok|Looks"`. Expect the matching
   assertions as `not ok`.
 - **Source:** found by testing (events Task 2: gate policy, venue URL check, constraint rename, unique position).
+
+### Browser fixtures with "readable" ids like `00000000-0000-0000-0000-0000000000e1` 404 in the app (2026-11-21)
+- **Symptom:** events planted by SQL with such ids rendered "Sayfa bulunamadı" for an organiser; no server error.
+- **Cause:** Zod 4's `z.uuid()` checks the RFC 9562 version and variant digits (`…-4xxx-[89ab]xxx-…` for v4); version
+  `0` fails, so `getEvent` returned null before querying. Postgres's `uuid` type accepts any hex. (pgTAP fixtures with
+  such ids are fine: they never pass through Zod.)
+- **Do:** give browser fixtures a valid version/variant: `00000000-0000-4000-8000-0000000000e1`.
+- **Source:** found by testing (events Task 6, event page).

@@ -235,6 +235,65 @@
       "stop": "Stop:",
       "finish": "Finish:",
       "meetup": "Meeting point:"
+    },
+    "backToList": "Back to events",
+    "detail": {
+      "when": "Date:",
+      "area": "Area:",
+      "edit": "Edit",
+      "share": "Share on WhatsApp",
+      "shareCancelled": "CANCELLED: {title}",
+      "places": "Route",
+      "meetingPoint": "Meeting point",
+      "roles": {
+        "start": "Start",
+        "stop": "Stop {n}",
+        "finish": "Finish",
+        "meetup": "Meeting point"
+      },
+      "openPlace": "Open location",
+      "directions": "Directions",
+      "apps": {
+        "google": "Google Maps",
+        "apple": "Apple Maps",
+        "yandex": "Yandex Maps",
+        "yandexNavi": "Yandex Navigator"
+      },
+      "copyCoords": "Copy coordinates",
+      "copied": "Copied",
+      "copyManually": "Couldn't copy. Select the coordinates here to copy them:",
+      "description": "Description",
+      "requirements": "Requirements",
+      "limitPeople": "{count, plural, one {Up to # person} other {Up to # people}}",
+      "limitBikes": "{count, plural, one {Up to # bike} other {Up to # bikes}}",
+      "minCc": "At least {cc} cc",
+      "fullMembersOnly": "Full members only",
+      "createdBy": "Organised by: {name}",
+      "updatedBy": "Last edited by {name}, {date}",
+      "cancel": "Cancel event",
+      "delete": "Delete event"
+    },
+    "cancelDialog": {
+      "title": "Cancel this event?",
+      "body": "The event stays listed, struck through and marked “Cancelled”. This can't be undone.",
+      "reason": "Reason (optional)",
+      "reasonHint": "Shown on the event page and in the share text.",
+      "count": "{count}/{max}",
+      "dismiss": "Keep event",
+      "confirm": "Cancel event",
+      "invalid": "Couldn't cancel: the event may already be cancelled. Refresh the page and try again."
+    },
+    "deleteDialog": {
+      "title": "Delete this event?",
+      "body": "The event and its places are deleted permanently. This can't be undone.",
+      "dismiss": "Keep event",
+      "confirm": "Delete"
+    },
+    "errors": {
+      "invalid": "Something in the request is wrong. Refresh the page and try again.",
+      "forbidden": "You don't have permission to do this.",
+      "notFound": "Event not found; it may have been deleted. Refresh the page.",
+      "error": "Something went wrong. Please try again."
     }
   },
   "Profile": {

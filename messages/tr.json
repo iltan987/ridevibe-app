@@ -235,6 +235,65 @@
       "stop": "Durak:",
       "finish": "Varış:",
       "meetup": "Buluşma yeri:"
+    },
+    "backToList": "Etkinliklere dön",
+    "detail": {
+      "when": "Tarih:",
+      "area": "Bölge:",
+      "edit": "Düzenle",
+      "share": "WhatsApp'ta paylaş",
+      "shareCancelled": "İPTAL: {title}",
+      "places": "Rota",
+      "meetingPoint": "Buluşma yeri",
+      "roles": {
+        "start": "Başlangıç",
+        "stop": "{n}. durak",
+        "finish": "Varış",
+        "meetup": "Buluşma yeri"
+      },
+      "openPlace": "Konumu aç",
+      "directions": "Yol tarifi",
+      "apps": {
+        "google": "Google Haritalar",
+        "apple": "Apple Haritalar",
+        "yandex": "Yandex Haritalar",
+        "yandexNavi": "Yandex Navigasyon"
+      },
+      "copyCoords": "Koordinatları kopyala",
+      "copied": "Kopyalandı",
+      "copyManually": "Kopyalanamadı. Koordinatları buradan seçip kopyalayabilirsin:",
+      "description": "Açıklama",
+      "requirements": "Katılım koşulları",
+      "limitPeople": "En fazla {count} kişi",
+      "limitBikes": "En fazla {count} motor",
+      "minCc": "En az {cc} cc",
+      "fullMembersOnly": "Sadece tam üyeler",
+      "createdBy": "Düzenleyen: {name}",
+      "updatedBy": "Son düzenleme: {name}, {date}",
+      "cancel": "Etkinliği iptal et",
+      "delete": "Etkinliği sil"
+    },
+    "cancelDialog": {
+      "title": "Etkinlik iptal edilsin mi?",
+      "body": "Etkinlik listede üstü çizili, “İptal edildi” olarak kalır. Bu geri alınamaz.",
+      "reason": "İptal nedeni (isteğe bağlı)",
+      "reasonHint": "Etkinlik sayfasında ve paylaşım metninde görünür.",
+      "count": "{count}/{max}",
+      "dismiss": "Vazgeç",
+      "confirm": "İptal et",
+      "invalid": "İptal edilemedi: etkinlik zaten iptal edilmiş olabilir. Sayfayı yenileyip tekrar dene."
+    },
+    "deleteDialog": {
+      "title": "Etkinlik silinsin mi?",
+      "body": "Etkinlik ve yerleri kalıcı olarak silinir. Bu geri alınamaz.",
+      "dismiss": "Vazgeç",
+      "confirm": "Sil"
+    },
+    "errors": {
+      "invalid": "Bilgilerde bir sorun var. Sayfayı yenileyip tekrar dene.",
+      "forbidden": "Bu işlem için yetkin yok.",
+      "notFound": "Etkinlik bulunamadı; silinmiş olabilir. Sayfayı yenile.",
+      "error": "Bir şeyler ters gitti. Lütfen tekrar dene."
     }
   },
   "Profile": {

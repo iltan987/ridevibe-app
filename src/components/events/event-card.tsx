@@ -4,6 +4,7 @@ import { RouteStrip } from "@/components/events/route-strip";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "@/i18n/navigation";
 import type { EventSummary } from "@/lib/events/queries";
+import { routeSummary } from "@/lib/events/share-text";
 import { cn } from "@/lib/utils";
 
 /**
@@ -19,9 +20,7 @@ export function EventCard({ event, withYear = false }: { event: EventSummary; wi
   const format = useFormatter();
   const start = new Date(event.startsAt);
   const cancelled = event.status === "cancelled";
-  const first = event.places.at(0);
-  const last = event.places.at(-1);
-  const places = first && last && event.places.length > 1 ? `${first.name} → ${last.name}` : (first?.name ?? "");
+  const places = routeSummary(event.places);
   const id = useId();
   const time = format.dateTime(start, { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
 

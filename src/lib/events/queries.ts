@@ -35,6 +35,8 @@ export type EventDetail = EventSummary & {
   createdByName: string | null;
   updatedByName: string | null;
   updatedAt: string;
+  /** The last change (edit or cancel) was made by someone other than the author. */
+  editedByOther: boolean;
 };
 
 /** An event in progress stays upcoming: started less than this long ago, or not yet ended. */
@@ -138,7 +140,7 @@ export async function getEvent(id: string): Promise<EventDetail | null> {
   const { data, error } = await supabase
     .from("events")
     .select(
-      `${SUMMARY_COLUMNS}, description, limit_people, limit_bikes, min_cc, full_members_only, cancel_reason, updated_at, created_by_profile:profiles!events_created_by_fkey(full_name), updated_by_profile:profiles!events_updated_by_fkey(full_name)`,
+      `${SUMMARY_COLUMNS}, description, limit_people, limit_bikes, min_cc, full_members_only, cancel_reason, updated_at, created_by, updated_by, created_by_profile:profiles!events_created_by_fkey(full_name), updated_by_profile:profiles!events_updated_by_fkey(full_name)`,
     )
     .eq("id", id)
     .maybeSingle();
@@ -155,5 +157,6 @@ export async function getEvent(id: string): Promise<EventDetail | null> {
     createdByName: data.created_by_profile?.full_name ?? null,
     updatedByName: data.updated_by_profile?.full_name ?? null,
     updatedAt: data.updated_at,
+    editedByOther: data.updated_by !== null && data.updated_by !== data.created_by,
   };
 }

@@ -369,9 +369,18 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   `string | null`; `visibility-form.tsx` indentation. All cosmetic or harmless today.
 
 ### UI / accessibility
-- **Event card details to settle** (2026-11-21, events organiser lists) — (a) a multi-day ride's card shows only the
-  start day; (b) on the labelled route strip (event page) stop names are screen-reader only (no room on a phone; the
-  card's strip carries no names at all). `src/components/events/`. Deferred: look at real events with iltan first.
+- **Event card details to settle** (2026-11-21, events organiser lists) — a multi-day ride's card shows only the
+  start day (the event page shows the range). `src/components/events/`. Deferred: look at real events with iltan
+  first. (Stop names: the event page lists every place under the strip.)
+- **Event page details to settle** (2026-11-21, events organiser event page) — (a) the labelled route strip names the
+  start and finish, then the place list names every place again (screen readers hear the route twice; a meet-up shows
+  its name under the dot and in the list): drop the strip's names on this page or make them the tap targets; (b)
+  "Yandex Navigasyon" is a bare `yandexnavi://` link: without the app iOS shows an error and Android does nothing
+  (a store fallback needs per-OS detection); (c) English "Last edited by …" uses the locale's 12-hour time
+  (`dateStyle`/`timeStyle`) while the other times are 24-hour; (d) map-app names are the official Turkish ones
+  ("Google Haritalar", "Apple Haritalar", "Yandex Haritalar", "Yandex Navigasyon"; options: "Google Maps" as people
+  say it). `src/app/[locale]/events/[id]/page.tsx`, `src/components/events/place-actions.tsx`. Deferred: check the
+  links on an Android phone and an iPhone and decide with iltan.
 - **Pager accessibility** (2026-11-13, list UX final review) — pressing "›" to reach the last page swaps the focused
   button for a `span`, so focus falls to `<body>`; after a page change the view scrolls to the list top but focus stays
   on the pager; the disabled end `<span aria-label>` has no role (ARIA forbids `aria-label` on generic elements). Fix:
