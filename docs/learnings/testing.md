@@ -301,7 +301,10 @@
   status 200, `text/x-component` and a string only that render holds. Prove an absence check can fail with a positive
   control (an allowed user's fetch must contain the names). Match member data by key (`district":"Beşiktaş`), not by
   the bare word (`scripts/e2e/probation-e2e.mjs`).
-- **Source:** found while fixing the review of the probation E2E.
+- **Also (2026-11-21):** `<NextIntlClientProvider>` in `[locale]/layout.tsx` ships *every* message to the client, so a
+  gated page's labels ("Harita linki, iğne veya koordinat") sit in the HTML of a 404 too: check "the form isn't shown"
+  with `document.body.innerText`, not `page.content()`.
+- **Source:** found while fixing the review of the probation E2E; the messages note by testing (events Task 7).
 
 ### Per-frame layout logs see half-parsed HTML on throttled loads (2026-11-19)
 - **Symptom:** `apply-nav-e2e.mjs` "second load, one layout" failed every run for phone TR fixtures that show
@@ -314,3 +317,35 @@
   `document.readyState !== "loading"` (`parsed()` in the frame logger). Before calling a layout check a product bug,
   log the element's child count and whether anything follows it.
 - **Source:** found by instrumenting the frame logger (`<li>` count, grid columns, next sibling).
+
+### Mutation-check a pgTAP file: did the assertions actually bite? (2026-11-21)
+- **Symptom:** a new pgTAP file passes on its first GREEN run; that alone doesn't show the gate/check assertions
+  would notice a broken rule (a wrong scope or a too-loose expected code passes silently).
+- **Cause:** pgTAP files open their own transaction (`begin; … rollback;`), so a mutation can't simply be applied
+  before them without touching the local schema.
+- **Do:** pipe the file into psql inside an outer transaction that first breaks the rule, with the file's own
+  `begin;` removed (its `rollback` then undoes the mutation too):
+  `{ echo "begin;"; echo "alter policy \"…\" on public.events using (true);"; sed 's/^begin;$//' <file>; } |
+  docker exec -i supabase_db_ridevibe psql -U postgres -At | grep -E "not ok|Looks"`. Expect the matching
+  assertions as `not ok`.
+- **Source:** found by testing (events Task 2: gate policy, venue URL check, constraint rename, unique position).
+
+### Browser fixtures with "readable" ids like `00000000-0000-0000-0000-0000000000e1` 404 in the app (2026-11-21)
+- **Symptom:** events planted by SQL with such ids rendered "Sayfa bulunamadı" for an organiser; no server error.
+- **Cause:** Zod 4's `z.uuid()` checks the RFC 9562 version and variant digits (`…-4xxx-[89ab]xxx-…` for v4); version
+  `0` fails, so `getEvent` returned null before querying. Postgres's `uuid` type accepts any hex. (pgTAP fixtures with
+  such ids are fine: they never pass through Zod.)
+- **Do:** give browser fixtures a valid version/variant: `00000000-0000-4000-8000-0000000000e1`.
+- **Source:** found by testing (events Task 6, event page).
+
+### E2E: pasting into a field; reading CSS-uppercased headings (2026-11-21)
+- **Need:** test the event form's paste path (`onPaste` reads the clipboard text and resolves it at once) without a
+  real clipboard; check that a page is the 404 page.
+- **Do:** dispatch a real paste event inside the page: `const d = new DataTransfer(); d.setData("text/plain", text);
+  el.dispatchEvent(new ClipboardEvent("paste", { clipboardData: d, bubbles: true, cancelable: true }))` after
+  `el.focus()`. React's `onPaste` receives it and `clipboardData.getData("text")` returns the text (headless Chrome;
+  `paste()` in `scripts/e2e/events-e2e.mjs`). Typed text plus `Enter` covers the other read path.
+- **Gotcha:** `innerText` applies `text-transform`: the 404 heading (`heading` utility, uppercase) reads "SAYFA
+  BULUNAMADI", so `innerText.includes("Sayfa bulunamadı")` fails on a real 404. Compare the visible `h1`'s
+  `textContent`; for "the form isn't shown" keep using `innerText` (messages ship in every page, see above).
+- **Source:** found while writing `scripts/e2e/events-e2e.mjs`.

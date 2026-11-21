@@ -31,6 +31,13 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   /docs/speed-insights/limits-and-pricing (checked 2026-11-10). If added, also measure the application funnel on
   `/apply` (opened → each step → sent; 2026-11-11, apply-steps).
 
+- **Organizatör role needs `events.manage` ticked on production** (2026-11-21, events organiser side) — the
+  permission is new and no role but the admin role holds it; tick it for Organizatör in `/admin/roles` (UI, no
+  migration) after the rollout, or organisers see "Çok yakında" on `/events` like everyone else.
+- **Share link during the gate** (2026-11-21, events organiser side; ruling R7) — the organiser's WhatsApp share
+  text leaves out the event link until the joining branch releases Events (members would meet sign-in and a 404). Put
+  the link back then: `shareText` / `ShareEventButton` (absolute URL from the origin + `getPathname`).
+
 - **Ban evasion vs. linking** (2026-11-09, application gaps) — when the ban list is built (PLAN "Member conduct"),
   check new applications *and* staff links (`link_application`) against it.
 - **Privacy notice: directory purpose and legal basis** (2026-11-10, members review) — sections 3/4 of the notice
@@ -70,12 +77,17 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 ## Features
 
 - **Events: "full members only" ride flag** (2026-11-18, ön alım + notes; decided, spec non-goal) — ön alım members may
-  join some rides and not others; the flag comes with Events (PLAN step 3), together with the event requirements.
+  join some rides and not others; specified in the events spec (2026-11-20, `full_members_only`), built in the
+  joining branch.
 - **Probation E2E gaps** (2026-11-18, ön alım + notes, final review) — `scripts/e2e/probation-e2e.mjs`: the district
   check matches only `district":` keys (a district printed as plain text in the crowd card would pass; idea: compare
   bare-word counts with the signed-out page); the HTML render check asserts only the locked sentence (add the summary);
   the RSC capture could pick a prefetch request (filter on path `/members` / no `next-router-prefetch`). Risk: a leak
   or a wrong capture goes unnoticed.
+- **Events E2E gaps** (2026-11-21, events organiser side) — `scripts/e2e/events-e2e.mjs`: the origin-absent DB check
+  has no positive control (it would also pass on an empty read); the past-page checks assume at most 50 past events in
+  the local DB and none newer than the fixtures; a scenario that throws skips the later ones. Risk: a false pass or a
+  confusing run on a busy local DB.
 - **`/admin/members` skeleton not re-measured** (2026-11-18, ön alım + notes, final review) — rows gained the "Notlar"
   button and two status buttons on probation/inactive rows; `ListSkeleton` (`h-36.75` at 390px) not re-checked. Run
   `scripts/e2e/skeletons.mjs`. Risk: layout shift on load.
@@ -132,10 +144,24 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 - **Web Install API / `<install>` element: switch when stable** (2026-11-12, install prompt) — Chrome's declarative
   install element is in an origin trial (2026), not stable. When it ships broadly, replace our `beforeinstallprompt`
   capture/banner plumbing (`src/lib/pwa/`) with it. Source: developer.chrome.com/blog/install-element-ot.
-- **Emergency contact required to join a ride** (2026-11-13, safety data) — decide with Events whether joining a ride
-  needs at least one emergency contact (today only a gentle prompt on `/account`).
-- **Organizers see their ride participants' safety cards** (2026-11-13, safety data) — with Events, a ride's
-  organizers get the participants' safety cards without `members.safety`; needs its own access rule and log entries.
+- **Emergency contact required to join a ride?** (2026-11-13, safety data; decided 2026-11-20, events spec) — not
+  required for now (iltan): joining nudges, the organiser's roster marks "acil durum kişisi yok". Revisit if
+  organisers keep missing contacts.
+- **Organisers without `members.safety`** (2026-11-13, safety data; updated 2026-11-20) — the events spec links the
+  roster to the existing safety card for `members.safety` holders (the Organizatör role has it, PLAN). An organiser
+  role *without* it would see no cards; a per-event access rule (own log entries) only if such a role appears.
+- **Several roles per person** (2026-11-20, iltan asked during the events design) — each profile has one `role_id`;
+  combinations are made as combined roles ("Organizatör + Üye Sorumlusu"). If combined roles pile up: a
+  `profile_roles` table, `private.has_permission` over all roles, a multi-select on `/admin/members`, pgTAP.
+- **Events: map, notifications, waiting list** (2026-11-20, events spec non-goals) — iteration 2: a real map
+  (MapLibre + tiles, picking points, place search; coordinates already stored); iteration 3: Web Push (service
+  worker, opt-in, reminders via pg_cron, `web-push` package after iltan approves) and the waiting list (only with
+  notifications, so the person who moves up is told). Spec: `docs/superpowers/specs/2026-11-20-events-design.md`.
+- **Google Places API for place links** (2026-11-21, events organiser side) — a Google place link carries no
+  coordinates, so a venue-only place routes by its name/address in Apple/Yandex and gets no Yandex Navi or
+  coordinates; organisers who want an exact point long-press the map and share a pin as well. The Places API would
+  resolve place links to points but needs a Google Cloud billing account (and a KVKK look at sending the link).
+  Revisit if organisers keep adding venue-only places.
 - **Access-log viewer for admins** (2026-11-13, safety data) — `safety_access_log` is written but only readable via
   SQL. Add an admin screen (paginated). Risk if left: the log exists but nobody can audit it in the app.
 - **Search on `/admin/applications`** (2026-11-13, list UX spec) — the list has status tabs and numbered server pages
@@ -159,6 +185,19 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   "docs(plan): application gaps implementation plan" commit (2026-11-09): recompute it from the reflog on iltan's PC
   (`docs/learnings/tooling.md`), never write an old SHA into this public repo (it points straight at the old data).
 
+- **Events organiser side: parked edges** (2026-11-21, events organiser side, task reviews) — (a) the event pages
+  answer an unknown or gated id with the 404 page but status 200 (soft 404, same as the admin pages); (b) delete
+  calls `router.replace("/events")`; the action's `refresh()` could re-render the deleted page first (no flash seen);
+  (c) `place-input.ts`: a bare short host with a query (`https://maps.app.goo.gl/?ll=41,29`) is read as a point
+  (it isn't a short link without a path); the Yandex org slug class accepts a malformed `%zz`; (d) the schema's venue
+  regex accepts a bare prefix (`https://www.google.com/maps/place/`; the parser is the real gate); (e)
+  `isoToIstanbul` returns "NaN-…" for an invalid ISO string (only stored times reach it); (f) `listPastEvents`
+  trusts `page ≥ 1` (callers clamp with `parsePage`); (g) `/events` and `/events/past` each read their own "now"
+  (moot: never rendered together). Harmless today; revisit if a caller changes.
+- **Short links from Vercel may come back `unresolved`** (2026-11-21, events organiser side) — Google may answer a
+  `maps.app.goo.gl` request from an unknown user agent / server IP with a 200 consent or interstitial page instead
+  of a 302, so `resolve-place.ts` would report `unresolved` on Vercel; never verified from production. After the
+  deploy paste one real short link into the event form; if it fails, try another user agent or ask for the long link.
 - **`profiles.status_changed_at` readable by every active member** (2026-11-18, ön alım + notes) — table-level select
   grant plus the active-member read policy: it shows when someone became a full member. Low sensitivity, accepted; a
   column-level grant would close it.
@@ -230,6 +269,14 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   members can satisfy `= any(initials)`). App: no tests for the notes server actions or dialog (e.g. zero rows deleted
   → `forbidden`); the client `.catch` fallbacks in the notes dialog don't log. Risk if left: a regression in these
   paths goes unseen.
+- **Events test gaps** (2026-11-21, events organiser side, task reviews) — unit: `place-input.test.ts` has no
+  exact-boundary cases (lat ±90 / lng ±180, venue URL 500 and label 200 characters), no bare `google.com/maps`, no
+  `/navi/org/` venue, no multi-waypoint `rtext`, no origin-only route with a trailing empty segment
+  (`/maps/dir/41.03,29.02//` → null); `resolve-place.test.ts` has no Yandex short link → `rtext` chain and no A → A
+  redirect loop; `schema.test.ts` has no `toRpcArgs` case for a meet-up with `ends_at` null or a place with point and
+  venue; `form-state.test.ts` doesn't cover unticking "Başlangıca dönüş" while the finish has a read pending (it is
+  dropped, as intended). pgTAP: `-infinity` as a start time is untested (`isfinite` covers it). Risk: a regression in
+  these corners goes unseen.
 - **Turkish case folding in `linkable_accounts` search** (2026-11-09) — `ilike` doesn't fold `ı/İ`
   (`supabase/schemas/20_applications.sql`). Email search and name-match ordering compensate. Fix: a SQL fold helper
   on both sides of the `like` (`private.search_fold` was dropped 2026-11-13 when directory search moved to the
@@ -359,6 +406,26 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   `string | null`; `visibility-form.tsx` indentation. All cosmetic or harmless today.
 
 ### UI / accessibility
+- **Event card details to settle** (2026-11-21, events organiser lists) — a multi-day ride's card shows only the
+  start day (the event page shows the range). `src/components/events/`. Deferred: look at real events with iltan
+  first. (Stop names: the event page lists every place under the strip.)
+- **Event page details to settle** (2026-11-21, events organiser event page) — (a) "Yandex Navigasyon" is a bare
+  `yandexnavi://` link: without the app iOS shows an error and Android does nothing (a store fallback needs per-OS
+  detection); (b) map-app names are the official Turkish ones ("Google Haritalar", "Apple Haritalar", "Yandex
+  Haritalar", "Yandex Navigasyon"; option: "Google Maps" as people say it). `src/components/events/place-actions.tsx`.
+  Deferred: check the links on an Android phone and an iPhone and decide with iltan.
+- **Event form details to settle** (2026-11-21, events organiser form) — (a) no warning when leaving with unsaved
+  changes; (b) two organisers editing at once: the later save wins silently (no `updated_at` check); (c) an abandoned
+  edit draft is kept by Next (hidden route) and shown on a later visit even if someone else changed the event; (d)
+  `datetime-local` shows the device's own format (12-hour on an English-region phone); (e) default kind is "Sürüş"
+  and the side defaults to "İki yaka / şehir dışı". `src/components/events/event-form.tsx`. Deferred: try the form
+  with organisers on real phones first; (b) matters only once several organisers edit the same events.
+- **Events UI minors** (2026-11-21, events organiser side, task reviews) — (a) `/events` with a chip pressed: the
+  total row still counts every upcoming event ("2 yaklaşan etkinlik") while the pager's range counts the filtered
+  ones ("1–1 / 1 etkinlik"); decide in the browser review whether the total should follow the filter; (b) a second
+  failed "Koordinatları kopyala" isn't announced again (the live text doesn't change); (c) a label-less (Yandex)
+  venue's status line follows the place-name field on every keystroke ("Mekân: …"); (d) two comment lines over 120
+  characters (`event-card.tsx`, `events-list.tsx`; Prettier doesn't wrap comments). Cosmetic.
 - **Pager accessibility** (2026-11-13, list UX final review) — pressing "›" to reach the last page swaps the focused
   button for a `span`, so focus falls to `<body>`; after a page change the view scrolls to the list top but focus stays
   on the pager; the disabled end `<span aria-label>` has no role (ARIA forbids `aria-label` on generic elements). Fix:
@@ -445,6 +512,18 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   review"; harmless).
 
 ### Loading states
+- **`/events` shows "Çok yakında" while an organiser's list loads** (2026-11-21, events organiser side; ruling R3) —
+  during the release gate the page's fallback is `ComingSoon` (what everyone but organisers keeps), so organisers see
+  a "coming soon" flash before their list. The joining branch replaces the gate and makes `EventsSkeleton` (chips,
+  create button) the fallback; measure it then with `scripts/e2e/skeletons.mjs`.
+- **Event page skeleton mirrors a ride** (2026-11-21, events organiser event page) — a meet-up has no route strip,
+  so its page is 96px shorter than the skeleton (layout shift); a ride with stops, no description or no area is
+  another height. `src/app/[locale]/events/[id]/page.tsx` (`EventSkeleton`). Deferred: rides are the common case.
+- **Event form skeletons mirror a ride** (2026-11-21, events organiser form) — `/events/new` matches its default
+  (ride) form; `/events/[id]/edit` mirrors a ride whose places have one pin each. Editing a meet-up, a ride with stops
+  or a place with a venue row makes the page longer than the skeleton (layout shift below the places). Measured in
+  Turkish only (English hints wrap differently). `src/components/events/event-form-skeleton.tsx`. Deferred: rides
+  with pins are the common case.
 - **Empty admin tab: the skeleton's range line shifts the content** (2026-11-13, list UX final review) — `ListSkeleton`
   reserves the pager's range line, but an empty tab renders no pager (only the "empty" text), so the page ends up
   shorter by the range line and its gap (16 + 24px) (`src/components/admin/list-skeleton.tsx`,

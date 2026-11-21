@@ -31,6 +31,52 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"event_places": {
+                  Row: {
+                    "event_id": string,"id": string,"lat": number | null,"lng": number | null,"name": string,"position": number,"venue_label": string | null,"venue_url": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "event_id": string,"id"?: string,"lat"?: number | null,"lng"?: number | null,"name": string,"position": number,"venue_label"?: string | null,"venue_url"?: string | null
+                  }
+                  Update: {
+                    "event_id"?: string,"id"?: string,"lat"?: number | null,"lng"?: number | null,"name"?: string,"position"?: number,"venue_label"?: string | null,"venue_url"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "event_places_event_id_fkey"
+      columns: ["event_id"]
+isOneToOne: false
+      referencedRelation: "events"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"events": {
+                  Row: {
+                    "area": string | null,"cancel_reason": string | null,"cancelled_at": string | null,"created_at": string,"created_by": string | null,"description": string | null,"ends_at": string | null,"full_members_only": boolean,"id": string,"kind": Database["public"]['Enums']["event_kind"],"limit_bikes": number | null,"limit_people": number | null,"min_cc": number | null,"side": Database["public"]['Enums']["istanbul_side"] | null,"starts_at": string,"status": Database["public"]['Enums']["event_status"],"title": string,"updated_at": string,"updated_by": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "area"?: string | null,"cancel_reason"?: string | null,"cancelled_at"?: string | null,"created_at"?: string,"created_by"?: string | null,"description"?: string | null,"ends_at"?: string | null,"full_members_only"?: boolean,"id"?: string,"kind": Database["public"]['Enums']["event_kind"],"limit_bikes"?: number | null,"limit_people"?: number | null,"min_cc"?: number | null,"side"?: Database["public"]['Enums']["istanbul_side"] | null,"starts_at": string,"status"?: Database["public"]['Enums']["event_status"],"title": string,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Update: {
+                    "area"?: string | null,"cancel_reason"?: string | null,"cancelled_at"?: string | null,"created_at"?: string,"created_by"?: string | null,"description"?: string | null,"ends_at"?: string | null,"full_members_only"?: boolean,"id"?: string,"kind"?: Database["public"]['Enums']["event_kind"],"limit_bikes"?: number | null,"limit_people"?: number | null,"min_cc"?: number | null,"side"?: Database["public"]['Enums']["istanbul_side"] | null,"starts_at"?: string,"status"?: Database["public"]['Enums']["event_status"],"title"?: string,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "events_created_by_fkey"
+      columns: ["created_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "events_updated_by_fkey"
+      columns: ["updated_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"member_contacts": {
                   Row: {
                     "email": string | null,"profile_id": string,"updated_at": string
@@ -262,6 +308,9 @@ isOneToOne: false
               "email": string,"full_name": string,"id": string,"status": Database["public"]['Enums']["member_status"]
             }[]
                            },
+"cancel_event":
+{ Args: { "p_id": string,"p_reason"?: string }; Returns: undefined
+                           },
 "cancel_my_account_deletion":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
@@ -269,6 +318,9 @@ isOneToOne: false
 { Args: Record<PropertyKey, never>; Returns: {
               "asian": number,"european": number,"initials": (string)[],"total": number
             }[]
+                           },
+"delete_event":
+{ Args: { "p_id": string }; Returns: undefined
                            },
 "keep_alive":
 { Args: Record<PropertyKey, never>; Returns: boolean
@@ -302,6 +354,9 @@ isOneToOne: false
 "request_my_account_deletion":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
+"save_event":
+{ Args: { "p_event": Json,"p_id"?: string,"p_places": Json }; Returns: string
+                           },
 "set_member_name":
 { Args: { "new_name": string,"target_id": string }; Returns: undefined
                            },
@@ -322,7 +377,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "application_status": "new"|"contacted"|"approved"|"rejected","blood_type": "A+"|"A-"|"B+"|"B-"|"AB+"|"AB-"|"0+"|"0-","emergency_relationship": "spouse_partner"|"parent"|"sibling"|"child"|"friend"|"other","group_ride_experience": "none"|"some"|"a_lot","heard_from": "instagram_ad"|"instagram_other"|"friend"|"other","istanbul_side": "asian"|"european","license_class": "a1"|"a2"|"a"|"b"|"none","member_status": "pending"|"probation"|"active"|"inactive"|"deleting","permission": "applications.view"|"applications.review"|"applications.decide"|"applications.delete"|"members.manage"|"members.safety"|"members.notes","safety_action": "view_card"|"filter_blood_type"|"set_blood_type"|"withdraw_blood_type"
+            "application_status": "new"|"contacted"|"approved"|"rejected","blood_type": "A+"|"A-"|"B+"|"B-"|"AB+"|"AB-"|"0+"|"0-","emergency_relationship": "spouse_partner"|"parent"|"sibling"|"child"|"friend"|"other","event_kind": "meetup"|"ride","event_status": "scheduled"|"cancelled","group_ride_experience": "none"|"some"|"a_lot","heard_from": "instagram_ad"|"instagram_other"|"friend"|"other","istanbul_side": "asian"|"european","license_class": "a1"|"a2"|"a"|"b"|"none","member_status": "pending"|"probation"|"active"|"inactive"|"deleting","permission": "applications.view"|"applications.review"|"applications.decide"|"applications.delete"|"members.manage"|"members.safety"|"members.notes"|"events.manage","safety_action": "view_card"|"filter_blood_type"|"set_blood_type"|"withdraw_blood_type"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -438,7 +493,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "application_status": ["new", "contacted", "approved", "rejected"],"blood_type": ["A+", "A-", "B+", "B-", "AB+", "AB-", "0+", "0-"],"emergency_relationship": ["spouse_partner", "parent", "sibling", "child", "friend", "other"],"group_ride_experience": ["none", "some", "a_lot"],"heard_from": ["instagram_ad", "instagram_other", "friend", "other"],"istanbul_side": ["asian", "european"],"license_class": ["a1", "a2", "a", "b", "none"],"member_status": ["pending", "probation", "active", "inactive", "deleting"],"permission": ["applications.view", "applications.review", "applications.decide", "applications.delete", "members.manage", "members.safety", "members.notes"],"safety_action": ["view_card", "filter_blood_type", "set_blood_type", "withdraw_blood_type"]
+            "application_status": ["new", "contacted", "approved", "rejected"],"blood_type": ["A+", "A-", "B+", "B-", "AB+", "AB-", "0+", "0-"],"emergency_relationship": ["spouse_partner", "parent", "sibling", "child", "friend", "other"],"event_kind": ["meetup", "ride"],"event_status": ["scheduled", "cancelled"],"group_ride_experience": ["none", "some", "a_lot"],"heard_from": ["instagram_ad", "instagram_other", "friend", "other"],"istanbul_side": ["asian", "european"],"license_class": ["a1", "a2", "a", "b", "none"],"member_status": ["pending", "probation", "active", "inactive", "deleting"],"permission": ["applications.view", "applications.review", "applications.decide", "applications.delete", "members.manage", "members.safety", "members.notes", "events.manage"],"safety_action": ["view_card", "filter_blood_type", "set_blood_type", "withdraw_blood_type"]
           }
         }
 } as const

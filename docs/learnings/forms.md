@@ -118,3 +118,25 @@
   push a `"required"` issue (`ctx.issues.push`) for the field; the branch is unreachable for valid input but typed
   honestly (`src/lib/applications/schema.ts`).
 - **Source:** zod source; Task 3.
+
+### A create form left with `router.push` stays alive: reset it once it is hidden (2026-11-21)
+- **Symptom (risk):** after "Oluştur" on `/events/new` and the push to the new event, browser back showed the filled
+  form again; one more tap would create a duplicate event.
+- **Cause:** with Cache Components Next keeps up to 3 left routes in a hidden React `<Activity>` and restores their
+  state and DOM on back/forward (`node_modules/next/dist/docs/01-app/02-guides/preserving-ui-state.md`). Resetting
+  state in the submit handler instead flashes the empty form while the navigation runs.
+- **Do:** set a `saved` ref on success and reset in a `useLayoutEffect` cleanup (runs when Activity hides the page):
+  bump a `key` on the inner form (`EventForm` in `src/components/events/event-form.tsx`). Keep the submit disabled
+  from success until the page is hidden (no second request from a double tap). An abandoned draft stays, as intended.
+- **Source:** Next guide above; verified in the browser (back after create: empty title).
+
+### An async read inside a list item: keep its request token in form state, not in a ref (2026-11-21)
+- **Symptom (risk, review):** a "newest request wins" counter in a `useRef` of `PlaceField` restarts when the field
+  remounts (the loop box hides and shows the finish, a key changes), so a late answer for text the organiser had
+  already replaced could land; typing in the box didn't cancel the read in flight either.
+- **Cause:** refs live and die with the component instance; the place lives in the form's state.
+- **Do:** store the token with the item (`PlaceDraft.pending: number | null`): `startResolve` sets it, the answer goes
+  through `settleResolve(p, token, …)`, which ignores a token that is no longer current, and typing (`typePaste`)
+  clears it. Pure and unit-tested in `src/lib/events/form-state.ts`. Announce outcomes in one always-mounted polite
+  status line per item; don't also render the error as `role="alert"` (it would be read twice).
+- **Source:** events Task 7 review.

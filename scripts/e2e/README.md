@@ -69,6 +69,22 @@ Run against a **local** stack only (local Supabase + a server on port 3123); nev
   (active) and `probation@test.local` (status `probation`, `status_changed_at` 5 days ago, "Ön Alım Fixture"); recipe in
   the script header. Resets the fixture and deletes its notes through `docker exec … psql` (`DB_CONTAINER`, local only)
   before and after. Works on a DB with other active members. Screenshots go to `OUT_DIR`.
+- `events-e2e.mjs` — events, organiser side, behind the release gate (PASS/FAIL lines, exit code != 0 on failure;
+  390px and 1280px). As `admin@test.local` it creates a ride whose start is typed coordinates, whose stop is a pasted
+  long Google place link (venue only) and whose finish is a pasted long Google route link with the Kız Kulesi origin
+  (long links: no network; pasted through a real `paste` event), checks that the paste boxes are emptied and that the
+  origin `41.021111`/`29.004167` is neither in the page nor in any column of `events`/`event_places` (`psql`), the
+  stored places, the start time stored as UTC (Istanbul wall time − 3 h, also after an edit), the "Konumu aç" / "Yol
+  tarifi" links of all three places (Yandex longitude first in `pt=`, no Navi for the venue-only stop), "Koordinatları
+  kopyala" only for points, the WhatsApp share link (`text=`, no `phone=`), side and kind chips on `/events` (list and
+  URL follow, no document/RSC request), cancel with a reason (banner, share text, struck card with "İptal edildi") and
+  delete; `/events/past` pages over 27 planted past meet-ups (`?page=2` via the pager, `?page=99` and `?page=1`
+  redirect). `member@test.local` and `probation@test.local` (given the role "E2E Organizatör" with `events.manage`:
+  rights need an active member) get "Çok yakında" on `/events` and the 404 page on `/events/{id}`, `/events/new` and
+  `/events/past`, with no event title in the HTML. Needs `pnpm start -p 3123`, local email sign-in and those three
+  users (recipe in `probation-e2e.mjs`). Plants and deletes its rows (events titled `E2E …`, the role) through `docker
+  exec … psql` (`DB_CONTAINER`, local only) before and after; other upcoming events are fine, other past events must
+  be older than the planted ones (1–27 days) and leave at most two pages. Screenshots go to `OUT_DIR`.
 - `header-e2e.mjs` — `<head>` theme script across a language switch and an unknown path (theme kept, client-created
   script inert, no React "script tag" warning), theme sync to other tabs, no colour transitions on a theme switch, the
   user-menu skeleton (signed out: button; signed in: the avatar, photo kept on a language switch; language button

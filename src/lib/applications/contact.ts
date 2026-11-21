@@ -36,3 +36,8 @@ export function normalizeEmail(email: string): string {
 export function sameEmail(a: string, b: string): boolean {
   return normalizeEmail(a) === normalizeEmail(b);
 }
+
+/** WhatsApp share link without a recipient (the sender picks a chat or group); same api.whatsapp.com rule as above. */
+export function whatsAppShareUrl(text: string): string {
+  return `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+}

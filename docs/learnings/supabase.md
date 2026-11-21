@@ -218,8 +218,13 @@
   PostgREST answers `200 []` for an offset past the end (checked locally up to offset 99,999,975).
 - **Do:** run the page query in parallel with the counts and redirect afterwards when `serverPage` (`src/lib/list-url.ts`)
   flags the URL; no need to wait for the count first.
+- **Except with a count (2026-11-21):** `.select(cols, { count: "exact" })` on the page query itself sends
+  `Prefer: count=exact`, and then PostgREST answers an offset past the end with **416 `PGRST103`** ("An offset of 50
+  was requested, but there are only 4 rows"; offset = total still gives an empty 206). `/events/past?page=99` showed the
+  error page instead of redirecting. Keep the count in its own `head: true` request (`listPastEvents` in
+  `src/lib/events/queries.ts`, like `countApplicationsByStatus`).
 - **Source:** `postgrest-js` `range()` in `node_modules/@supabase/postgrest-js/dist/index.mjs`; curl against local
-  PostgREST.
+  PostgREST (with and without `Prefer: count=exact`); the events E2E.
 
 ### pg_cron with declarative schemas: extension in the schema, schedule in a hand-written migration (2026-11-14)
 - **Symptom:** the declarative diff handles `create extension if not exists pg_cron with schema pg_catalog;` but
@@ -331,6 +336,9 @@
   `roles.test.sql` then failed on a hardcoded permission count.
 - **Do:** keep both files; tests that need "every permission" count with
   `array_length(enum_range(null::public.permission), 1)`, never a literal.
+- **Also (2026-11-21, events):** the split can be three files: `_1` tables/columns + the `ADD VALUE` at its end, `_2`
+  functions, constraints and indexes, `_3` policies and grants (whatever uses the new value comes after `_1`). Keep
+  all of them; `_1` still gets the `cron.unschedule` line to delete.
 - **Also:** a planted row (as `postgres`) through a before-insert trigger that sets `author_id := auth.uid()` gets a
   null author; fine for fixtures that only need visibility.
 - **Source:** `supabase/schemas/18_member_notes.sql`, probation Task 3.

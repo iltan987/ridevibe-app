@@ -209,6 +209,147 @@
       "noContactFilter": "No emergency contact"
     }
   },
+  "Events": {
+    "title": "Events",
+    "pastTitle": "Past events",
+    "create": "Create event",
+    "pastLink": "Past events",
+    "upcomingLink": "Upcoming events",
+    "upcomingTotal": "{count, plural, one {# upcoming event} other {# upcoming events}}",
+    "pastTotal": "{count, plural, one {# past event} other {# past events}}",
+    "range": "{from}–{to} of {total, plural, one {# event} other {# events}}",
+    "filtersLabel": "Event filters",
+    "kinds": {
+      "meetup": "Meet-up",
+      "ride": "Ride"
+    },
+    "cancelled": "Cancelled",
+    "meta": "{time} · {places}",
+    "empty": "No upcoming events. Add one with “Create event”.",
+    "noResults": "No events match this filter.",
+    "pastEmpty": "No past events yet.",
+    "ceiling": "This list is incomplete: there are more than 2,000 upcoming events and only the first 2,000 are shown. Please tell the admins.",
+    "backToList": "Back to events",
+    "detail": {
+      "when": "Date:",
+      "area": "Area:",
+      "edit": "Edit",
+      "share": "Share on WhatsApp",
+      "shareCancelled": "CANCELLED: {title}",
+      "places": "Route",
+      "meetingPoint": "Meeting point",
+      "roles": {
+        "start": "Start",
+        "stop": "Stop {n}",
+        "finish": "Finish"
+      },
+      "openPlace": "Open location",
+      "directions": "Directions",
+      "apps": {
+        "google": "Google Maps",
+        "apple": "Apple Maps",
+        "yandex": "Yandex Maps",
+        "yandexNavi": "Yandex Navigator"
+      },
+      "copyCoords": "Copy coordinates",
+      "copied": "Copied",
+      "copyManually": "Couldn't copy. Select the coordinates here to copy them:",
+      "description": "Description",
+      "requirements": "Requirements",
+      "limitPeople": "{count, plural, one {Up to # person} other {Up to # people}}",
+      "limitBikes": "{count, plural, one {Up to # bike} other {Up to # bikes}}",
+      "minCc": "At least {cc} cc",
+      "fullMembersOnly": "Full members only",
+      "createdBy": "Organised by: {name}",
+      "updatedBy": "Last change: {name}, {date}",
+      "cancel": "Cancel event",
+      "delete": "Delete event"
+    },
+    "cancelDialog": {
+      "title": "Cancel this event?",
+      "body": "The event stays listed, struck through and marked “Cancelled”. This can't be undone.",
+      "reason": "Reason (optional)",
+      "reasonHint": "Shown on the event page and in the share text.",
+      "count": "{count}/{max}",
+      "dismiss": "Keep event",
+      "confirm": "Cancel event",
+      "invalid": "Couldn't cancel: the event may already be cancelled. Refresh the page and try again."
+    },
+    "deleteDialog": {
+      "title": "Delete this event?",
+      "body": "The event and all its details are deleted permanently.",
+      "dismiss": "Keep event",
+      "confirm": "Delete"
+    },
+    "errors": {
+      "invalid": "Something in the request is wrong. Refresh the page and try again.",
+      "forbidden": "You don't have permission to do this.",
+      "notFound": "Event not found; it may have been deleted. Refresh the page.",
+      "error": "Something went wrong. Please try again."
+    },
+    "form": {
+      "editTitle": "Edit event",
+      "backToEvent": "Back to the event",
+      "optional": "optional",
+      "kind": "Type",
+      "title": "Title",
+      "titlePlaceholder": "e.g. Ağva breakfast ride",
+      "side": "Side",
+      "sideNone": "Both sides / out of town",
+      "startsAt": "Date and time",
+      "endsAt": "End",
+      "endsAtHint": "For long rides the return time; the last day if it runs several days.",
+      "area": "Area",
+      "areaHint": "Visitors see this too: don't name the exact spot (e.g. Üsküdar → Ağva)",
+      "placeName": "Place name",
+      "placeNamePlaceholder": "e.g. Moda seaside",
+      "placeLink": "Map link, pin or coordinates",
+      "placeLinkHint": "A venue link shows the venue; for the exact meeting spot, long-press the map and add the pin too.",
+      "resolving": "Reading the location…",
+      "pin": "Pin: {coords}",
+      "venue": "Venue: {label}",
+      "venueUnnamed": "Venue link added",
+      "removePin": "Remove pin",
+      "removeVenue": "Remove venue",
+      "placeErrors": {
+        "unreadable": "Couldn't read a location from this link; long-press the spot on the map and share the pin, or paste coordinates (e.g. 41.0255, 29.0154)",
+        "forbidden": "You don't have permission to do this.",
+        "error": "Couldn't read the location right now. Try again in a moment."
+      },
+      "addStop": "Add stop",
+      "stopsFull": "You can add up to {max} stops.",
+      "moveUp": "Move stop {n} up",
+      "moveDown": "Move stop {n} down",
+      "removeStop": "Remove stop {n}",
+      "loop": "Back to the start",
+      "loopHint": "The finish is the same place as the start.",
+      "descriptionHint": "e.g. pace, breaks, what to bring",
+      "requirementsHint": "Leave a field empty for no limit.",
+      "limitPeople": "People limit",
+      "limitBikes": "Bike limit",
+      "minCc": "Minimum cc",
+      "fullMembersOnlyHint": "Probation members can't join.",
+      "create": "Create",
+      "save": "Save",
+      "saving": "Saving…",
+      "needsPlaces": "To save, add the location of every place: a map link, a pin or coordinates.",
+      "waitResolving": "Reading a location; you can save once it's done.",
+      "hasErrors": "Not saved: fix the highlighted fields.",
+      "deleted": "This event was deleted while you were editing it.",
+      "errors": {
+        "required": "Fill in this field.",
+        "requiredDate": "Pick a date and time.",
+        "tooLong": "This text is too long.",
+        "limitRange": "Enter a whole number from 1 to 500.",
+        "ccRange": "Enter a whole number from 50 to 3000.",
+        "invalidDate": "Pick a valid date and time.",
+        "endsBeforeStart": "The end must be after the start.",
+        "placeRequired": "Add a location: a map link, a pin or coordinates.",
+        "placeInvalid": "This location can't be used; remove it and add it again.",
+        "other": "Check this field."
+      }
+    }
+  },
   "Profile": {
     "nameHint": "To change your name, ask the club team.",
     "location": "Location",
@@ -626,6 +767,12 @@
         "notes": {
           "label": "Read and write member notes",
           "description": "Can read and write internal staff notes about members; the member never sees them. Notes about admin accounts are visible to admins only."
+        }
+      },
+      "events": {
+        "manage": {
+          "label": "Manage events",
+          "description": "Creates, edits, cancels and deletes meet-ups and rides."
         }
       }
     },

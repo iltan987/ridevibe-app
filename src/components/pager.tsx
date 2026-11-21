@@ -15,7 +15,7 @@ export async function PagerLinks({
   page: number;
   pageCount: number;
   rangeLabel: string;
-  href: (page: number) => { pathname: "/admin/applications"; query: Record<string, string> };
+  href: (page: number) => { pathname: "/admin/applications" | "/events/past"; query: Record<string, string> };
 }) {
   const t = await getTranslations("Pagination");
   const arrow = (target: number, enabled: boolean, label: string, icon: React.ReactNode) =>

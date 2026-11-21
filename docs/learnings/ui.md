@@ -283,3 +283,21 @@
 - **Do:** when a size changes in a variant, repeat the line height there too (`…:text-sm/snug`, `src/components/ui/card.tsx`),
   or keep a separate `leading-*` class.
 - **Source:** Task 4 review; measured in headless Chrome (16/22px and 14/19.25px before and after the fix).
+
+### `heading text-3xl` is 36px tall, not 30px: the size's line height beats the utility's `line-height: 1` (2026-11-21)
+- **Symptom:** the events skeleton's heading row (sized for `line-height: 1` × 30px) measured 32px, the real
+  `<h1 class="heading text-3xl">` 36px.
+- **Cause:** the `heading` utility sets `line-height: 1`, but `text-3xl` sets `line-height: var(--tw-leading,
+  var(--text-3xl--line-height))` (2.25rem) and wins in the cascade.
+- **Do:** size a skeleton of a `heading text-3xl` line as `h-9` (36px); measure, don't compute from the utility.
+- **Source:** found by measuring `/events/past` with JS off (Task 5 of the events branch).
+
+### A `<fieldset>`'s `<legend>` is no flex item: its gap is its margin (2026-11-21)
+- **Symptom:** the event form's skeleton came out 6px taller per fieldset than the form.
+- **Cause:** the rendered legend sits outside the fieldset's flex layout, so `gap-3` doesn't apply after it; shadcn's
+  `FieldLegend` brings `mb-1.5` (24px line + 6px). A legend inside another element isn't the fieldset's legend at all
+  (no accessible name): use `role="group"` + `aria-labelledby` when the label shares a row with buttons
+  (`src/components/events/place-field.tsx`).
+- **Do:** in a skeleton, give the legend line its height plus a negative margin of (gap − legend margin)
+  (`-mb-1.5 h-6` for `gap-3`, `src/components/events/event-form-skeleton.tsx`); measure, don't compute.
+- **Source:** found by measuring `/events/new` with JS off (events Task 7).

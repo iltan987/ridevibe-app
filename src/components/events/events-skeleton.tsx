@@ -1,0 +1,80 @@
+import { PagerSkeleton } from "@/components/pager-skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+
+// Chip widths of the two groups (sides, kinds), as in `EventsList`: one row on desktop, two on a 390px phone.
+const CHIP_GROUPS = [
+  ["w-20", "w-24", "w-24"],
+  ["w-26", "w-20"],
+];
+
+/**
+ * One `EventCard`: the 96px route strip (markers only, no names), then the date block beside title, meta line and
+ * badge row (one line each).
+ */
+function EventCardSkeleton() {
+  return (
+    <div data-skeleton="events-row" className="overflow-hidden rounded-xl border">
+      <div className="flex h-24 items-center border-b px-4">
+        <Skeleton className="h-1 flex-1" />
+      </div>
+      <div className="flex gap-4 p-4">
+        <Skeleton className="h-15.5 w-12 shrink-0" />
+        <div className="flex flex-1 flex-col gap-1">
+          <div className="flex h-6 items-center">
+            <Skeleton className="h-4 w-2/3" />
+          </div>
+          <div className="flex h-5 items-center">
+            <Skeleton className="h-3.5 w-1/2" />
+          </div>
+          <div className="flex gap-1.5 pt-1">
+            <Skeleton className="h-5 w-14 rounded-4xl" />
+            <Skeleton className="h-5 w-24 rounded-4xl" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Fallback for the organiser event lists: heading row (title, plus the "Etkinlik oluştur" button with `create`), total
+ * row (count + link), the filter chips (`chips`: the upcoming list only), three cards and the pager's range line
+ * (lists usually fit one page). Mirrors the page layout: sections are `gap-6` apart.
+ *
+ * Today only `/events/past` uses it (`chips={false}`, no `create`). The `chips` default and `create` are kept for the
+ * joining branch, which makes this the fallback of `/events` (ruling R3, events plan): not dead code.
+ */
+export function EventsSkeleton({ chips = true, create = false }: { chips?: boolean; create?: boolean }) {
+  return (
+    <div className="flex flex-col gap-6">
+      {/* The heading's `text-3xl` line is 36px (the button is 32px). */}
+      <div data-skeleton="events-heading" className="flex h-9 items-center justify-between gap-3">
+        <Skeleton className="h-7.5 w-48" />
+        {create && <Skeleton className="h-8 w-36" />}
+      </div>
+      <div data-skeleton="events-total" className="flex h-5 items-center justify-between gap-3">
+        <Skeleton className="h-3.5 w-28" />
+        <Skeleton className="h-3.5 w-32" />
+      </div>
+      {chips && (
+        // Same boxes as the chip groups: pills are py-1.5 + border around a text-sm line (h-8.5).
+        <div data-skeleton="events-chips" className="flex flex-wrap gap-x-4 gap-y-2">
+          {CHIP_GROUPS.map((group, g) => (
+            <div key={g} className="flex flex-wrap gap-2">
+              {group.map((width, i) => (
+                <Skeleton key={i} className={cn("h-8.5 shrink-0 rounded-full", width)} />
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="flex flex-col gap-3">
+        {[0, 1, 2].map((i) => (
+          <EventCardSkeleton key={i} />
+        ))}
+      </div>
+      <PagerSkeleton buttons={false} />
+    </div>
+  );
+}

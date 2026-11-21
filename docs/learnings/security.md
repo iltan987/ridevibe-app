@@ -49,3 +49,15 @@
   before writing (names: Ali Veli / Ayşe Yılmaz; phones: `+90532 123 45 67`-style or `+90500…`; emails: `.invalid`).
   If one slips in, scrub history (`docs/learnings/tooling.md`, "Scrubbing text from history").
 - **Source:** public-repo audit, 2026-11-19 (gitleaks + manual scans).
+
+### Following a pasted short link on the server without SSRF or leaking the sharer's position (2026-11-21)
+- **Symptom:** organisers paste `maps.app.goo.gl/…` links; the place is only in the redirect target, so the server
+  has to request the link. A plain `fetch()` follows redirects anywhere (an internal address, any host), and the
+  route links it ends at hold the sharer's own position as the route origin.
+- **Cause:** default `redirect: "follow"` re-checks nothing; logging "the URL that failed" would store a location.
+- **Do:** `src/lib/events/resolve-place.ts`: only allow-listed https map hosts (`isAllowedMapUrl`), `redirect:
+  "manual"`, at most 3 hops, every `Location` resolved against the current hop and checked *before* it is requested,
+  one `AbortSignal.timeout` for the whole chain; log a reason code only (never the input or a `Location`). The action
+  (`resolvePlaceLink`) is limited to `events.manage` so it isn't an open fetcher. Node's fetch (undici) with
+  `redirect: "manual"` returns the real 3xx with its `Location` header (browsers return an opaque redirect instead).
+- **Source:** found by testing (Node 24 against a local 302 server); tests with a fake `fetchImpl`.

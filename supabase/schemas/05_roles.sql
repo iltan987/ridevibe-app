@@ -19,7 +19,8 @@ create type public.permission as enum (
   'applications.delete',  -- erase an application (KVKK request)
   'members.manage',       -- see pending sign-ups, activate/deactivate members
   'members.safety',       -- see members' emergency contacts, blood type and plates
-  'members.notes'         -- read and write staff notes about members (member_notes)
+  'members.notes',        -- read and write staff notes about members (member_notes)
+  'events.manage'         -- create, edit, cancel and delete events (40_events.sql)
 );
 
 create table public.roles (

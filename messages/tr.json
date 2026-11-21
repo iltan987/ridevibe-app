@@ -209,6 +209,147 @@
       "noContactFilter": "Acil kişisi yok"
     }
   },
+  "Events": {
+    "title": "Etkinlikler",
+    "pastTitle": "Geçmiş etkinlikler",
+    "create": "Etkinlik oluştur",
+    "pastLink": "Geçmiş etkinlikler",
+    "upcomingLink": "Yaklaşan etkinlikler",
+    "upcomingTotal": "{count} yaklaşan etkinlik",
+    "pastTotal": "{count} geçmiş etkinlik",
+    "range": "{from}–{to} / {total} etkinlik",
+    "filtersLabel": "Etkinlik filtreleri",
+    "kinds": {
+      "meetup": "Buluşma",
+      "ride": "Sürüş"
+    },
+    "cancelled": "İptal edildi",
+    "meta": "{time} · {places}",
+    "empty": "Yaklaşan etkinlik yok. Yenisini “Etkinlik oluştur” ile ekleyebilirsin.",
+    "noResults": "Bu filtreye uyan etkinlik yok.",
+    "pastEmpty": "Henüz geçmiş etkinlik yok.",
+    "ceiling": "Liste eksik: 2.000'den fazla yaklaşan etkinlik var, yalnızca ilk 2.000 etkinlik gösteriliyor. Lütfen yöneticilere haber ver.",
+    "backToList": "Etkinliklere dön",
+    "detail": {
+      "when": "Tarih:",
+      "area": "Bölge:",
+      "edit": "Düzenle",
+      "share": "WhatsApp'ta paylaş",
+      "shareCancelled": "İPTAL: {title}",
+      "places": "Rota",
+      "meetingPoint": "Buluşma yeri",
+      "roles": {
+        "start": "Başlangıç",
+        "stop": "{n}. durak",
+        "finish": "Varış"
+      },
+      "openPlace": "Konumu aç",
+      "directions": "Yol tarifi",
+      "apps": {
+        "google": "Google Haritalar",
+        "apple": "Apple Haritalar",
+        "yandex": "Yandex Haritalar",
+        "yandexNavi": "Yandex Navigasyon"
+      },
+      "copyCoords": "Koordinatları kopyala",
+      "copied": "Kopyalandı",
+      "copyManually": "Kopyalanamadı. Koordinatları buradan seçip kopyalayabilirsin:",
+      "description": "Açıklama",
+      "requirements": "Katılım koşulları",
+      "limitPeople": "En fazla {count} kişi",
+      "limitBikes": "En fazla {count} motor",
+      "minCc": "En az {cc} cc",
+      "fullMembersOnly": "Sadece tam üyeler",
+      "createdBy": "Düzenleyen: {name}",
+      "updatedBy": "Son değişiklik: {name}, {date}",
+      "cancel": "Etkinliği iptal et",
+      "delete": "Etkinliği sil"
+    },
+    "cancelDialog": {
+      "title": "Etkinlik iptal edilsin mi?",
+      "body": "Etkinlik listede üstü çizili, “İptal edildi” olarak kalır. Bu geri alınamaz.",
+      "reason": "İptal nedeni (isteğe bağlı)",
+      "reasonHint": "Etkinlik sayfasında ve paylaşım metninde görünür.",
+      "count": "{count}/{max}",
+      "dismiss": "Vazgeç",
+      "confirm": "İptal et",
+      "invalid": "İptal edilemedi: etkinlik zaten iptal edilmiş olabilir. Sayfayı yenileyip tekrar dene."
+    },
+    "deleteDialog": {
+      "title": "Etkinlik silinsin mi?",
+      "body": "Etkinlik tüm bilgileriyle kalıcı olarak silinir.",
+      "dismiss": "Vazgeç",
+      "confirm": "Sil"
+    },
+    "errors": {
+      "invalid": "Bilgilerde bir sorun var. Sayfayı yenileyip tekrar dene.",
+      "forbidden": "Bu işlem için yetkin yok.",
+      "notFound": "Etkinlik bulunamadı; silinmiş olabilir. Sayfayı yenile.",
+      "error": "Bir şeyler ters gitti. Lütfen tekrar dene."
+    },
+    "form": {
+      "editTitle": "Etkinliği düzenle",
+      "backToEvent": "Etkinliğe dön",
+      "optional": "isteğe bağlı",
+      "kind": "Tür",
+      "title": "Başlık",
+      "titlePlaceholder": "ör. Ağva kahvaltı sürüşü",
+      "side": "Yaka",
+      "sideNone": "İki yaka / şehir dışı",
+      "startsAt": "Tarih ve saat",
+      "endsAt": "Bitiş",
+      "endsAtHint": "Uzun sürüşlerde dönüş saati; birkaç gün sürerse son gün.",
+      "area": "Bölge",
+      "areaHint": "Ziyaretçiler de görecek: tam yeri yazma (ör. Üsküdar → Ağva)",
+      "placeName": "Yer adı",
+      "placeNamePlaceholder": "ör. Moda Sahili",
+      "placeLink": "Harita linki, iğne veya koordinat",
+      "placeLinkHint": "Mekân linki mekânı gösterir; tam buluşma noktası için haritada yere uzun basıp iğneyi de ekleyebilirsin.",
+      "resolving": "Konum okunuyor…",
+      "pin": "İğne: {coords}",
+      "venue": "Mekân: {label}",
+      "venueUnnamed": "Mekân linki eklendi",
+      "removePin": "İğneyi kaldır",
+      "removeVenue": "Mekânı kaldır",
+      "placeErrors": {
+        "unreadable": "Bu linkten konum okunamadı; haritada yere uzun bas ve iğneyi paylaş ya da koordinatı yapıştır (ör. 41.0255, 29.0154)",
+        "forbidden": "Bu işlem için yetkin yok.",
+        "error": "Konum şu an okunamadı. Biraz sonra tekrar dene."
+      },
+      "addStop": "Durak ekle",
+      "stopsFull": "En fazla {max} durak ekleyebilirsin.",
+      "moveUp": "{n}. durağı yukarı taşı",
+      "moveDown": "{n}. durağı aşağı taşı",
+      "removeStop": "{n}. durağı kaldır",
+      "loop": "Başlangıca dönüş",
+      "loopHint": "Varış yeri başlangıçla aynı olur.",
+      "descriptionHint": "ör. tempo, molalar, yanına alınacaklar",
+      "requirementsHint": "Boş bıraktığın koşul uygulanmaz.",
+      "limitPeople": "Kişi sınırı",
+      "limitBikes": "Motor sınırı",
+      "minCc": "En az cc",
+      "fullMembersOnlyHint": "Ön alım üyeleri katılamaz.",
+      "create": "Oluştur",
+      "save": "Kaydet",
+      "saving": "Kaydediliyor…",
+      "needsPlaces": "Kaydetmek için her yerin konumunu ekle: harita linki, iğne ya da koordinat.",
+      "waitResolving": "Konum okunuyor; bitince kaydedebilirsin.",
+      "hasErrors": "Kaydedilemedi: işaretli alanları düzelt.",
+      "deleted": "Bu etkinlik sen düzenlerken silinmiş.",
+      "errors": {
+        "required": "Bu alanı doldur.",
+        "requiredDate": "Tarih ve saat seç.",
+        "tooLong": "Bu metin çok uzun.",
+        "limitRange": "1 ile 500 arasında bir tam sayı yaz.",
+        "ccRange": "50 ile 3000 arasında bir tam sayı yaz.",
+        "invalidDate": "Geçerli bir tarih ve saat seç.",
+        "endsBeforeStart": "Bitiş, başlangıçtan sonra olmalı.",
+        "placeRequired": "Bir konum ekle: harita linki, iğne ya da koordinat.",
+        "placeInvalid": "Bu konum kullanılamıyor; kaldırıp yeniden ekle.",
+        "other": "Bu alanı kontrol et."
+      }
+    }
+  },
   "Profile": {
     "nameHint": "İsim değişikliği için kulüp ekibine yaz.",
     "location": "Konum",
@@ -626,6 +767,12 @@
         "notes": {
           "label": "Üye notlarını görme ve yazma",
           "description": "Üyeler hakkındaki iç notları görebilir ve yazabilir; üyenin kendisi göremez. Yöneticiler hakkındaki notları yalnızca yöneticiler görür."
+        }
+      },
+      "events": {
+        "manage": {
+          "label": "Etkinlikleri yönetme",
+          "description": "Buluşma ve sürüş oluşturur, düzenler, iptal eder ve siler."
         }
       }
     },
