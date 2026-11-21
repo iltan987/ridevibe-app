@@ -11,6 +11,7 @@ import {
   parseAuthorsRow,
   parseChangeRows,
   parseCountsRows,
+  maxCc,
   parseRosterRows,
   type RosterRow,
 } from "./signup-rows";
@@ -276,16 +277,17 @@ export async function getMyJoinContext(): Promise<{
   hasEmergencyContact: boolean;
 }> {
   const [user, supabase] = await Promise.all([getCurrentUser(), createClient()]);
+  if (user === null) return { probation: false, maxCc: null, hasEmergencyContact: false };
+  // Explicit own-row filters: RLS lets `members.manage` holders read every member's bikes.
   const [bikes, contacts] = await Promise.all([
-    supabase.from("member_motorcycles").select("cc").not("cc", "is", null),
-    supabase.from("member_emergency_contacts").select("id", { count: "exact", head: true }),
+    supabase.from("member_motorcycles").select("cc").eq("profile_id", user.id).not("cc", "is", null),
+    supabase.from("member_emergency_contacts").select("id", { count: "exact", head: true }).eq("profile_id", user.id),
   ]);
   if (bikes.error) throw new Error(`getMyJoinContext bikes failed: ${bikes.error.code}`);
   if (contacts.error) throw new Error(`getMyJoinContext contacts failed: ${contacts.error.code}`);
-  const ccs = bikes.data.flatMap((b) => (b.cc === null ? [] : [b.cc]));
   return {
-    probation: user?.profile?.status === "probation",
-    maxCc: ccs.length === 0 ? null : Math.max(...ccs),
+    probation: user.profile?.status === "probation",
+    maxCc: maxCc(bikes.data.map((b) => b.cc)),
     hasEmergencyContact: (contacts.count ?? 0) > 0,
   };
 }

@@ -119,3 +119,8 @@ export function parseAuthorsRow(
   if (row === undefined) return null;
   return { createdByName: row.created_by_name, updatedByName: row.updated_by_name, editedByOther: row.edited_by_other };
 }
+
+/** The largest known cc among a caller's own bikes; null when none has one. */
+export function maxCc(ccs: (number | null)[]): number | null {
+  return ccs.reduce<number | null>((max, cc) => (cc === null || (max !== null && max >= cc) ? max : cc), null);
+}

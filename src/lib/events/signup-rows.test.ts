@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { parseAuthorsRow, parseChangeRows, parseCountsRows, parseRosterRows } from "./signup-rows.ts";
+import { maxCc, parseAuthorsRow, parseChangeRows, parseCountsRows, parseRosterRows } from "./signup-rows.ts";
 
 test("roster rows keep nulls for hidden organiser fields and removed names", () => {
   const rows = parseRosterRows([
@@ -82,4 +82,10 @@ test("authors: no row is null, nulls survive", () => {
     updatedByName: "B",
     editedByOther: true,
   });
+});
+
+test("maxCc is the largest known cc, null without one", () => {
+  assert.equal(maxCc([]), null);
+  assert.equal(maxCc([null]), null);
+  assert.equal(maxCc([null, 250, 650, 125]), 650);
 });
