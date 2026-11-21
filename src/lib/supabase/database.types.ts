@@ -309,7 +309,7 @@ isOneToOne: false
             }[]
                            },
 "cancel_event":
-{ Args: { "p_id": string,"p_reason": string }; Returns: undefined
+{ Args: { "p_id": string,"p_reason"?: string }; Returns: undefined
                            },
 "cancel_my_account_deletion":
 { Args: Record<PropertyKey, never>; Returns: undefined
@@ -355,7 +355,7 @@ isOneToOne: false
 { Args: Record<PropertyKey, never>; Returns: string
                            },
 "save_event":
-{ Args: { "p_event": Json,"p_id": string,"p_places": Json }; Returns: string
+{ Args: { "p_event": Json,"p_id"?: string,"p_places": Json }; Returns: string
                            },
 "set_member_name":
 { Args: { "new_name": string,"target_id": string }; Returns: undefined

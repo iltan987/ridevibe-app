@@ -334,10 +334,6 @@
 - **Also (2026-11-21, events):** the split can be three files: `_1` tables/columns + the `ADD VALUE` at its end, `_2`
   functions, constraints and indexes, `_3` policies and grants (whatever uses the new value comes after `_1`). Keep
   all of them; `_1` still gets the `cron.unschedule` line to delete.
-- **Mutation-check a pgTAP file** (did the gate assertions actually bite?): pipe the file into psql inside an outer
-  transaction that first breaks the rule, with the file's own `begin;` removed (its `rollback` undoes the mutation):
-  `{ echo "begin;"; echo "alter policy \"…\" on public.events using (true);"; sed 's/^begin;$//' <file>; } |
-  docker exec -i supabase_db_ridevibe psql -U postgres -At | grep -E "not ok|Looks"`.
 - **Also:** a planted row (as `postgres`) through a before-insert trigger that sets `author_id := auth.uid()` gets a
   null author; fine for fixtures that only need visibility.
 - **Source:** `supabase/schemas/18_member_notes.sql`, probation Task 3.

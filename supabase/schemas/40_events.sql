@@ -41,7 +41,7 @@ create table public.events (
   constraint events_ride_area check ((kind = 'ride') = (area is not null)),
   constraint events_ends_after_start check (ends_at is null or ends_at > starts_at),
   constraint events_cancelled_at check ((status = 'cancelled') = (cancelled_at is not null)),
-  constraint events_cancel_reason check (cancel_reason is null or status = 'cancelled')
+  constraint events_reason_only_when_cancelled check (cancel_reason is null or status = 'cancelled')
 );
 
 comment on table public.events is 'Meet-ups and rides. Written only via save_event / cancel_event / delete_event.';
@@ -100,13 +100,16 @@ using ((select private.has_permission('events.manage')));
 -- ---------------------------------------------------------------------------
 -- Write RPCs (events.manage). Errors: 42501 without the permission, P0002 for an unknown id, 22023 for input the
 -- table checks can't judge (kind, side, place count for the kind, area rule, editing/cancelling a cancelled event),
--- 23514 from the table checks (lengths, ranges, venue link shape). Texts are trimmed here; optional ones become null
--- when blank, required ones stay '' so the length check refuses them.
+-- 23514 from the table checks (lengths, ranges, venue link shape). Malformed numbers, booleans and timestamps in the
+-- JSON raise Postgres cast errors besides these (22P02 / 22007 / 22008 / 22003); the app's Zod schema rules them out.
+-- Callers send starts_at / ends_at as ISO strings WITH an offset: a string without one is read in the session time
+-- zone. Texts are trimmed here; optional ones become null when blank, required ones stay '' so the length check
+-- refuses them.
 -- ---------------------------------------------------------------------------
 
--- p_id null = create. p_event: { kind, title, side, area, starts_at, ends_at, description, limit_people, limit_bikes,
+-- p_id null (default) = create. p_event: { kind, title, side, area, starts_at, ends_at, description, limit_people, limit_bikes,
 -- min_cc, full_members_only }; p_places: [{ name, lat, lng, venue_url, venue_label }] in route order (replaces all).
-create or replace function public.save_event(p_id uuid, p_event jsonb, p_places jsonb)
+create or replace function public.save_event(p_event jsonb, p_places jsonb, p_id uuid default null)
 returns uuid
 language plpgsql
 security definer
@@ -117,6 +120,8 @@ declare
   v_kind text := p_event ->> 'kind';
   v_side text := nullif(btrim(p_event ->> 'side'), '');
   v_area text := nullif(btrim(p_event ->> 'area'), '');
+  v_starts timestamptz;
+  v_ends timestamptz;
   v_places integer;
   v_status public.event_status;
   v_id uuid;
@@ -134,8 +139,10 @@ begin
   if v_side is not null and v_side not in ('asian', 'european') then
     raise exception 'unknown side' using errcode = '22023';
   end if;
-  if p_event ->> 'starts_at' is null then
-    raise exception 'starts_at is required' using errcode = '22023';
+  v_starts := (p_event ->> 'starts_at')::timestamptz;
+  v_ends := (p_event ->> 'ends_at')::timestamptz;
+  if v_starts is null or not isfinite(v_starts) or (v_ends is not null and not isfinite(v_ends)) then
+    raise exception 'starts_at is required; starts_at and ends_at must be finite' using errcode = '22023';
   end if;
   if (v_kind = 'ride') <> (v_area is not null) then
     raise exception 'a ride needs an area; a meet-up has none' using errcode = '22023';
@@ -161,8 +168,8 @@ begin
       coalesce(btrim(p_event ->> 'title'), ''),
       v_side::public.istanbul_side,
       v_area,
-      (p_event ->> 'starts_at')::timestamptz,
-      (p_event ->> 'ends_at')::timestamptz,
+      v_starts,
+      v_ends,
       nullif(btrim(p_event ->> 'description'), ''),
       (p_event ->> 'limit_people')::integer,
       (p_event ->> 'limit_bikes')::integer,
@@ -186,8 +193,8 @@ begin
         title = coalesce(btrim(p_event ->> 'title'), ''),
         side = v_side::public.istanbul_side,
         area = v_area,
-        starts_at = (p_event ->> 'starts_at')::timestamptz,
-        ends_at = (p_event ->> 'ends_at')::timestamptz,
+        starts_at = v_starts,
+        ends_at = v_ends,
         description = nullif(btrim(p_event ->> 'description'), ''),
         limit_people = (p_event ->> 'limit_people')::integer,
         limit_bikes = (p_event ->> 'limit_bikes')::integer,
@@ -216,10 +223,10 @@ begin
 end;
 $$;
 
-revoke all on function public.save_event(uuid, jsonb, jsonb) from public, anon;
-grant execute on function public.save_event(uuid, jsonb, jsonb) to authenticated;
+revoke all on function public.save_event(jsonb, jsonb, uuid) from public, anon;
+grant execute on function public.save_event(jsonb, jsonb, uuid) to authenticated;
 
-create or replace function public.cancel_event(p_id uuid, p_reason text)
+create or replace function public.cancel_event(p_id uuid, p_reason text default null)
 returns void
 language plpgsql
 security definer

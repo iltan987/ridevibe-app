@@ -314,3 +314,15 @@
   `document.readyState !== "loading"` (`parsed()` in the frame logger). Before calling a layout check a product bug,
   log the element's child count and whether anything follows it.
 - **Source:** found by instrumenting the frame logger (`<li>` count, grid columns, next sibling).
+
+### Mutation-check a pgTAP file: did the assertions actually bite? (2026-11-21)
+- **Symptom:** a new pgTAP file passes on its first GREEN run; that alone doesn't show the gate/check assertions
+  would notice a broken rule (a wrong scope or a too-loose expected code passes silently).
+- **Cause:** pgTAP files open their own transaction (`begin; … rollback;`), so a mutation can't simply be applied
+  before them without touching the local schema.
+- **Do:** pipe the file into psql inside an outer transaction that first breaks the rule, with the file's own
+  `begin;` removed (its `rollback` then undoes the mutation too):
+  `{ echo "begin;"; echo "alter policy \"…\" on public.events using (true);"; sed 's/^begin;$//' <file>; } |
+  docker exec -i supabase_db_ridevibe psql -U postgres -At | grep -E "not ok|Looks"`. Expect the matching
+  assertions as `not ok`.
+- **Source:** found by testing (events Task 2: gate policy, venue URL check, constraint rename, unique position).

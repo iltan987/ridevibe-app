@@ -2,7 +2,7 @@ SET local check_function_bodies = off;
 
 CREATE OR REPLACE FUNCTION public.cancel_event (
   p_id     uuid,
-  p_reason text
+  p_reason text DEFAULT NULL::text
 )
   RETURNS void
   LANGUAGE plpgsql
@@ -61,9 +61,9 @@ $function$;
 REVOKE ALL ON FUNCTION "public"."delete_event"(uuid) FROM "anon";
 
 CREATE OR REPLACE FUNCTION public.save_event (
-  p_id     uuid,
   p_event  jsonb,
-  p_places jsonb
+  p_places jsonb,
+  p_id     uuid  DEFAULT NULL::uuid
 )
   RETURNS uuid
   LANGUAGE plpgsql
@@ -75,6 +75,8 @@ declare
   v_kind text := p_event ->> 'kind';
   v_side text := nullif(btrim(p_event ->> 'side'), '');
   v_area text := nullif(btrim(p_event ->> 'area'), '');
+  v_starts timestamptz;
+  v_ends timestamptz;
   v_places integer;
   v_status public.event_status;
   v_id uuid;
@@ -92,8 +94,10 @@ begin
   if v_side is not null and v_side not in ('asian', 'european') then
     raise exception 'unknown side' using errcode = '22023';
   end if;
-  if p_event ->> 'starts_at' is null then
-    raise exception 'starts_at is required' using errcode = '22023';
+  v_starts := (p_event ->> 'starts_at')::timestamptz;
+  v_ends := (p_event ->> 'ends_at')::timestamptz;
+  if v_starts is null or not isfinite(v_starts) or (v_ends is not null and not isfinite(v_ends)) then
+    raise exception 'starts_at is required; starts_at and ends_at must be finite' using errcode = '22023';
   end if;
   if (v_kind = 'ride') <> (v_area is not null) then
     raise exception 'a ride needs an area; a meet-up has none' using errcode = '22023';
@@ -119,8 +123,8 @@ begin
       coalesce(btrim(p_event ->> 'title'), ''),
       v_side::public.istanbul_side,
       v_area,
-      (p_event ->> 'starts_at')::timestamptz,
-      (p_event ->> 'ends_at')::timestamptz,
+      v_starts,
+      v_ends,
       nullif(btrim(p_event ->> 'description'), ''),
       (p_event ->> 'limit_people')::integer,
       (p_event ->> 'limit_bikes')::integer,
@@ -144,8 +148,8 @@ begin
         title = coalesce(btrim(p_event ->> 'title'), ''),
         side = v_side::public.istanbul_side,
         area = v_area,
-        starts_at = (p_event ->> 'starts_at')::timestamptz,
-        ends_at = (p_event ->> 'ends_at')::timestamptz,
+        starts_at = v_starts,
+        ends_at = v_ends,
         description = nullif(btrim(p_event ->> 'description'), ''),
         limit_people = (p_event ->> 'limit_people')::integer,
         limit_bikes = (p_event ->> 'limit_bikes')::integer,
@@ -174,7 +178,7 @@ begin
 end;
 $function$;
 
-REVOKE ALL ON FUNCTION "public"."save_event"(uuid, jsonb, jsonb) FROM "anon";
+REVOKE ALL ON FUNCTION "public"."save_event"(jsonb, jsonb, uuid) FROM "anon";
 
 ALTER TABLE "public"."events"
   ADD CONSTRAINT "events_area_check" CHECK (((area IS NULL) OR (((char_length(area) >= 1) AND (char_length(area) <= 80)) AND (area = btrim(area)))));
@@ -182,9 +186,6 @@ ALTER TABLE "public"."events"
 ALTER TABLE "public"."events"
   ADD CONSTRAINT "events_cancel_reason_check"
     CHECK (((cancel_reason IS NULL) OR (((char_length(cancel_reason) >= 1) AND (char_length(cancel_reason) <= 200)) AND (cancel_reason = btrim(cancel_reason)))));
-
-ALTER TABLE "public"."events"
-  ADD CONSTRAINT "events_cancel_reason" CHECK (((cancel_reason IS NULL) OR (status = 'cancelled'::public.event_status)));
 
 ALTER TABLE "public"."events"
   ADD CONSTRAINT "events_cancelled_at" CHECK (((status = 'cancelled'::public.event_status) = (cancelled_at IS NOT NULL)));
@@ -210,6 +211,9 @@ ALTER TABLE "public"."events"
 
 ALTER TABLE "public"."event_places"
   ADD CONSTRAINT "event_places_event_id_fkey" FOREIGN KEY (event_id) REFERENCES public.events(id) ON DELETE CASCADE;
+
+ALTER TABLE "public"."events"
+  ADD CONSTRAINT "events_reason_only_when_cancelled" CHECK (((cancel_reason IS NULL) OR (status = 'cancelled'::public.event_status)));
 
 ALTER TABLE "public"."events"
   ADD CONSTRAINT "events_ride_area" CHECK (((kind = 'ride'::public.event_kind) = (area IS NOT NULL)));

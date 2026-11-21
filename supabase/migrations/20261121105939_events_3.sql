@@ -34,15 +34,15 @@ GRANT EXECUTE ON FUNCTION "public"."delete_event"(uuid) TO "postgres";
 
 GRANT EXECUTE ON FUNCTION "public"."delete_event"(uuid) TO "service_role";
 
-REVOKE ALL ON FUNCTION "public"."save_event"(uuid, jsonb, jsonb) FROM PUBLIC;
+REVOKE ALL ON FUNCTION "public"."save_event"(jsonb, jsonb, uuid) FROM PUBLIC;
 
-GRANT EXECUTE ON FUNCTION "public"."save_event"(uuid, jsonb, jsonb) TO "authenticated";
+GRANT EXECUTE ON FUNCTION "public"."save_event"(jsonb, jsonb, uuid) TO "authenticated";
 
-REVOKE ALL ON FUNCTION "public"."save_event"(uuid, jsonb, jsonb) FROM "postgres";
+REVOKE ALL ON FUNCTION "public"."save_event"(jsonb, jsonb, uuid) FROM "postgres";
 
-GRANT EXECUTE ON FUNCTION "public"."save_event"(uuid, jsonb, jsonb) TO "postgres";
+GRANT EXECUTE ON FUNCTION "public"."save_event"(jsonb, jsonb, uuid) TO "postgres";
 
-GRANT EXECUTE ON FUNCTION "public"."save_event"(uuid, jsonb, jsonb) TO "service_role";
+GRANT EXECUTE ON FUNCTION "public"."save_event"(jsonb, jsonb, uuid) TO "service_role";
 
 REVOKE ALL ON TABLE "public"."event_places" FROM "authenticated";
 
