@@ -79,7 +79,7 @@ export const eventInputSchema = z
     }
   });
 
-export type EventInput = z.infer<typeof eventInputSchema>;
+type EventInput = z.infer<typeof eventInputSchema>;
 
 /** Arguments for `public.save_event` (the caller adds `p_id` when editing). */
 export function toRpcArgs(input: EventInput): { p_event: Json; p_places: Json } {

@@ -9,7 +9,7 @@ export function routeSummary(places: Named[]): string {
 }
 
 /**
- * The organiser's WhatsApp text without the event link (the browser appends it: only it knows the origin). No
+ * The organiser's WhatsApp text. It has no event link until the joining branch releases Events (follow-ups). No
  * personal data, never the roster. A cancelled event leads with the cancellation and its reason (spec §6).
  */
 export function shareText(

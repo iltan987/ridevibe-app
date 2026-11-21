@@ -16,7 +16,7 @@ const ids = (items: E[]) => items.map((e) => e.id);
 
 test("no filter: every event, counts per side and kind, first page of 25", () => {
   const view = eventsView(events, { side: null, kind: null, page: 1 });
-  assert.deepEqual(view.counts, { all: 30, asian: 2, european: 27, meetup: 27, ride: 3 });
+  assert.deepEqual(view.counts, { all: 30, asian: 3, european: 28, meetup: 27, ride: 3 });
   assert.equal(view.total, 30);
   assert.equal(view.items.length, 25);
   assert.deepEqual([view.page, view.pageCount, view.from, view.to], [1, 2, 1, 25]);
@@ -24,14 +24,15 @@ test("no filter: every event, counts per side and kind, first page of 25", () =>
 
 test("side counts honour the kind filter, kind counts honour the side filter; 'all' counts everything", () => {
   const view = eventsView(events, { side: "asian", kind: "ride", page: 1 });
-  assert.deepEqual(view.counts, { all: 30, asian: 1, european: 1, meetup: 1, ride: 1 });
-  assert.deepEqual(ids(view.items), ["a-ride"]);
+  assert.deepEqual(view.counts, { all: 30, asian: 2, european: 2, meetup: 1, ride: 2 });
+  assert.deepEqual(ids(view.items), ["a-ride", "none-ride"]);
 });
 
-test("a side filter leaves out events without a side; order is kept", () => {
+test("an event without a side shows under both side filters; order is kept", () => {
   const view = eventsView(events, { side: null, kind: "ride", page: 1 });
   assert.deepEqual(ids(view.items), ["a-ride", "e-ride", "none-ride"]);
-  assert.ok(!ids(eventsView(events, { side: "european", kind: "ride", page: 1 }).items).includes("none-ride"));
+  assert.deepEqual(ids(eventsView(events, { side: "european", kind: "ride", page: 1 }).items), ["e-ride", "none-ride"]);
+  assert.deepEqual(ids(eventsView(events, { side: "asian", kind: "ride", page: 1 }).items), ["a-ride", "none-ride"]);
 });
 
 test("page 2 holds the rest; an out-of-range page is clamped to the last one", () => {

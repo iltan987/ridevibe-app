@@ -407,9 +407,15 @@ function EventFormFields({ event, onSaved }: { event: (StoredEvent & { id: strin
         <FieldError id={`${id("description")}-error`}>{error("description")}</FieldError>
       </Field>
 
-      <FieldSet data-skeleton-result="event-form-requirements" className="gap-4">
+      <FieldSet
+        data-skeleton-result="event-form-requirements"
+        aria-labelledby={id("requirements-legend")}
+        className="gap-4"
+      >
         <div className="flex flex-col gap-1">
-          <FieldLegend className="mb-0 text-lg font-semibold">{t("detail.requirements")}</FieldLegend>
+          <span id={id("requirements-legend")} className="text-lg font-semibold">
+            {t("detail.requirements")}
+          </span>
           <FieldDescription>{tf("requirementsHint")}</FieldDescription>
         </div>
         <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 sm:items-start">

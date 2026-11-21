@@ -14,12 +14,20 @@ export function eventsView<T extends { side: Side | null; kind: Kind }>(
   events: T[],
   { side, kind, page }: { side: Side | null; kind: Kind | null; page: number },
 ) {
-  const sideOk = (event: T) => side === null || event.side === side;
+  // An event without a side belongs to both sides: it shows under either chip.
+  const sideOk = (event: T) => side === null || event.side === null || event.side === side;
   const kindOk = (event: T) => kind === null || event.kind === kind;
 
   const counts = { all: events.length, asian: 0, european: 0, meetup: 0, ride: 0 };
   for (const event of events) {
-    if (event.side && kindOk(event)) counts[event.side] += 1;
+    if (kindOk(event)) {
+      if (event.side === null) {
+        counts.asian += 1;
+        counts.european += 1;
+      } else {
+        counts[event.side] += 1;
+      }
+    }
     if (sideOk(event)) counts[event.kind] += 1;
   }
 

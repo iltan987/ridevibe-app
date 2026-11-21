@@ -12,7 +12,7 @@ export const MAX_STOPS = 10;
 /** Same cap as a place name in the schema. */
 const NAME_MAX = 80;
 
-export type PlaceError = "unreadable" | "forbidden" | "error";
+type PlaceError = "unreadable" | "forbidden" | "error";
 
 export type PlaceDraft = {
   /** React key and element ids; the async read finds its place by it (a removed place ignores the answer). */
@@ -57,7 +57,7 @@ export type EventFormState = {
   loop: boolean;
 };
 
-export type EventFormInput = z.input<typeof eventInputSchema>;
+type EventFormInput = z.input<typeof eventInputSchema>;
 
 /** An event as stored (`EventDetail` from the queries, times in ISO). */
 export type StoredEvent = {
@@ -290,7 +290,7 @@ export function errorAt(map: Readonly<Partial<Record<string, string>>>, key: str
   return sub === undefined ? undefined : map[sub];
 }
 
-export type ErrorMessageKey =
+type ErrorMessageKey =
   | "required"
   | "requiredDate"
   | "tooLong"

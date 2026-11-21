@@ -66,3 +66,45 @@ test("both: venue opens in Google, every route uses the point", () => {
   assert.equal(links.route.yandexNavi, "yandexnavi://build_route_on_map?lat_to=41.025500&lon_to=29.015400");
   assert.equal(links.coords, "41.025500, 29.015400");
 });
+
+const YANDEX_ORG = "https://yandex.com.tr/maps/org/starbucks/1234567890/";
+
+test("Yandex venue only: Yandex opens the org page, Google and Apple search the label", () => {
+  const q = encodeURIComponent(LABEL);
+  const links = navLinks({ name: "Starbucks", point: null, venueUrl: YANDEX_ORG, venueLabel: LABEL });
+  assert.deepEqual(links.open, {
+    google: `https://www.google.com/maps/search/?api=1&query=${q}`,
+    apple: `https://maps.apple.com/?q=${q}`,
+    yandex: YANDEX_ORG,
+  });
+  assert.equal(links.route.yandex, `https://yandex.com.tr/maps/?text=${q}`);
+  assert.equal(links.route.yandexNavi, null);
+});
+
+test("pin and Yandex venue: Yandex opens the org page, Google keeps the pin", () => {
+  const links = navLinks({
+    name: "Starbucks",
+    point: { lat: 41.0255, lng: 29.0154 },
+    venueUrl: YANDEX_ORG,
+    venueLabel: LABEL,
+  });
+  assert.deepEqual(links.open, {
+    google: "https://www.google.com/maps/search/?api=1&query=41.025500,29.015400",
+    apple: "https://maps.apple.com/?ll=41.025500,29.015400&q=Starbucks",
+    yandex: YANDEX_ORG,
+  });
+});
+
+test("pin and Google venue: Google opens the venue, Yandex keeps the pin", () => {
+  const links = navLinks({
+    name: "Starbucks",
+    point: { lat: 41.0255, lng: 29.0154 },
+    venueUrl: STARBUCKS,
+    venueLabel: LABEL,
+  });
+  assert.deepEqual(links.open, {
+    google: STARBUCKS,
+    apple: "https://maps.apple.com/?ll=41.025500,29.015400&q=Starbucks",
+    yandex: "https://yandex.com.tr/maps/?pt=29.015400,41.025500&z=16&l=map",
+  });
+});

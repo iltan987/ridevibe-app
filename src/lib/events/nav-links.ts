@@ -2,7 +2,7 @@ import type { LatLng } from "./place-input.ts";
 
 export type NavPlace = { name: string; point: LatLng | null; venueUrl: string | null; venueLabel: string | null };
 
-export type NavLinks = {
+type NavLinks = {
   open: { google: string; apple: string; yandex: string };
   route: { google: string; apple: string; yandex: string; yandexNavi: string | null };
   coords: string | null;
@@ -10,17 +10,21 @@ export type NavLinks = {
 
 const six = (n: number) => n.toFixed(6);
 
-/** Map-app links for a place. A point wins for routes; a venue link is Google's own "open" page. */
+const isYandexUrl = (url: string) => url.startsWith("https://yandex.");
+
+/** Map-app links for a place. A point wins for routes; a venue link is the "open" page of the app it belongs to. */
 export function navLinks(place: NavPlace): NavLinks {
   const { point, venueUrl } = place;
+  const venueGoogle = venueUrl !== null && !isYandexUrl(venueUrl) ? venueUrl : null;
+  const venueYandex = venueUrl !== null && isYandexUrl(venueUrl) ? venueUrl : null;
   if (point !== null) {
     const lat = six(point.lat);
     const lng = six(point.lng);
     return {
       open: {
-        google: venueUrl ?? `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`,
+        google: venueGoogle ?? `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`,
         apple: `https://maps.apple.com/?ll=${lat},${lng}&q=${encodeURIComponent(place.name)}`,
-        yandex: `https://yandex.com.tr/maps/?pt=${lng},${lat}&z=16&l=map`,
+        yandex: venueYandex ?? `https://yandex.com.tr/maps/?pt=${lng},${lat}&z=16&l=map`,
       },
       route: {
         google: `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
@@ -35,9 +39,9 @@ export function navLinks(place: NavPlace): NavLinks {
   const yandex = `https://yandex.com.tr/maps/?text=${q}`;
   return {
     open: {
-      google: venueUrl ?? `https://www.google.com/maps/search/?api=1&query=${q}`,
+      google: venueGoogle ?? `https://www.google.com/maps/search/?api=1&query=${q}`,
       apple: `https://maps.apple.com/?q=${q}`,
-      yandex,
+      yandex: venueYandex ?? yandex,
     },
     route: {
       google: `https://www.google.com/maps/dir/?api=1&destination=${q}`,

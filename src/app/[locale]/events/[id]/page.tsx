@@ -1,6 +1,6 @@
 import { Ban, CalendarDays, MapPin, Pencil } from "lucide-react";
 import type { Metadata } from "next";
-import { getFormatter, getLocale, getTranslations } from "next-intl/server";
+import { getFormatter, getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { CancelEventDialog } from "@/components/events/cancel-event-dialog";
@@ -11,7 +11,7 @@ import { ShareEventButton } from "@/components/events/share-event-button";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getPathname, Link } from "@/i18n/navigation";
+import { Link } from "@/i18n/navigation";
 import { requirePermission } from "@/lib/auth/require-access";
 import { getEvent } from "@/lib/events/queries";
 import { shareText } from "@/lib/events/places";
@@ -62,12 +62,11 @@ async function EventContent({ params }: { params: PageProps<"/[locale]/events/[i
   const { id } = await params;
   await requirePermission("events.manage", `/events/${id}`);
 
-  const [event, t, tSides, format, locale] = await Promise.all([
+  const [event, t, tSides, format] = await Promise.all([
     getEvent(id),
     getTranslations("Events"),
     getTranslations("Admin.sides"),
     getFormatter(),
-    getLocale(),
   ]);
   if (!event) notFound();
 
@@ -138,7 +137,7 @@ async function EventContent({ params }: { params: PageProps<"/[locale]/events/[i
             {t("detail.edit")}
           </Link>
         )}
-        <ShareEventButton text={text} path={getPathname({ href: `/events/${event.id}`, locale })} />
+        <ShareEventButton text={text} />
       </div>
 
       <section data-skeleton-result="event-places" aria-labelledby="event-places" className="flex flex-col gap-3">

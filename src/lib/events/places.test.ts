@@ -13,7 +13,7 @@ test("routeSummary: start → finish for a route, the one name for a meet-up, no
   assert.equal(routeSummary([]), "");
 });
 
-test("shareText: title, date line, route (no URL: the browser adds it)", () => {
+test("shareText: title, date line, route, no event link", () => {
   const text = shareText(
     {
       title: "Ağva kahvaltı sürüşü",

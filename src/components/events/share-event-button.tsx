@@ -1,35 +1,21 @@
-"use client";
-
 import { MessageCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useSyncExternalStore } from "react";
 import { buttonVariants } from "@/components/ui/button";
 import { whatsAppShareUrl } from "@/lib/applications/contact";
-import { noSubscribe } from "@/lib/no-subscribe";
-import { cn } from "@/lib/utils";
-
-const getOrigin = () => window.location.origin;
-const getServerOrigin = () => null;
 
 /**
- * "WhatsApp'ta paylaş" (organisers, spec §6): `text` (from `shareText`) plus the event's absolute link, built from the
- * browser's origin and the localized `path`. Until hydration the origin is unknown: no target, shown disabled.
+ * "WhatsApp'ta paylaş" (organisers, spec §6): `text` comes from `shareText`. It carries no event link until the joining
+ * branch releases Events (members would meet sign-in and a 404); put the link back then (docs/follow-ups.md).
  */
-export function ShareEventButton({ text, path }: { text: string; path: string }) {
+export function ShareEventButton({ text }: { text: string }) {
   const t = useTranslations("Events.detail");
-  const origin = useSyncExternalStore(noSubscribe, getOrigin, getServerOrigin);
-  const href = origin === null ? undefined : whatsAppShareUrl(`${text}\n${origin}${path}`);
 
   return (
     <a
-      href={href}
+      href={whatsAppShareUrl(text)}
       target="_blank"
       rel="noopener noreferrer"
-      aria-disabled={href === undefined ? true : undefined}
-      className={cn(
-        buttonVariants({ variant: "outline" }),
-        "aria-disabled:pointer-events-none aria-disabled:opacity-50",
-      )}
+      className={buttonVariants({ variant: "outline" })}
     >
       <MessageCircle data-icon="inline-start" aria-hidden />
       {t("share")}
