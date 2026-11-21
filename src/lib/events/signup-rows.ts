@@ -28,6 +28,12 @@ export const CHANGE_FIELDS = [
 export type ChangeField = (typeof CHANGE_FIELDS)[number];
 
 const json: z.ZodType<Json> = z.json();
+const uuid = z.uuid();
+
+/** Whether `id` can be an event id: anything else fails the RPCs' uuid cast (22P02) instead of finding nothing. */
+export function isUuid(id: string): boolean {
+  return uuid.safeParse(id).success;
+}
 
 export type ChangeEntry = {
   id: string;

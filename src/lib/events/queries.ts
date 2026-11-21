@@ -8,6 +8,7 @@ import type { Counts, JoinRole, Signup } from "./join";
 import type { NavPlace } from "./nav-links";
 import {
   type ChangeEntry,
+  isUuid,
   parseAuthorsRow,
   parseChangeRows,
   parseCountsRows,
@@ -195,8 +196,12 @@ export async function getEvent(id: string): Promise<EventDetail | null> {
 /** The roster RPC answers an unknown event with P0002; the page treats it as not found. */
 class EventNotFoundError extends Error {}
 
-/** Counts per event (zeros included for existing events); empty input: no request. */
-export async function getEventCounts(ids: string[]): Promise<Map<string, Counts>> {
+/**
+ * Counts per event (zeros included for existing events). Ids that aren't uuids are dropped (they would fail the whole
+ * request with 22P02); nothing left: no request.
+ */
+export async function getEventCounts(eventIds: string[]): Promise<Map<string, Counts>> {
+  const ids = eventIds.filter(isUuid);
   if (ids.length === 0) return new Map();
   const supabase = await createClient();
   // One row per event: a long list of events can pass max_rows, so read in chunks (the RPC orders by event_id).

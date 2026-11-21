@@ -408,10 +408,10 @@
     "roster": {
       "heading": "Who's coming",
       "total": "{count, plural, one {# member} other {# members}}",
+      "totalWithNew": "{count, plural, one {# member} other {# members}} · +{newMembers, plural, one {# new member} other {# new members}}",
       "probation": "Probation",
       "empty": "Nobody has joined yet.",
       "guests": "+{count, plural, one {# guest} other {# guests}}",
-      "newMembers": "+{count, plural, one {# new member} other {# new members}}",
       "noContact": "No emergency contact",
       "range": "{from}–{to} of {total} members",
       "ceiling": "The list is incomplete: more than 2,000 people have joined and only the first 2,000 are shown. Please tell the admins."

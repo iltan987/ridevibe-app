@@ -28,6 +28,7 @@ import {
   getRoster,
 } from "@/lib/events/queries";
 import { shareText } from "@/lib/events/places";
+import { isUuid } from "@/lib/events/signup-rows";
 import { isUpcoming } from "@/lib/events/time";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -76,6 +77,8 @@ const SHARE_WHEN = {
 async function EventContent({ params }: { params: PageProps<"/[locale]/events/[id]">["params"] }) {
   const { id } = await params;
   const user = await requireEventsAccess(`/events/${id}`);
+  // A malformed id is no event (the counts RPC would otherwise fail on the uuid cast and show the error page).
+  if (!isUuid(id)) notFound();
   // Viewers (spec §3): organisers see everyone with flags; active members the active participants' names while the
   // event is upcoming; ön alım members counts only. Every viewer here is active or ön alım (the gate).
   const organiser = can(user.access, "events.manage");

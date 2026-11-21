@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { maxCc, parseAuthorsRow, parseChangeRows, parseCountsRows, parseRosterRows } from "./signup-rows.ts";
+import { isUuid, maxCc, parseAuthorsRow, parseChangeRows, parseCountsRows, parseRosterRows } from "./signup-rows.ts";
 
 test("roster rows keep nulls for hidden organiser fields and removed names", () => {
   const rows = parseRosterRows([
@@ -88,4 +88,11 @@ test("maxCc is the largest known cc, null without one", () => {
   assert.equal(maxCc([]), null);
   assert.equal(maxCc([null]), null);
   assert.equal(maxCc([null, 250, 650, 125]), 650);
+});
+
+test("isUuid accepts event ids and refuses what the uuid cast would reject", () => {
+  assert.equal(isUuid("5b0c1d2e-3f40-4a5b-8c6d-7e8f9a0b1c2d"), true);
+  for (const id of ["abc", "", "5b0c1d2e-3f40-4a5b-8c6d-7e8f9a0b1c2", "5b0c1d2e-3f40-4a5b-8c6d-7e8f9a0b1c2d'"]) {
+    assert.equal(isUuid(id), false, id);
+  }
 });

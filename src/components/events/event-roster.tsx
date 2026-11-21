@@ -15,7 +15,8 @@ import { slicePage } from "@/lib/pagination";
 /**
  * Who joined, as the viewer may see it (the `event_roster` RPC already decided the rows): name, Sürücü/Artçı and
  * "+N misafir" for everyone; organisers also get the "Ön alım" badge and "Acil durum kişisi yok", and `safety`
- * holders a safety card per row. Active members don't see ön alım participants: `newMembers` adds them as a count.
+ * holders a safety card per row. Active members don't see ön alım participants: `newMembers` adds them as a count
+ * beside the total ("12 üye · +2 yeni üye", on every page).
  * The total sits by the heading; more than PAGE_SIZE rows page in the browser (the page lives in component state,
  * not the URL: a section of the event page, not a list page).
  */
@@ -55,13 +56,17 @@ export function EventRoster({
         <h2 id={`${id}-heading`} className="text-lg font-semibold">
           {t("roster.heading")}
         </h2>
-        <p className="text-sm text-muted-foreground tabular-nums">{t("roster.total", { count: rows.length })}</p>
+        <p className="text-sm text-muted-foreground tabular-nums">
+          {newMembers > 0
+            ? t("roster.totalWithNew", { count: rows.length, newMembers })
+            : t("roster.total", { count: rows.length })}
+        </p>
       </div>
 
       {overCeiling && <CeilingNotice>{t("roster.ceiling")}</CeilingNotice>}
 
-      {rows.length === 0 && newMembers === 0 ? (
-        <p className="text-sm text-muted-foreground">{t("roster.empty")}</p>
+      {rows.length === 0 ? (
+        newMembers === 0 && <p className="text-sm text-muted-foreground">{t("roster.empty")}</p>
       ) : (
         <ul className="flex flex-col gap-2">
           {view.items.map((row) => {
@@ -94,11 +99,6 @@ export function EventRoster({
               </li>
             );
           })}
-          {newMembers > 0 && view.page === view.pageCount && (
-            <li className="rounded-xl border border-dashed p-3 text-sm text-muted-foreground">
-              {t("roster.newMembers", { count: newMembers })}
-            </li>
-          )}
         </ul>
       )}
 

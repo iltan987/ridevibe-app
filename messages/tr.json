@@ -408,10 +408,10 @@
     "roster": {
       "heading": "Katılanlar",
       "total": "{count} üye",
+      "totalWithNew": "{count} üye · +{newMembers} yeni üye",
       "probation": "Ön alım",
       "empty": "Henüz katılan yok.",
       "guests": "+{count} misafir",
-      "newMembers": "+{count} yeni üye",
       "noContact": "Acil durum kişisi yok",
       "range": "{from}–{to} / {total} üye",
       "ceiling": "Liste eksik: 2.000'den fazla katılan var, yalnızca ilk 2.000 kişi gösteriliyor. Lütfen yöneticilere haber ver."
