@@ -98,7 +98,11 @@ Actions, Suspense), next-intl, shadcn/ui (Base UI), Zod, `node --test`, puppetee
   `!3d!4d`, the sharer's position as origin), (c) a dropped pin `/maps/place/<name>/data=…!8m2!3d<lat>!4d<lng>…`;
   Yandex `navi/org/<slug>/<id>` redirects to `maps/org/<slug>/<id>` (no coordinates); Yandex route
   `navi?rtext=<lat,lng>~<lat,lng>&…` (lat first, destination last). Place pages and OSM Nominatim don't give the
-  venue's point reliably. Before Step 2, ask iltan for a Yandex pin link (long-press → share) and add its shape.
+  venue's point reliably. Yandex pin (long-press → share, 2026-11-21):
+  `https://yandex.com.tr/navi?whatshere%5Bpoint%5D=<lng>%2C<lat>&whatshere%5Bzoom%5D=…&ll=<lng>%2C<lat>&z=…&si=<id>`
+  — the point is `whatshere[point]`, **longitude first**; `ll` is the map view (nearly the same, never preferred); `si`
+  is a sharing id (never stored). Test with a public point in this shape (Millet Parkı `29.054398%2C41.023378`), never
+  the point from iltan's own link.
 - [ ] **Step 2: Write the failing tests** — a table of `[input, expected]`. From the spike (origins replaced, Global
   Constraints): the Starbucks place URL → `{ kind: "venue", url: "https://www.google.com/maps/place/Starbucks,+Cafera%C4%9Fa,+Muvakk%C4%B1thane+Cd.+No:9,+34710+Kad%C4%B1k%C3%B6y%2F%C4%B0stanbul/data=!4m2!3m1!1s0x14cab93c1a414691:0x31f407649c1b19e0",
   label: "Starbucks, Caferağa, Muvakkıthane Cd. No:9, 34710 Kadıköy/İstanbul" }` (query string and the trailing
