@@ -10,7 +10,17 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ## Next up (iltan asked for these; in priority order; start in a new session)
 
-- Nothing queued; pick from the lists below.
+- **Events branch 2: joining + release** (2026-11-21, iltan) — spec `docs/superpowers/specs/2026-11-20-events-design.md`
+  §5, §6, §9 item 2: sign-ups (rider/passenger, up to 3 guests), the join RPC (people/bike limits, `min_cc`, full
+  members only, closing at `starts_at`), counts, rosters per role (ön alım counts only, past events counts only),
+  safety-card links, "Katıldıklarım", emergency-contact nudge, the change log; then the release: widen the RLS gate,
+  visitor teaser (area line only), home section + "Etkinlikleri Gör", `/events` indexable + sitemap, the event link
+  back in the share text, privacy notice (one `PRIVACY_NOTICE_VERSION` bump). Branch 1 shipped 2026-11-21.
+  Before planning: iltan's feedback from reviewing branch 1 on production; restore iltan's local admin (the build
+  reset the local DB: iltan signs in with Google locally once, then set the admin role by SQL).
+- **After the branch 1 deploy (iltan)** — tick `events.manage` for the Organizatör role in `/admin/roles`; on a real
+  Android phone and iPhone check every "Konumu aç" / "Yol tarifi" app link and Yandex Navi with and without the app;
+  paste one real `maps.app.goo.gl` link on production to confirm short links resolve from Vercel.
 
 ## Open decisions (need iltan)
 
