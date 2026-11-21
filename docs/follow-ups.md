@@ -16,11 +16,15 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   safety-card links, "Katıldıklarım", emergency-contact nudge, the change log; then the release: widen the RLS gate,
   visitor teaser (area line only), home section + "Etkinlikleri Gör", `/events` indexable + sitemap, the event link
   back in the share text, privacy notice (one `PRIVACY_NOTICE_VERSION` bump). Branch 1 shipped 2026-11-21.
-  Before planning: iltan's feedback from reviewing branch 1 on production; restore iltan's local admin (the build
-  reset the local DB: iltan signs in with Google locally once, then set the admin role by SQL).
-- **After the branch 1 deploy (iltan)** — tick `events.manage` for the Organizatör role in `/admin/roles`; on a real
-  Android phone and iPhone check every "Konumu aç" / "Yol tarifi" app link and Yandex Navi with and without the app;
-  paste one real `maps.app.goo.gl` link on production to confirm short links resolve from Vercel.
+  iltan reviews the whole Events feature once, at the end (2026-11-21): so the joining work ships first **behind the
+  gate**, iltan does the full check below on production, and only then does the release step open the gate.
+  Restore iltan's local admin before any local browser review (the build reset the local DB: iltan signs in with
+  Google locally once, then set the admin role by SQL).
+- **Full Events check on production (iltan, before the release step)** — branch 1 feedback (the UI / form / card
+  items marked "Deferred: … decide with iltan" below); tick `events.manage` for the Organizatör role in
+  `/admin/roles`; on a real Android phone and iPhone check every "Konumu aç" / "Yol tarifi" app link and Yandex Navi
+  with and without the app; paste one real `maps.app.goo.gl` link on production to confirm short links resolve from
+  Vercel; try joining (rider/passenger, guests, limits) as admin/organiser while the gate is still closed.
 
 ## Open decisions (need iltan)
 

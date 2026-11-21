@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: 7a8aaec5-6bb8-4c02-8eb0-868d47f41274
-  modified: 2026-11-21T18:30:41.292Z
+  modified: 2026-11-21T19:52:52.150Z
 ---
 
 When a branch is finished and fully verified (task reviews, final review, security review, pgTAP, E2E), iltan may
@@ -19,3 +19,7 @@ ask for changes as follow-ups.
 production review, run the full rollout (merge `--no-ff` → `pnpm db:push --yes` → push `main` → wait for Ready →
 post-push checks) and queue anything iltan must do by hand in `docs/follow-ups.md` "Next up". Gated features
 (organisers-only) make this low risk.
+
+For a multi-branch feature iltan may batch all checks to the end ("i want to check all together at the end of events
+feature", 2026-11-21). Then keep the gate closed until that check: ship the work behind the gate, iltan reviews on
+production, and the step that exposes it to members (opening a gate, release) comes last, after the review.
