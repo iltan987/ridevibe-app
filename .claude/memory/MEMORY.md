@@ -12,3 +12,4 @@
 - [No lawyer](project-no-lawyer.md) — KVKK "lawyer questions" are Claude's to research and decide; no lawyer review
 - [Turkish copy](feedback-turkish-copy.md) — native connotations (not "kahvede", "sohbet"); skip obvious/money details
 - [Ignore settings.json](feedback-ignore-settings-json.md) — never commit/ask about local .claude/settings.json changes until iltan says otherwise
+- [Review in production](feedback-review-in-production.md) — iltan may review finished branches on production after merge
