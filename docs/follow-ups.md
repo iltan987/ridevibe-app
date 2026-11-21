@@ -377,6 +377,12 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   detection); (b) map-app names are the official Turkish ones ("Google Haritalar", "Apple Haritalar", "Yandex
   Haritalar", "Yandex Navigasyon"; option: "Google Maps" as people say it). `src/components/events/place-actions.tsx`.
   Deferred: check the links on an Android phone and an iPhone and decide with iltan.
+- **Event form details to settle** (2026-11-21, events organiser form) — (a) no warning when leaving with unsaved
+  changes; (b) two organisers editing at once: the later save wins silently (no `updated_at` check); (c) an abandoned
+  edit draft is kept by Next (hidden route) and shown on a later visit even if someone else changed the event; (d)
+  `datetime-local` shows the device's own format (12-hour on an English-region phone); (e) default kind is "Sürüş"
+  and the side defaults to "İki yaka / şehir dışı". `src/components/events/event-form.tsx`. Deferred: try the form
+  with organisers on real phones first; (b) matters only once several organisers edit the same events.
 - **Pager accessibility** (2026-11-13, list UX final review) — pressing "›" to reach the last page swaps the focused
   button for a `span`, so focus falls to `<body>`; after a page change the view scrolls to the list top but focus stays
   on the pager; the disabled end `<span aria-label>` has no role (ARIA forbids `aria-label` on generic elements). Fix:
@@ -463,6 +469,11 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   review"; harmless).
 
 ### Loading states
+- **Event form skeletons mirror a ride** (2026-11-21, events organiser form) — `/events/new` matches its default
+  (ride) form; `/events/[id]/edit` mirrors a ride whose places have one pin each. Editing a meet-up, a ride with stops
+  or a place with a venue row makes the page longer than the skeleton (layout shift below the places). Measured in
+  Turkish only (English hints wrap differently). `src/components/events/event-form-skeleton.tsx`. Deferred: rides
+  with pins are the common case.
 - **Empty admin tab: the skeleton's range line shifts the content** (2026-11-13, list UX final review) — `ListSkeleton`
   reserves the pager's range line, but an empty tab renders no pager (only the "empty" text), so the page ends up
   shorter by the range line and its gap (16 + 24px) (`src/components/admin/list-skeleton.tsx`,

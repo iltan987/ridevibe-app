@@ -118,3 +118,14 @@
   push a `"required"` issue (`ctx.issues.push`) for the field; the branch is unreachable for valid input but typed
   honestly (`src/lib/applications/schema.ts`).
 - **Source:** zod source; Task 3.
+
+### A create form left with `router.push` stays alive: reset it once it is hidden (2026-11-21)
+- **Symptom (risk):** after "Oluştur" on `/events/new` and the push to the new event, browser back showed the filled
+  form again; one more tap would create a duplicate event.
+- **Cause:** with Cache Components Next keeps up to 3 left routes in a hidden React `<Activity>` and restores their
+  state and DOM on back/forward (`node_modules/next/dist/docs/01-app/02-guides/preserving-ui-state.md`). Resetting
+  state in the submit handler instead flashes the empty form while the navigation runs.
+- **Do:** set a `saved` ref on success and reset in a `useLayoutEffect` cleanup (runs when Activity hides the page):
+  bump a `key` on the inner form (`EventForm` in `src/components/events/event-form.tsx`). Keep the submit disabled
+  from success until the page is hidden (no second request from a double tap). An abandoned draft stays, as intended.
+- **Source:** Next guide above; verified in the browser (back after create: empty title).

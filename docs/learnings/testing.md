@@ -301,7 +301,10 @@
   status 200, `text/x-component` and a string only that render holds. Prove an absence check can fail with a positive
   control (an allowed user's fetch must contain the names). Match member data by key (`district":"Beşiktaş`), not by
   the bare word (`scripts/e2e/probation-e2e.mjs`).
-- **Source:** found while fixing the review of the probation E2E.
+- **Also (2026-11-21):** `<NextIntlClientProvider>` in `[locale]/layout.tsx` ships *every* message to the client, so a
+  gated page's labels ("Harita linki, iğne veya koordinat") sit in the HTML of a 404 too: check "the form isn't shown"
+  with `document.body.innerText`, not `page.content()`.
+- **Source:** found while fixing the review of the probation E2E; the messages note by testing (events Task 7).
 
 ### Per-frame layout logs see half-parsed HTML on throttled loads (2026-11-19)
 - **Symptom:** `apply-nav-e2e.mjs` "second load, one layout" failed every run for phone TR fixtures that show
