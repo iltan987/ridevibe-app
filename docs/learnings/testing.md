@@ -337,3 +337,15 @@
   such ids are fine: they never pass through Zod.)
 - **Do:** give browser fixtures a valid version/variant: `00000000-0000-4000-8000-0000000000e1`.
 - **Source:** found by testing (events Task 6, event page).
+
+### E2E: pasting into a field; reading CSS-uppercased headings (2026-11-21)
+- **Need:** test the event form's paste path (`onPaste` reads the clipboard text and resolves it at once) without a
+  real clipboard; check that a page is the 404 page.
+- **Do:** dispatch a real paste event inside the page: `const d = new DataTransfer(); d.setData("text/plain", text);
+  el.dispatchEvent(new ClipboardEvent("paste", { clipboardData: d, bubbles: true, cancelable: true }))` after
+  `el.focus()`. React's `onPaste` receives it and `clipboardData.getData("text")` returns the text (headless Chrome;
+  `paste()` in `scripts/e2e/events-e2e.mjs`). Typed text plus `Enter` covers the other read path.
+- **Gotcha:** `innerText` applies `text-transform`: the 404 heading (`heading` utility, uppercase) reads "SAYFA
+  BULUNAMADI", so `innerText.includes("Sayfa bulunamadı")` fails on a real 404. Compare the visible `h1`'s
+  `textContent`; for "the form isn't shown" keep using `innerText` (messages ship in every page, see above).
+- **Source:** found while writing `scripts/e2e/events-e2e.mjs`.

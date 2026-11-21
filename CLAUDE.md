@@ -91,7 +91,7 @@ pnpm db:backup                # encrypted production backup alone (--local: the 
 pnpm exec supabase migration up   # apply new migrations locally, keeping data (db:reset wipes auth users; after
                                   # an iteration that reset, restore iltan's local admin before browser review)
 kill $(ss -ltnp | grep ':3123 ' | grep -oP 'pid=\K[0-9]+')   # stop a local server; never `pkill -f` (kills own shell)
-PUPPETEER_DIR=~/e2e-tools node scripts/e2e/{nav,members,safety,header,apply,apply-nav,install,cross-tab,lists,deletion}-e2e.mjs   # browser E2E vs `pnpm start -p 3123` (setup: scripts/e2e/README.md)
+PUPPETEER_DIR=~/e2e-tools node scripts/e2e/{nav,members,safety,header,apply,apply-nav,install,cross-tab,lists,deletion,events}-e2e.mjs   # browser E2E vs `pnpm start -p 3123` (setup: scripts/e2e/README.md)
 node scripts/e2e/seo-check.mjs   # SEO head/robots/sitemap/JSON-LD check, no puppeteer; `BASE=https://ridevibe.com.tr` for production
 # signed-in parts need fixture users (admin@/member@/pending-noapp@test.local) that `db:reset` wipes: recreate per README
 # headless hides scrollbars (launch({ scrollbars: true }) keeps them); Next keeps the previous route hidden in the DOM: select visible elements
@@ -154,6 +154,11 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   on non-deleting others; notes about admin-role holders: admins only; delete: admins only, never about oneself;
   nobody reads notes about themselves. Counts via the security-invoker view `member_note_counts`.
   KVKK art. 11 request: content + date by hand, never the author's name (PLAN.md "Access requests and staff notes").
+- **Events** (`public.events` + `event_places`, `supabase/schemas/40_events.sql`, permission `events.manage`): release
+  gate until the joining branch: RLS select for `events.manage` only (everyone else: "Çok yakında" on `/events`, 404
+  on the rest). Writes only via `save_event` / `cancel_event` / `delete_event`. A place = point and/or venue link
+  (Google place / Yandex org); a route link keeps only its destination (the origin is the sharer's position):
+  pasted links are never stored or logged (`src/lib/events/place-input.ts`, `resolve-place.ts`).
 - Status: `pending` / `probation` ("Ön alım") / `active` / `inactive` / `deleting`. Approval and staff manual
   activation start in `probation`; staff promote via `set_member_status` ("Tam üye yap"); the DB refuses
   pending → active. `profiles.status_changed_at` records the last change (moves into/out of `deleting` keep it).

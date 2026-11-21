@@ -115,21 +115,33 @@ export async function listUpcomingEvents(): Promise<{ events: EventSummary[]; ov
   return { events: uniqueById(items).map(toSummary), overCeiling };
 }
 
-/** One page (1-based, PAGE_SIZE rows) of past events, newest first, with their total. */
+/**
+ * One page (1-based, PAGE_SIZE rows) of past events, newest first, with their total. The total is a separate count
+ * request: with `count: "exact"` on the page query, PostgREST answers an offset past the end (`?page=99`) with 416
+ * PGRST103 instead of an empty page, and the page could not redirect to the last one.
+ */
 export async function listPastEvents(page: number): Promise<{ events: EventSummary[]; total: number }> {
   const supabase = await createClient();
   const { now, cutoff } = boundaries();
   const from = (page - 1) * PAGE_SIZE;
-  const { data, error, count } = await supabase
-    .from("events")
-    .select(SUMMARY_COLUMNS, { count: "exact" })
-    .lt("starts_at", cutoff)
-    .or(`ends_at.is.null,ends_at.lt.${now}`)
-    .order("starts_at", { ascending: false })
-    .order("id", { ascending: false })
-    .range(from, from + PAGE_SIZE - 1);
-  if (error) throw new Error(`listPastEvents failed: ${error.code}`);
-  return { events: data.map(toSummary), total: count ?? 0 };
+  const [rows, total] = await Promise.all([
+    supabase
+      .from("events")
+      .select(SUMMARY_COLUMNS)
+      .lt("starts_at", cutoff)
+      .or(`ends_at.is.null,ends_at.lt.${now}`)
+      .order("starts_at", { ascending: false })
+      .order("id", { ascending: false })
+      .range(from, from + PAGE_SIZE - 1),
+    supabase
+      .from("events")
+      .select("id", { count: "exact", head: true })
+      .lt("starts_at", cutoff)
+      .or(`ends_at.is.null,ends_at.lt.${now}`),
+  ]);
+  if (rows.error) throw new Error(`listPastEvents failed: ${rows.error.code}`);
+  if (total.error) throw new Error(`listPastEvents count failed: ${total.error.code}`);
+  return { events: rows.data.map(toSummary), total: total.count ?? 0 };
 }
 
 const uuid = z.uuid();
