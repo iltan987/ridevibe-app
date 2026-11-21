@@ -76,6 +76,7 @@ async function EventContent({ params }: { params: PageProps<"/[locale]/events/[i
   const text = shareText(event, {
     when: format.dateTime(start, SHARE_WHEN),
     cancelledTitle: (title) => t("detail.shareCancelled", { title }),
+    changeLead: null,
   });
   const single = event.places.length === 1;
   // A meet-up's one place needs no role: the section heading says "Buluşma yeri".
