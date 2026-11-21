@@ -106,6 +106,36 @@ const parseCases: [string, string, unknown][] = [
     "https://yandex.com.tr/maps/?whatshere%5Bpoint%5D=29.0154%2C41.0255",
     point(41.0255, 29.0154),
   ],
+  ["yandex pt with style", "https://yandex.com.tr/maps/?pt=29.0154,41.0255,pm2rdm", point(41.0255, 29.0154)],
+  [
+    "yandex pt with several points",
+    "https://yandex.com.tr/maps/?pt=29.0154,41.0255,pm2rdm~28.9,41.1,pm2rdm",
+    point(41.0255, 29.0154),
+  ],
+  [
+    "google route with empty origin, coordinate destination",
+    "https://www.google.com/maps/dir//41.03,29.02/",
+    point(41.03, 29.02),
+  ],
+  [
+    "google route with empty origin, named destination",
+    "https://www.google.com/maps/dir//Some+Place/data=!4m2!3d41.0322013!4d29.0229043",
+    point(41.0322013, 29.0229043),
+  ],
+  [
+    "google venue URL over 500 characters",
+    `https://www.google.com/maps/place/${"a".repeat(500)}/data=!4m2!3m1!1s${STARBUCKS_ID}`,
+    null,
+  ],
+  [
+    "google venue label over 200 characters: label null, venue kept",
+    `https://www.google.com/maps/place/${"a".repeat(201)}/data=!4m2!3m1!1s${STARBUCKS_ID}`,
+    {
+      kind: "venue",
+      url: `https://www.google.com/maps/place/${"a".repeat(201)}/data=!4m2!3m1!1s${STARBUCKS_ID}`,
+      label: null,
+    },
+  ],
   ["share text around a link", `Starbucks\nhttps://maps.apple.com/?ll=41.0255,29.0154`, point(41.0255, 29.0154)],
   ["latitude out of range", "95, 29", null],
   ["longitude out of range", "41, 190", null],

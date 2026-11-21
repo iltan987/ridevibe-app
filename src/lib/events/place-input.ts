@@ -10,6 +10,9 @@ const GOOGLE_HOSTS = new Set(["www.google.com", "www.google.com.tr", "google.com
 const YANDEX_HOSTS = new Set(["yandex.com.tr", "yandex.com", "yandex.ru"]);
 const APPLE_HOSTS = new Set(["maps.apple.com", "maps.apple"]);
 
+const MAX_VENUE_URL = 500;
+const MAX_LABEL = 200;
+
 const NUMBER = String.raw`-?\d+(?:\.\d+)?`;
 const PAIR = new RegExp(String.raw`^\s*(${NUMBER})\s*,\s*(${NUMBER})\s*$`);
 const DATA_POINT = new RegExp(String.raw`!3d(${NUMBER})!4d(${NUMBER})`, "g");
@@ -57,7 +60,7 @@ function safeDecode(text: string): string | null {
   }
 }
 
-function isGoogleMapsPath(path: string): boolean {
+function isMapsPath(path: string): boolean {
   return path === "/maps" || path.startsWith("/maps/");
 }
 
@@ -67,9 +70,9 @@ export function isAllowedMapUrl(url: URL): boolean {
   const path = url.pathname;
   if (host === "maps.app.goo.gl" || host === "maps.google.com") return true;
   if (host === "goo.gl") return path.startsWith("/maps/");
-  if (GOOGLE_HOSTS.has(host)) return isGoogleMapsPath(path);
+  if (GOOGLE_HOSTS.has(host)) return isMapsPath(path);
   if (YANDEX_HOSTS.has(host)) {
-    return isGoogleMapsPath(path) || path === "/navi" || path.startsWith("/navi/");
+    return isMapsPath(path) || path === "/navi" || path.startsWith("/navi/");
   }
   return APPLE_HOSTS.has(host);
 }
@@ -90,10 +93,12 @@ function parseGoogle(url: URL): ParsedPlace | null {
     // /maps/dir/<origin>/<destination>/…: only the destination (last !3d!4d, else a coordinate segment after the origin).
     const last = dataPoints(path).at(-1);
     if (last !== undefined) return { kind: "point", point: last };
+    // The origin may be empty (/maps/dir//<destination>/): count it, drop only trailing empties.
     const segments = path
       .slice("/maps/dir/".length)
       .split("/")
-      .filter((s) => s !== "" && !s.startsWith("@") && !s.startsWith("data="));
+      .filter((s) => !s.startsWith("@") && !s.startsWith("data="));
+    while (segments.at(-1) === "") segments.pop();
     const destination = segments.length >= 2 ? parsePair(safeDecode(segments.at(-1) ?? "")) : null;
     if (destination !== null) return { kind: "point", point: destination };
     const query = firstPair(url, ["destination"]);
@@ -111,8 +116,11 @@ function parseGoogle(url: URL): ParsedPlace | null {
   const id = GOOGLE_FEATURE_ID.exec(path.slice(dataStart));
   if (id === null) return null;
   const data = path.slice(dataStart + 1, dataStart + id.index + id[0].length);
-  const label = safeDecode(name.replaceAll("+", " "))?.trim() || null;
-  return { kind: "venue", url: `https://www.google.com/maps/place/${name}/${data}`, label };
+  const venueUrl = `https://www.google.com/maps/place/${name}/${data}`;
+  if (venueUrl.length > MAX_VENUE_URL) return null;
+  const decoded = safeDecode(name.replaceAll("+", " "))?.trim() ?? "";
+  const label = decoded === "" || decoded.length > MAX_LABEL ? null : decoded;
+  return { kind: "venue", url: venueUrl, label };
 }
 
 function parseYandex(url: URL): ParsedPlace | null {
@@ -121,7 +129,9 @@ function parseYandex(url: URL): ParsedPlace | null {
     const destination = parsePair(rtext.split("~").at(-1) ?? "");
     return destination === null ? null : { kind: "point", point: destination };
   }
-  const pin = firstPair(url, ["whatshere[point]", "pt"], true);
+  // pt=<lng>,<lat>[,<style>][~<more points>]: the first point counts.
+  const pt = url.searchParams.get("pt")?.split("~")[0]?.split(",").slice(0, 2).join(",") ?? null;
+  const pin = firstPair(url, ["whatshere[point]"], true) ?? parsePair(pt, true);
   if (pin !== null) return { kind: "point", point: pin };
   const org = YANDEX_ORG.exec(url.pathname);
   if (org !== null) {
