@@ -9,7 +9,7 @@ organisers until the joining branch releases Events to everyone.
 **Architecture:** Two tables (`public.events`, `public.event_places`) readable only by `events.manage` holders (the
 release gate, enforced by RLS) and written only through three security-definer RPCs (`save_event`, `cancel_event`,
 `delete_event`) so an event and its places change atomically and the place rules (meet-up: one place, ride: start +
-stops + finish) hold. Pure TS modules parse pasted map links, build the navigation URLs, convert Istanbul wall time and
+stops + finish) hold. Pure TS modules read points and venue links from pasted map links (a route link gives only its destination), build the navigation URLs, convert Istanbul wall time and
 validate the form; a server action resolves short links through an allow-list. Pages: `/events` (upcoming, chips in the
 browser), `/events/past` (server-paged), `/events/[id]`, `/events/new`, `/events/[id]/edit`.
 
@@ -39,12 +39,21 @@ Actions, Suspense), next-intl, shadcn/ui (Base UI), Zod, `node --test`, puppetee
   description ≤ 2,000 trimmed or null; place name 1–80 trimmed; lat −90…90, lng −180…180 (stored `numeric(9,6)`);
   `limit_people`, `limit_bikes` 1–500 or null; `min_cc` 50–3000 or null; `cancel_reason` ≤ 200 trimmed or null;
   `ends_at > starts_at` when set; ride places 2–12 (start, ≤ 10 stops, finish), meet-up exactly 1.
-- Navigation URLs (verify on a phone in review; spec §4): Google open `https://www.google.com/maps/search/?api=1&query={lat},{lng}`,
-  route `https://www.google.com/maps/dir/?api=1&destination={lat},{lng}`; Apple open
-  `https://maps.apple.com/?ll={lat},{lng}&q={name}`, route `https://maps.apple.com/?daddr={lat},{lng}`; Yandex open
-  `https://yandex.com.tr/maps/?pt={lng},{lat}&z=16&l=map`, route `https://yandex.com.tr/maps/?rtext=~{lat},{lng}&rtt=auto`;
-  Yandex Navi (route only) `yandexnavi://build_route_on_map?lat_to={lat}&lon_to={lng}`. Coordinates printed with 6
-  decimals.
+- **A place = a point and/or a venue link, at least one** (spec §4): point = lat + lng (both or neither); venue =
+  a cleaned place URL (≤ 500 chars, `https://www.google.com/maps/place/…` or `https://yandex.com.tr/maps/org/<slug>/<id>/`,
+  query string removed) + an optional label (≤ 200, the "name, address" text from a Google place path). A pasted
+  **route** link yields only its destination point; no pasted link or origin is ever stored or logged.
+- Navigation URLs (verify on a phone in review; spec §4). With a point: Google open
+  `https://www.google.com/maps/search/?api=1&query={lat},{lng}` (or the venue URL when there is one), route
+  `https://www.google.com/maps/dir/?api=1&destination={lat},{lng}`; Apple open `https://maps.apple.com/?ll={lat},{lng}&q={name}`,
+  route `https://maps.apple.com/?daddr={lat},{lng}`; Yandex open `https://yandex.com.tr/maps/?pt={lng},{lat}&z=16&l=map`,
+  route `https://yandex.com.tr/maps/?rtext=~{lat},{lng}&rtt=auto`; Yandex Navi (route only)
+  `yandexnavi://build_route_on_map?lat_to={lat}&lon_to={lng}`. Venue only (`q` = label ?? place name, URL-encoded):
+  Google open = the venue URL, route `https://www.google.com/maps/dir/?api=1&destination={q}`; Apple open
+  `https://maps.apple.com/?q={q}`, route `https://maps.apple.com/?daddr={q}`; Yandex open and route
+  `https://yandex.com.tr/maps/?text={q}`; no Yandex Navi. Coordinates printed with 6 decimals.
+- Test fixtures use public venues only (Starbucks Caferağa, İBB Paşalimanı Sosyal Tesisi, Millet Parkı); in route
+  links the start is replaced by Kız Kulesi (`41.021111,29.004167`) — never the real origin from iltan's links.
 - WhatsApp: `whatsAppUrl()` is for a phone number; group sharing uses `https://api.whatsapp.com/send?text=…` (no
   phone) — add `whatsAppShareUrl(text)` next to it, never `wa.me`. Share texts hold no personal data (no roster).
 - Copy: UI "sen"; Turkish first and native; no CSS `uppercase` on Turkish; every key in `messages/tr.json` and
@@ -60,14 +69,15 @@ Actions, Suspense), next-intl, shadcn/ui (Base UI), Zod, `node --test`, puppetee
    `http://169.254.169.254/`, a redirect from an allowed host to a disallowed one, or a redirect loop must be refused
    without fetching the disallowed URL. Pinned in Task 1 (`isAllowedMapUrl` cases) and Task 4 (resolver with an
    injected fetch).
-2. **Yandex's longitude-first order**: `pt=29.0154,41.0255` must give lat 41.0255, lng 29.0154 (a swapped point lands
-   in Somalia). Pinned in Task 1.
-3. **Istanbul wall time**: "2026-11-22T08:30" must store `2026-11-22T05:30:00Z` regardless of the server's own time
+2. **The sharer's location in a route link**: a Google `/maps/dir/<origin>/<venue>/…!3d…!4d…` or Yandex
+   `rtext=<origin>~<destination>` link must yield the destination, and the origin must appear nowhere (result, DB,
+   logs). Pinned in Task 1 (result has only the destination) and Task 8 (DB holds no origin value).
+3. **Yandex's longitude-first order** in `pt=` / `ll=` (but latitude-first in `rtext=`): `pt=29.0154,41.0255` gives
+   lat 41.0255 (a swapped point lands in Somalia). Pinned in Task 1.
+4. **Istanbul wall time**: "2026-11-22T08:30" must store `2026-11-22T05:30:00Z` regardless of the server's own time
    zone (Vercel runs UTC, iltan's WSL may not). Pinned in Task 3 (`istanbulToIso`, `isoToIstanbul` round trip).
-4. **A non-organiser reading events through the API during the gate** (active member, ön alım member holding an
+5. **A non-organiser reading events through the API during the gate** (active member, ön alım member holding an
    organiser role, anon) gets no rows and can't call the RPCs. Pinned in Task 2's pgTAP.
-5. **Editing a ride into a meet-up or reordering stops** replaces the places atomically: never a ride with one place
-   or a meet-up with leftovers. Pinned in Task 2's pgTAP.
 
 ---
 
@@ -78,15 +88,26 @@ Actions, Suspense), next-intl, shadcn/ui (Base UI), Zod, `node --test`, puppetee
 - Modify: `docs/learnings/` (new entry in a fitting file, or `domain.md`) — formats found
 
 **Interfaces:**
-- Produces: `type LatLng = { lat: number; lng: number }`; `parsePlaceInput(text: string): LatLng | null` (no network);
-  `isAllowedMapUrl(url: URL): boolean`; `isShortMapUrl(url: URL): boolean` (needs a redirect to learn the point).
+- Produces: `type LatLng = { lat: number; lng: number }`; `type ParsedPlace = { kind: "point"; point: LatLng } |
+  { kind: "venue"; url: string; label: string | null }`; `parsePlaceInput(text: string): ParsedPlace | null` (no
+  network); `isAllowedMapUrl(url: URL): boolean`; `isShortMapUrl(url: URL): boolean` (needs a redirect first).
 
-- [ ] **Step 1: Spike.** With real links iltan provides (a Google Maps place shared from the phone app =
-  `maps.app.goo.gl/…`, a dropped Google pin, a Google desktop URL, a Yandex Maps share link, an Apple Maps share
-  link), follow each with `curl -sI` (only those hosts), note the final URL shapes and where the coordinates sit.
-  Write the learnings entry (formats, which value is the place vs. the viewport, Yandex lng-first).
-- [ ] **Step 2: Write the failing tests** — a table of `[input, expected]` built from the spike's real URLs plus:
-  `"41.0255, 29.0154"` and `"41.0255,29.0154"` → `{ lat: 41.0255, lng: 29.0154 }`; Google `…/@41.01,28.97,17z/data=…!3d41.0255!4d29.0154`
+- [ ] **Step 1: Spike (done 2026-11-21, findings in spec §4)** — write the learnings entry from it: Google short links
+  (`maps.app.goo.gl/…?g_st=ac`) redirect once to (a) a place `/maps/place/<name, address>/data=!4m2!3m1!1s<id>…` with
+  **no coordinates**, (b) a route `/maps/dir/<origin lat,lng>/<name>/data=…!3d<lat>!4d<lng>…` (destination in
+  `!3d!4d`, the sharer's position as origin), (c) a dropped pin `/maps/place/<name>/data=…!8m2!3d<lat>!4d<lng>…`;
+  Yandex `navi/org/<slug>/<id>` redirects to `maps/org/<slug>/<id>` (no coordinates); Yandex route
+  `navi?rtext=<lat,lng>~<lat,lng>&…` (lat first, destination last). Place pages and OSM Nominatim don't give the
+  venue's point reliably. Before Step 2, ask iltan for a Yandex pin link (long-press → share) and add its shape.
+- [ ] **Step 2: Write the failing tests** — a table of `[input, expected]`. From the spike (origins replaced, Global
+  Constraints): the Starbucks place URL → `{ kind: "venue", url: "https://www.google.com/maps/place/Starbucks,+Cafera%C4%9Fa,+Muvakk%C4%B1thane+Cd.+No:9,+34710+Kad%C4%B1k%C3%B6y%2F%C4%B0stanbul/data=!4m2!3m1!1s0x14cab93c1a414691:0x31f407649c1b19e0",
+  label: "Starbucks, Caferağa, Muvakkıthane Cd. No:9, 34710 Kadıköy/İstanbul" }` (query string and the trailing
+  `!18m1!1e1` view flags dropped); the Paşalimanı route URL `…/maps/dir/41.021111,29.004167/%C4%B0BB+Pa%C5%9Faliman%C4%B1+Sosyal+Tesisi/data=…!3d41.0322013!4d29.0229043…`
+  → `{ kind: "point", point: { lat: 41.0322013, lng: 29.0229043 } }` (never 41.021111); the Millet Parkı pin
+  (`…!8m2!3d41.0233784!4d29.054398499999998…`) → that point; Yandex `https://yandex.com.tr/navi/org/starbucks/1317996799?si=x`
+  → venue `https://yandex.com.tr/maps/org/starbucks/1317996799/`, label null; Yandex route
+  `…navi?rtext=41.021111%2C29.004167~40.990536%2C29.023418&rtt=auto` → point 40.990536 / 29.023418. Plus:
+  `"41.0255, 29.0154"` and `"41.0255,29.0154"` → point; Google `…/@41.01,28.97,17z/data=…!3d41.0255!4d29.0154`
   → the `!3d/!4d` pair (the place, not the `@` viewport); Google `?q=41.0255,29.0154`, `query=`, `destination=`, `ll=`;
   Apple `?ll=41.0255,29.0154` and `coordinate=`; Yandex `?pt=29.0154,41.0255`, `ll=29.0154,41.0255`,
   `whatshere%5Bpoint%5D=29.0154%2C41.0255` → lat 41.0255 / lng 29.0154; out of range (`"95, 29"`), plain words, an
@@ -97,10 +118,11 @@ Actions, Suspense), next-intl, shadcn/ui (Base UI), Zod, `node --test`, puppetee
   (`https://x@maps.apple.com`), non-default ports. `isShortMapUrl`: true for `maps.app.goo.gl/*`, `goo.gl/maps/*`,
   `yandex.*/maps/-/*`, `maps.apple/p/*`.
 - [ ] **Step 3: Run `node --test src/lib/events/place-input.test.ts`** — expected FAIL (module not found).
-- [ ] **Step 4: Implement** in `place-input.ts` (dependency-free; regexes over the decoded URL/text; first match in
-  the order: plain pair, `!3d!4d`, query params by host, `@` pair last).
+- [ ] **Step 4: Implement** in `place-input.ts` (dependency-free; regexes over the decoded URL/text; order: plain
+  pair; route links (`/maps/dir/`, `rtext=`) → destination only; `!3d!4d`; query params by host; Google
+  `/maps/place/` or Yandex `/maps/org/` without a point → venue; `@` pair never used alone (it is the viewport)).
 - [ ] **Step 5: Run the test** — expected PASS. Full check line.
-- [ ] **Step 6: Commit** — `feat(events): parse coordinates from pasted map links`.
+- [ ] **Step 6: Commit** — `feat(events): read points and venues from pasted map links`.
 
 ### Task 2: `events.manage`, tables, gate and write RPCs
 
@@ -117,11 +139,15 @@ Actions, Suspense), next-intl, shadcn/ui (Base UI), Zod, `node --test`, puppetee
   `public.events (id, kind, title, side istanbul_side null, area, starts_at, ends_at, description, limit_people,
   limit_bikes, min_cc, full_members_only bool default false, status default 'scheduled', cancel_reason, cancelled_at,
   created_by → profiles on delete set null, updated_by → profiles on delete set null, created_at, updated_at)` and
-  `public.event_places (id, event_id → events on delete cascade, position smallint, name, lat numeric(9,6), lng
-  numeric(9,6), unique (event_id, position))`; RPCs:
+  `public.event_places (id, event_id → events on delete cascade, position smallint, name, lat numeric(9,6) null, lng
+  numeric(9,6) null, venue_url text null, venue_label text null, unique (event_id, position))` with checks
+  `(lat is null) = (lng is null)`, `lat is not null or venue_url is not null`, `venue_url ~
+  '^https://(www\.google\.com/maps/place/|yandex\.com\.tr/maps/org/)'` and no `?` in it, lengths per Global
+  Constraints; RPCs:
   - `public.save_event(p_id uuid, p_event jsonb, p_places jsonb) returns uuid` — `p_id` null = create. `p_event` keys:
     `kind, title, side, area, starts_at, ends_at, description, limit_people, limit_bikes, min_cc,
-    full_members_only`; `p_places`: array of `{ name, lat, lng }` in route order. Replaces all places.
+    full_members_only`; `p_places`: array of `{ name, lat, lng, venue_url, venue_label }` (nulls allowed per the
+    checks) in route order. Replaces all places.
   - `public.cancel_event(p_id uuid, p_reason text) returns void`
   - `public.delete_event(p_id uuid) returns void` (branch 2 adds "only without sign-ups").
   - Errors: `42501` without `events.manage`; `P0002` unknown id; `22023` invalid input (place count for the kind,
@@ -140,7 +166,10 @@ select is((select count(*)::int from public.events where id in ('…0751','…07
 select isnt(public.save_event(null, '{"kind":"meetup","title":"Moda akşam","side":"asian","starts_at":"2026-12-01T17:00:00Z"}', '[{"name":"Moda Sahili","lat":40.98,"lng":29.02}]'), null, 'organiser creates a meet-up');
 -- must fail (22023): meet-up with 2 places; ride with 1 place; ride without area; meet-up with area; 13 places
 select throws_ok($$ select public.save_event(null, '{"kind":"ride","title":"Ağva","starts_at":"2026-12-06T05:30:00Z"}', '[{"name":"Üsküdar","lat":41.02,"lng":29.01}]') $$, '22023', null, 'ride needs start and finish');
--- must fail (23514): ends_at before starts_at; lat 95; limit_people 0; min_cc 40; title of 81 chars
+-- must fail (23514): ends_at before starts_at; lat 95; limit_people 0; min_cc 40; title of 81 chars;
+--   a place with neither point nor venue; lat without lng; venue_url 'https://evil.com/maps/place/x';
+--   a venue_url with a query string ('…/maps/place/x?g_st=ac')
+-- allowed: a venue-only place (Google place URL, label), and a place with both a point and a venue
 -- must fail (42501): 0743, 0744 (probation with the role), 0745 (deleting) call save/cancel/delete
 -- edit as 0742: ride 0751 → meet-up with one place: exactly 1 row left in event_places, positions 0..n-1 after a reorder
 -- updated_by becomes the editor, updated_at moves
@@ -171,27 +200,32 @@ select throws_ok($$ select public.save_event(null, '{"kind":"ride","title":"Ağv
 - Modify: `src/lib/applications/contact.ts` (+ test): `whatsAppShareUrl`
 
 **Interfaces:**
-- Consumes: `LatLng` (Task 1).
+- Consumes: `LatLng`, `ParsedPlace` (Task 1).
 - Produces:
   - `istanbulToIso(local: string): string | null` ("YYYY-MM-DDTHH:mm" → ISO UTC, null when malformed);
     `isoToIstanbul(iso: string): string` (inverse, for the edit form).
   - `eventInputSchema` (Zod) over `{ kind, title, side, area, startsAt, endsAt, description, limitPeople,
-    limitBikes, minCc, fullMembersOnly, places: { name, lat, lng }[] }` with the Global Constraints values and the
+    limitBikes, minCc, fullMembersOnly, places: { name, point: LatLng | null, venueUrl: string | null, venueLabel:
+    string | null }[] }` (each place: a point or a venue URL, at least one) with the Global Constraints values and the
     kind rules (meet-up: 1 place, no area; ride: 2–12 places, area required); `startsAt`/`endsAt` are Istanbul wall
     times "YYYY-MM-DDTHH:mm" (what `datetime-local` sends) and must convert with `istanbulToIso`;
     `type EventInput = z.infer<…>`; `toRpcArgs(input: EventInput): { p_event: Json; p_places: Json }` (converts the
     times to ISO UTC, maps camelCase to the RPC keys).
-  - `navLinks(place: { name: string } & LatLng): { open: { google: string; apple: string; yandex: string }; route:
-    { google: string; apple: string; yandex: string; yandexNavi: string }; coords: string }` (URLs exactly as in
-    Global Constraints, `coords` = `"41.025500, 29.015400"`).
+  - `navLinks(place: { name: string; point: LatLng | null; venueUrl: string | null; venueLabel: string | null }): {
+    open: { google: string; apple: string; yandex: string }; route: { google: string; apple: string; yandex: string;
+    yandexNavi: string | null }; coords: string | null }` (URLs exactly as in Global Constraints for the three cases
+    point only / venue only / both; `coords` = `"41.025500, 29.015400"` or null without a point).
   - `whatsAppShareUrl(text: string): string` = `https://api.whatsapp.com/send?text=<encoded>`.
 
 - [ ] **Step 1: Write the failing tests:** `istanbulToIso("2026-11-22T08:30") === "2026-11-22T05:30:00.000Z"`, run
   under `TZ=America/New_York` too (spawn or `process.env.TZ` before import) with the same result;
   `isoToIstanbul("2026-11-22T05:30:00.000Z") === "2026-11-22T08:30"`; `istanbulToIso("2026-02-30T08:30") === null`;
   schema accepts a valid meet-up and a valid ride; rejects ride with one place, meet-up with area, 81-char title, ends
-  before starts, `limitPeople: 0`, `minCc: 40`, lat 95; `navLinks` returns the exact Global Constraints strings for
-  `{ name: "Moda Sahili", lat: 40.98, lng: 29.0254 }` (Apple `q` URL-encoded); `whatsAppShareUrl("Pazar 08:30 →
+  before starts, `limitPeople: 0`, `minCc: 40`, lat 95, a place with neither point nor venue; `navLinks` returns the
+  exact Global Constraints strings for a point-only place `{ name: "Moda Sahili", point: { lat: 40.98, lng: 29.0254 } }`
+  (Apple `q` URL-encoded), a venue-only place (the Starbucks URL + label: Google open = the URL, Apple/Yandex search
+  the label, `yandexNavi: null`, `coords: null`) and a place with both (Google open = the venue URL, every route =
+  the point, Navi present); `whatsAppShareUrl("Pazar 08:30 →
   Ağva")` encodes the text and has no `phone=`.
 - [ ] **Step 2: Run them** — expected FAIL.
 - [ ] **Step 3: Implement** (fixed `+03:00` offset, no `Intl` time-zone math needed; validate the date round-trips).
@@ -206,7 +240,8 @@ select throws_ok($$ select public.save_event(null, '{"kind":"ride","title":"Ağv
 **Interfaces:**
 - Consumes: Tasks 1–3; `readAll`, `uniqueById`, `PAGE_SIZE`, `LIST_CEILING` (`src/lib/pagination.ts`).
 - Produces:
-  - `type EventPlace = { name: string; lat: number; lng: number }`; `type EventSummary = { id; kind; title; side;
+  - `type EventPlace = { name: string; point: LatLng | null; venueUrl: string | null; venueLabel: string | null }`
+    (the same shape `navLinks` and the schema take); `type EventSummary = { id; kind; title; side;
     area; startsAt; endsAt; status; places: EventPlace[] }`; `type EventDetail = EventSummary & { description;
     limitPeople; limitBikes; minCc; fullMembersOnly; cancelReason; createdByName: string | null; updatedByName:
     string | null; updatedAt }`.
@@ -215,10 +250,11 @@ select throws_ok($$ select public.save_event(null, '{"kind":"ride","title":"Ağv
   - `listPastEvents(page: number): Promise<{ events: EventSummary[]; total: number }>` — the rest, newest first,
     `PAGE_SIZE` per page, `count: "exact"`.
   - `getEvent(id: string): Promise<EventDetail | null>` (null for an invalid uuid or no row).
-  - `resolvePlace(text: string, fetchImpl?: typeof fetch): Promise<{ status: "ok"; point: LatLng } | { status:
+  - `resolvePlace(text: string, fetchImpl?: typeof fetch): Promise<{ status: "ok"; place: ParsedPlace } | { status:
     "invalid" | "unresolved" }>` — `parsePlaceInput` first; else, only for `isShortMapUrl`, follow up to 3 redirects
     manually (`redirect: "manual"`, 5 s `AbortSignal.timeout`), every hop must pass `isAllowedMapUrl` or it stops
-    with `unresolved`; parse the final `Location`.
+    with `unresolved`; parse the final `Location`. Never logs the input or a `Location` (they can hold the sharer's
+    position); errors log only a reason code.
   - Actions (`"use server"`): `resolvePlaceLink(text: string)` (wraps `resolvePlace`), `saveEvent(id: string | null,
     input: unknown): Promise<{ status: "ok"; id: string } | { status: "invalid" | "forbidden" | "error" }>`,
     `cancelEvent(id: string, reason: string)`, `deleteEvent(id: string)` → `{ status: "ok" | "invalid" | "forbidden"
@@ -226,7 +262,8 @@ select throws_ok($$ select public.save_event(null, '{"kind":"ride","title":"Ağv
     `refresh()` after success (create returns the id; the page redirects).
 
 - [ ] **Step 1: Write `resolve-place.test.ts`** with a fake `fetchImpl`: a direct coordinate input never fetches; a
-  short link redirecting to a Google place URL resolves; a redirect to `https://evil.com/…` → `unresolved` and the
+  short link redirecting to a Google pin URL resolves to the point, one redirecting to a Google place URL to the
+  venue, one redirecting to a route URL to the destination only; a redirect to `https://evil.com/…` → `unresolved` and the
   fake records no request to evil.com; 4 chained redirects → `unresolved`; a non-map URL → `invalid` with zero
   fetches; a thrown/aborted fetch → `unresolved`.
 - [ ] **Step 2: Run** — FAIL. **Step 3: Implement** `resolve-place.ts`, then `queries.ts` and `actions.ts`
@@ -298,9 +335,13 @@ select throws_ok($$ select public.save_event(null, '{"kind":"ride","title":"Ağv
 - [ ] **Step 1: Form.** Kind radio (Buluşma / Sürüş) switches between one place ("Buluşma yeri") and Başlangıç /
   Duraklar (add/remove/move up/down, ≤ 10) / Varış with a "Başlangıca dönüş" checkbox that copies the start into the
   finish. Fields per Global Constraints; `datetime-local` inputs; area only for rides with the hint "Ziyaretçiler de
-  görecek: tam yeri yazma (ör. Üsküdar → Ağva)". `PlaceField`: name + "Harita linki veya koordinat"; on paste/blur it
-  calls `resolvePlaceLink` and shows the coordinates with a "Konumu aç" (Google) check link, or the error "Bu linkten
-  konum okunamadı; koordinatı yapıştır (ör. 41.0255, 29.0154)". Save is disabled while any place is unresolved.
+  görecek: tam yeri yazma (ör. Üsküdar → Ağva)". `PlaceField`: name + one paste box "Harita linki, iğne veya
+  koordinat"; on paste/blur it calls `resolvePlaceLink` and fills a slot: a point → "İğne: 41.032201, 29.022904"; a
+  venue → "Mekân: İBB Paşalimanı Sosyal Tesisi, …" (label, or the place name for Yandex). Both slots can be filled
+  (paste again), each with a remove button and a "Konumu aç" check link; the hint under the box: "Mekân linki
+  mekânı gösterir; tam buluşma noktası için haritada yere uzun basıp iğneyi de ekleyebilirsin." Error: "Bu linkten
+  konum okunamadı; haritada yere uzun bas ve iğneyi paylaş ya da koordinatı yapıştır (ör. 41.0255, 29.0154)". Save is
+  disabled while a place has neither slot or a paste is still resolving.
 - [ ] **Step 2: Submit** → `saveEvent`; ok → `router.push("/events/{id}")`; errors shown inline (invalid, forbidden,
   error). Edit page prefills from `getEvent` (`isoToIstanbul`); a cancelled event redirects to its page.
 - [ ] **Step 3: Verify** full check line. **Step 4: Commit** — `feat(events): create and edit form with map-link
@@ -314,9 +355,12 @@ select throws_ok($$ select public.save_event(null, '{"kind":"ride","title":"Ağv
   `docs/follow-ups.md` (deferred items from this branch), `docs/learnings/*` (anything found)
 
 - [ ] **Step 1: E2E** (local stack, `pnpm start -p 3123`, fixtures `admin@test.local` with the admin role,
-  `member@test.local` active, `probation@test.local` with an organiser role): organiser creates a ride with a pasted
-  Google URL + coordinates, sees it on `/events`, filters by side and kind (no request), opens the detail, checks the
-  three open URLs and the Yandex lng-first order in the hrefs, edits the start time (stored UTC = wall − 3 h, read
+  `member@test.local` active, `probation@test.local` with an organiser role): organiser creates a ride whose start is
+  plain coordinates, whose stop is a long Google **place** URL (venue only) and whose finish is a long Google **route**
+  URL with the Kız Kulesi origin (long URLs: no network in E2E), sees it on `/events`, filters by side and kind (no
+  request), opens the detail, checks the open/route hrefs for all three cases (Yandex lng-first in `pt=`, no Navi for
+  the venue-only stop), reads `event_places` via `psql` and asserts the origin `41.021111` appears in no column,
+  edits the start time (stored UTC = wall − 3 h, read
   back via `psql`), cancels with a reason (banner, struck card), deletes; `/events/past` paging with planted past
   events (> 25); the member and the probation organiser get the "coming soon" `/events` and a 404 on `/events/{id}`
   and `/events/new`; the WhatsApp share href has `text=` and no `phone=`. 390px and 1280px. Fixture rows cleaned

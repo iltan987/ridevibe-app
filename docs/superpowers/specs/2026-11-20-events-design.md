@@ -25,8 +25,8 @@ coming, on how many bikes.
 - Visitors see a teaser of upcoming rides; members see everything.
 
 **Non-goals (later iterations, in this order)**
-1. A real map (MapLibre + tiles, picking points on a map, place search) — iteration 2; the coordinates stored now
-   feed it.
+1. A real map (MapLibre + tiles, picking points on a map, place search) — iteration 2; the points stored now feed
+   it (link-only places need a pin to appear).
 2. Notifications (Web Push: service worker, opt-in, reminders via pg_cron) and the **waiting list** (it only makes
    sense when the person who moves up is told) — iteration 3. No paid service needed (Web Push, VAPID keys, the
    `web-push` package after iltan approves it; iOS 16.4+ home-screen apps only).
@@ -74,16 +74,29 @@ path (CLAUDE.md).
 | status | `scheduled` / `cancelled` (+ optional cancel reason) |
 | created_by / updated_by | shown as "Düzenleyen: …" on the event |
 
-**Place:** a name ("Moda Sahili", "Ağva — Rıva yolu kahvaltıcı") plus coordinates. The organiser pastes a map link or
-coordinates; the server extracts latitude/longitude. Accepted input: Google Maps links (long URLs with `@lat,lng` or
-`!3d…!4d…`, and short `maps.app.goo.gl` links — the server follows the redirect), Yandex Maps links, Apple Maps links,
-plain "41.0255, 29.0154". A link that yields no coordinates is refused with a hint to paste coordinates instead.
-**Risk:** the short-link format is not documented by Google; the first task of the build is a spike that tries real
-links and fixes the parser rules (and records them in `docs/learnings/`).
+**Place:** a name ("Moda Sahili", "Akasya AVM — otopark girişi") plus a **point** (coordinates) and/or a **place
+link** (a venue in Google or Yandex) — at least one (iltan, 2026-11-21). The organiser pastes links or coordinates;
+the server classifies each input (short `maps.app.goo.gl` links are followed through an allow-list first):
+
+| Input | What we keep |
+|---|---|
+| Plain coordinates ("41.0255, 29.0154"), a dropped pin (Google `!3d…!4d…`, Yandex/Apple point links) | the point |
+| A route link (Google `/maps/dir/…`, Yandex `rtext=…`) | the **destination** point only; the link is never stored (it contains the sharer's own location as the start) |
+| A place link (Google `/maps/place/<name, address>/data=…!1s<id>`, Yandex `/maps/org/<slug>/<id>`) | the cleaned place URL (tracking parameters such as `g_st`, `g_ep`, `utm_*`, `entry`, `coh` stripped) and, for Google, the name + address written in its path (for searches in other apps) |
+
+Spike findings (2026-11-21, real links from iltan): Google and Yandex **place** links carry no coordinates, and neither
+their pages nor OpenStreetMap's free geocoder give them reliably (address lookup was ~50 m off or empty); Google's
+Places API would, but needs a billing account (follow-up if organisers miss it). So a venue is kept as a link, and a
+pin can be added for the exact spot (e.g. one entrance of a mall).
 
 **Opening a place (every place, iltan):** two actions, "Konumu aç" (show the spot) and "Yol tarifi" (navigate there),
 each offering Google Maps, Apple Maps and Yandex (Navi app when installed, Yandex Maps web otherwise), plus
-"Koordinatları kopyala". Exact URL schemes are left to the builder (verify on Android and iPhone).
+"Koordinatları kopyala" when there is a point. With a point, every app opens the point ("Yol tarifi" always goes to
+the point, so a mall's chosen entrance wins); "Konumu aç" in Google opens the place link when there is one. A place
+with only a link: Google opens the link; Apple Maps and Yandex Maps open a search for the place's name + address
+(Google link) or the organiser's place name (Yandex link); Yandex Navi is not offered (it can't route to a search).
+Exact URL schemes are left to the builder (verify on Android and iPhone). A link-only place gets no dot on the
+future map (iteration 2) until a pin is added.
 
 **Route display:** the design-system strip (`docs/superpowers/specs/2026-11-09-design-system-design.md` §6: start
 ring, stop dots, orange finish, no map base) with the place names; each place tappable for the open/route actions.
