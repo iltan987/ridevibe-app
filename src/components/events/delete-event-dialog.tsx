@@ -15,9 +15,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "@/i18n/navigation";
-import { deleteEvent, type EventActionResult } from "@/lib/events/actions";
+import { deleteEvent, type DeleteEventResult } from "@/lib/events/actions";
 
-type Failure = Exclude<EventActionResult["status"], "ok">;
+type Failure = Exclude<DeleteEventResult["status"], "ok">;
 
 /** "Etkinliği sil": confirmed in a dialog that stays open while the request runs; afterwards the list replaces the page. */
 export function DeleteEventDialog({ eventId }: { eventId: string }) {
@@ -30,7 +30,7 @@ export function DeleteEventDialog({ eventId }: { eventId: string }) {
   function confirm() {
     setFailure(null);
     startTransition(async () => {
-      const { status } = await deleteEvent(eventId).catch((): EventActionResult => ({ status: "error" }));
+      const { status } = await deleteEvent(eventId).catch((): DeleteEventResult => ({ status: "error" }));
       if (status === "ok") router.replace("/events");
       else setFailure(status);
     });

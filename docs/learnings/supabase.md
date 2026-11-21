@@ -342,3 +342,13 @@
 - **Also:** a planted row (as `postgres`) through a before-insert trigger that sets `author_id := auth.uid()` gets a
   null author; fine for fixtures that only need visibility.
 - **Source:** `supabase/schemas/18_member_notes.sql`, probation Task 3.
+
+### A plpgsql function may use a table or view from a later schema file (2026-11-21)
+- **Need:** `delete_event` (`40_events.sql`) checks `private.counted_event_signups`, a view over a table created in
+  `42_event_signups.sql`.
+- **Found:** works: plpgsql resolves table names when it runs, and the generated migration starts with
+  `set local check_function_bodies = off`. A `language sql` function is different: its body is checked at
+  `create`, so it must come after what it reads (put it in the later file).
+- **Also:** a view in the `private` schema gets no default grants (the diff emitted none); still `revoke all … from
+  public, anon, authenticated` and pin it in pgTAP (`has_table_privilege`).
+- **Source:** events joining Task 1.

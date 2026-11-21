@@ -8,6 +8,11 @@
 -- origin is never stored.
 -- Events outlive their authors: created_by / updated_by are nulled when the
 -- profile goes.
+-- RELEASE GATE (spec §9): who sees events at all is decided in one place,
+-- private.can_see_events() below. The read policies on events, places and
+-- sign-ups and the join/leave RPCs (42_event_signups.sql) ask it, and the app
+-- asks its public wrapper, so the release replaces that one function body.
+-- The organiser RPCs here check events.manage instead.
 -- ---------------------------------------------------------------------------
 
 create type public.event_kind as enum ('meetup', 'ride');
@@ -83,25 +88,53 @@ grant select on table public.event_places to authenticated;
 alter table public.events enable row level security;
 alter table public.event_places enable row level security;
 
--- RELEASE GATE (spec §9): until the joining branch ships, only organisers read events. That branch replaces these
--- two policies (members and ön alım members per spec §3; visitors through a teaser RPC) and removes this comment.
-create policy "events: organisers read (release gate)"
+-- The release gate. In this branch only organisers (events.manage) pass; the release (branch 2b) changes the body to
+-- `select private.is_club_member()` (members and ön alım members, spec §3). Granted to authenticated because the
+-- policies call it; the app reads it through public.can_see_events().
+create or replace function private.can_see_events()
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select private.has_permission('events.manage')
+$$;
+
+revoke all on function private.can_see_events() from public, anon;
+grant execute on function private.can_see_events() to authenticated;
+
+-- Whether the signed-in caller sees events (the app shows "Çok yakında" / a 404 otherwise).
+create or replace function public.can_see_events()
+returns boolean
+language sql
+stable
+set search_path = ''
+as $$
+  select private.can_see_events()
+$$;
+
+revoke all on function public.can_see_events() from public, anon;
+grant execute on function public.can_see_events() to authenticated;
+
+create policy "events: read behind the release gate"
 on public.events
 for select
 to authenticated
-using ((select private.has_permission('events.manage')));
+using ((select private.can_see_events()));
 
-create policy "event_places: organisers read (release gate)"
+create policy "event_places: read behind the release gate"
 on public.event_places
 for select
 to authenticated
-using ((select private.has_permission('events.manage')));
+using ((select private.can_see_events()));
 
 -- ---------------------------------------------------------------------------
 -- Write RPCs (events.manage). Errors: 42501 without the permission, P0002 for an unknown id, 22023 for input the
 -- table checks can't judge (kind, side, place count for the kind, area rule, editing/cancelling a cancelled event),
--- 23514 from the table checks (lengths, ranges, venue link shape). Malformed numbers, booleans and timestamps in the
--- JSON raise Postgres cast errors besides these (22P02 / 22007 / 22008 / 22003); the app's Zod schema rules them out.
+-- 23514 from the table checks (lengths, ranges, venue link shape), P0001 with hint 'has_signups' when deleting an
+-- event someone has joined. Malformed numbers, booleans and timestamps in the JSON raise Postgres cast errors besides
+-- these (22P02 / 22007 / 22008 / 22003); the app's Zod schema rules them out.
 -- Callers send starts_at / ends_at as ISO strings WITH an offset: a string without one is read in the session time
 -- zone. Texts are trimmed here; optional ones become null when blank, required ones stay '' so the length check
 -- refuses them.
@@ -260,7 +293,9 @@ $$;
 revoke all on function public.cancel_event(uuid, text) from public, anon;
 grant execute on function public.cancel_event(uuid, text) to authenticated;
 
--- The joining branch adds "only while nobody has joined" (spec §3).
+-- Only while nobody counted has joined (spec §3); otherwise the organiser cancels. Sign-ups of inactive / deleting
+-- people don't count and go with the event (cascade). private.counted_event_signups lives in 42_event_signups.sql
+-- (plpgsql resolves it at run time).
 create or replace function public.delete_event(p_id uuid)
 returns void
 language plpgsql
@@ -275,6 +310,9 @@ begin
   perform 1 from public.events e where e.id = p_id for update;
   if not found then
     raise exception 'event not found' using errcode = 'P0002';
+  end if;
+  if exists (select 1 from private.counted_event_signups s where s.event_id = p_id) then
+    raise exception 'event has sign-ups; cancel it instead' using errcode = 'P0001', hint = 'has_signups';
   end if;
 
   delete from public.events where id = p_id;

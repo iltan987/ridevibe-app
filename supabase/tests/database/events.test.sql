@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(121);
+select plan(126);
 
 -- Fixtures: 0741 admin, 0742 organiser (active, role 0749), 0743 active member without a role, 0744 probation member
 -- holding role 0749, 0745 organiser in deleting. Role 0749 holds only events.manage. Events planted as postgres:
@@ -95,11 +95,12 @@ select is((select count(*)::int from pg_proc where proname = 'cancel_event' and 
   'exactly one cancel_event');
 
 -- ---------------------------------------------------------------------------
--- Release gate (RLS): only events.manage holders read events and places
+-- Release gate (RLS through private.can_see_events): only events.manage holders read events and places
 -- ---------------------------------------------------------------------------
 select pg_temp.login('00000000-0000-0000-0000-000000000742');
 select is((select count(*)::int from public.events where id in ('00000000-0000-0000-0000-000000000751', '00000000-0000-0000-0000-000000000752')),
   2, 'organiser sees both fixture events');
+select ok(public.can_see_events(), 'organiser passes the gate (can_see_events)');
 select is((select count(*)::int from public.event_places where event_id in ('00000000-0000-0000-0000-000000000751', '00000000-0000-0000-0000-000000000752')),
   4, 'organiser sees their places');
 select throws_ok($$ insert into public.events (kind, title, starts_at) values ('meetup', 'x', now()) $$, '42501', null,
@@ -113,6 +114,7 @@ reset role;
 select pg_temp.login('00000000-0000-0000-0000-000000000741');
 select is((select count(*)::int from public.events where id in ('00000000-0000-0000-0000-000000000751', '00000000-0000-0000-0000-000000000752')),
   2, 'admin sees both fixture events');
+select ok(public.can_see_events(), 'admin passes the gate');
 select is((select count(*)::int from public.event_places where event_id in ('00000000-0000-0000-0000-000000000751', '00000000-0000-0000-0000-000000000752')),
   4, 'admin sees their places');
 reset role;
@@ -120,6 +122,7 @@ reset role;
 select pg_temp.login('00000000-0000-0000-0000-000000000743');
 select is((select count(*)::int from public.events where id in ('00000000-0000-0000-0000-000000000751', '00000000-0000-0000-0000-000000000752')),
   0, 'member sees no events before release');
+select ok(not public.can_see_events(), 'member does not pass the gate before release');
 select is((select count(*)::int from public.event_places where event_id in ('00000000-0000-0000-0000-000000000751', '00000000-0000-0000-0000-000000000752')),
   0, 'member sees no places before release');
 reset role;
@@ -127,6 +130,7 @@ reset role;
 select pg_temp.login('00000000-0000-0000-0000-000000000744');
 select is((select count(*)::int from public.events where id in ('00000000-0000-0000-0000-000000000751', '00000000-0000-0000-0000-000000000752')),
   0, 'probation member holding the role sees no events (rights are active-only)');
+select ok(not public.can_see_events(), 'probation member holding the role does not pass the gate');
 select is((select count(*)::int from public.event_places where event_id in ('00000000-0000-0000-0000-000000000751', '00000000-0000-0000-0000-000000000752')),
   0, 'probation member holding the role sees no places');
 reset role;
@@ -134,6 +138,7 @@ reset role;
 select pg_temp.login('00000000-0000-0000-0000-000000000745');
 select is((select count(*)::int from public.events where id in ('00000000-0000-0000-0000-000000000751', '00000000-0000-0000-0000-000000000752')),
   0, 'deleting organiser sees no events');
+select ok(not public.can_see_events(), 'deleting organiser does not pass the gate');
 select is((select count(*)::int from public.event_places where event_id in ('00000000-0000-0000-0000-000000000751', '00000000-0000-0000-0000-000000000752')),
   0, 'deleting organiser sees no places');
 reset role;

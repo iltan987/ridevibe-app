@@ -13,6 +13,7 @@ import { eventInputSchema, toRpcArgs } from "./schema";
 
 export type EventActionResult = { status: "ok" | "invalid" | "forbidden" | "notFound" | "error" };
 export type SaveEventResult = { status: "ok"; id: string } | { status: "invalid" | "forbidden" | "notFound" | "error" };
+export type DeleteEventResult = { status: EventActionResult["status"] | "hasSignups" };
 
 const uuid = z.uuid();
 const cancelReason = z.string().trim().max(200);
@@ -66,11 +67,15 @@ export async function cancelEvent(id: string, reason: string): Promise<EventActi
   return { status: "ok" };
 }
 
-export async function deleteEvent(id: string): Promise<EventActionResult> {
+/** Deletes an event nobody has joined; with sign-ups the organiser cancels it instead (`hasSignups`). */
+export async function deleteEvent(id: string): Promise<DeleteEventResult> {
   if (!uuid.safeParse(id).success) return { status: "invalid" };
   const supabase = await createClient();
   const { error } = await supabase.rpc("delete_event", { p_id: id });
-  if (error) return fail(error.code, "deleteEvent");
+  if (error) {
+    if (error.code === "P0001" && error.hint === "has_signups") return { status: "hasSignups" };
+    return fail(error.code, "deleteEvent");
+  }
   refresh();
   return { status: "ok" };
 }

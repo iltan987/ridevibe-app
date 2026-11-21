@@ -51,6 +51,32 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"event_signups": {
+                  Row: {
+                    "created_at": string,"event_id": string,"guests": number,"profile_id": string,"role": Database["public"]['Enums']["event_role"],"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"event_id": string,"guests"?: number,"profile_id": string,"role": Database["public"]['Enums']["event_role"],"updated_at"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"event_id"?: string,"guests"?: number,"profile_id"?: string,"role"?: Database["public"]['Enums']["event_role"],"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "event_signups_event_id_fkey"
+      columns: ["event_id"]
+isOneToOne: false
+      referencedRelation: "events"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "event_signups_profile_id_fkey"
+      columns: ["profile_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"events": {
                   Row: {
                     "area": string | null,"cancel_reason": string | null,"cancelled_at": string | null,"created_at": string,"created_by": string | null,"description": string | null,"ends_at": string | null,"full_members_only": boolean,"id": string,"kind": Database["public"]['Enums']["event_kind"],"limit_bikes": number | null,"limit_people": number | null,"min_cc": number | null,"side": Database["public"]['Enums']["istanbul_side"] | null,"starts_at": string,"status": Database["public"]['Enums']["event_status"],"title": string,"updated_at": string,"updated_by": string | null
@@ -308,6 +334,9 @@ isOneToOne: false
               "email": string,"full_name": string,"id": string,"status": Database["public"]['Enums']["member_status"]
             }[]
                            },
+"can_see_events":
+{ Args: Record<PropertyKey, never>; Returns: boolean
+                           },
 "cancel_event":
 { Args: { "p_id": string,"p_reason"?: string }; Returns: undefined
                            },
@@ -322,8 +351,14 @@ isOneToOne: false
 "delete_event":
 { Args: { "p_id": string }; Returns: undefined
                            },
+"join_event":
+{ Args: { "p_event": string,"p_guests"?: number,"p_role": Database["public"]['Enums']["event_role"] }; Returns: undefined
+                           },
 "keep_alive":
 { Args: Record<PropertyKey, never>; Returns: boolean
+                           },
+"leave_event":
+{ Args: { "p_event": string }; Returns: undefined
                            },
 "link_application":
 { Args: { "application_id": string,"target_id": string }; Returns: undefined
@@ -377,7 +412,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "application_status": "new"|"contacted"|"approved"|"rejected","blood_type": "A+"|"A-"|"B+"|"B-"|"AB+"|"AB-"|"0+"|"0-","emergency_relationship": "spouse_partner"|"parent"|"sibling"|"child"|"friend"|"other","event_kind": "meetup"|"ride","event_status": "scheduled"|"cancelled","group_ride_experience": "none"|"some"|"a_lot","heard_from": "instagram_ad"|"instagram_other"|"friend"|"other","istanbul_side": "asian"|"european","license_class": "a1"|"a2"|"a"|"b"|"none","member_status": "pending"|"probation"|"active"|"inactive"|"deleting","permission": "applications.view"|"applications.review"|"applications.decide"|"applications.delete"|"members.manage"|"members.safety"|"members.notes"|"events.manage","safety_action": "view_card"|"filter_blood_type"|"set_blood_type"|"withdraw_blood_type"
+            "application_status": "new"|"contacted"|"approved"|"rejected","blood_type": "A+"|"A-"|"B+"|"B-"|"AB+"|"AB-"|"0+"|"0-","emergency_relationship": "spouse_partner"|"parent"|"sibling"|"child"|"friend"|"other","event_kind": "meetup"|"ride","event_role": "rider"|"passenger","event_status": "scheduled"|"cancelled","group_ride_experience": "none"|"some"|"a_lot","heard_from": "instagram_ad"|"instagram_other"|"friend"|"other","istanbul_side": "asian"|"european","license_class": "a1"|"a2"|"a"|"b"|"none","member_status": "pending"|"probation"|"active"|"inactive"|"deleting","permission": "applications.view"|"applications.review"|"applications.decide"|"applications.delete"|"members.manage"|"members.safety"|"members.notes"|"events.manage","safety_action": "view_card"|"filter_blood_type"|"set_blood_type"|"withdraw_blood_type"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -493,7 +528,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "application_status": ["new", "contacted", "approved", "rejected"],"blood_type": ["A+", "A-", "B+", "B-", "AB+", "AB-", "0+", "0-"],"emergency_relationship": ["spouse_partner", "parent", "sibling", "child", "friend", "other"],"event_kind": ["meetup", "ride"],"event_status": ["scheduled", "cancelled"],"group_ride_experience": ["none", "some", "a_lot"],"heard_from": ["instagram_ad", "instagram_other", "friend", "other"],"istanbul_side": ["asian", "european"],"license_class": ["a1", "a2", "a", "b", "none"],"member_status": ["pending", "probation", "active", "inactive", "deleting"],"permission": ["applications.view", "applications.review", "applications.decide", "applications.delete", "members.manage", "members.safety", "members.notes", "events.manage"],"safety_action": ["view_card", "filter_blood_type", "set_blood_type", "withdraw_blood_type"]
+            "application_status": ["new", "contacted", "approved", "rejected"],"blood_type": ["A+", "A-", "B+", "B-", "AB+", "AB-", "0+", "0-"],"emergency_relationship": ["spouse_partner", "parent", "sibling", "child", "friend", "other"],"event_kind": ["meetup", "ride"],"event_role": ["rider", "passenger"],"event_status": ["scheduled", "cancelled"],"group_ride_experience": ["none", "some", "a_lot"],"heard_from": ["instagram_ad", "instagram_other", "friend", "other"],"istanbul_side": ["asian", "european"],"license_class": ["a1", "a2", "a", "b", "none"],"member_status": ["pending", "probation", "active", "inactive", "deleting"],"permission": ["applications.view", "applications.review", "applications.decide", "applications.delete", "members.manage", "members.safety", "members.notes", "events.manage"],"safety_action": ["view_card", "filter_blood_type", "set_blood_type", "withdraw_blood_type"]
           }
         }
 } as const

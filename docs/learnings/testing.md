@@ -349,3 +349,17 @@
   BULUNAMADI", so `innerText.includes("Sayfa bulunamadı")` fails on a real 404. Compare the visible `h1`'s
   `textContent`; for "the form isn't shown" keep using `innerText` (messages ship in every page, see above).
 - **Source:** found while writing `scripts/e2e/events-e2e.mjs`.
+
+### pgTAP: asserting an error's `hint`; mutating a function for a mutation check (2026-11-21)
+- **Need:** RPCs that refuse with `P0001` + a reason in `hint` (`people_limit`, `has_signups`, …); `throws_ok` checks
+  only the code and message.
+- **Do:** a `pg_temp.last_error(stmt text) returns table (sqlstate text, hint text)` helper: `execute stmt` in a
+  plpgsql block with `exception when others then get stacked diagnostics … = returned_sqlstate, … = pg_exception_hint`
+  (`event_signups.test.sql`). Assert with `is((select hint from pg_temp.last_error($$ … $$) where sqlstate =
+  'P0001'), 'people_limit', …)`: a wrong code yields null and fails too. A successful statement keeps its effects (as
+  with `throws_ok`). The helper works after `pg_temp.login(…)` (role `authenticated` may run the session's `pg_temp`
+  functions).
+- **Mutation check of a function body:** cut the function from the schema file and edit it on the fly as the
+  mutation: `awk '/^create or replace function public.join_event/,/^\$\$;/' supabase/schemas/42_event_signups.sql |
+  sed 's/…/…/'` as the first statement of the outer transaction (recipe above).
+- **Source:** found by testing (events joining Task 1).

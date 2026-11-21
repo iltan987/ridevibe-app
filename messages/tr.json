@@ -285,7 +285,8 @@
       "invalid": "Bilgilerde bir sorun var. Sayfayı yenileyip tekrar dene.",
       "forbidden": "Bu işlem için yetkin yok.",
       "notFound": "Etkinlik bulunamadı; silinmiş olabilir. Sayfayı yenile.",
-      "error": "Bir şeyler ters gitti. Lütfen tekrar dene."
+      "error": "Bir şeyler ters gitti. Lütfen tekrar dene.",
+      "hasSignups": "Bu etkinliğe katılan var; silmek yerine iptal edebilirsin."
     },
     "form": {
       "editTitle": "Etkinliği düzenle",

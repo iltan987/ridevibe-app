@@ -285,7 +285,8 @@
       "invalid": "Something in the request is wrong. Refresh the page and try again.",
       "forbidden": "You don't have permission to do this.",
       "notFound": "Event not found; it may have been deleted. Refresh the page.",
-      "error": "Something went wrong. Please try again."
+      "error": "Something went wrong. Please try again.",
+      "hasSignups": "People have joined this event; cancel it instead of deleting it."
     },
     "form": {
       "editTitle": "Edit event",
