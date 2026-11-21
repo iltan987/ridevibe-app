@@ -263,7 +263,9 @@
       "createdBy": "Düzenleyen: {name}",
       "updatedBy": "Son değişiklik: {name}, {date}",
       "cancel": "Etkinliği iptal et",
-      "delete": "Etkinliği sil"
+      "delete": "Etkinliği sil",
+      "deleteHasSignups": "Katılan var; silmek yerine iptal edebilirsin.",
+      "deleteHasSignupsCancelled": "Katılan olduğu için silinemez."
     },
     "cancelDialog": {
       "title": "Etkinlik iptal edilsin mi?",
@@ -285,7 +287,8 @@
       "invalid": "Bilgilerde bir sorun var. Sayfayı yenileyip tekrar dene.",
       "forbidden": "Bu işlem için yetkin yok.",
       "notFound": "Etkinlik bulunamadı; silinmiş olabilir. Sayfayı yenile.",
-      "error": "Bir şeyler ters gitti. Lütfen tekrar dene."
+      "error": "Bir şeyler ters gitti. Lütfen tekrar dene.",
+      "hasSignups": "Bu etkinliğe katılan var; silmek yerine iptal edebilirsin."
     },
     "form": {
       "editTitle": "Etkinliği düzenle",
@@ -347,6 +350,104 @@
         "placeRequired": "Bir konum ekle: harita linki, iğne ya da koordinat.",
         "placeInvalid": "Bu konum kullanılamıyor; kaldırıp yeniden ekle.",
         "other": "Bu alanı kontrol et."
+      }
+    },
+    "joinedBadge": "Katılıyorsun",
+    "mineChip": "Katıldıklarım",
+    "counts": {
+      "label": "Katılım:",
+      "line": "{people} kişi · {bikes} motor",
+      "over": "Sınır aşıldı"
+    },
+    "join": {
+      "heading": "Katılıyor musun?",
+      "headingJoined": "Katılıyorsun",
+      "roleLabel": "Nasıl geliyorsun?",
+      "roles": {
+        "rider": "Sürücü",
+        "passenger": "Artçı"
+      },
+      "roleHints": {
+        "rider": "Kendi motorunla",
+        "passenger": "Birinin arkasında"
+      },
+      "guests": "Misafir",
+      "guestsHint": "Misafir: yanında getirdiğin, üye olmayan biri; motorda artçı olur.",
+      "fewerGuests": "Bir misafir çıkar",
+      "moreGuests": "Bir misafir ekle",
+      "summary": "{role} · {guests, plural, =0 {misafirsiz} other {# misafir}}",
+      "join": "Katılıyorum",
+      "update": "Güncelle",
+      "leave": "Katılmaktan vazgeç",
+      "leaveDialog": {
+        "title": "Katılmaktan vazgeçiyor musun?",
+        "body": "Katılımın silinir. Etkinlik başlayana kadar yeniden katılabilirsin.",
+        "dismiss": "Hayır, geliyorum",
+        "confirm": "Evet, vazgeç"
+      },
+      "done": {
+        "joined": "Katılımın kaydedildi.",
+        "updated": "Katılımın güncellendi.",
+        "left": "Katılımın silindi."
+      },
+      "reasons": {
+        "started": "Etkinlik başladı; katılım kapandı.",
+        "cancelled": "Etkinlik iptal edildi; katılım kapandı.",
+        "peopleLimit": "Kişi sınırı doldu.",
+        "bikeLimit": "Motor sınırı doldu; artçı olarak katılabilirsin.",
+        "minCc": "Sürücü olarak katılmak için profilinde en az {cc} cc bir motor olmalı.",
+        "fullMembersOnly": "Bu etkinlik sadece tam üyeler için."
+      },
+      "addBike": "Motor ekle",
+      "nudge": {
+        "title": "Acil durum kişin yok",
+        "text": "Yolda bir şey olursa kime haber verelim? Bir kişi eklemen yeter.",
+        "action": "Acil durum kişisi ekle"
+      }
+    },
+    "roster": {
+      "heading": "Katılanlar",
+      "total": "{count} üye",
+      "totalWithNew": "{count} üye · +{newMembers} yeni üye",
+      "probation": "Ön alım",
+      "empty": "Henüz katılan yok.",
+      "guests": "+{count} misafir",
+      "noContact": "Acil durum kişisi yok",
+      "range": "{from}–{to} / {total} üye",
+      "ceiling": "Liste eksik: 2.000'den fazla katılan var, yalnızca ilk 2.000 kişi gösteriliyor. Lütfen yöneticilere haber ver."
+    },
+    "changes": {
+      "heading": "Güncellendi",
+      "byline": "{date} · {name}",
+      "fields": {
+        "startsAt": "Başlangıç",
+        "endsAt": "Bitiş",
+        "route": "Rota",
+        "meetingPoint": "Buluşma yeri",
+        "limitPeople": "Kişi sınırı",
+        "limitBikes": "Motor sınırı",
+        "minCc": "En az cc",
+        "fullMembersOnly": "Sadece tam üyeler"
+      },
+      "line": "{field}: {from} → {to}",
+      "placesLine": "{field}: {from} ⇒ {to}",
+      "moved": "{field}: konum güncellendi",
+      "none": "yok",
+      "unlimited": "sınırsız",
+      "cc": "{cc} cc",
+      "fullMembersOnly": "{value, select, true {Artık sadece tam üyeler katılabilir} other {Ön alım üyeleri de katılabilir}}",
+      "changed": "{field} güncellendi",
+      "lead": "Güncellendi: {parts}",
+      "leadParts": {
+        "time": "saat {value}",
+        "date": "tarih {value}",
+        "endsAt": "{value, select, none {bitiş saati kaldırıldı} other {bitiş {value}}}",
+        "route": "rota",
+        "meetingPoint": "buluşma yeri",
+        "limitPeople": "{value, select, none {kişi sınırı kaldırıldı} other {kişi sınırı {value}}}",
+        "limitBikes": "{value, select, none {motor sınırı kaldırıldı} other {motor sınırı {value}}}",
+        "minCc": "{value, select, none {cc sınırı kaldırıldı} other {en az {value} cc}}",
+        "fullMembersOnly": "{value, select, true {sadece tam üyeler} other {ön alım üyeleri de katılabilir}}"
       }
     }
   },

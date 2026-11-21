@@ -8,6 +8,11 @@
 -- origin is never stored.
 -- Events outlive their authors: created_by / updated_by are nulled when the
 -- profile goes.
+-- RELEASE GATE (spec §9): who sees events at all is decided in one place,
+-- private.can_see_events() below. The read policies on events, places and
+-- sign-ups and the join/leave RPCs (42_event_signups.sql) ask it, and the app
+-- asks its public wrapper, so the release replaces that one function body.
+-- The organiser RPCs here check events.manage instead.
 -- ---------------------------------------------------------------------------
 
 create type public.event_kind as enum ('meetup', 'ride');
@@ -75,40 +80,119 @@ create table public.event_places (
 
 comment on table public.event_places is 'Places of an event in route order. Replaced as a whole by save_event.';
 
+-- Change log (spec §6): save_event appends one row when an event with at least one counted sign-up changes its time,
+-- places, limits or requirements. changes = [{ field, old, new }] in a fixed field order (starts_at, ends_at, places,
+-- limit_people, limit_bikes, min_cc, full_members_only); for places, old/new are the ordered place names. Read only
+-- through public.event_change_log (42_event_signups.sql), which shows the author to organisers only.
+create table public.event_changes (
+  id uuid primary key default gen_random_uuid(),
+  event_id uuid not null references public.events (id) on delete cascade,
+  changed_by uuid references public.profiles (id) on delete set null,
+  changed_at timestamptz not null default now(),
+  changes jsonb not null,
+  constraint event_changes_changes_list check (jsonb_typeof(changes) = 'array' and jsonb_array_length(changes) > 0)
+);
+
+comment on table public.event_changes is 'What an edit changed on an event people had joined. Written only by save_event.';
+
+create index event_changes_event_idx on public.event_changes (event_id, changed_at desc, id);
+
 revoke all on table public.events from anon, authenticated;
 revoke all on table public.event_places from anon, authenticated;
+revoke all on table public.event_changes from anon, authenticated;
 grant select on table public.events to authenticated;
 grant select on table public.event_places to authenticated;
 
 alter table public.events enable row level security;
 alter table public.event_places enable row level security;
+alter table public.event_changes enable row level security;
 
--- RELEASE GATE (spec §9): until the joining branch ships, only organisers read events. That branch replaces these
--- two policies (members and ön alım members per spec §3; visitors through a teaser RPC) and removes this comment.
-create policy "events: organisers read (release gate)"
+-- The release gate. In this branch only organisers (events.manage) pass; the release (branch 2b) changes the body to
+-- `select private.is_club_member()` (members and ön alım members, spec §3). Granted to authenticated because the
+-- policies call it; the app reads it through public.can_see_events().
+create or replace function private.can_see_events()
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select private.has_permission('events.manage')
+$$;
+
+revoke all on function private.can_see_events() from public, anon;
+grant execute on function private.can_see_events() to authenticated;
+
+-- Whether the signed-in caller sees events (the app shows "Çok yakında" / a 404 otherwise).
+create or replace function public.can_see_events()
+returns boolean
+language sql
+stable
+set search_path = ''
+as $$
+  select private.can_see_events()
+$$;
+
+revoke all on function public.can_see_events() from public, anon;
+grant execute on function public.can_see_events() to authenticated;
+
+-- Upcoming = started at most 12 hours ago, or not yet ended: the rule the app's lists use (listUpcomingEvents). Past
+-- events keep their counts but show members no names (event_roster).
+create or replace function private.event_is_upcoming(starts_at timestamptz, ends_at timestamptz)
+returns boolean
+language sql
+stable
+set search_path = ''
+as $$
+  select starts_at >= now() - interval '12 hours' or coalesce(ends_at >= now(), false)
+$$;
+
+revoke all on function private.event_is_upcoming(timestamptz, timestamptz) from public, anon, authenticated;
+
+create policy "events: read behind the release gate"
 on public.events
 for select
 to authenticated
-using ((select private.has_permission('events.manage')));
+using ((select private.can_see_events()));
 
-create policy "event_places: organisers read (release gate)"
+create policy "event_places: read behind the release gate"
 on public.event_places
 for select
 to authenticated
-using ((select private.has_permission('events.manage')));
+using ((select private.can_see_events()));
 
 -- ---------------------------------------------------------------------------
 -- Write RPCs (events.manage). Errors: 42501 without the permission, P0002 for an unknown id, 22023 for input the
 -- table checks can't judge (kind, side, place count for the kind, area rule, editing/cancelling a cancelled event),
--- 23514 from the table checks (lengths, ranges, venue link shape). Malformed numbers, booleans and timestamps in the
--- JSON raise Postgres cast errors besides these (22P02 / 22007 / 22008 / 22003); the app's Zod schema rules them out.
+-- 23514 from the table checks (lengths, ranges, venue link shape), P0001 with hint 'has_signups' when deleting an
+-- event someone has joined. Malformed numbers, booleans and timestamps in the JSON raise Postgres cast errors besides
+-- these (22P02 / 22007 / 22008 / 22003); the app's Zod schema rules them out.
 -- Callers send starts_at / ends_at as ISO strings WITH an offset: a string without one is read in the session time
 -- zone. Texts are trimmed here; optional ones become null when blank, required ones stay '' so the length check
 -- refuses them.
 -- ---------------------------------------------------------------------------
 
+-- An event's places as the change log compares them: [{ name, lat, lng, venue_url }] in route order ('[]' without
+-- places). The venue label follows the venue link, so it is left out.
+create or replace function private.event_place_list(target_event uuid)
+returns jsonb
+language sql
+stable
+set search_path = ''
+as $$
+  select coalesce(
+    jsonb_agg(jsonb_build_object('name', p.name, 'lat', p.lat, 'lng', p.lng, 'venue_url', p.venue_url) order by p.position),
+    '[]'
+  )
+  from public.event_places p
+  where p.event_id = target_event
+$$;
+
+revoke all on function private.event_place_list(uuid) from public, anon, authenticated;
+
 -- p_id null (default) = create. p_event: { kind, title, side, area, starts_at, ends_at, description, limit_people, limit_bikes,
 -- min_cc, full_members_only }; p_places: [{ name, lat, lng, venue_url, venue_label }] in route order (replaces all).
+-- An edit that changes a logged field of an event with counted sign-ups appends one public.event_changes row.
 create or replace function public.save_event(p_event jsonb, p_places jsonb, p_id uuid default null)
 returns uuid
 language plpgsql
@@ -123,7 +207,11 @@ declare
   v_starts timestamptz;
   v_ends timestamptz;
   v_places integer;
-  v_status public.event_status;
+  v_old public.events;
+  v_new public.events;
+  v_old_places jsonb;
+  v_new_places jsonb;
+  v_changes jsonb;
   v_id uuid;
 begin
   if not (select private.has_permission('events.manage')) then
@@ -180,13 +268,14 @@ begin
     )
     returning id into v_id;
   else
-    select e.status into v_status from public.events e where e.id = p_id for update;
+    select e.* into v_old from public.events e where e.id = p_id for update;
     if not found then
       raise exception 'event not found' using errcode = 'P0002';
     end if;
-    if v_status = 'cancelled' then
+    if v_old.status = 'cancelled' then
       raise exception 'a cancelled event can''t be edited' using errcode = '22023';
     end if;
+    v_old_places := private.event_place_list(p_id);
 
     update public.events
     set kind = v_kind::public.event_kind,
@@ -202,7 +291,8 @@ begin
         full_members_only = coalesce((p_event ->> 'full_members_only')::boolean, false),
         updated_by = uid,
         updated_at = now()
-    where id = p_id;
+    where id = p_id
+    returning * into v_new;
 
     delete from public.event_places where event_id = p_id;
     v_id := p_id;
@@ -218,6 +308,34 @@ begin
     nullif(btrim(p.place ->> 'venue_url'), ''),
     nullif(btrim(p.place ->> 'venue_label'), '')
   from jsonb_array_elements(p_places) with ordinality as p(place, ord);
+
+  -- Change log (edits only): compare the stored values before and after, so input that only looks different (an
+  -- offset, trailing zeros) logs nothing; log only when someone counted has joined.
+  if p_id is not null then
+    v_new_places := private.event_place_list(p_id);
+    select coalesce(jsonb_agg(jsonb_build_object('field', c.field, 'old', c.old_value, 'new', c.new_value) order by c.ord), '[]')
+    into v_changes
+    from (values
+      (1, 'starts_at', to_jsonb(v_old.starts_at), to_jsonb(v_new.starts_at), v_old.starts_at is distinct from v_new.starts_at),
+      (2, 'ends_at', to_jsonb(v_old.ends_at), to_jsonb(v_new.ends_at), v_old.ends_at is distinct from v_new.ends_at),
+      (3, 'places', jsonb_path_query_array(v_old_places, '$[*].name'), jsonb_path_query_array(v_new_places, '$[*].name'),
+        v_old_places is distinct from v_new_places),
+      (4, 'limit_people', to_jsonb(v_old.limit_people), to_jsonb(v_new.limit_people),
+        v_old.limit_people is distinct from v_new.limit_people),
+      (5, 'limit_bikes', to_jsonb(v_old.limit_bikes), to_jsonb(v_new.limit_bikes),
+        v_old.limit_bikes is distinct from v_new.limit_bikes),
+      (6, 'min_cc', to_jsonb(v_old.min_cc), to_jsonb(v_new.min_cc), v_old.min_cc is distinct from v_new.min_cc),
+      (7, 'full_members_only', to_jsonb(v_old.full_members_only), to_jsonb(v_new.full_members_only),
+        v_old.full_members_only is distinct from v_new.full_members_only)
+    ) as c(ord, field, old_value, new_value, changed)
+    where c.changed;
+
+    -- private.counted_event_signups lives in 42_event_signups.sql (plpgsql resolves it at run time)
+    if jsonb_array_length(v_changes) > 0
+      and exists (select 1 from private.counted_event_signups s where s.event_id = p_id) then
+      insert into public.event_changes (event_id, changed_by, changes) values (p_id, uid, v_changes);
+    end if;
+  end if;
 
   return v_id;
 end;
@@ -260,7 +378,9 @@ $$;
 revoke all on function public.cancel_event(uuid, text) from public, anon;
 grant execute on function public.cancel_event(uuid, text) to authenticated;
 
--- The joining branch adds "only while nobody has joined" (spec §3).
+-- Only while nobody counted has joined (spec §3); otherwise the organiser cancels. Sign-ups of inactive / deleting
+-- people don't count and go with the event (cascade). private.counted_event_signups lives in 42_event_signups.sql
+-- (plpgsql resolves it at run time).
 create or replace function public.delete_event(p_id uuid)
 returns void
 language plpgsql
@@ -275,6 +395,9 @@ begin
   perform 1 from public.events e where e.id = p_id for update;
   if not found then
     raise exception 'event not found' using errcode = 'P0002';
+  end if;
+  if exists (select 1 from private.counted_event_signups s where s.event_id = p_id) then
+    raise exception 'event has sign-ups; cancel it instead' using errcode = 'P0001', hint = 'has_signups';
   end if;
 
   delete from public.events where id = p_id;

@@ -21,7 +21,7 @@ test("shareText: title, date line, route, no event link", () => {
       cancelReason: null,
       places: [place("Üsküdar"), place("Ağva")],
     },
-    { when, cancelledTitle },
+    { when, cancelledTitle, changeLead: null },
   );
   assert.equal(text, "Ağva kahvaltı sürüşü\n22 Kasım Cumartesi 08:30\nÜsküdar → Ağva");
 });
@@ -29,7 +29,7 @@ test("shareText: title, date line, route, no event link", () => {
 test("shareText: a scheduled event never shows a leftover reason", () => {
   const text = shareText(
     { title: "Moda buluşması", status: "scheduled", cancelReason: "eski", places: [place("Moda Sahili")] },
-    { when, cancelledTitle },
+    { when, cancelledTitle, changeLead: null },
   );
   assert.equal(text, "Moda buluşması\n22 Kasım Cumartesi 08:30\nModa Sahili");
 });
@@ -37,7 +37,7 @@ test("shareText: a scheduled event never shows a leftover reason", () => {
 test("shareText: a cancelled event leads with the cancellation and its reason", () => {
   const text = shareText(
     { title: "Moda buluşması", status: "cancelled", cancelReason: "Yağmur bekleniyor", places: [place("Moda Sahili")] },
-    { when, cancelledTitle },
+    { when, cancelledTitle, changeLead: null },
   );
   assert.equal(text, "İPTAL: Moda buluşması\nYağmur bekleniyor\n22 Kasım Cumartesi 08:30\nModa Sahili");
 });
@@ -45,7 +45,23 @@ test("shareText: a cancelled event leads with the cancellation and its reason", 
 test("shareText: a cancelled event without a reason has no empty line", () => {
   const text = shareText(
     { title: "Moda buluşması", status: "cancelled", cancelReason: null, places: [place("Moda Sahili")] },
-    { when, cancelledTitle },
+    { when, cancelledTitle, changeLead: null },
   );
   assert.equal(text, "İPTAL: Moda buluşması\n22 Kasım Cumartesi 08:30\nModa Sahili");
+});
+
+test("shareText: a change lead is the first line of a scheduled event", () => {
+  const text = shareText(
+    { title: "Ağva kahvaltı sürüşü", status: "scheduled", cancelReason: null, places: [place("Ağva")] },
+    { when, cancelledTitle, changeLead: "Güncellendi: saat 09:00" },
+  );
+  assert.equal(text, "Güncellendi: saat 09:00\nAğva kahvaltı sürüşü\n22 Kasım Cumartesi 08:30\nAğva");
+});
+
+test("shareText: on a cancelled event the cancellation wins over a change lead", () => {
+  const text = shareText(
+    { title: "Ağva", status: "cancelled", cancelReason: "Yağmur", places: [] },
+    { when, cancelledTitle, changeLead: "Güncellendi: saat 09:00" },
+  );
+  assert.equal(text, "İPTAL: Ağva\nYağmur\n22 Kasım Cumartesi 08:30");
 });

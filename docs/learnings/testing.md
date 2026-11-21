@@ -349,3 +349,48 @@
   BULUNAMADI", so `innerText.includes("Sayfa bulunamadı")` fails on a real 404. Compare the visible `h1`'s
   `textContent`; for "the form isn't shown" keep using `innerText` (messages ship in every page, see above).
 - **Source:** found while writing `scripts/e2e/events-e2e.mjs`.
+
+### pgTAP: asserting an error's `hint`; mutating a function for a mutation check (2026-11-21)
+- **Need:** RPCs that refuse with `P0001` + a reason in `hint` (`people_limit`, `has_signups`, …); `throws_ok` checks
+  only the code and message.
+- **Do:** a `pg_temp.last_error(stmt text) returns table (sqlstate text, hint text)` helper: `execute stmt` in a
+  plpgsql block with `exception when others then get stacked diagnostics … = returned_sqlstate, … = pg_exception_hint`
+  (`event_signups.test.sql`). Assert with `is((select hint from pg_temp.last_error($$ … $$) where sqlstate =
+  'P0001'), 'people_limit', …)`: a wrong code yields null and fails too. A successful statement keeps its effects (as
+  with `throws_ok`). The helper works after `pg_temp.login(…)` (role `authenticated` may run the session's `pg_temp`
+  functions).
+- **Mutation check of a function body:** cut the function from the schema file and edit it on the fly as the
+  mutation: `awk '/^create or replace function public.join_event/,/^\$\$;/' supabase/schemas/42_event_signups.sql |
+  sed 's/…/…/'` as the first statement of the outer transaction (recipe above).
+- **Source:** found by testing (events joining Task 1).
+
+### pgTAP: `now()` is one value per transaction, so "newest first" ties; "past" means the 12-hour rule (2026-11-21)
+- **Symptom (avoided):** a change-log test wrote three `event_changes` rows through `save_event` and expected them
+  newest first; all three had the same `changed_at` (`default now()`), so only the `id desc` tie-break (random
+  uuids) decided the order. Separately, the brief's "past" fixture (0775, started an hour ago, no end) is still
+  *upcoming* by `private.event_is_upcoming` (started ≤ 12 h ago or not yet ended).
+- **Cause:** `now()` is the transaction start time, and the whole pgTAP file is one transaction.
+- **Do:** after the RPC writes the rows, spread their times as `postgres` (`update … set changed_at = now() - interval
+  '3 minutes' where … changes @> '[{"field": "starts_at"}]'`, fixture rows only) and then assert the order. For
+  "past", plant `starts_at` more than 12 hours ago (or an `ends_at` in the past); pin both sides of the rule with
+  direct `private.event_is_upcoming(…)` cases. A mutation loop over function bodies (`awk` the function out of the
+  schema file, `sed` one change, run the file in an outer transaction) caught all 21 read-side mutations at once.
+- **Source:** events joining Task 2 (`event_signups.test.sql`).
+
+### E2E: proving two requests really race for one row; radio labels in Base UI (2026-11-22)
+- **Need:** show that `join_event`'s row lock decides the last place when two people join at once. Two puppeteer
+  clicks on a fast local server may run one after the other, so "exactly one wins" alone proves little.
+- **Do:** hold the row from a separate session first: `spawn("docker", ["exec", DB, "psql", "-U", "postgres", "-c",
+  "begin; select 1 from events where id = '…' for update; select pg_sleep(3); commit;"])` (`-c` with several
+  statements runs them in one transaction), wait ~0.5 s, click both buttons, then poll `pg_stat_activity` for
+  `wait_event_type = 'Lock' and query like '%join_event%'` until it counts 2: both RPCs are in flight and queued on
+  the lock. After the sleep commits, one gets the place and the other the `people_limit` refusal
+  (`scripts/e2e/events-join-e2e.mjs`).
+- **Gotcha:** reading a radio label's text with `label.querySelector("span span")` returned "" for the *checked*
+  option only: Base UI's `Radio.Indicator` renders a `<span>` (with an inner dot `<span>`) only while checked, and it
+  comes first. Select the label's own text element by class (`span.font-medium`).
+- **Opening the release gate for a run:** replace `private.can_see_events()` with `create or replace` through psql
+  (privileges are kept) and restore it from the schema file's own statement in `finally` (regex
+  `create or replace function private\.can_see_events\(\)[\s\S]*?\$\$;` over `40_events.sql`), so a later edit of
+  the schema can't leave a stale hard-coded restore.
+- **Source:** found by testing (events joining Task 6).

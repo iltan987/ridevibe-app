@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { test } from "node:test";
-import { isoToIstanbul, istanbulToIso } from "./time.ts";
+import { isoToIstanbul, istanbulToIso, isUpcoming } from "./time.ts";
 
 test("istanbulToIso converts a wall time by the fixed +03:00 offset", () => {
   assert.equal(istanbulToIso("2026-11-22T08:30"), "2026-11-22T05:30:00.000Z");
@@ -34,4 +34,13 @@ test("the result does not depend on the machine time zone", () => {
     });
     assert.equal(out.trim(), "2026-11-22T05:30:00.000Z 2026-11-22T08:30", tz);
   }
+});
+
+test("isUpcoming: until 12 hours after the start, or while the event has not ended", () => {
+  const now = Date.parse("2026-11-22T12:00:00Z");
+  assert.equal(isUpcoming({ startsAt: "2026-11-23T06:00:00Z", endsAt: null }, now), true);
+  assert.equal(isUpcoming({ startsAt: "2026-11-22T00:00:00Z", endsAt: null }, now), true);
+  assert.equal(isUpcoming({ startsAt: "2026-11-21T23:59:59Z", endsAt: null }, now), false);
+  assert.equal(isUpcoming({ startsAt: "2026-11-20T06:00:00Z", endsAt: "2026-11-22T12:00:00Z" }, now), true);
+  assert.equal(isUpcoming({ startsAt: "2026-11-20T06:00:00Z", endsAt: "2026-11-22T11:59:59Z" }, now), false);
 });

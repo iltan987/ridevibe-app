@@ -10,6 +10,7 @@ import { scrollToListTop, useUrlFix } from "@/components/lists/use-list-search";
 import { PagerButtons } from "@/components/pager-buttons";
 import { Link } from "@/i18n/navigation";
 import { eventsView } from "@/lib/events/events-view";
+import { type Counts, NO_COUNTS } from "@/lib/events/join";
 import type { EventSummary } from "@/lib/events/queries";
 import { listSearch, paramOff } from "@/lib/list-url";
 import { oneOf } from "@/lib/one-of";
@@ -23,31 +24,55 @@ type Side = (typeof SIDES)[number];
 type Kind = (typeof KINDS)[number];
 
 /**
- * Upcoming events in the browser: side and kind chips and pages over the full list from the server, with the state
- * in the URL (`?side=…&kind=…&page=…`, defaults left out; chips and pages push a history entry, nothing goes to the
- * server). "Tümü" clears both filters; a pressed side or kind chip clears its own filter.
+ * Upcoming events in the browser: side, kind and "Katıldıklarım" chips and pages over the full list from the server,
+ * with the state in the URL (`?side=…&kind=…&mine=1&page=…`, defaults left out; chips and pages push a history entry,
+ * nothing goes to the server). "Tümü" clears every filter; a pressed chip clears its own filter. `counts` by event id
+ * (the counts line of each card), `joined`: the ids of the viewer's own sign-ups.
  */
-export function EventsList({ events, overCeiling }: { events: EventSummary[]; overCeiling: boolean }) {
+export function EventsList({
+  events,
+  counts,
+  joined,
+  overCeiling,
+}: {
+  events: EventSummary[];
+  counts: Partial<Record<string, Counts>>;
+  joined: string[];
+  overCeiling: boolean;
+}) {
   const t = useTranslations("Events");
   const tSides = useTranslations("Members.sides");
   const params = useListParams();
   const side = oneOf(SIDES, params.get("side")) ?? null;
   const kind = oneOf(KINDS, params.get("kind")) ?? null;
+  const mine = params.get("mine") === "1";
+  const joinedIds = new Set(joined);
   // Repeated (`?page=2&page=3`) reads as an array: shown as page 1 and corrected, like on the server.
   const rawPage = params.raw("page");
-  const view = eventsView(events, { side, kind, page: parsePage(rawPage) });
+  const view = eventsView(events, { side, kind, mine, page: parsePage(rawPage) }, joinedIds);
 
-  const urlValues = (changes: Record<string, string | number | null>) => ({ side, kind, page: view.page, ...changes });
+  const urlValues = (changes: Record<string, string | number | null>) => ({
+    side,
+    kind,
+    mine: mine ? 1 : null,
+    page: view.page,
+    ...changes,
+  });
 
-  // A malformed or out-of-range ?page=, or an unknown ?side= / ?kind=, renders the corrected list: fix the URL to match.
+  // A malformed or out-of-range ?page=, or an unknown ?side= / ?kind= / ?mine=, renders the corrected list: fix the URL
+  // to match.
   const urlOff =
-    paramOff(rawPage, view.page, 1) || paramOff(params.raw("side"), side) || paramOff(params.raw("kind"), kind);
+    paramOff(rawPage, view.page, 1) ||
+    paramOff(params.raw("side"), side) ||
+    paramOff(params.raw("kind"), kind) ||
+    paramOff(params.raw("mine"), mine ? 1 : null);
   useUrlFix(urlOff ? listSearch(urlValues({}), DEFAULTS) : null);
 
   const listTop = useRef<HTMLDivElement>(null);
 
-  function onFilter(next: { side: Side | null; kind: Kind | null }) {
-    if (next.side !== side || next.kind !== kind) params.push(urlValues({ ...next, page: null }), DEFAULTS);
+  function onFilter(next: { side: Side | null; kind: Kind | null; mine: boolean }) {
+    if (next.side === side && next.kind === kind && next.mine === mine) return;
+    params.push(urlValues({ side: next.side, kind: next.kind, mine: next.mine ? 1 : null, page: null }), DEFAULTS);
   }
 
   function onPage(next: number) {
@@ -76,9 +101,9 @@ export function EventsList({ events, overCeiling }: { events: EventSummary[]; ov
         {/* Two groups that wrap as a whole: one row on wide screens, sides above kinds on a phone (no hidden chips). */}
         <div className="flex flex-wrap gap-2">
           <ListChip
-            pressed={side === null && kind === null}
+            pressed={side === null && kind === null && !mine}
             count={view.counts.all}
-            onClick={() => onFilter({ side: null, kind: null })}
+            onClick={() => onFilter({ side: null, kind: null, mine: false })}
           >
             {tSides("all")}
           </ListChip>
@@ -87,7 +112,7 @@ export function EventsList({ events, overCeiling }: { events: EventSummary[]; ov
               key={s}
               pressed={side === s}
               count={view.counts[s]}
-              onClick={() => onFilter({ side: side === s ? null : s, kind })}
+              onClick={() => onFilter({ side: side === s ? null : s, kind, mine })}
             >
               {tSides(s)}
             </ListChip>
@@ -99,11 +124,14 @@ export function EventsList({ events, overCeiling }: { events: EventSummary[]; ov
               key={k}
               pressed={kind === k}
               count={view.counts[k]}
-              onClick={() => onFilter({ side, kind: kind === k ? null : k })}
+              onClick={() => onFilter({ side, kind: kind === k ? null : k, mine })}
             >
               {t(`kinds.${k}`)}
             </ListChip>
           ))}
+          <ListChip pressed={mine} count={view.counts.mine} onClick={() => onFilter({ side, kind, mine: !mine })}>
+            {t("mineChip")}
+          </ListChip>
         </div>
       </div>
 
@@ -114,7 +142,7 @@ export function EventsList({ events, overCeiling }: { events: EventSummary[]; ov
           <ul className="flex flex-col gap-3">
             {view.items.map((event) => (
               <li key={event.id}>
-                <EventCard event={event} />
+                <EventCard event={event} counts={counts[event.id] ?? NO_COUNTS} joined={joinedIds.has(event.id)} />
               </li>
             ))}
           </ul>

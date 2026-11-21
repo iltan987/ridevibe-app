@@ -31,6 +31,32 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"event_changes": {
+                  Row: {
+                    "changed_at": string,"changed_by": string | null,"changes": NonNullable<Json>,"event_id": string,"id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "changed_at"?: string,"changed_by"?: string | null,"changes": NonNullable<Json>,"event_id": string,"id"?: string
+                  }
+                  Update: {
+                    "changed_at"?: string,"changed_by"?: string | null,"changes"?: NonNullable<Json>,"event_id"?: string,"id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "event_changes_changed_by_fkey"
+      columns: ["changed_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "event_changes_event_id_fkey"
+      columns: ["event_id"]
+isOneToOne: false
+      referencedRelation: "events"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"event_places": {
                   Row: {
                     "event_id": string,"id": string,"lat": number | null,"lng": number | null,"name": string,"position": number,"venue_label": string | null,"venue_url": string | null
@@ -48,6 +74,32 @@ isOneToOne: false
       columns: ["event_id"]
 isOneToOne: false
       referencedRelation: "events"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"event_signups": {
+                  Row: {
+                    "created_at": string,"event_id": string,"guests": number,"profile_id": string,"role": Database["public"]['Enums']["event_role"],"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"event_id": string,"guests"?: number,"profile_id": string,"role": Database["public"]['Enums']["event_role"],"updated_at"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"event_id"?: string,"guests"?: number,"profile_id"?: string,"role"?: Database["public"]['Enums']["event_role"],"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "event_signups_event_id_fkey"
+      columns: ["event_id"]
+isOneToOne: false
+      referencedRelation: "events"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "event_signups_profile_id_fkey"
+      columns: ["profile_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
       referencedColumns: ["id"]
     }
                   ]
@@ -308,6 +360,9 @@ isOneToOne: false
               "email": string,"full_name": string,"id": string,"status": Database["public"]['Enums']["member_status"]
             }[]
                            },
+"can_see_events":
+{ Args: Record<PropertyKey, never>; Returns: boolean
+                           },
 "cancel_event":
 { Args: { "p_id": string,"p_reason"?: string }; Returns: undefined
                            },
@@ -322,8 +377,34 @@ isOneToOne: false
 "delete_event":
 { Args: { "p_id": string }; Returns: undefined
                            },
+"event_authors":
+{ Args: { "p_event": string }; Returns: {
+              "created_by_name": string,"edited_by_other": boolean,"updated_by_name": string
+            }[]
+                           },
+"event_change_log":
+{ Args: { "p_event": string }; Returns: {
+              "changed_at": string,"changed_by_name": string,"changes": Json,"id": string
+            }[]
+                           },
+"event_counts":
+{ Args: { "p_events": (string)[] }; Returns: {
+              "bikes": number,"event_id": string,"guests": number,"members": number,"people": number,"probation": number
+            }[]
+                           },
+"event_roster":
+{ Args: { "p_event": string }; Returns: {
+              "avatar_url": string,"full_name": string,"guests": number,"has_emergency_contact": boolean,"probation": boolean,"profile_id": string,"role": Database["public"]['Enums']["event_role"]
+            }[]
+                           },
+"join_event":
+{ Args: { "p_event": string,"p_guests"?: number,"p_role": Database["public"]['Enums']["event_role"] }; Returns: undefined
+                           },
 "keep_alive":
 { Args: Record<PropertyKey, never>; Returns: boolean
+                           },
+"leave_event":
+{ Args: { "p_event": string }; Returns: undefined
                            },
 "link_application":
 { Args: { "application_id": string,"target_id": string }; Returns: undefined
@@ -377,7 +458,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "application_status": "new"|"contacted"|"approved"|"rejected","blood_type": "A+"|"A-"|"B+"|"B-"|"AB+"|"AB-"|"0+"|"0-","emergency_relationship": "spouse_partner"|"parent"|"sibling"|"child"|"friend"|"other","event_kind": "meetup"|"ride","event_status": "scheduled"|"cancelled","group_ride_experience": "none"|"some"|"a_lot","heard_from": "instagram_ad"|"instagram_other"|"friend"|"other","istanbul_side": "asian"|"european","license_class": "a1"|"a2"|"a"|"b"|"none","member_status": "pending"|"probation"|"active"|"inactive"|"deleting","permission": "applications.view"|"applications.review"|"applications.decide"|"applications.delete"|"members.manage"|"members.safety"|"members.notes"|"events.manage","safety_action": "view_card"|"filter_blood_type"|"set_blood_type"|"withdraw_blood_type"
+            "application_status": "new"|"contacted"|"approved"|"rejected","blood_type": "A+"|"A-"|"B+"|"B-"|"AB+"|"AB-"|"0+"|"0-","emergency_relationship": "spouse_partner"|"parent"|"sibling"|"child"|"friend"|"other","event_kind": "meetup"|"ride","event_role": "rider"|"passenger","event_status": "scheduled"|"cancelled","group_ride_experience": "none"|"some"|"a_lot","heard_from": "instagram_ad"|"instagram_other"|"friend"|"other","istanbul_side": "asian"|"european","license_class": "a1"|"a2"|"a"|"b"|"none","member_status": "pending"|"probation"|"active"|"inactive"|"deleting","permission": "applications.view"|"applications.review"|"applications.decide"|"applications.delete"|"members.manage"|"members.safety"|"members.notes"|"events.manage","safety_action": "view_card"|"filter_blood_type"|"set_blood_type"|"withdraw_blood_type"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -493,7 +574,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "application_status": ["new", "contacted", "approved", "rejected"],"blood_type": ["A+", "A-", "B+", "B-", "AB+", "AB-", "0+", "0-"],"emergency_relationship": ["spouse_partner", "parent", "sibling", "child", "friend", "other"],"event_kind": ["meetup", "ride"],"event_status": ["scheduled", "cancelled"],"group_ride_experience": ["none", "some", "a_lot"],"heard_from": ["instagram_ad", "instagram_other", "friend", "other"],"istanbul_side": ["asian", "european"],"license_class": ["a1", "a2", "a", "b", "none"],"member_status": ["pending", "probation", "active", "inactive", "deleting"],"permission": ["applications.view", "applications.review", "applications.decide", "applications.delete", "members.manage", "members.safety", "members.notes", "events.manage"],"safety_action": ["view_card", "filter_blood_type", "set_blood_type", "withdraw_blood_type"]
+            "application_status": ["new", "contacted", "approved", "rejected"],"blood_type": ["A+", "A-", "B+", "B-", "AB+", "AB-", "0+", "0-"],"emergency_relationship": ["spouse_partner", "parent", "sibling", "child", "friend", "other"],"event_kind": ["meetup", "ride"],"event_role": ["rider", "passenger"],"event_status": ["scheduled", "cancelled"],"group_ride_experience": ["none", "some", "a_lot"],"heard_from": ["instagram_ad", "instagram_other", "friend", "other"],"istanbul_side": ["asian", "european"],"license_class": ["a1", "a2", "a", "b", "none"],"member_status": ["pending", "probation", "active", "inactive", "deleting"],"permission": ["applications.view", "applications.review", "applications.decide", "applications.delete", "members.manage", "members.safety", "members.notes", "events.manage"],"safety_action": ["view_card", "filter_blood_type", "set_blood_type", "withdraw_blood_type"]
           }
         }
 } as const

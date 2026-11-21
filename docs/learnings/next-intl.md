@@ -60,3 +60,12 @@
 - **Caveat:** next-intl forwards those request headers on, so every localized page, layout and Server Action sees
   `accept-language: tr`. Nothing reads it today; code that needs the visitor's real language must not rely on it.
 - **Source:** `next-intl/dist/esm/development/middleware/{resolveLocale,syncCookie}.js`, found by testing.
+
+### Checking ICU messages outside the app: `createTranslator` from `next-intl` (2026-11-22)
+- **Symptom:** a scratch script importing `intl-messageformat` to try new `plural` / `select` messages failed with
+  `Cannot find module` from the repo root.
+- **Cause:** pnpm doesn't hoist next-intl's own dependencies; only `next-intl` itself resolves from the root.
+- **Do:** `createRequire(process.cwd() + "/package.json")("next-intl").createTranslator({ locale, messages,
+  namespace, onError })` in a scratchpad `.mjs` run from the repo root: the same formatter the app uses, and `onError`
+  reports a broken message or a missing argument. Run each `select` / `plural` with every branch's value.
+- **Source:** events joining Task 5 (checking `Events.changes.leadParts.*` in both locales).

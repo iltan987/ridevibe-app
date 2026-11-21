@@ -91,7 +91,7 @@ pnpm db:backup                # encrypted production backup alone (--local: the 
 pnpm exec supabase migration up   # apply new migrations locally, keeping data (db:reset wipes auth users; after
                                   # an iteration that reset, restore iltan's local admin before browser review)
 kill $(ss -ltnp | grep ':3123 ' | grep -oP 'pid=\K[0-9]+')   # stop a local server; never `pkill -f` (kills own shell)
-PUPPETEER_DIR=~/e2e-tools node scripts/e2e/{nav,members,safety,header,apply,apply-nav,install,cross-tab,lists,deletion,events}-e2e.mjs   # browser E2E vs `pnpm start -p 3123` (setup: scripts/e2e/README.md)
+PUPPETEER_DIR=~/e2e-tools node scripts/e2e/{nav,members,safety,header,apply,apply-nav,install,cross-tab,lists,deletion,events,events-join}-e2e.mjs   # browser E2E vs `pnpm start -p 3123` (setup: scripts/e2e/README.md)
 node scripts/e2e/seo-check.mjs   # SEO head/robots/sitemap/JSON-LD check, no puppeteer; `BASE=https://ridevibe.com.tr` for production
 # signed-in parts need fixture users (admin@/member@/pending-noapp@test.local) that `db:reset` wipes: recreate per README
 # headless hides scrollbars (launch({ scrollbars: true }) keeps them); Next keeps the previous route hidden in the DOM: select visible elements
@@ -155,10 +155,15 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   nobody reads notes about themselves. Counts via the security-invoker view `member_note_counts`.
   KVKK art. 11 request: content + date by hand, never the author's name (PLAN.md "Access requests and staff notes").
 - **Events** (`public.events` + `event_places`, `supabase/schemas/40_events.sql`, permission `events.manage`): release
-  gate until the joining branch: RLS select for `events.manage` only (non-organisers: "Çok yakında" on `/events`; on
-  the other event routes signed-out visitors go to sign-in and signed-in non-organisers get a 404; the WhatsApp share
-  text has no event link until the release). Writes only via `save_event` / `cancel_event` / `delete_event`. A place = point and/or venue link
-  (Google place / Yandex org); a route link keeps only its destination (the origin is the sharer's position):
+  gate = one function, `private.can_see_events()` (today `events.manage` only; policies, RPCs and pages via
+  `public.can_see_events()` ask it; the release replaces its body with `private.is_club_member()`). Until then
+  non-organisers get "Çok yakında" on `/events`; on the other event routes signed-out visitors go to sign-in and
+  signed-in non-organisers get a 404; the WhatsApp share text has no event link. Writes only via `save_event` /
+  `cancel_event` / `delete_event` (refuses `has_signups`); `save_event` logs changes of events with counted sign-ups.
+  Sign-ups (`42_event_signups.sql`) only via `join_event` / `leave_event` (security definer, lock the event row
+  first); counted = `private.counted_event_signups` (active/probation); rule refusals are `P0001` + `hint`, mapped in
+  `src/lib/events/join.ts`; reads via `event_counts` / `event_roster` / `event_authors` / `event_change_log`. A place = point and/or venue
+  link (Google place / Yandex org); a route link keeps only its destination (the origin is the sharer's position):
   pasted links are never stored or logged (`src/lib/events/place-input.ts`, `resolve-place.ts`).
 - Status: `pending` / `probation` ("Ön alım") / `active` / `inactive` / `deleting`. Approval and staff manual
   activation start in `probation`; staff promote via `set_member_status` ("Tam üye yap"); the DB refuses
