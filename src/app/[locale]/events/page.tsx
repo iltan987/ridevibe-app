@@ -1,7 +1,16 @@
+import { Plus } from "lucide-react";
 import type { Metadata, ResolvingMetadata } from "next";
 import { useTranslations } from "next-intl";
 import { getLocale, getTranslations } from "next-intl/server";
+import { Suspense } from "react";
 import { ComingSoon } from "@/components/coming-soon";
+import { EventsList } from "@/components/events/events-list";
+import { buttonVariants } from "@/components/ui/button";
+import { Link } from "@/i18n/navigation";
+import { can } from "@/lib/auth/permissions";
+import { getCurrentUser } from "@/lib/auth/user";
+import { listUpcomingEvents } from "@/lib/events/queries";
+import { LIST_CEILING } from "@/lib/pagination";
 import { pageMetadata } from "@/lib/seo/metadata";
 
 export async function generateMetadata(_props: unknown, parent: ResolvingMetadata): Promise<Metadata> {
@@ -17,7 +26,34 @@ export async function generateMetadata(_props: unknown, parent: ResolvingMetadat
   });
 }
 
+// Release gate (spec §9): until the release only organisers (`events.manage`) see events; everyone else keeps the
+// "coming soon" page, which is also the fallback while the session is read. The database enforces the same gate.
 export default function EventsPage() {
   const t = useTranslations("Nav");
-  return <ComingSoon title={t("events")} />;
+  return (
+    <Suspense fallback={<ComingSoon title={t("events")} />}>
+      <Events />
+    </Suspense>
+  );
+}
+
+async function Events() {
+  const [user, tNav] = await Promise.all([getCurrentUser(), getTranslations("Nav")]);
+  if (!can(user?.access, "events.manage")) return <ComingSoon title={tNav("events")} />;
+
+  const [{ events, overCeiling }, t] = await Promise.all([listUpcomingEvents(), getTranslations("Events")]);
+  if (overCeiling) console.error("upcoming events over ceiling", { count: `${LIST_CEILING}+` });
+
+  return (
+    <section className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8">
+      <div data-skeleton-result="events-heading" className="flex min-h-8 items-center justify-between gap-3">
+        <h1 className="heading text-3xl">{t("title")}</h1>
+        <Link href="/events/new" className={buttonVariants()}>
+          <Plus data-icon="inline-start" aria-hidden />
+          {t("create")}
+        </Link>
+      </div>
+      <EventsList events={events} overCeiling={overCeiling} />
+    </section>
+  );
 }

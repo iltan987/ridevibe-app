@@ -369,6 +369,11 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   `string | null`; `visibility-form.tsx` indentation. All cosmetic or harmless today.
 
 ### UI / accessibility
+- **Event card details to settle** (2026-11-21, events organiser lists) — (a) the route strip's start/finish names
+  repeat in the "08:30 · start → finish" line (plan wording); options: the line uses the ride's public `area`, or the
+  card's strip drops its names; (b) a multi-day ride's card shows only the start day; (c) stop names on the strip are
+  screen-reader only (no room on a phone; the event page lists them); (d) at 390px the chip row scrolls and the
+  Buluşma / Sürüş chips start off-screen (`src/components/events/`). Deferred: look at real events with iltan first.
 - **Pager accessibility** (2026-11-13, list UX final review) — pressing "›" to reach the last page swaps the focused
   button for a `span`, so focus falls to `<body>`; after a page change the view scrolls to the list top but focus stays
   on the pager; the disabled end `<span aria-label>` has no role (ARIA forbids `aria-label` on generic elements). Fix:

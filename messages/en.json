@@ -209,6 +209,34 @@
       "noContactFilter": "No emergency contact"
     }
   },
+  "Events": {
+    "title": "Events",
+    "pastTitle": "Past events",
+    "create": "Create event",
+    "pastLink": "Past events",
+    "upcomingLink": "Upcoming events",
+    "upcomingTotal": "{count, plural, one {# upcoming event} other {# upcoming events}}",
+    "pastTotal": "{count, plural, one {# past event} other {# past events}}",
+    "range": "{from}–{to} of {total, plural, one {# event} other {# events}}",
+    "filtersLabel": "Event filters",
+    "kinds": {
+      "meetup": "Meet-up",
+      "ride": "Ride"
+    },
+    "cancelled": "Cancelled",
+    "meta": "{time} · {places}",
+    "empty": "No upcoming events. Add one with “Create event”.",
+    "noResults": "No events match this filter.",
+    "pastEmpty": "No past events yet.",
+    "ceiling": "This list is incomplete: there are more than 2,000 upcoming events and only the first 2,000 are shown. Please tell the admins.",
+    "route": "Route",
+    "placeRoles": {
+      "start": "Start:",
+      "stop": "Stop:",
+      "finish": "Finish:",
+      "meetup": "Meeting point:"
+    }
+  },
   "Profile": {
     "nameHint": "To change your name, ask the club team.",
     "location": "Location",

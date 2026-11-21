@@ -209,6 +209,34 @@
       "noContactFilter": "Acil kişisi yok"
     }
   },
+  "Events": {
+    "title": "Etkinlikler",
+    "pastTitle": "Geçmiş etkinlikler",
+    "create": "Etkinlik oluştur",
+    "pastLink": "Geçmiş etkinlikler",
+    "upcomingLink": "Yaklaşan etkinlikler",
+    "upcomingTotal": "{count} yaklaşan etkinlik",
+    "pastTotal": "{count} geçmiş etkinlik",
+    "range": "{from}–{to} / {total} etkinlik",
+    "filtersLabel": "Etkinlik filtreleri",
+    "kinds": {
+      "meetup": "Buluşma",
+      "ride": "Sürüş"
+    },
+    "cancelled": "İptal edildi",
+    "meta": "{time} · {places}",
+    "empty": "Yaklaşan etkinlik yok. Yenisini “Etkinlik oluştur” ile ekleyebilirsin.",
+    "noResults": "Bu filtreye uyan etkinlik yok.",
+    "pastEmpty": "Henüz geçmiş etkinlik yok.",
+    "ceiling": "Liste eksik: 2.000'den fazla yaklaşan etkinlik var, yalnızca ilk 2.000 etkinlik gösteriliyor. Lütfen yöneticilere haber ver.",
+    "route": "Rota",
+    "placeRoles": {
+      "start": "Başlangıç:",
+      "stop": "Durak:",
+      "finish": "Varış:",
+      "meetup": "Buluşma yeri:"
+    }
+  },
   "Profile": {
     "nameHint": "İsim değişikliği için kulüp ekibine yaz.",
     "location": "Konum",
