@@ -1,7 +1,7 @@
 // Run with: pnpm test
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { routeSummary, shareText } from "./share-text.ts";
+import { routeSummary, shareText } from "./places.ts";
 
 const place = (name: string) => ({ name });
 const when = "22 Kasım Cumartesi 08:30";

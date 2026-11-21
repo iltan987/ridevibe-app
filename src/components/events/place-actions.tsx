@@ -17,11 +17,11 @@ import type { EventPlace } from "@/lib/events/queries";
 type App = "google" | "apple" | "yandex" | "yandexNavi";
 
 /**
- * One place of an event (spec §4 "Opening a place"): its role ("Başlangıç"), name and venue label, then "Konumu aç"
- * and "Yol tarifi" menus with the map apps, and "Koordinatları kopyala" when the place has a point. Both menus are
- * described by the place name, so a screen reader tells the places' buttons apart.
+ * One place of an event (spec §4 "Opening a place"): its role ("Başlangıç"; none for a meet-up), name and venue
+ * label, then "Konumu aç" and "Yol tarifi" menus with the map apps, and "Koordinatları kopyala" when the place has a
+ * point. Both menus are described by the place name, so a screen reader tells the places' buttons apart.
  */
-export function PlaceActions({ place, label }: { place: EventPlace; label: string }) {
+export function PlaceActions({ place, label }: { place: EventPlace; label: string | null }) {
   const t = useTranslations("Events.detail");
   const nameId = useId();
   const links = navLinks(place);
@@ -30,7 +30,7 @@ export function PlaceActions({ place, label }: { place: EventPlace; label: strin
   return (
     <div className="flex flex-col gap-3 p-4">
       <div className="flex min-w-0 flex-col gap-0.5">
-        <span className="text-xs text-muted-foreground">{label}</span>
+        {label && <span className="text-xs text-muted-foreground">{label}</span>}
         <span id={nameId} className="font-medium wrap-break-word">
           {place.name}
         </span>
@@ -114,6 +114,7 @@ function CopyCoords({ coords, describedBy }: { coords: string; describedBy: stri
     try {
       await navigator.clipboard.writeText(coords);
     } catch {
+      setCopied(false);
       setCopyFailed(true);
       return;
     }
@@ -129,8 +130,9 @@ function CopyCoords({ coords, describedBy }: { coords: string; describedBy: stri
         {copied ? <Check data-icon="inline-start" aria-hidden /> : <Copy data-icon="inline-start" aria-hidden />}
         {copied ? t("copied") : t("copyCoords")}
       </Button>
+      {/* Also says when copying failed: the fallback field appears below, out of the reader's way. */}
       <span className="sr-only" aria-live="polite">
-        {copied ? t("copied") : ""}
+        {copied ? t("copied") : copyFailed ? t("copyManually") : ""}
       </span>
       {copyFailed && (
         <label className="flex w-full flex-col gap-1 text-sm text-muted-foreground">

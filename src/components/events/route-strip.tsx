@@ -1,4 +1,3 @@
-import { useTranslations } from "next-intl";
 import type { EventPlace } from "@/lib/events/queries";
 import { cn } from "@/lib/utils";
 
@@ -20,29 +19,16 @@ const MARKER: Record<Role, string> = {
 
 /**
  * The route strip of the design system (no map base): start ring, stop dots, orange finish on an orange line with a
- * soft glow; a meet-up's single place is one orange dot. Under the markers the start and finish names (a meet-up's
- * one name); stop names are for screen readers only (a phone has no room for them). `labels={false}`: markers only,
- * pure decoration hidden from screen readers (the event card names the places in its meta line).
+ * soft glow; a meet-up's single place is one orange dot. Pure decoration, hidden from screen readers: the card's meta
+ * line and the event page's place list name the places.
  */
-export function RouteStrip({
-  places,
-  labels = true,
-  className,
-}: {
-  places: EventPlace[];
-  labels?: boolean;
-  className?: string;
-}) {
-  const t = useTranslations("Events");
+export function RouteStrip({ places, className }: { places: EventPlace[]; className?: string }) {
   if (places.length === 0) return null;
   const single = places.length === 1;
 
   return (
-    <div
-      aria-hidden={labels ? undefined : true}
-      className={cn("flex h-24 flex-col justify-center gap-2 bg-muted/40 px-4", className)}
-    >
-      <div aria-hidden className={cn("relative flex h-4 items-center", single ? "justify-center" : "justify-between")}>
+    <div aria-hidden className={cn("flex h-24 flex-col justify-center bg-muted/40 px-4", className)}>
+      <div className={cn("relative flex h-4 items-center", single ? "justify-center" : "justify-between")}>
         {!single && (
           <>
             <span className="absolute inset-x-2 top-1/2 h-2.5 -translate-y-1/2 rounded-full bg-primary/25 blur-xs" />
@@ -55,29 +41,6 @@ export function RouteStrip({
           </span>
         ))}
       </div>
-      {labels && (
-        <ol
-          aria-label={t("route")}
-          className={cn("flex gap-3 text-sm font-medium", single ? "justify-center" : "justify-between")}
-        >
-          {places.map((place, i) => {
-            const role = roleOf(i, places.length);
-            return (
-              <li
-                key={i}
-                className={cn(
-                  role === "stop" ? "sr-only" : "min-w-0 truncate",
-                  role === "finish" && "text-right",
-                  role === "meetup" && "text-center",
-                )}
-              >
-                <span className="sr-only">{t(`placeRoles.${role}`)} </span>
-                {place.name}
-              </li>
-            );
-          })}
-        </ol>
-      )}
     </div>
   );
 }

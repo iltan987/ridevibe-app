@@ -229,13 +229,6 @@
     "noResults": "No events match this filter.",
     "pastEmpty": "No past events yet.",
     "ceiling": "This list is incomplete: there are more than 2,000 upcoming events and only the first 2,000 are shown. Please tell the admins.",
-    "route": "Route",
-    "placeRoles": {
-      "start": "Start:",
-      "stop": "Stop:",
-      "finish": "Finish:",
-      "meetup": "Meeting point:"
-    },
     "backToList": "Back to events",
     "detail": {
       "when": "Date:",
@@ -248,8 +241,7 @@
       "roles": {
         "start": "Start",
         "stop": "Stop {n}",
-        "finish": "Finish",
-        "meetup": "Meeting point"
+        "finish": "Finish"
       },
       "openPlace": "Open location",
       "directions": "Directions",
@@ -269,7 +261,7 @@
       "minCc": "At least {cc} cc",
       "fullMembersOnly": "Full members only",
       "createdBy": "Organised by: {name}",
-      "updatedBy": "Last edited by {name}, {date}",
+      "updatedBy": "Last change: {name}, {date}",
       "cancel": "Cancel event",
       "delete": "Delete event"
     },
@@ -285,7 +277,7 @@
     },
     "deleteDialog": {
       "title": "Delete this event?",
-      "body": "The event and its places are deleted permanently. This can't be undone.",
+      "body": "The event and all its details are deleted permanently.",
       "dismiss": "Keep event",
       "confirm": "Delete"
     },

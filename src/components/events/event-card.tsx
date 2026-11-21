@@ -4,7 +4,7 @@ import { RouteStrip } from "@/components/events/route-strip";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "@/i18n/navigation";
 import type { EventSummary } from "@/lib/events/queries";
-import { routeSummary } from "@/lib/events/share-text";
+import { routeSummary } from "@/lib/events/places";
 import { cn } from "@/lib/utils";
 
 /**
@@ -33,7 +33,7 @@ export function EventCard({ event, withYear = false }: { event: EventSummary; wi
       className="block rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
     >
       <article className="overflow-hidden rounded-xl border bg-card transition-colors hover:bg-muted/40">
-        <RouteStrip places={event.places} labels={false} className="border-b" />
+        <RouteStrip places={event.places} className="border-b" />
         <div className="flex gap-4 p-4">
           <time
             id={`${id}-date`}

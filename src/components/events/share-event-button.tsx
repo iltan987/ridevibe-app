@@ -6,13 +6,14 @@ import { useSyncExternalStore } from "react";
 import { buttonVariants } from "@/components/ui/button";
 import { whatsAppShareUrl } from "@/lib/applications/contact";
 import { noSubscribe } from "@/lib/no-subscribe";
+import { cn } from "@/lib/utils";
 
 const getOrigin = () => window.location.origin;
 const getServerOrigin = () => null;
 
 /**
  * "WhatsApp'ta paylaş" (organisers, spec §6): `text` (from `shareText`) plus the event's absolute link, built from the
- * browser's origin and the localized `path`. Until hydration the link has no target (the origin is unknown).
+ * browser's origin and the localized `path`. Until hydration the origin is unknown: no target, shown disabled.
  */
 export function ShareEventButton({ text, path }: { text: string; path: string }) {
   const t = useTranslations("Events.detail");
@@ -20,7 +21,16 @@ export function ShareEventButton({ text, path }: { text: string; path: string })
   const href = origin === null ? undefined : whatsAppShareUrl(`${text}\n${origin}${path}`);
 
   return (
-    <a href={href} target="_blank" rel="noopener" className={buttonVariants({ variant: "outline" })}>
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-disabled={href === undefined ? true : undefined}
+      className={cn(
+        buttonVariants({ variant: "outline" }),
+        "aria-disabled:pointer-events-none aria-disabled:opacity-50",
+      )}
+    >
       <MessageCircle data-icon="inline-start" aria-hidden />
       {t("share")}
     </a>

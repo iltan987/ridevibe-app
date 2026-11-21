@@ -14,7 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getPathname, Link } from "@/i18n/navigation";
 import { requirePermission } from "@/lib/auth/require-access";
 import { getEvent } from "@/lib/events/queries";
-import { shareText } from "@/lib/events/share-text";
+import { shareText } from "@/lib/events/places";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("Events");
@@ -31,7 +31,7 @@ export default async function EventPage({ params }: PageProps<"/[locale]/events/
         ← {t("backToList")}
       </Link>
       <Suspense fallback={<EventSkeleton />}>
-        <EventDetail params={params} />
+        <EventContent params={params} />
       </Suspense>
     </section>
   );
@@ -58,7 +58,7 @@ const SHARE_WHEN = {
   hourCycle: "h23",
 } as const;
 
-async function EventDetail({ params }: { params: PageProps<"/[locale]/events/[id]">["params"] }) {
+async function EventContent({ params }: { params: PageProps<"/[locale]/events/[id]">["params"] }) {
   const { id } = await params;
   await requirePermission("events.manage", `/events/${id}`);
 
@@ -79,8 +79,9 @@ async function EventDetail({ params }: { params: PageProps<"/[locale]/events/[id
     cancelledTitle: (title) => t("detail.shareCancelled", { title }),
   });
   const single = event.places.length === 1;
+  // A meet-up's one place needs no role: the section heading says "Buluşma yeri".
   const roleLabel = (i: number) => {
-    if (single) return t("detail.roles.meetup");
+    if (single) return null;
     if (i === 0) return t("detail.roles.start");
     return i === event.places.length - 1 ? t("detail.roles.finish") : t("detail.roles.stop", { n: i });
   };
@@ -145,7 +146,8 @@ async function EventDetail({ params }: { params: PageProps<"/[locale]/events/[id
           {single ? t("detail.meetingPoint") : t("detail.places")}
         </h2>
         <div className="overflow-hidden rounded-xl border bg-card">
-          <RouteStrip places={event.places} className="border-b" />
+          {/* Decoration for a route; a meet-up's one dot would add nothing. */}
+          {!single && <RouteStrip places={event.places} className="border-b" />}
           <ol className="divide-y">
             {event.places.map((place, i) => (
               <li key={i}>
@@ -185,7 +187,11 @@ async function EventDetail({ params }: { params: PageProps<"/[locale]/events/[id
             <p>
               {t("detail.updatedBy", {
                 name: event.updatedByName,
-                date: format.dateTime(new Date(event.updatedAt), { dateStyle: "medium", timeStyle: "short" }),
+                date: format.dateTime(new Date(event.updatedAt), {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                  hourCycle: "h23",
+                }),
               })}
             </p>
           )}

@@ -229,13 +229,6 @@
     "noResults": "Bu filtreye uyan etkinlik yok.",
     "pastEmpty": "Henüz geçmiş etkinlik yok.",
     "ceiling": "Liste eksik: 2.000'den fazla yaklaşan etkinlik var, yalnızca ilk 2.000 etkinlik gösteriliyor. Lütfen yöneticilere haber ver.",
-    "route": "Rota",
-    "placeRoles": {
-      "start": "Başlangıç:",
-      "stop": "Durak:",
-      "finish": "Varış:",
-      "meetup": "Buluşma yeri:"
-    },
     "backToList": "Etkinliklere dön",
     "detail": {
       "when": "Tarih:",
@@ -248,8 +241,7 @@
       "roles": {
         "start": "Başlangıç",
         "stop": "{n}. durak",
-        "finish": "Varış",
-        "meetup": "Buluşma yeri"
+        "finish": "Varış"
       },
       "openPlace": "Konumu aç",
       "directions": "Yol tarifi",
@@ -269,7 +261,7 @@
       "minCc": "En az {cc} cc",
       "fullMembersOnly": "Sadece tam üyeler",
       "createdBy": "Düzenleyen: {name}",
-      "updatedBy": "Son düzenleme: {name}, {date}",
+      "updatedBy": "Son değişiklik: {name}, {date}",
       "cancel": "Etkinliği iptal et",
       "delete": "Etkinliği sil"
     },
@@ -285,7 +277,7 @@
     },
     "deleteDialog": {
       "title": "Etkinlik silinsin mi?",
-      "body": "Etkinlik ve yerleri kalıcı olarak silinir. Bu geri alınamaz.",
+      "body": "Etkinlik tüm bilgileriyle kalıcı olarak silinir.",
       "dismiss": "Vazgeç",
       "confirm": "Sil"
     },
