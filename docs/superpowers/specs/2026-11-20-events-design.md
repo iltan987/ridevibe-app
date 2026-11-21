@@ -185,6 +185,27 @@ through the API before the release), and removed in branch 2 without leftovers (
 Each branch: pgTAP first for every permission rule (incl. must-fail cases, `deleting` excluded, ön alım rules),
 browser E2E (create → join → change → cancel; visitor teaser shows no time/place details; probation sees counts only).
 
+**Branch 2 split (2026-11-21, iltan: review the whole feature once, at the end):** 2a = joining, built and shipped
+**behind the gate**, so iltan can try it on production as an organiser; 2b = the release (open the gate, teaser, home
+section + hero button, SEO, share link, notice). Calls Claude made while building 2a (spec §10):
+- **The gate is one function**, `private.can_see_events()` (body today: `private.has_permission('events.manage')`).
+  The read policies, the join/leave/read RPCs and the pages (via `public.can_see_events()`) all ask it, so 2b is one
+  migration replacing the body with `private.is_club_member()` plus flipped pgTAP gate assertions, nothing else to
+  hunt down.
+- **Only counted statuses count.** Sign-ups of `active` and `probation` profiles (`private.counted_event_signups`)
+  make limits, counts, rosters, "has sign-ups" and the change log; `inactive` / `pending` / `deleting` sign-ups are
+  kept but ignored and come back with the status. Deleting the account removes them (FK cascade).
+- **"Don't make it worse."** A tightened limit, `min_cc` or `full_members_only` refuses a change only if it raises the
+  caller's own footprint on that rule (more people, becoming a rider, a new ön alım sign-up). Nobody is removed or
+  locked in when an organiser tightens a rule; organisers see "Sınır aşıldı".
+- **Refusals are a contract:** `P0001` with a `hint` (`started`, `cancelled`, `people_limit`, `bike_limit`, `min_cc`,
+  `full_members_only`, `has_signups`), mapped in `src/lib/events/join.ts` (never by message text). `delete_event`
+  refuses with `has_signups` (cancel instead).
+- **Active members see "+N yeni üye" beside the roster total** (on every page of the roster), not ön alım names; ön
+  alım members see counts only; past events show no names to members.
+- Concurrent joins for the last place: `join_event` locks the event row before counting; the browser E2E
+  (`scripts/e2e/events-join-e2e.mjs`) holds the row from psql while two joins wait, and exactly one wins.
+
 ## 10. Left to the builder
 
 Table and column names, RPC shapes, the exact link-parsing rules (after the spike), navigation URL schemes,

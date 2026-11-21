@@ -85,6 +85,26 @@ Run against a **local** stack only (local Supabase + a server on port 3123); nev
   users (recipe in `probation-e2e.mjs`). Plants and deletes its rows (events titled `E2E …`, the role) through `docker
   exec … psql` (`DB_CONTAINER`, local only) before and after; other upcoming events are fine, other past events must
   be older than the planted ones (1–27 days) and leave at most two pages. Screenshots go to `OUT_DIR`.
+- `events-join-e2e.mjs` — events joining behind the release gate (PASS/FAIL lines, exit code != 0 on failure; 390px
+  and 1280px). With the gate closed: the member gets "Çok yakında" and a 404 on an event; the organiser gets a 404 on
+  `/events/not-a-uuid`. Then it **opens the gate locally** (replaces `private.can_see_events()` with the release body
+  `select private.is_club_member()` through `docker exec psql`) and restores the definition from
+  `supabase/schemas/40_events.sql` in `finally` (a FAIL/WARNING line if that fails; `pnpm db:reset` restores it
+  too). Per viewport: the organiser creates a ride (3 people, 1 bike, 400 cc); the member (a planted 250 cc bike)
+  sees Sürücü disabled with "Motor ekle" → `/account#motorcycles`, joins as Artçı with a guest and gets the
+  emergency-contact nudge; member2 and the organiser join at once for the last place while a psql session holds the
+  event row (both `join_event` calls seen waiting on the lock in `pg_stat_activity`): exactly one wins, the other
+  reads "Kişi sınırı doldu."; the organiser raises the limit (change box); the ön alım member sees counts but no names
+  (not in the HTML), joins, and on a planted "Sadece tam üyeler" meet-up reads the reason; the organiser's roster
+  shows the "Ön alım" badge, "Acil durum kişisi yok" and safety-card buttons; the member's shows names, no badges,
+  "2 üye · +1 yeni üye"; a start-time change shows "Başlangıç: 08:30 → 09:45" (author only for the organiser) and
+  leads the share text ("Güncellendi: saat 09:45"); "Katıldıklarım" filters the list with no document/RSC request;
+  delete is disabled while people are signed up; cancelling closes joining. Needs `pnpm start -p 3123`, local email
+  sign-in and `admin@test.local` (admin role), `member@test.local` (active, no emergency contact, no bike ≥ 400 cc),
+  `member2@test.local` (active; create it like `member@`) and `probation@test.local` (recipe in `probation-e2e.mjs`).
+  Plants and deletes its rows (events titled `E2E Katılım …` / `E2E Sadece Tam …` with their sign-ups and change
+  log, the member's `E2E` bike) through `docker exec … psql` (`DB_CONTAINER`, local only) before and after. Other
+  upcoming events are fine. Screenshots go to `OUT_DIR`.
 - `header-e2e.mjs` — `<head>` theme script across a language switch and an unknown path (theme kept, client-created
   script inert, no React "script tag" warning), theme sync to other tabs, no colour transitions on a theme switch, the
   user-menu skeleton (signed out: button; signed in: the avatar, photo kept on a language switch; language button

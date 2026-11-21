@@ -10,21 +10,27 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ## Next up (iltan asked for these; in priority order; start in a new session)
 
-- **Events branch 2: joining + release** (2026-11-21, iltan) — spec `docs/superpowers/specs/2026-11-20-events-design.md`
-  §5, §6, §9 item 2: sign-ups (rider/passenger, up to 3 guests), the join RPC (people/bike limits, `min_cc`, full
-  members only, closing at `starts_at`), counts, rosters per role (ön alım counts only, past events counts only),
-  safety-card links, "Katıldıklarım", emergency-contact nudge, the change log; then the release: widen the RLS gate,
-  visitor teaser (area line only), home section + "Etkinlikleri Gör", `/events` indexable + sitemap, the event link
-  back in the share text, privacy notice (one `PRIVACY_NOTICE_VERSION` bump). Branch 1 shipped 2026-11-21.
-  iltan reviews the whole Events feature once, at the end (2026-11-21): so the joining work ships first **behind the
-  gate**, iltan does the full check below on production, and only then does the release step open the gate.
-  Restore iltan's local admin before any local browser review (the build reset the local DB: iltan signs in with
-  Google locally once, then set the admin role by SQL).
+- **Events branch 2b: the release** (2026-11-22, events joining; iltan) — joining (branch 2a, `feat/events-joining`)
+  is built behind the gate; spec `docs/superpowers/specs/2026-11-20-events-design.md` §3, §9. Left for the release,
+  after iltan's production check below: open the gate (one migration replacing `private.can_see_events()`'s body with
+  `select private.is_club_member()`; flip the pgTAP gate assertions in `events.test.sql` / `event_signups.test.sql`
+  and drop their in-transaction swap; `events-join-e2e.mjs` then needs no gate swap), visitor teaser (area line
+  only), home section + "Etkinlikleri Gör" hero button (item below), `/events` indexable + sitemap (item below), the
+  event link back in the share text (`shareText` / `ShareEventButton`, absolute URL from the origin + `getPathname`;
+  members would meet a 404 before), privacy notice + one `PRIVACY_NOTICE_VERSION` bump, `<InstallBanner />` on
+  `/events`, per-viewer event-page skeletons and the `/events` list fallback (Loading states below), the
+  navigation review (below). Restore iltan's local admin before any local browser review (the build reset the local
+  DB: iltan signs in with Google locally once, then set the admin role by SQL).
 - **Full Events check on production (iltan, before the release step)** — branch 1 feedback (the UI / form / card
   items marked "Deferred: … decide with iltan" below); tick `events.manage` for the Organizatör role in
   `/admin/roles`; on a real Android phone and iPhone check every "Konumu aç" / "Yol tarifi" app link and Yandex Navi
   with and without the app; paste one real `maps.app.goo.gl` link on production to confirm short links resolve from
-  Vercel; try joining (rider/passenger, guests, limits) as admin/organiser while the gate is still closed.
+  Vercel; try joining while the gate is still closed: as an organiser join as Sürücü and Artçı (Sürücü needs a bike
+  of at least `min_cc` on `/account`), add and remove guests, set people/bike limits, `min_cc` and "Sadece tam
+  üyeler" and tighten them after joining (you can still lower guests, switch to Artçı or leave; "Sınır aşıldı"
+  shows), edit the time with someone signed up (the "Güncellendi" box and the share text's first line), check the
+  roster (badge, "Acil durum kişisi yok", safety card), "Katıldıklarım", delete disabled / cancel closing joining.
+  Only organisers can join until 2b, so a second organiser account helps for the race and the roster.
 
 ## Open decisions (need iltan)
 
@@ -48,9 +54,6 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 - **Organizatör role needs `events.manage` ticked on production** (2026-11-21, events organiser side) — the
   permission is new and no role but the admin role holds it; tick it for Organizatör in `/admin/roles` (UI, no
   migration) after the rollout, or organisers see "Çok yakında" on `/events` like everyone else.
-- **Share link during the gate** (2026-11-21, events organiser side; ruling R7) — the organiser's WhatsApp share
-  text leaves out the event link until the joining branch releases Events (members would meet sign-in and a 404). Put
-  the link back then: `shareText` / `ShareEventButton` (absolute URL from the origin + `getPathname`).
 
 - **Ban evasion vs. linking** (2026-11-09, application gaps) — when the ban list is built (PLAN "Member conduct"),
   check new applications *and* staff links (`link_application`) against it.
@@ -90,9 +93,15 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ## Features
 
-- **Events: "full members only" ride flag** (2026-11-18, ön alım + notes; decided, spec non-goal) — ön alım members may
-  join some rides and not others; specified in the events spec (2026-11-20, `full_members_only`), built in the
-  joining branch.
+- **Events joining: small features left out** (2026-11-22, events joining, Task 5 review) — (a) leaving a
+  cancelled event: the DB allows it (`leave_event`), the panel offers no button; (b) a started event still says
+  "Katılıyorsun" (past tense "Katıldın" would read better); (c) "Katıldıklarım" with no sign-ups shows the generic
+  "Bu filtreye uyan etkinlik yok." (a dedicated empty state). `src/components/events/join-panel.tsx`,
+  `events-list.tsx`. Deferred: polish; decide in iltan's production check.
+- **Events joining E2E gaps** (2026-11-22, events joining) — `scripts/e2e/events-join-e2e.mjs` runs in Turkish and
+  the dark theme only; joining as Sürücü, the bike limit, "Katılmaktan vazgeç", "don't make it worse" after a
+  tightened rule and a past event's roster (no names for members) are covered by pgTAP / unit tests and Task 5's
+  manual smoke run, not in the browser. Risk: a UI regression on those paths goes unseen.
 - **Probation E2E gaps** (2026-11-18, ön alım + notes, final review) — `scripts/e2e/probation-e2e.mjs`: the district
   check matches only `district":` keys (a district printed as plain text in the crowd card would pass; idea: compare
   bare-word counts with the signed-out page); the HTML render check asserts only the locked sentence (add the summary);
@@ -291,6 +300,11 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   venue; `form-state.test.ts` doesn't cover unticking "Başlangıca dönüş" while the finish has a read pending (it is
   dropped, as intended). pgTAP: `-infinity` as a start time is untested (`isfinite` covers it). Risk: a regression in
   these corners goes unseen.
+- **Events joining test gaps** (2026-11-22, events joining, task reviews) — pgTAP: a change-log author who is
+  `deleting` reads as null (needs a deleting author fixture); `event_change_log` lacks a comment that an unknown id
+  returns no rows (unlike `event_roster`'s `P0002`). Unit: `join.test.ts` has no ön alım *edit* that raises the
+  footprint on a `fullMembersOnly` event (allowed: the rule only refuses new sign-ups); the query layer
+  (`src/lib/events/queries.ts` sign-up reads) has no unit tests (the browser E2E covers it). Risk: low.
 - **Turkish case folding in `linkable_accounts` search** (2026-11-09) — `ilike` doesn't fold `ı/İ`
   (`supabase/schemas/20_applications.sql`). Email search and name-match ordering compensate. Fix: a SQL fold helper
   on both sides of the `like` (`private.search_fold` was dropped 2026-11-13 when directory search moved to the
@@ -336,6 +350,13 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   row survival.
 
 ### App logic
+- **Events joining app minors** (2026-11-22, events joining, task reviews) — (a) a server refusal doesn't refresh
+  the page: after a lost race the panel keeps the stale counts and "Katılıyorum" (seen in the E2E; a reload shows
+  "Kişi sınırı doldu."); (b) the panel's role/guests state is seeded once from `mine` (a refresh after another tab's
+  change keeps the old choice); (c) `JoinPanel` receives the whole `EventDetail`; (d) the event page calls
+  `getRoster` for active members on past events and then hides it; (e) `REASONS` in `join.ts` is a
+  `Record<string, …>`, leaving an unreachable `null`; (f) `isUuid` / `z.uuid()` refuse ids with non-RFC version
+  bits (consistent with `getEvent`; only hand-planted fixtures have such ids). Harmless today.
 - **`pageMetadata` call sites repeat a preamble** (2026-11-13, SEO final review) — the five pages calling
   `pageMetadata` each do `getLocale()` + `(await parent).openGraph?.images`; a helper taking `parent` would stop a
   future page from forgetting the images. Works as is; risk is a missing share image on a new page.
@@ -440,6 +461,11 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   failed "Koordinatları kopyala" isn't announced again (the live text doesn't change); (c) a label-less (Yandex)
   venue's status line follows the place-name field on every keystroke ("Mekân: …"); (d) two comment lines over 120
   characters (`event-card.tsx`, `events-list.tsx`; Prettier doesn't wrap comments). Cosmetic.
+- **Events joining UI minors** (2026-11-22, events joining, Task 5 review) — (a) focus is lost when "+"/"−" or
+  "Güncelle" become disabled, or when leaving unmounts the buttons; (b) reason texts aren't tied to the controls
+  with `aria-describedby`; (c) the bike-limit reason ("…artçı olarak katılabilirsin") also shows to someone already
+  joined as Artçı; (d) copy options: "En az cc" → "En az motor hacmi", "Katılımın silindi." → "Katılımını geri
+  çektin.". `src/components/events/join-panel.tsx`, `messages/*.json`. Deferred: polish for the release review.
 - **Pager accessibility** (2026-11-13, list UX final review) — pressing "›" to reach the last page swaps the focused
   button for a `span`, so focus falls to `<body>`; after a page change the view scrolls to the list top but focus stays
   on the pager; the disabled end `<span aria-label>` has no role (ARIA forbids `aria-label` on generic elements). Fix:
@@ -528,8 +554,16 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 ### Loading states
 - **`/events` shows "Çok yakında" while an organiser's list loads** (2026-11-21, events organiser side; ruling R3) —
   during the release gate the page's fallback is `ComingSoon` (what everyone but organisers keeps), so organisers see
-  a "coming soon" flash before their list. The joining branch replaces the gate and makes `EventsSkeleton` (chips,
-  create button) the fallback; measure it then with `scripts/e2e/skeletons.mjs`.
+  a "coming soon" flash before their list. The release (2b) makes `EventsSkeleton` (chips incl. "Katıldıklarım",
+  `w-34` estimated; create button) the fallback; measure it then with `scripts/e2e/skeletons.mjs`. Its card is
+  measured on `/events/past` (Δh 0, 2026-11-22), but a joined card's badge row ("Katılıyorsun" + kind + side) may
+  wrap to two lines at 375px. `CardCounts` and the card skeleton's counts line have no `data-skeleton` marks.
+- **Event page skeleton is the organiser's view** (2026-11-22, events joining) — measured as an organiser who has
+  not joined a ride with two sign-ups (every block Δh 0 at 390/1280). Other viewers differ: joined, the panel has a
+  summary line (+28px); members see no edit/share or cancel/delete rows and a roster only while the event is
+  upcoming; ön alım members never see a roster; more participants make the roster longer (data). The status and the
+  sign-up are request-time data, so the fallback can't know them (a per-viewer hint like `apply-hint.ts` could).
+  `src/app/[locale]/events/[id]/page.tsx` (`EventSkeleton`). Deferred to the release (2b), when members see the page.
 - **Event page skeleton mirrors a ride** (2026-11-21, events organiser event page) — a meet-up has no route strip,
   so its page is 96px shorter than the skeleton (layout shift); a ride with stops, no description or no area is
   another height. `src/app/[locale]/events/[id]/page.tsx` (`EventSkeleton`). Deferred: rides are the common case.

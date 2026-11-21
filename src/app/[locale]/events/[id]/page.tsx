@@ -283,7 +283,8 @@ async function EventContent({ params }: { params: PageProps<"/[locale]/events/[i
  * edit/share row, the join panel (heading, Sürücü/Artçı, the guests stepper with its hint, the button and its empty
  * status line), the route card with two places (strip, then name block and the action buttons, which wrap to two rows
  * on a phone), a one-line description, the roster with two rows (each with its safety card button), the
- * "Düzenleyen" line and the cancel/delete row. Members and ön alım members see no edit/share or cancel/delete rows
+ * "Düzenleyen" line and the cancel/delete row with the "people joined" hint under it. Measured with
+ * `scripts/e2e/skeletons.mjs` (organiser, joined or not: the joined panel's summary line is the one difference). Members and ön alım members see no edit/share or cancel/delete rows
  * and a roster only in some cases (follow-up: per-viewer shape once the gate opens).
  */
 function EventSkeleton() {
@@ -399,9 +400,13 @@ function EventSkeleton() {
       <div className="flex h-5 items-center">
         <Skeleton className="h-3.5 w-48" />
       </div>
-      <div data-skeleton="event-manage" className="flex gap-2 border-t pt-6">
+      {/* With people signed up, delete is disabled with a one-line hint below the buttons. */}
+      <div data-skeleton="event-manage" className="flex flex-wrap gap-2 border-t pt-6">
         <Skeleton className="h-8 w-40" />
         <Skeleton className="h-8 w-32" />
+        <div className="flex h-5 w-full items-center">
+          <Skeleton className="h-3.5 w-72 max-w-full" />
+        </div>
       </div>
     </div>
   );

@@ -376,3 +376,21 @@
   direct `private.event_is_upcoming(…)` cases. A mutation loop over function bodies (`awk` the function out of the
   schema file, `sed` one change, run the file in an outer transaction) caught all 21 read-side mutations at once.
 - **Source:** events joining Task 2 (`event_signups.test.sql`).
+
+### E2E: proving two requests really race for one row; radio labels in Base UI (2026-11-22)
+- **Need:** show that `join_event`'s row lock decides the last place when two people join at once. Two puppeteer
+  clicks on a fast local server may run one after the other, so "exactly one wins" alone proves little.
+- **Do:** hold the row from a separate session first: `spawn("docker", ["exec", DB, "psql", "-U", "postgres", "-c",
+  "begin; select 1 from events where id = '…' for update; select pg_sleep(3); commit;"])` (`-c` with several
+  statements runs them in one transaction), wait ~0.5 s, click both buttons, then poll `pg_stat_activity` for
+  `wait_event_type = 'Lock' and query like '%join_event%'` until it counts 2: both RPCs are in flight and queued on
+  the lock. After the sleep commits, one gets the place and the other the `people_limit` refusal
+  (`scripts/e2e/events-join-e2e.mjs`).
+- **Gotcha:** reading a radio label's text with `label.querySelector("span span")` returned "" for the *checked*
+  option only: Base UI's `Radio.Indicator` renders a `<span>` (with an inner dot `<span>`) only while checked, and it
+  comes first. Select the label's own text element by class (`span.font-medium`).
+- **Opening the release gate for a run:** replace `private.can_see_events()` with `create or replace` through psql
+  (privileges are kept) and restore it from the schema file's own statement in `finally` (regex
+  `create or replace function private\.can_see_events\(\)[\s\S]*?\$\$;` over `40_events.sql`), so a later edit of
+  the schema can't leave a stale hard-coded restore.
+- **Source:** found by testing (events joining Task 6).
