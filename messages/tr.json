@@ -627,6 +627,12 @@
           "label": "Üye notlarını görme ve yazma",
           "description": "Üyeler hakkındaki iç notları görebilir ve yazabilir; üyenin kendisi göremez. Yöneticiler hakkındaki notları yalnızca yöneticiler görür."
         }
+      },
+      "events": {
+        "manage": {
+          "label": "Etkinlikleri yönetme",
+          "description": "Buluşma ve sürüş oluşturur, düzenler, iptal eder."
+        }
       }
     },
     "review": {

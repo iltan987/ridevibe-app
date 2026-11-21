@@ -627,6 +627,12 @@
           "label": "Read and write member notes",
           "description": "Can read and write internal staff notes about members; the member never sees them. Notes about admin accounts are visible to admins only."
         }
+      },
+      "events": {
+        "manage": {
+          "label": "Manage events",
+          "description": "Creates, edits and cancels meet-ups and rides."
+        }
       }
     },
     "review": {
