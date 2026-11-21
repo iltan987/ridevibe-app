@@ -9,10 +9,10 @@ import type { NavPlace } from "./nav-links";
 import {
   type ChangeEntry,
   isUuid,
+  maxCc,
   parseAuthorsRow,
   parseChangeRows,
   parseCountsRows,
-  maxCc,
   parseRosterRows,
   type RosterRow,
 } from "./signup-rows";

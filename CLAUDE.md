@@ -162,8 +162,8 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   `cancel_event` / `delete_event` (refuses `has_signups`); `save_event` logs changes of events with counted sign-ups.
   Sign-ups (`42_event_signups.sql`) only via `join_event` / `leave_event` (security definer, lock the event row
   first); counted = `private.counted_event_signups` (active/probation); rule refusals are `P0001` + `hint`, mapped in
-  `src/lib/events/join.ts`; reads via `event_counts` / `event_roster` / `event_authors` / `event_change_log`. A place = point and/or venue link
-  (Google place / Yandex org); a route link keeps only its destination (the origin is the sharer's position):
+  `src/lib/events/join.ts`; reads via `event_counts` / `event_roster` / `event_authors` / `event_change_log`. A place = point and/or venue
+  link (Google place / Yandex org); a route link keeps only its destination (the origin is the sharer's position):
   pasted links are never stored or logged (`src/lib/events/place-input.ts`, `resolve-place.ts`).
 - Status: `pending` / `probation` ("Ön alım") / `active` / `inactive` / `deleting`. Approval and staff manual
   activation start in `probation`; staff promote via `set_member_status` ("Tam üye yap"); the DB refuses

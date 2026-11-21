@@ -21,6 +21,15 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   `/events`, per-viewer event-page skeletons and the `/events` list fallback (Loading states below), the
   navigation review (below). Restore iltan's local admin before any local browser review (the build reset the local
   DB: iltan signs in with Google locally once, then set the admin role by SQL).
+  Leftovers that still say or do "organisers only" once the body flips (final review): comments in
+  `src/lib/events/access.ts:11`, `src/lib/events/queries.ts:23`, `src/app/[locale]/events/[id]/page.tsx:39-41`,
+  `src/app/[locale]/events/past/page.tsx:21-22`, `src/app/[locale]/events/page.tsx:30`; `scripts/e2e/events-e2e.mjs`
+  `gateScenario` (~555-619: expects `member@` to get "Çok yakında" / a 404); `events-join-e2e.mjs`'s gate
+  open/restore and its hard-coded "gate restored to organisers only" check; spec §6 "Members get a plain share of the
+  event link too" (not built yet). Also for the release: server refusals (`refused` / `notFound` / `hasSignups`)
+  should call `refresh()` in `src/lib/events/actions.ts` so the panel and the delete button aren't stale after a lost
+  race (filed as "Events joining app minors" (a)), and the join panel's focus handling when controls disable or
+  unmount (filed as "Events joining UI minors" (a)).
 - **Full Events check on production (iltan, before the release step)** — branch 1 feedback (the UI / form / card
   items marked "Deferred: … decide with iltan" below); tick `events.manage` for the Organizatör role in
   `/admin/roles`; on a real Android phone and iPhone check every "Konumu aç" / "Yol tarifi" app link and Yandex Navi
@@ -97,11 +106,16 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   cancelled event: the DB allows it (`leave_event`), the panel offers no button; (b) a started event still says
   "Katılıyorsun" (past tense "Katıldın" would read better); (c) "Katıldıklarım" with no sign-ups shows the generic
   "Bu filtreye uyan etkinlik yok." (a dedicated empty state). `src/components/events/join-panel.tsx`,
-  `events-list.tsx`. Deferred: polish; decide in iltan's production check.
+  `events-list.tsx`; (d) a cancelled event with sign-ups can never be deleted: `delete_event` refuses while sign-ups
+  exist and the UI offers no leave on a cancelled event (the copy explains it). Deferred: polish; decide in iltan's
+  production check.
 - **Events joining E2E gaps** (2026-11-22, events joining) — `scripts/e2e/events-join-e2e.mjs` runs in Turkish and
   the dark theme only; joining as Sürücü, the bike limit, "Katılmaktan vazgeç", "don't make it worse" after a
   tightened rule and a past event's roster (no names for members) are covered by pgTAP / unit tests and Task 5's
-  manual smoke run, not in the browser. Risk: a UI regression on those paths goes unseen.
+  manual smoke run, not in the browser. Risk: a UI regression on those paths goes unseen. Script robustness (final
+  review): (a) no SIGINT/SIGTERM handler, so Ctrl-C leaves the local gate open until the next run's `finally` or
+  `pnpm db:reset`; (b) the 404 "no title" check (~line 715) has no positive control (it would pass on any 404); (c) the
+  "gate restored to organisers only" check (~line 677) hard-codes the old body and must change at release.
 - **Probation E2E gaps** (2026-11-18, ön alım + notes, final review) — `scripts/e2e/probation-e2e.mjs`: the district
   check matches only `district":` keys (a district printed as plain text in the crowd card would pass; idea: compare
   bare-word counts with the signed-out page); the HTML render check asserts only the locked sentence (add the summary);

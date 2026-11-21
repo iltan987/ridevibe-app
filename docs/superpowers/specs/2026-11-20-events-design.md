@@ -189,9 +189,9 @@ browser E2E (create → join → change → cancel; visitor teaser shows no time
 **behind the gate**, so iltan can try it on production as an organiser; 2b = the release (open the gate, teaser, home
 section + hero button, SEO, share link, notice). Calls Claude made while building 2a (spec §10):
 - **The gate is one function**, `private.can_see_events()` (body today: `private.has_permission('events.manage')`).
-  The read policies, the join/leave/read RPCs and the pages (via `public.can_see_events()`) all ask it, so 2b is one
-  migration replacing the body with `private.is_club_member()` plus flipped pgTAP gate assertions, nothing else to
-  hunt down.
+  The read policies, the join/leave/read RPCs and the pages (via `public.can_see_events()`) all ask it, so the gate
+  itself is one migration replacing the body with `private.is_club_member()` plus flipped pgTAP gate assertions; the
+  release is that migration plus the leftovers listed in the follow-ups item "Events branch 2b: the release".
 - **Only counted statuses count.** Sign-ups of `active` and `probation` profiles (`private.counted_event_signups`)
   make limits, counts, rosters, "has sign-ups" and the change log; `inactive` / `pending` / `deleting` sign-ups are
   kept but ignored and come back with the status. Deleting the account removes them (FK cascade).

@@ -284,8 +284,8 @@ async function EventContent({ params }: { params: PageProps<"/[locale]/events/[i
  * status line), the route card with two places (strip, then name block and the action buttons, which wrap to two rows
  * on a phone), a one-line description, the roster with two rows (each with its safety card button), the
  * "Düzenleyen" line and the cancel/delete row with the "people joined" hint under it. Measured with
- * `scripts/e2e/skeletons.mjs` (organiser, joined or not: the joined panel's summary line is the one difference). Members and ön alım members see no edit/share or cancel/delete rows
- * and a roster only in some cases (follow-up: per-viewer shape once the gate opens).
+ * `scripts/e2e/skeletons.mjs` (organiser, joined or not: the joined panel's summary line is the one difference).
+ * Members and ön alım members see no edit/share or cancel/delete rows and a roster only in some cases.
  */
 function EventSkeleton() {
   return (
