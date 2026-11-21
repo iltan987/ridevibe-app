@@ -148,11 +148,11 @@ Actions, Suspense), next-intl, shadcn/ui (Base UI), Zod, `node --test`, puppetee
   `(lat is null) = (lng is null)`, `lat is not null or venue_url is not null`, `venue_url ~
   '^https://(www\.google\.com/maps/place/|yandex\.com\.tr/maps/org/)'` and no `?` in it, lengths per Global
   Constraints; RPCs:
-  - `public.save_event(p_id uuid, p_event jsonb, p_places jsonb) returns uuid` — `p_id` null = create. `p_event` keys:
+  - `public.save_event(p_event jsonb, p_places jsonb, p_id uuid default null) returns uuid` — `p_id` null = create (named args). `p_event` keys:
     `kind, title, side, area, starts_at, ends_at, description, limit_people, limit_bikes, min_cc,
     full_members_only`; `p_places`: array of `{ name, lat, lng, venue_url, venue_label }` (nulls allowed per the
     checks) in route order. Replaces all places.
-  - `public.cancel_event(p_id uuid, p_reason text) returns void`
+  - `public.cancel_event(p_id uuid, p_reason text default null) returns void`
   - `public.delete_event(p_id uuid) returns void` (branch 2 adds "only without sign-ups").
   - Errors: `42501` without `events.manage`; `P0002` unknown id; `22023` invalid input (place count for the kind,
     ride without area, meet-up with area, editing a cancelled event, kind unknown); check constraints `23514`.
