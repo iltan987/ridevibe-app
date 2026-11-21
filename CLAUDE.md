@@ -202,6 +202,8 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   `~/ridevibe-backups/`, 14 days), shows the dry-run, pushes after a y/N (Claude: `--yes` once iltan said go), then
   runs pgTAP against production. Remote CLI writes (`db push`, `db reset`, `db query`, `db pull`, `migration up/down/repair/squash`, `seed`)
   are blocked for Claude by a hook (`db push --dry-run`, `db query --read-only` allowed).
+  The hook matches command text: a commit message or hook test that merely mentions such a command is blocked too
+  (write it to a file, `git commit -F`).
   Backups, the key and restoring: `docs/runbooks/database-backup.md`. Other tools needing the URL: `vercel env pull
   --environment=production <file outside the repo>` (`POSTGRES_URL_NON_POOLING`) and delete the file afterwards.
   Decrypting a backup needs iltan's gpg passphrase cached first (iltan runs one `gpg --decrypt` in their terminal).
@@ -356,6 +358,8 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   either load fully on the server up to `LIST_CEILING` (2,000) with `readAll` and filter/page in the browser, failing
   loudly above it (`CeilingNotice`; `/members`, `/admin/members`; URL state via `useListParams`), or page on the
   server with offsets (`?page=N`, odd values → redirect) when a list grows without bound (`/admin/applications`).
+  Take the total from a separate `count: "exact", head: true` request: a page query with `count: "exact"` past the
+  last page gets 416 (PGRST103) instead of an empty page (`docs/learnings/supabase.md`).
   Search-and-pick results inside a dialog may instead "load more" with keyset cursors over a changing set
   (`findLinkableAccounts`). Access checks via `can()` / `requirePermission()`.
   A `Link` whose `href` follows live client state (search box, chips) needs `prefetch={false}`, or it prefetches
