@@ -34,6 +34,9 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 - **Organizatör role needs `events.manage` ticked on production** (2026-11-21, events organiser side) — the
   permission is new and no role but the admin role holds it; tick it for Organizatör in `/admin/roles` (UI, no
   migration) after the rollout, or organisers see "Çok yakında" on `/events` like everyone else.
+- **Share link during the gate** (2026-11-21, events organiser side; ruling R7) — the organiser's WhatsApp share
+  text leaves out the event link until the joining branch releases Events (members would meet sign-in and a 404). Put
+  the link back then: `shareText` / `ShareEventButton` (absolute URL from the origin + `getPathname`).
 
 - **Ban evasion vs. linking** (2026-11-09, application gaps) — when the ban list is built (PLAN "Member conduct"),
   check new applications *and* staff links (`link_application`) against it.
@@ -81,6 +84,10 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   bare-word counts with the signed-out page); the HTML render check asserts only the locked sentence (add the summary);
   the RSC capture could pick a prefetch request (filter on path `/members` / no `next-router-prefetch`). Risk: a leak
   or a wrong capture goes unnoticed.
+- **Events E2E gaps** (2026-11-21, events organiser side) — `scripts/e2e/events-e2e.mjs`: the origin-absent DB check
+  has no positive control (it would also pass on an empty read); the past-page checks assume at most 50 past events in
+  the local DB and none newer than the fixtures; a scenario that throws skips the later ones. Risk: a false pass or a
+  confusing run on a busy local DB.
 - **`/admin/members` skeleton not re-measured** (2026-11-18, ön alım + notes, final review) — rows gained the "Notlar"
   button and two status buttons on probation/inactive rows; `ListSkeleton` (`h-36.75` at 390px) not re-checked. Run
   `scripts/e2e/skeletons.mjs`. Risk: layout shift on load.
@@ -187,6 +194,10 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   `isoToIstanbul` returns "NaN-…" for an invalid ISO string (only stored times reach it); (f) `listPastEvents`
   trusts `page ≥ 1` (callers clamp with `parsePage`); (g) `/events` and `/events/past` each read their own "now"
   (moot: never rendered together). Harmless today; revisit if a caller changes.
+- **Short links from Vercel may come back `unresolved`** (2026-11-21, events organiser side) — Google may answer a
+  `maps.app.goo.gl` request from an unknown user agent / server IP with a 200 consent or interstitial page instead
+  of a 302, so `resolve-place.ts` would report `unresolved` on Vercel; never verified from production. After the
+  deploy paste one real short link into the event form; if it fails, try another user agent or ask for the long link.
 - **`profiles.status_changed_at` readable by every active member** (2026-11-18, ön alım + notes) — table-level select
   grant plus the active-member read policy: it shows when someone became a full member. Low sensitivity, accepted; a
   column-level grant would close it.

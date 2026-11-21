@@ -155,8 +155,9 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   nobody reads notes about themselves. Counts via the security-invoker view `member_note_counts`.
   KVKK art. 11 request: content + date by hand, never the author's name (PLAN.md "Access requests and staff notes").
 - **Events** (`public.events` + `event_places`, `supabase/schemas/40_events.sql`, permission `events.manage`): release
-  gate until the joining branch: RLS select for `events.manage` only (everyone else: "Çok yakında" on `/events`, 404
-  on the rest). Writes only via `save_event` / `cancel_event` / `delete_event`. A place = point and/or venue link
+  gate until the joining branch: RLS select for `events.manage` only (non-organisers: "Çok yakında" on `/events`; on
+  the other event routes signed-out visitors go to sign-in and signed-in non-organisers get a 404; the WhatsApp share
+  text has no event link until the release). Writes only via `save_event` / `cancel_event` / `delete_event`. A place = point and/or venue link
   (Google place / Yandex org); a route link keeps only its destination (the origin is the sharer's position):
   pasted links are never stored or logged (`src/lib/events/place-input.ts`, `resolve-place.ts`).
 - Status: `pending` / `probation` ("Ön alım") / `active` / `inactive` / `deleting`. Approval and staff manual
