@@ -1,20 +1,32 @@
 import { useFormatter, useTranslations } from "next-intl";
 import { useId } from "react";
+import { CardCounts } from "@/components/events/event-counts";
 import { RouteStrip } from "@/components/events/route-strip";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "@/i18n/navigation";
+import type { Counts } from "@/lib/events/join";
 import type { EventSummary } from "@/lib/events/queries";
 import { routeSummary } from "@/lib/events/places";
 import { cn } from "@/lib/utils";
 
 /**
  * An event in a list (design system §6): route strip on top (decoration: the meta line names the places), then the
- * date block, the title, "08:30 · start → finish" and badges (kind, side, "cancelled"). A cancelled event's title is
- * struck through. The whole card links to the event; the link is named by the title and described by the date, meta
+ * date block, the title, "08:30 · start → finish", the counts line (with a capacity bar when a limit is set) and
+ * badges ("cancelled", "Katılıyorsun" when `joined`, kind, side). A cancelled event's title is struck through. The whole card links to the event; the link is named by the title and described by the date, meta
  * line and badges (screen readers hear the title first). `withYear`: past lists span years, so their date block shows the year where upcoming ones show the
  * weekday.
  */
-export function EventCard({ event, withYear = false }: { event: EventSummary; withYear?: boolean }) {
+export function EventCard({
+  event,
+  counts,
+  joined = false,
+  withYear = false,
+}: {
+  event: EventSummary;
+  counts: Counts;
+  joined?: boolean;
+  withYear?: boolean;
+}) {
   const t = useTranslations("Events");
   const tSides = useTranslations("Admin.sides");
   const format = useFormatter();
@@ -29,7 +41,7 @@ export function EventCard({ event, withYear = false }: { event: EventSummary; wi
       href={`/events/${event.id}`}
       data-skeleton-result="events-row"
       aria-labelledby={`${id}-title`}
-      aria-describedby={`${id}-date ${id}-meta ${id}-badges`}
+      aria-describedby={`${id}-date ${id}-meta ${id}-counts ${id}-badges`}
       className="block rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
     >
       <article className="overflow-hidden rounded-xl border bg-card transition-colors hover:bg-muted/40">
@@ -56,8 +68,14 @@ export function EventCard({ event, withYear = false }: { event: EventSummary; wi
             <p id={`${id}-meta`} className="truncate text-sm text-muted-foreground">
               {places ? t("meta", { time, places }) : time}
             </p>
+            <CardCounts
+              id={`${id}-counts`}
+              counts={counts}
+              limits={{ people: event.limitPeople, bikes: event.limitBikes }}
+            />
             <div id={`${id}-badges`} className="flex flex-wrap gap-1.5 pt-1">
               {cancelled && <Badge variant="destructive">{t("cancelled")}</Badge>}
+              {joined && <Badge variant="status">{t("joinedBadge")}</Badge>}
               <Badge variant="secondary">{t(`kinds.${event.kind}`)}</Badge>
               {event.side && <Badge variant="outline">{tSides(event.side)}</Badge>}
             </div>

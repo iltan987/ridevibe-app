@@ -6,7 +6,8 @@ import { EventsSkeleton } from "@/components/events/events-skeleton";
 import { PagerLinks } from "@/components/pager";
 import { Link, redirect } from "@/i18n/navigation";
 import { requireEventsAccess } from "@/lib/events/access";
-import { listPastEvents } from "@/lib/events/queries";
+import { NO_COUNTS } from "@/lib/events/join";
+import { getEventCounts, listPastEvents } from "@/lib/events/queries";
 import { listQuery, serverPage } from "@/lib/list-url";
 import { PAGE_SIZE, pageCount, parsePage } from "@/lib/pagination";
 
@@ -47,6 +48,7 @@ async function PastEvents({ searchParams }: { searchParams: PageProps<"/[locale]
   // Malformed, repeated, `1` spelled out or past the end (e.g. a page emptied since): go to the canonical URL.
   if (off) return redirect({ href: href(page), locale });
   const from = (page - 1) * PAGE_SIZE;
+  const counts = await getEventCounts(events.map((event) => event.id));
 
   return (
     <>
@@ -66,7 +68,7 @@ async function PastEvents({ searchParams }: { searchParams: PageProps<"/[locale]
         <ul className="flex flex-col gap-3">
           {events.map((event) => (
             <li key={event.id}>
-              <EventCard event={event} withYear />
+              <EventCard event={event} counts={counts.get(event.id) ?? NO_COUNTS} withYear />
             </li>
           ))}
         </ul>

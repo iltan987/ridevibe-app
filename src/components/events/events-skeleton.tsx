@@ -2,15 +2,16 @@ import { PagerSkeleton } from "@/components/pager-skeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
-// Chip widths of the two groups (sides, kinds), as in `EventsList`: one row on desktop, two on a 390px phone.
+// Chip widths of the two groups (sides; kinds and "Katıldıklarım"), as in `EventsList`: one row on desktop, two on a
+// 390px phone.
 const CHIP_GROUPS = [
   ["w-20", "w-24", "w-24"],
-  ["w-26", "w-20"],
+  ["w-26", "w-20", "w-34"],
 ];
 
 /**
- * One `EventCard`: the 96px route strip (markers only, no names), then the date block beside title, meta line and
- * badge row (one line each).
+ * One `EventCard`: the 96px route strip (markers only, no names), then the date block beside title, meta line,
+ * counts line (its capacity bar sits on the same line) and badge row (one line each).
  */
 function EventCardSkeleton() {
   return (
@@ -26,6 +27,9 @@ function EventCardSkeleton() {
           </div>
           <div className="flex h-5 items-center">
             <Skeleton className="h-3.5 w-1/2" />
+          </div>
+          <div className="flex h-5 items-center">
+            <Skeleton className="h-3.5 w-2/5" />
           </div>
           <div className="flex gap-1.5 pt-1">
             <Skeleton className="h-5 w-14 rounded-4xl" />

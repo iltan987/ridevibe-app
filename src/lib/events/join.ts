@@ -5,6 +5,8 @@ export const MAX_GUESTS = 3;
 export type JoinRole = "rider" | "passenger";
 export type Signup = { role: JoinRole; guests: number };
 export type Counts = { people: number; bikes: number; members: number; guests: number; probation: number };
+/** An event nobody (counted) has joined; also the fallback when its counts row is missing. */
+export const NO_COUNTS: Counts = { people: 0, bikes: 0, members: 0, guests: 0, probation: 0 };
 export type JoinReason = "started" | "cancelled" | "peopleLimit" | "bikeLimit" | "minCc" | "fullMembersOnly";
 
 export const joinSchema = z.object({

@@ -41,7 +41,7 @@ export function MotorcyclesSection({ motorcycles }: { motorcycles: Item[] }) {
   const full = motorcycles.length >= MAX_MOTORCYCLES;
 
   return (
-    <Card data-skeleton-result="profile-motorcycles">
+    <Card id="motorcycles" className="scroll-mt-20" data-skeleton-result="profile-motorcycles">
       <CardHeader>
         <CardTitle>{t("motorcycles")}</CardTitle>
       </CardHeader>

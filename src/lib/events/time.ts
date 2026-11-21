@@ -28,3 +28,13 @@ export function isoToIstanbul(iso: string): string {
   const d = new Date(t);
   return `${pad(d.getUTCFullYear(), 4)}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}T${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
 }
+
+/** An event in progress stays upcoming: started less than this long ago, or not yet ended (`private.event_is_upcoming`). */
+export const UPCOMING_GRACE_MS = 12 * 3_600_000;
+
+/** Same rule as the upcoming list and the database: the roster keeps names for active members until then. */
+export function isUpcoming(event: { startsAt: string; endsAt: string | null }, now: number): boolean {
+  return (
+    Date.parse(event.startsAt) >= now - UPCOMING_GRACE_MS || (event.endsAt !== null && Date.parse(event.endsAt) >= now)
+  );
+}

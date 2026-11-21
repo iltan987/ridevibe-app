@@ -15,6 +15,7 @@ import {
   parseRosterRows,
   type RosterRow,
 } from "./signup-rows";
+import { UPCOMING_GRACE_MS } from "./time";
 
 export type { ChangeEntry, ChangeField, RosterRow } from "./signup-rows";
 
@@ -35,12 +36,13 @@ export type EventSummary = {
   status: Enums<"event_status">;
   /** In route order (a meet-up has one). */
   places: EventPlace[];
+  /** For the counts line and the capacity bar. */
+  limitPeople: number | null;
+  limitBikes: number | null;
 };
 
 export type EventDetail = EventSummary & {
   description: string | null;
-  limitPeople: number | null;
-  limitBikes: number | null;
   minCc: number | null;
   fullMembersOnly: boolean;
   cancelReason: string | null;
@@ -52,11 +54,8 @@ export type EventDetail = EventSummary & {
   editedByOther: boolean;
 };
 
-/** An event in progress stays upcoming: started less than this long ago, or not yet ended. */
-const UPCOMING_GRACE_MS = 12 * 3_600_000;
-
 const PLACES = "event_places(position, name, lat, lng, venue_url, venue_label)";
-const SUMMARY_COLUMNS = `id, kind, title, side, area, starts_at, ends_at, status, ${PLACES}`;
+const SUMMARY_COLUMNS = `id, kind, title, side, area, starts_at, ends_at, status, limit_people, limit_bikes, ${PLACES}`;
 
 type PlaceRow = {
   position: number;
@@ -76,6 +75,8 @@ type SummaryRow = {
   starts_at: string;
   ends_at: string | null;
   status: Enums<"event_status">;
+  limit_people: number | null;
+  limit_bikes: number | null;
   event_places: PlaceRow[];
 };
 
@@ -101,6 +102,8 @@ function toSummary(row: SummaryRow): EventSummary {
     endsAt: row.ends_at,
     status: row.status,
     places: toPlaces(row.event_places),
+    limitPeople: row.limit_people,
+    limitBikes: row.limit_bikes,
   };
 }
 
@@ -165,9 +168,7 @@ export async function getEvent(id: string): Promise<EventDetail | null> {
   const [event, authors] = await Promise.all([
     supabase
       .from("events")
-      .select(
-        `${SUMMARY_COLUMNS}, description, limit_people, limit_bikes, min_cc, full_members_only, cancel_reason, updated_at`,
-      )
+      .select(`${SUMMARY_COLUMNS}, description, min_cc, full_members_only, cancel_reason, updated_at`)
       .eq("id", id)
       .maybeSingle(),
     supabase.rpc("event_authors", { p_event: id }),
@@ -181,8 +182,6 @@ export async function getEvent(id: string): Promise<EventDetail | null> {
   return {
     ...toSummary(data),
     description: data.description,
-    limitPeople: data.limit_people,
-    limitBikes: data.limit_bikes,
     minCc: data.min_cc,
     fullMembersOnly: data.full_members_only,
     cancelReason: data.cancel_reason,
@@ -270,7 +269,10 @@ export async function getMySignups(): Promise<Map<string, Signup>> {
   );
 }
 
-/** What the join rules need to know about the caller (own bikes and contacts via RLS). */
+/**
+ * What the join rules need to know about the caller: their own bikes and emergency contacts, read with an explicit
+ * `profile_id` filter (RLS alone would also return other members' rows to `members.manage` holders).
+ */
 export async function getMyJoinContext(): Promise<{
   probation: boolean;
   maxCc: number | null;

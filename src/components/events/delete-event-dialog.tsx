@@ -2,7 +2,7 @@
 
 import { Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState, useTransition } from "react";
+import { useId, useState, useTransition } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,9 +19,13 @@ import { deleteEvent, type DeleteEventResult } from "@/lib/events/actions";
 
 type Failure = Exclude<DeleteEventResult["status"], "ok">;
 
-/** "Etkinliği sil": confirmed in a dialog that stays open while the request runs; afterwards the list replaces the page. */
-export function DeleteEventDialog({ eventId }: { eventId: string }) {
+/**
+ * "Etkinliği sil": confirmed in a dialog that stays open while the request runs; afterwards the list replaces the page.
+ * `blocked`: people have joined, so the button is disabled with this hint (the database refuses anyway: `hasSignups`).
+ */
+export function DeleteEventDialog({ eventId, blocked = null }: { eventId: string; blocked?: string | null }) {
   const t = useTranslations("Events");
+  const hintId = useId();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [failure, setFailure] = useState<Failure | null>(null);
@@ -40,6 +44,8 @@ export function DeleteEventDialog({ eventId }: { eventId: string }) {
     <>
       <Button
         variant="destructive"
+        disabled={blocked !== null}
+        aria-describedby={blocked === null ? undefined : hintId}
         onClick={() => {
           setFailure(null);
           setOpen(true);
@@ -48,6 +54,11 @@ export function DeleteEventDialog({ eventId }: { eventId: string }) {
         <Trash2 data-icon="inline-start" aria-hidden />
         {t("detail.delete")}
       </Button>
+      {blocked !== null && (
+        <p id={hintId} className="w-full text-sm text-muted-foreground">
+          {blocked}
+        </p>
+      )}
       <AlertDialog open={open} onOpenChange={(next) => !isPending && setOpen(next)}>
         <AlertDialogContent>
           <AlertDialogHeader>

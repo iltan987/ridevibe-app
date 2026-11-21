@@ -263,7 +263,9 @@
       "createdBy": "Organised by: {name}",
       "updatedBy": "Last change: {name}, {date}",
       "cancel": "Cancel event",
-      "delete": "Delete event"
+      "delete": "Delete event",
+      "deleteHasSignups": "People have joined; you can cancel it instead.",
+      "deleteHasSignupsCancelled": "People have joined, so it can't be deleted."
     },
     "cancelDialog": {
       "title": "Cancel this event?",
@@ -348,6 +350,104 @@
         "placeRequired": "Add a location: a map link, a pin or coordinates.",
         "placeInvalid": "This location can't be used; remove it and add it again.",
         "other": "Check this field."
+      }
+    },
+    "joinedBadge": "You're going",
+    "mineChip": "My events",
+    "counts": {
+      "label": "Sign-ups:",
+      "line": "People {people} · Bikes {bikes}",
+      "over": "Over the limit"
+    },
+    "join": {
+      "heading": "Are you coming?",
+      "headingJoined": "You're going",
+      "roleLabel": "How are you coming?",
+      "roles": {
+        "rider": "Rider",
+        "passenger": "Passenger"
+      },
+      "roleHints": {
+        "rider": "On your own bike",
+        "passenger": "On someone else's bike"
+      },
+      "guests": "Guests",
+      "guestsHint": "A guest is someone you bring who isn't a member; they ride as a passenger.",
+      "fewerGuests": "One guest fewer",
+      "moreGuests": "One more guest",
+      "summary": "{role} · {guests, plural, =0 {no guests} one {# guest} other {# guests}}",
+      "join": "I'm coming",
+      "update": "Update",
+      "leave": "I'm not coming",
+      "leaveDialog": {
+        "title": "Not coming after all?",
+        "body": "Your sign-up is removed. You can join again until the event starts.",
+        "dismiss": "No, I'm coming",
+        "confirm": "Yes, withdraw"
+      },
+      "done": {
+        "joined": "You're signed up.",
+        "updated": "Your sign-up is updated.",
+        "left": "Your sign-up is removed."
+      },
+      "reasons": {
+        "started": "The event has started; sign-ups are closed.",
+        "cancelled": "The event is cancelled; sign-ups are closed.",
+        "peopleLimit": "The people limit is reached.",
+        "bikeLimit": "The bike limit is reached; you can come as a passenger.",
+        "minCc": "To ride, you need a bike of at least {cc} cc in your profile.",
+        "fullMembersOnly": "This event is for full members only."
+      },
+      "addBike": "Add a bike",
+      "nudge": {
+        "title": "No emergency contact yet",
+        "text": "If something happens on the road, whom should we call? One person is enough.",
+        "action": "Add an emergency contact"
+      }
+    },
+    "roster": {
+      "heading": "Who's coming",
+      "total": "{count, plural, one {# member} other {# members}}",
+      "probation": "Probation",
+      "empty": "Nobody has joined yet.",
+      "guests": "+{count, plural, one {# guest} other {# guests}}",
+      "newMembers": "+{count, plural, one {# new member} other {# new members}}",
+      "noContact": "No emergency contact",
+      "range": "{from}–{to} of {total} members",
+      "ceiling": "The list is incomplete: more than 2,000 people have joined and only the first 2,000 are shown. Please tell the admins."
+    },
+    "changes": {
+      "heading": "Updated",
+      "byline": "{date} · {name}",
+      "fields": {
+        "startsAt": "Start",
+        "endsAt": "End",
+        "route": "Route",
+        "meetingPoint": "Meeting point",
+        "limitPeople": "People limit",
+        "limitBikes": "Bike limit",
+        "minCc": "Minimum cc",
+        "fullMembersOnly": "Full members only"
+      },
+      "line": "{field}: {from} → {to}",
+      "placesLine": "{field}: {from} ⇒ {to}",
+      "moved": "{field}: location updated",
+      "none": "none",
+      "unlimited": "no limit",
+      "cc": "{cc} cc",
+      "fullMembersOnly": "{value, select, true {Now for full members only} other {Probation members can join too}}",
+      "changed": "{field} updated",
+      "lead": "Updated: {parts}",
+      "leadParts": {
+        "time": "time {value}",
+        "date": "date {value}",
+        "endsAt": "{value, select, none {end time removed} other {end {value}}}",
+        "route": "route",
+        "meetingPoint": "meeting point",
+        "limitPeople": "{value, select, none {people limit removed} other {people limit {value}}}",
+        "limitBikes": "{value, select, none {bike limit removed} other {bike limit {value}}}",
+        "minCc": "{value, select, none {cc minimum removed} other {at least {value} cc}}",
+        "fullMembersOnly": "{value, select, true {full members only} other {probation members can join too}}"
       }
     }
   },

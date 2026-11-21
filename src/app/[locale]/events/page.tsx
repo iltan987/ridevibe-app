@@ -10,7 +10,7 @@ import { Link } from "@/i18n/navigation";
 import { can } from "@/lib/auth/permissions";
 import { getCurrentUser } from "@/lib/auth/user";
 import { canSeeEvents } from "@/lib/events/access";
-import { listUpcomingEvents } from "@/lib/events/queries";
+import { getEventCounts, getMySignups, listUpcomingEvents } from "@/lib/events/queries";
 import { LIST_CEILING } from "@/lib/pagination";
 import { pageMetadata } from "@/lib/seo/metadata";
 
@@ -42,8 +42,13 @@ async function Events() {
   const [user, tNav] = await Promise.all([getCurrentUser(), getTranslations("Nav")]);
   if (!(await canSeeEvents())) return <ComingSoon title={tNav("events")} />;
 
-  const [{ events, overCeiling }, t] = await Promise.all([listUpcomingEvents(), getTranslations("Events")]);
+  const [{ events, overCeiling }, mySignups, t] = await Promise.all([
+    listUpcomingEvents(),
+    getMySignups(),
+    getTranslations("Events"),
+  ]);
   if (overCeiling) console.error("upcoming events over ceiling", { count: `${LIST_CEILING}+` });
+  const counts = await getEventCounts(events.map((event) => event.id));
 
   return (
     <section className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8">
@@ -56,7 +61,12 @@ async function Events() {
           </Link>
         )}
       </div>
-      <EventsList events={events} overCeiling={overCeiling} />
+      <EventsList
+        events={events}
+        counts={Object.fromEntries(counts)}
+        joined={[...mySignups.keys()]}
+        overCeiling={overCeiling}
+      />
     </section>
   );
 }
