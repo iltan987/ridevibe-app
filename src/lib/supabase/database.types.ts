@@ -31,6 +31,32 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"event_changes": {
+                  Row: {
+                    "changed_at": string,"changed_by": string | null,"changes": NonNullable<Json>,"event_id": string,"id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "changed_at"?: string,"changed_by"?: string | null,"changes": NonNullable<Json>,"event_id": string,"id"?: string
+                  }
+                  Update: {
+                    "changed_at"?: string,"changed_by"?: string | null,"changes"?: NonNullable<Json>,"event_id"?: string,"id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "event_changes_changed_by_fkey"
+      columns: ["changed_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "event_changes_event_id_fkey"
+      columns: ["event_id"]
+isOneToOne: false
+      referencedRelation: "events"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"event_places": {
                   Row: {
                     "event_id": string,"id": string,"lat": number | null,"lng": number | null,"name": string,"position": number,"venue_label": string | null,"venue_url": string | null
@@ -350,6 +376,26 @@ isOneToOne: false
                            },
 "delete_event":
 { Args: { "p_id": string }; Returns: undefined
+                           },
+"event_authors":
+{ Args: { "p_event": string }; Returns: {
+              "created_by_name": string,"edited_by_other": boolean,"updated_by_name": string
+            }[]
+                           },
+"event_change_log":
+{ Args: { "p_event": string }; Returns: {
+              "changed_at": string,"changed_by_name": string,"changes": Json,"id": string
+            }[]
+                           },
+"event_counts":
+{ Args: { "p_events": (string)[] }; Returns: {
+              "bikes": number,"event_id": string,"guests": number,"members": number,"people": number,"probation": number
+            }[]
+                           },
+"event_roster":
+{ Args: { "p_event": string }; Returns: {
+              "avatar_url": string,"full_name": string,"guests": number,"has_emergency_contact": boolean,"probation": boolean,"profile_id": string,"role": Database["public"]['Enums']["event_role"]
+            }[]
                            },
 "join_event":
 { Args: { "p_event": string,"p_guests"?: number,"p_role": Database["public"]['Enums']["event_role"] }; Returns: undefined

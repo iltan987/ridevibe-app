@@ -363,3 +363,16 @@
   mutation: `awk '/^create or replace function public.join_event/,/^\$\$;/' supabase/schemas/42_event_signups.sql |
   sed 's/…/…/'` as the first statement of the outer transaction (recipe above).
 - **Source:** found by testing (events joining Task 1).
+
+### pgTAP: `now()` is one value per transaction, so "newest first" ties; "past" means the 12-hour rule (2026-11-21)
+- **Symptom (avoided):** a change-log test wrote three `event_changes` rows through `save_event` and expected them
+  newest first; all three had the same `changed_at` (`default now()`), so only the `id desc` tie-break (random
+  uuids) decided the order. Separately, the brief's "past" fixture (0775, started an hour ago, no end) is still
+  *upcoming* by `private.event_is_upcoming` (started ≤ 12 h ago or not yet ended).
+- **Cause:** `now()` is the transaction start time, and the whole pgTAP file is one transaction.
+- **Do:** after the RPC writes the rows, spread their times as `postgres` (`update … set changed_at = now() - interval
+  '3 minutes' where … changes @> '[{"field": "starts_at"}]'`, fixture rows only) and then assert the order. For
+  "past", plant `starts_at` more than 12 hours ago (or an `ends_at` in the past); pin both sides of the rule with
+  direct `private.event_is_upcoming(…)` cases. A mutation loop over function bodies (`awk` the function out of the
+  schema file, `sed` one change, run the file in an outer transaction) caught all 21 read-side mutations at once.
+- **Source:** events joining Task 2 (`event_signups.test.sql`).

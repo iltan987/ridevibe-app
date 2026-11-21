@@ -1,13 +1,14 @@
 -- Run with: pnpm db:test
 -- Event sign-ups (docs/superpowers/plans/2026-11-21-events-joining.md, Global Constraints): the release gate in one
 -- function (private.can_see_events), join_event / leave_event with their rules and refusal hints, "don't make it
--- worse" after an organiser tightens a rule, delete_event only without counted sign-ups, cascade when an account goes.
+-- worse" after an organiser tightens a rule, delete_event only without counted sign-ups, cascade when an account goes;
+-- counts, rosters per viewer, authors and the change log save_event writes.
 -- Two sections: GATE CLOSED (this branch: only events.manage holders) and GATE OPEN (the release body, swapped in
 -- inside this transaction).
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(101);
+select plan(155);
 
 -- Fixtures: 0761 organiser (active, role 0769 holding only events.manage, 250 cc bike), 0762 second organiser (same
 -- role, a bike without cc), 0763 active member without a role, 0764 ön alım member, 0765 organiser in deleting, 0766
@@ -55,6 +56,20 @@ insert into public.events (id, kind, title, starts_at) values
   ('00000000-0000-0000-0000-000000000778', 'meetup', 'pgtap-ej probation only', now() + interval '2 days');
 insert into public.events (id, kind, title, starts_at, status, cancelled_at) values
   ('00000000-0000-0000-0000-000000000774', 'meetup', 'pgtap-ej cancelled', now() + interval '2 days', 'cancelled', now());
+-- 0780 serves the rosters, counts and authors (created by 0767, last edited by 0761); 0781 the change log of an event
+-- without counted sign-ups.
+insert into public.events (id, kind, title, starts_at, created_by, updated_by) values
+  ('00000000-0000-0000-0000-000000000780', 'meetup', 'pgtap-ej roster', now() + interval '2 days',
+   '00000000-0000-0000-0000-000000000767', '00000000-0000-0000-0000-000000000761'),
+  ('00000000-0000-0000-0000-000000000781', 'meetup', 'pgtap-ej uncounted log', now() + interval '2 days', null, null);
+-- Places, so the change-log saves can send the same ones back
+insert into public.event_places (event_id, position, name, lat, lng) values
+  ('00000000-0000-0000-0000-000000000771', 0, 'Üsküdar', 41.026, 29.015),
+  ('00000000-0000-0000-0000-000000000771', 1, 'Ağva', 41.137, 29.853),
+  ('00000000-0000-0000-0000-000000000781', 0, 'Moda', 40.983, 29.025);
+-- 0761 has an emergency contact (the organiser's roster shows "has one")
+insert into public.member_emergency_contacts (profile_id, position, name, relationship, phone) values
+  ('00000000-0000-0000-0000-000000000761', 1, 'Ayşe Pgtapkatilim', 'parent', '+905321234567');
 
 -- Sign-ups planted as postgres: 0761 on the cancelled and the started events (to edit/leave them), 0763 and 0764 on
 -- 0772 (own rows the gate must still hide), only uncounted people (inactive 0766, deleting 0765) on 0777, the ön alım
@@ -71,6 +86,15 @@ insert into public.event_signups (event_id, profile_id, role, guests) values
   ('00000000-0000-0000-0000-000000000778', '00000000-0000-0000-0000-000000000764', 'passenger', 0),
   ('00000000-0000-0000-0000-000000000778', '00000000-0000-0000-0000-000000000766', 'passenger', 0),
   ('00000000-0000-0000-0000-000000000771', '00000000-0000-0000-0000-000000000766', 'rider', 3);
+-- 0780: active organiser (rider + 1), active member (passenger), ön alım member (passenger + 2), and the deleting and
+-- inactive people with guests, who must appear in no roster row and no count. 0781: only the inactive member.
+insert into public.event_signups (event_id, profile_id, role, guests) values
+  ('00000000-0000-0000-0000-000000000780', '00000000-0000-0000-0000-000000000761', 'rider', 1),
+  ('00000000-0000-0000-0000-000000000780', '00000000-0000-0000-0000-000000000763', 'passenger', 0),
+  ('00000000-0000-0000-0000-000000000780', '00000000-0000-0000-0000-000000000764', 'passenger', 2),
+  ('00000000-0000-0000-0000-000000000780', '00000000-0000-0000-0000-000000000765', 'rider', 2),
+  ('00000000-0000-0000-0000-000000000780', '00000000-0000-0000-0000-000000000766', 'passenger', 3),
+  ('00000000-0000-0000-0000-000000000781', '00000000-0000-0000-0000-000000000766', 'rider', 0);
 
 create function pg_temp.login(uid uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
@@ -91,6 +115,20 @@ exception when others then
   get stacked diagnostics v_state = returned_sqlstate, v_hint = pg_exception_hint;
   return query select v_state, v_hint;
 end;
+$$;
+
+-- save_event input built from an event's current row and places (as the caller reads them), so a test changes only
+-- what it means to change.
+create function pg_temp.event_json(target uuid) returns jsonb language sql as $$
+  select jsonb_build_object('kind', e.kind, 'title', e.title, 'side', e.side, 'area', e.area, 'starts_at', e.starts_at,
+    'ends_at', e.ends_at, 'description', e.description, 'limit_people', e.limit_people, 'limit_bikes', e.limit_bikes,
+    'min_cc', e.min_cc, 'full_members_only', e.full_members_only)
+  from public.events e where e.id = target
+$$;
+create function pg_temp.places_json(target uuid) returns jsonb language sql as $$
+  select jsonb_agg(jsonb_build_object('name', p.name, 'lat', p.lat, 'lng', p.lng, 'venue_url', p.venue_url,
+    'venue_label', p.venue_label) order by p.position)
+  from public.event_places p where p.event_id = target
 $$;
 
 -- ---------------------------------------------------------------------------
@@ -114,6 +152,36 @@ select ok(has_function_privilege('authenticated', 'private.can_see_events()', 'e
 select ok(not has_table_privilege('authenticated', 'private.counted_event_signups', 'select'),
   'authenticated cannot read the counted-sign-ups view (RPCs only)');
 select ok(not has_table_privilege('anon', 'private.counted_event_signups', 'select'), 'anon cannot read the counted-sign-ups view');
+select ok(not has_function_privilege('anon', 'private.can_see_events()', 'execute'),
+  'anon cannot execute private.can_see_events (the migration revokes it from PUBLIC; this pins it)');
+
+-- Read RPCs: authenticated only (each checks the gate); the change table only through event_change_log
+select ok(not has_function_privilege('anon', 'public.event_counts(uuid[])', 'execute'), 'anon cannot call event_counts');
+select ok(not has_function_privilege('anon', 'public.event_roster(uuid)', 'execute'), 'anon cannot call event_roster');
+select ok(not has_function_privilege('anon', 'public.event_authors(uuid)', 'execute'), 'anon cannot call event_authors');
+select ok(not has_function_privilege('anon', 'public.event_change_log(uuid)', 'execute'), 'anon cannot call event_change_log');
+select ok(has_function_privilege('authenticated', 'public.event_counts(uuid[])', 'execute'), 'authenticated may call event_counts');
+select ok(has_function_privilege('authenticated', 'public.event_roster(uuid)', 'execute'), 'authenticated may call event_roster');
+select ok(has_function_privilege('authenticated', 'public.event_authors(uuid)', 'execute'), 'authenticated may call event_authors');
+select ok(has_function_privilege('authenticated', 'public.event_change_log(uuid)', 'execute'),
+  'authenticated may call event_change_log');
+select ok(not has_function_privilege('authenticated', 'private.event_is_upcoming(timestamptz, timestamptz)', 'execute'),
+  'authenticated cannot execute private.event_is_upcoming (the RPCs call it)');
+select ok(not has_function_privilege('authenticated', 'private.event_place_list(uuid)', 'execute'),
+  'authenticated cannot execute private.event_place_list (save_event calls it)');
+select ok(not has_table_privilege('authenticated', 'public.event_changes', 'select, insert, update, delete'),
+  'authenticated has no rights on event_changes');
+select ok(not has_table_privilege('anon', 'public.event_changes', 'select, insert, update, delete'),
+  'anon has no rights on event_changes');
+select ok((select relrowsecurity from pg_class where oid = 'public.event_changes'::regclass), 'event_changes has RLS on');
+
+-- Upcoming = started at most 12 hours ago, or not yet ended (the rule listUpcomingEvents uses)
+select is(private.event_is_upcoming(now() - interval '11 hours', null), true, 'started 11 hours ago, no end: upcoming');
+select is(private.event_is_upcoming(now() - interval '13 hours', null), false, 'started 13 hours ago, no end: past');
+select is(private.event_is_upcoming(now() - interval '13 hours', now() + interval '1 minute'), true,
+  'started 13 hours ago, ends in a minute: upcoming');
+select is(private.event_is_upcoming(now() - interval '13 hours', now() - interval '1 minute'), false,
+  'started 13 hours ago, ended a minute ago: past');
 select is((select count(*)::int from pg_proc where proname = 'join_event' and pronamespace = 'public'::regnamespace), 1,
   'exactly one join_event (no overload left behind)');
 select is((select count(*)::int from pg_proc where proname = 'leave_event' and pronamespace = 'public'::regnamespace), 1,
@@ -333,6 +401,50 @@ delete from auth.users where id = '00000000-0000-0000-0000-000000000762';
 select is((select count(*)::int from public.event_signups where profile_id = '00000000-0000-0000-0000-000000000762'), 0,
   'deleting the account removes its sign-ups (cascade)');
 
+-- ---------------------------------------------------------------------------
+-- Read RPCs before the release: organisers see the full roster; everyone else is refused
+-- ---------------------------------------------------------------------------
+select pg_temp.login('00000000-0000-0000-0000-000000000761');
+select is((select array_agg(row(r.profile_id, r.full_name, r.role, r.guests, r.probation, r.has_emergency_contact)::text
+    order by r.ord)
+  from public.event_roster('00000000-0000-0000-0000-000000000780')
+    with ordinality as r(profile_id, full_name, avatar_url, role, guests, probation, has_emergency_contact, ord)),
+  array[row('00000000-0000-0000-0000-000000000764'::uuid, 'Okan Pgtapkatilim', 'passenger'::public.event_role, 2, true, false)::text,
+        row('00000000-0000-0000-0000-000000000761'::uuid, 'Orhan Pgtapkatilim', 'rider'::public.event_role, 1, false, true)::text,
+        row('00000000-0000-0000-0000-000000000763'::uuid, 'Pelin Pgtapkatilim', 'passenger'::public.event_role, 0, false, false)::text],
+  'organiser: every counted participant by name, with the ön alım flag and the emergency contact; not the deleting or inactive ones');
+select throws_ok($$ select * from public.event_roster('00000000-0000-0000-0000-000000000779') $$, 'P0002', null,
+  'roster of an unknown event → P0002');
+select is((select array_agg(row(c.*)::text order by c.event_id)
+  from public.event_counts(array['00000000-0000-0000-0000-000000000780', '00000000-0000-0000-0000-000000000774',
+                                 '00000000-0000-0000-0000-000000000779']::uuid[]) c),
+  array[row('00000000-0000-0000-0000-000000000774'::uuid, 0, 0, 0, 0, 0)::text,
+        row('00000000-0000-0000-0000-000000000780'::uuid, 6, 1, 3, 3, 1)::text],
+  'counts (people, bikes, members, guests, ön alım): zeros included, unknown ids left out, deleting / inactive not counted');
+reset role;
+
+select pg_temp.login('00000000-0000-0000-0000-000000000763');
+select throws_ok($$ select * from public.event_counts(array['00000000-0000-0000-0000-000000000780']::uuid[]) $$, '42501', null,
+  'member refused before the release (counts)');
+select throws_ok($$ select * from public.event_roster('00000000-0000-0000-0000-000000000780') $$, '42501', null,
+  'member refused before the release (roster)');
+select throws_ok($$ select * from public.event_authors('00000000-0000-0000-0000-000000000780') $$, '42501', null,
+  'member refused before the release (authors)');
+select throws_ok($$ select * from public.event_change_log('00000000-0000-0000-0000-000000000780') $$, '42501', null,
+  'member refused before the release (change log)');
+reset role;
+
+select pg_temp.login('00000000-0000-0000-0000-000000000764');
+select throws_ok($$ select * from public.event_counts(array['00000000-0000-0000-0000-000000000780']::uuid[]) $$, '42501', null,
+  'ön alım member refused before the release (counts)');
+select throws_ok($$ select * from public.event_roster('00000000-0000-0000-0000-000000000780') $$, '42501', null,
+  'ön alım member refused before the release (roster)');
+select throws_ok($$ select * from public.event_authors('00000000-0000-0000-0000-000000000780') $$, '42501', null,
+  'ön alım member refused before the release (authors)');
+select throws_ok($$ select * from public.event_change_log('00000000-0000-0000-0000-000000000780') $$, '42501', null,
+  'ön alım member refused before the release (change log)');
+reset role;
+
 -- ===========================================================================
 -- GATE SWAP: open the gate as the release will (members and ön alım members). Safe on every database the suite runs
 -- on, production included: this runs inside the test transaction and is rolled back at the end; until then no other
@@ -356,8 +468,8 @@ update public.events set limit_people = 10, limit_bikes = 10 where id = '0000000
 
 select pg_temp.login('00000000-0000-0000-0000-000000000763');
 select ok(public.can_see_events(), 'member passes the open gate');
-select is((select count(*)::int from public.event_signups where profile_id = '00000000-0000-0000-0000-000000000763'), 1,
-  'member reads their own sign-up');
+select is((select count(*)::int from public.event_signups where profile_id = '00000000-0000-0000-0000-000000000763'), 2,
+  'member reads their own sign-ups (0772, 0780)');
 select is((select count(*)::int from public.event_signups where event_id = '00000000-0000-0000-0000-000000000772'), 1,
   'member reads only their own row, not the ön alım member''s on the same event');
 select lives_ok($$ select public.join_event('00000000-0000-0000-0000-000000000771', 'passenger') $$,
@@ -401,6 +513,173 @@ set local role anon;
 select throws_ok($$ select public.join_event('00000000-0000-0000-0000-000000000771', 'passenger') $$, '42501', null,
   'anon still cannot join after the release');
 reset role;
+
+-- ---------------------------------------------------------------------------
+-- Rosters and counts per viewer after the release (0780: organiser 0761 rider + 1, member 0763, ön alım 0764 + 2,
+-- deleting 0765 and inactive 0766 with guests)
+-- ---------------------------------------------------------------------------
+select pg_temp.login('00000000-0000-0000-0000-000000000763');
+select is((select array_agg(row(r.profile_id, r.full_name, r.role, r.guests, r.probation, r.has_emergency_contact)::text
+    order by r.ord)
+  from public.event_roster('00000000-0000-0000-0000-000000000780')
+    with ordinality as r(profile_id, full_name, avatar_url, role, guests, probation, has_emergency_contact, ord)),
+  array[row('00000000-0000-0000-0000-000000000761'::uuid, 'Orhan Pgtapkatilim', 'rider'::public.event_role, 1, null::boolean, null::boolean)::text,
+        row('00000000-0000-0000-0000-000000000763'::uuid, 'Pelin Pgtapkatilim', 'passenger'::public.event_role, 0, null::boolean, null::boolean)::text],
+  'member, upcoming event: only active participants, without the ön alım flag or the emergency-contact field');
+select is((select count(*)::int from public.event_roster('00000000-0000-0000-0000-000000000775')), 1,
+  'member: an event that started an hour ago (no end) is still upcoming, its roster still shows');
+reset role;
+
+-- 0775 moves to 13 hours ago: past by the 12-hour rule
+update public.events set starts_at = now() - interval '13 hours' where id = '00000000-0000-0000-0000-000000000775';
+select pg_temp.login('00000000-0000-0000-0000-000000000763');
+select is((select count(*)::int from public.event_roster('00000000-0000-0000-0000-000000000775')), 0,
+  'member: no names once the event is past');
+reset role;
+select pg_temp.login('00000000-0000-0000-0000-000000000761');
+select is((select count(*)::int from public.event_roster('00000000-0000-0000-0000-000000000775')), 1,
+  'organiser: the roster of a past event still shows');
+reset role;
+
+select pg_temp.login('00000000-0000-0000-0000-000000000764');
+select is((select count(*)::int from public.event_roster('00000000-0000-0000-0000-000000000780')), 0,
+  'ön alım member: no roster rows (not an error)');
+reset role;
+
+-- The same counts for every viewer who passes the gate
+select pg_temp.login('00000000-0000-0000-0000-000000000761');
+select is((select array_agg(row(c.*)::text order by c.event_id)
+  from public.event_counts(array['00000000-0000-0000-0000-000000000780', '00000000-0000-0000-0000-000000000774']::uuid[]) c),
+  array[row('00000000-0000-0000-0000-000000000774'::uuid, 0, 0, 0, 0, 0)::text,
+        row('00000000-0000-0000-0000-000000000780'::uuid, 6, 1, 3, 3, 1)::text],
+  'counts for the organiser');
+reset role;
+select pg_temp.login('00000000-0000-0000-0000-000000000763');
+select is((select array_agg(row(c.*)::text order by c.event_id)
+  from public.event_counts(array['00000000-0000-0000-0000-000000000780', '00000000-0000-0000-0000-000000000774']::uuid[]) c),
+  array[row('00000000-0000-0000-0000-000000000774'::uuid, 0, 0, 0, 0, 0)::text,
+        row('00000000-0000-0000-0000-000000000780'::uuid, 6, 1, 3, 3, 1)::text],
+  'the same counts for a member');
+reset role;
+select pg_temp.login('00000000-0000-0000-0000-000000000764');
+select is((select array_agg(row(c.*)::text order by c.event_id)
+  from public.event_counts(array['00000000-0000-0000-0000-000000000780', '00000000-0000-0000-0000-000000000774']::uuid[]) c),
+  array[row('00000000-0000-0000-0000-000000000774'::uuid, 0, 0, 0, 0, 0)::text,
+        row('00000000-0000-0000-0000-000000000780'::uuid, 6, 1, 3, 3, 1)::text],
+  'the same counts for an ön alım member');
+reset role;
+
+-- ---------------------------------------------------------------------------
+-- Change log: save_event appends one row per save that changes a logged field of an event with counted sign-ups
+-- (0771 holds 0761, 0763 and 0767 as passengers; full_members_only and limits 10/10 from above)
+-- ---------------------------------------------------------------------------
+select pg_temp.login('00000000-0000-0000-0000-000000000761');
+select lives_ok($$ select public.save_event(
+    pg_temp.event_json('00000000-0000-0000-0000-000000000771') || jsonb_build_object('starts_at', now() + interval '2 days 1 hour'),
+    pg_temp.places_json('00000000-0000-0000-0000-000000000771'), '00000000-0000-0000-0000-000000000771') $$,
+  'organiser moves 0771 an hour later, same places');
+reset role;
+select is((select count(*)::int from public.event_changes where event_id = '00000000-0000-0000-0000-000000000771'), 1,
+  'one change row');
+select is((select changes from public.event_changes where event_id = '00000000-0000-0000-0000-000000000771'),
+  jsonb_build_array(jsonb_build_object('field', 'starts_at', 'old', now() + interval '2 days', 'new', now() + interval '2 days 1 hour')),
+  'the row lists only starts_at, old → new');
+
+select pg_temp.login('00000000-0000-0000-0000-000000000761');
+select lives_ok($$ select public.save_event(
+    pg_temp.event_json('00000000-0000-0000-0000-000000000771') || '{"title": "pgtap-ej limits renamed"}',
+    pg_temp.places_json('00000000-0000-0000-0000-000000000771'), '00000000-0000-0000-0000-000000000771') $$,
+  'organiser renames 0771');
+select lives_ok($$ select public.save_event(
+    pg_temp.event_json('00000000-0000-0000-0000-000000000781') || jsonb_build_object('starts_at', now() + interval '3 days'),
+    pg_temp.places_json('00000000-0000-0000-0000-000000000781'), '00000000-0000-0000-0000-000000000781') $$,
+  'organiser moves 0781, whose only sign-up is an inactive member''s');
+reset role;
+select is((select count(*)::int from public.event_changes where event_id = '00000000-0000-0000-0000-000000000771'), 1,
+  'a title-only edit adds no change row');
+select is((select count(*)::int from public.event_changes where event_id = '00000000-0000-0000-0000-000000000781'), 0,
+  'an edit of an event without counted sign-ups adds no change row');
+
+select pg_temp.login('00000000-0000-0000-0000-000000000761');
+select lives_ok($$ select public.save_event(
+    pg_temp.event_json('00000000-0000-0000-0000-000000000771'),
+    jsonb_set(pg_temp.places_json('00000000-0000-0000-0000-000000000771'), '{0,lat}', '41.03'),
+    '00000000-0000-0000-0000-000000000771') $$,
+  'organiser moves the start point, same name');
+reset role;
+select is((select changes from public.event_changes
+    where event_id = '00000000-0000-0000-0000-000000000771' and changes @> '[{"field": "places"}]'),
+  '[{"field": "places", "old": ["Üsküdar", "Ağva"], "new": ["Üsküdar", "Ağva"]}]'::jsonb,
+  'a moved point logs places, with the (equal) name lists');
+
+select pg_temp.login('00000000-0000-0000-0000-000000000761');
+select lives_ok($$ select public.save_event(
+    pg_temp.event_json('00000000-0000-0000-0000-000000000771') || jsonb_build_object('ends_at', now() + interval '2 days 6 hours',
+      'limit_people', 12, 'limit_bikes', 8, 'min_cc', 600, 'full_members_only', false),
+    pg_temp.places_json('00000000-0000-0000-0000-000000000771'), '00000000-0000-0000-0000-000000000771') $$,
+  'organiser changes the end, both limits, min_cc and full_members_only at once');
+reset role;
+select is((select changes from public.event_changes
+    where event_id = '00000000-0000-0000-0000-000000000771' and changes @> '[{"field": "ends_at"}]'),
+  jsonb_build_array(
+    jsonb_build_object('field', 'ends_at', 'old', null, 'new', now() + interval '2 days 6 hours'),
+    '{"field": "limit_people", "old": 10, "new": 12}'::jsonb,
+    '{"field": "limit_bikes", "old": 10, "new": 8}'::jsonb,
+    '{"field": "min_cc", "old": null, "new": 600}'::jsonb,
+    '{"field": "full_members_only", "old": true, "new": false}'::jsonb),
+  'one row with every changed field, in the fixed order');
+
+-- now() is fixed in the transaction: spread the rows' times to see the order (newest first)
+update public.event_changes set changed_at = now() - interval '3 minutes'
+  where event_id = '00000000-0000-0000-0000-000000000771' and changes @> '[{"field": "starts_at"}]';
+update public.event_changes set changed_at = now() - interval '2 minutes'
+  where event_id = '00000000-0000-0000-0000-000000000771' and changes @> '[{"field": "places"}]';
+
+select pg_temp.login('00000000-0000-0000-0000-000000000763');
+select is((select array_agg(row(r.changes -> 0 ->> 'field', r.changed_by_name)::text order by r.ord)
+  from public.event_change_log('00000000-0000-0000-0000-000000000771')
+    with ordinality as r(id, changed_at, changes, changed_by_name, ord)),
+  array[row('ends_at', null::text)::text, row('places', null::text)::text, row('starts_at', null::text)::text],
+  'member: the change log, newest first, without the author');
+reset role;
+select pg_temp.login('00000000-0000-0000-0000-000000000764');
+select is((select array_agg(row(r.changes -> 0 ->> 'field', r.changed_by_name)::text order by r.ord)
+  from public.event_change_log('00000000-0000-0000-0000-000000000771')
+    with ordinality as r(id, changed_at, changes, changed_by_name, ord)),
+  array[row('ends_at', null::text)::text, row('places', null::text)::text, row('starts_at', null::text)::text],
+  'ön alım member: the same log, without the author');
+reset role;
+select pg_temp.login('00000000-0000-0000-0000-000000000761');
+select is((select array_agg(row(r.changes -> 0 ->> 'field', r.changed_by_name)::text order by r.ord)
+  from public.event_change_log('00000000-0000-0000-0000-000000000771')
+    with ordinality as r(id, changed_at, changes, changed_by_name, ord)),
+  array[row('ends_at', 'Orhan Pgtapkatilim')::text, row('places', 'Orhan Pgtapkatilim')::text,
+        row('starts_at', 'Orhan Pgtapkatilim')::text],
+  'organiser: the change log with the author');
+reset role;
+
+-- ---------------------------------------------------------------------------
+-- Authors ("Düzenleyen") for viewers who can't read profiles; null once the author is deleting
+-- ---------------------------------------------------------------------------
+select pg_temp.login('00000000-0000-0000-0000-000000000764');
+select is((select row(a.*)::text from public.event_authors('00000000-0000-0000-0000-000000000780') a),
+  row('Burak Pgtapkatilim', 'Orhan Pgtapkatilim', true)::text,
+  'ön alım member reads the authors'' names and that someone else edited it');
+reset role;
+update public.profiles
+  set status = 'deleting', deletion_requested_at = now(), status_before_deletion = 'active'
+  where id = '00000000-0000-0000-0000-000000000767';
+select pg_temp.login('00000000-0000-0000-0000-000000000764');
+select is((select row(a.*)::text from public.event_authors('00000000-0000-0000-0000-000000000780') a),
+  row(null::text, 'Orhan Pgtapkatilim', true)::text,
+  'a deleting author''s name is null');
+reset role;
+
+-- The author's account goes: the change rows stay, without an author
+delete from auth.users where id = '00000000-0000-0000-0000-000000000761';
+select is((select row(count(*), count(*) filter (where changed_by is null))::text from public.event_changes
+  where event_id = '00000000-0000-0000-0000-000000000771'),
+  row(3, 3)::text, 'after the author''s account is deleted, the change rows stay with changed_by null');
 
 select * from finish();
 rollback;

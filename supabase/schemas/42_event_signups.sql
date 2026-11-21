@@ -100,7 +100,8 @@ begin
     raise exception 'events are not open to you' using errcode = '42501';
   end if;
 
-  -- 2. caller status
+  -- 2. caller status. Defence in depth: both gate bodies (events.manage needs active; the release's is_club_member)
+  -- already refuse every other status, so no test can fail without it. Keep it: it states the join rule here.
   select p.status into v_member from public.profiles p where p.id = uid;
   if v_member is null or v_member not in ('active', 'probation') then
     raise exception 'only active and ön alım members join events' using errcode = '42501';
@@ -213,3 +214,160 @@ $$;
 
 revoke all on function public.leave_event(uuid) from public, anon;
 grant execute on function public.leave_event(uuid) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Read RPCs (spec §3): counts, rosters per viewer, authors and the change log. Each refuses callers the gate refuses
+-- (42501). Sign-ups are read only through private.counted_event_signups.
+-- Roster visibility: organisers (events.manage) see everyone counted, with the ön alım flag and whether they have an
+-- emergency contact (both null for everyone else); active members see active participants while the event is
+-- upcoming (private.event_is_upcoming); ön alım members, and members once the event is past, get no rows. Counts are
+-- the same for every viewer.
+-- ---------------------------------------------------------------------------
+
+-- One row per existing event in p_events (zeros included), ordered by event_id. people = members + guests; bikes =
+-- riders; probation = ön alım participants.
+create or replace function public.event_counts(p_events uuid[])
+returns table (event_id uuid, people integer, bikes integer, members integer, guests integer, probation integer)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+begin
+  if not (select private.can_see_events()) then
+    raise exception 'events are not open to you' using errcode = '42501';
+  end if;
+
+  return query
+  select
+    e.id,
+    coalesce(sum(1 + c.guests), 0)::integer,
+    (count(c.profile_id) filter (where c.role = 'rider'))::integer,
+    count(c.profile_id)::integer,
+    coalesce(sum(c.guests), 0)::integer,
+    (count(c.profile_id) filter (where c.profile_status = 'probation'))::integer
+  from public.events e
+  left join private.counted_event_signups c on c.event_id = e.id
+  where e.id = any(p_events)
+  group by e.id
+  order by e.id;
+end;
+$$;
+
+revoke all on function public.event_counts(uuid[]) from public, anon;
+grant execute on function public.event_counts(uuid[]) to authenticated;
+
+-- Who joined p_event, by name (Turkish order). 42501 without the gate, P0002 for an unknown event.
+create or replace function public.event_roster(p_event uuid)
+returns table (
+  profile_id uuid,
+  full_name text,
+  avatar_url text,
+  role public.event_role,
+  guests integer,
+  probation boolean,
+  has_emergency_contact boolean
+)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_starts timestamptz;
+  v_ends timestamptz;
+  v_organiser boolean;
+begin
+  if not (select private.can_see_events()) then
+    raise exception 'events are not open to you' using errcode = '42501';
+  end if;
+
+  select e.starts_at, e.ends_at into v_starts, v_ends from public.events e where e.id = p_event;
+  if not found then
+    raise exception 'event not found' using errcode = 'P0002';
+  end if;
+
+  v_organiser := (select private.has_permission('events.manage'));
+  if not v_organiser and not ((select private.is_active_member()) and private.event_is_upcoming(v_starts, v_ends)) then
+    return;
+  end if;
+
+  return query
+  select
+    c.profile_id,
+    p.full_name,
+    p.avatar_url,
+    c.role,
+    c.guests::integer,
+    case when v_organiser then c.profile_status = 'probation' end,
+    case when v_organiser then exists (
+      select 1 from public.member_emergency_contacts ec where ec.profile_id = c.profile_id
+    ) end
+  from private.counted_event_signups c
+  join public.profiles p on p.id = c.profile_id
+  where c.event_id = p_event
+    and (v_organiser or c.profile_status = 'active')
+  order by p.full_name collate "tr-x-icu", c.profile_id;
+end;
+$$;
+
+revoke all on function public.event_roster(uuid) from public, anon;
+grant execute on function public.event_roster(uuid) to authenticated;
+
+-- "Düzenleyen" for every viewer who passes the gate (ön alım members can't read profiles). A name is null when the
+-- account is gone or deleting. edited_by_other: the last editor isn't the creator. No row for an unknown event.
+create or replace function public.event_authors(p_event uuid)
+returns table (created_by_name text, updated_by_name text, edited_by_other boolean)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+begin
+  if not (select private.can_see_events()) then
+    raise exception 'events are not open to you' using errcode = '42501';
+  end if;
+
+  return query
+  select
+    cp.full_name,
+    up.full_name,
+    e.updated_by is not null and e.updated_by is distinct from e.created_by
+  from public.events e
+  left join public.profiles cp on cp.id = e.created_by and cp.status <> 'deleting'
+  left join public.profiles up on up.id = e.updated_by and up.status <> 'deleting'
+  where e.id = p_event;
+end;
+$$;
+
+revoke all on function public.event_authors(uuid) from public, anon;
+grant execute on function public.event_authors(uuid) to authenticated;
+
+-- What edits changed on p_event, newest first. The author's name only for organisers (null when the account is gone
+-- or deleting).
+create or replace function public.event_change_log(p_event uuid)
+returns table (id uuid, changed_at timestamptz, changes jsonb, changed_by_name text)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_organiser boolean;
+begin
+  if not (select private.can_see_events()) then
+    raise exception 'events are not open to you' using errcode = '42501';
+  end if;
+
+  v_organiser := (select private.has_permission('events.manage'));
+  return query
+  select ch.id, ch.changed_at, ch.changes, case when v_organiser then p.full_name end
+  from public.event_changes ch
+  left join public.profiles p on p.id = ch.changed_by and p.status <> 'deleting'
+  where ch.event_id = p_event
+  order by ch.changed_at desc, ch.id desc;
+end;
+$$;
+
+revoke all on function public.event_change_log(uuid) from public, anon;
+grant execute on function public.event_change_log(uuid) to authenticated;
