@@ -5,7 +5,7 @@ import { EventCard } from "@/components/events/event-card";
 import { EventsSkeleton } from "@/components/events/events-skeleton";
 import { PagerLinks } from "@/components/pager";
 import { Link, redirect } from "@/i18n/navigation";
-import { requirePermission } from "@/lib/auth/require-access";
+import { requireEventsAccess } from "@/lib/events/access";
 import { listPastEvents } from "@/lib/events/queries";
 import { listQuery, serverPage } from "@/lib/list-url";
 import { PAGE_SIZE, pageCount, parsePage } from "@/lib/pagination";
@@ -30,7 +30,7 @@ export default function PastEventsPage({ searchParams }: PageProps<"/[locale]/ev
 }
 
 async function PastEvents({ searchParams }: { searchParams: PageProps<"/[locale]/events/past">["searchParams"] }) {
-  await requirePermission("events.manage", "/events/past");
+  await requireEventsAccess("/events/past");
 
   const params = await searchParams;
   // The list query runs with the page as asked; a URL the total corrects redirects instead.

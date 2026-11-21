@@ -5,6 +5,7 @@ import { z } from "zod";
 import { can } from "@/lib/auth/permissions";
 import { getCurrentUser } from "@/lib/auth/user";
 import { createClient } from "@/lib/supabase/server";
+import { type JoinActionResult, joinResult, joinSchema, reasonFromHint } from "./join";
 import { resolvePlace, type ResolvePlaceResult } from "./resolve-place";
 import { eventInputSchema, toRpcArgs } from "./schema";
 
@@ -73,9 +74,36 @@ export async function deleteEvent(id: string): Promise<DeleteEventResult> {
   const supabase = await createClient();
   const { error } = await supabase.rpc("delete_event", { p_id: id });
   if (error) {
-    if (error.code === "P0001" && error.hint === "has_signups") return { status: "hasSignups" };
+    if (error.code === "P0001" && reasonFromHint(error.hint) === "hasSignups") return { status: "hasSignups" };
     return fail(error.code, "deleteEvent");
   }
   refresh();
   return { status: "ok" };
+}
+
+/** Joins an event, or edits the caller's own sign-up (role, guests). The RPC enforces every rule. */
+export async function joinEvent(id: string, input: unknown): Promise<JoinActionResult> {
+  if (!uuid.safeParse(id).success) return { status: "invalid" };
+  const parsed = joinSchema.safeParse(input);
+  if (!parsed.success) return { status: "invalid" };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("join_event", {
+    p_event: id,
+    p_role: parsed.data.role,
+    p_guests: parsed.data.guests,
+  });
+  const result = joinResult(error);
+  if (result.status === "error") console.error("joinEvent failed", { code: error?.code });
+  if (result.status === "ok") refresh();
+  return result;
+}
+
+export async function leaveEvent(id: string): Promise<JoinActionResult> {
+  if (!uuid.safeParse(id).success) return { status: "invalid" };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("leave_event", { p_event: id });
+  const result = joinResult(error);
+  if (result.status === "error") console.error("leaveEvent failed", { code: error?.code });
+  if (result.status === "ok") refresh();
+  return result;
 }

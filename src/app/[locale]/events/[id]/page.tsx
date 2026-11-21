@@ -12,7 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "@/i18n/navigation";
-import { requirePermission } from "@/lib/auth/require-access";
+import { can } from "@/lib/auth/permissions";
+import { requireEventsAccess } from "@/lib/events/access";
 import { getEvent } from "@/lib/events/queries";
 import { shareText } from "@/lib/events/places";
 
@@ -60,7 +61,8 @@ const SHARE_WHEN = {
 
 async function EventContent({ params }: { params: PageProps<"/[locale]/events/[id]">["params"] }) {
   const { id } = await params;
-  await requirePermission("events.manage", `/events/${id}`);
+  const user = await requireEventsAccess(`/events/${id}`);
+  const organiser = can(user.access, "events.manage");
 
   const [event, t, tSides, format] = await Promise.all([
     getEvent(id),
@@ -131,15 +133,17 @@ async function EventContent({ params }: { params: PageProps<"/[locale]/events/[i
         </div>
       </header>
 
-      <div data-skeleton-result="event-actions" className="flex flex-wrap gap-2">
-        {!cancelled && (
-          <Link href={`/events/${event.id}/edit`} className={buttonVariants({ variant: "outline" })}>
-            <Pencil data-icon="inline-start" aria-hidden />
-            {t("detail.edit")}
-          </Link>
-        )}
-        <ShareEventButton text={text} />
-      </div>
+      {organiser && (
+        <div data-skeleton-result="event-actions" className="flex flex-wrap gap-2">
+          {!cancelled && (
+            <Link href={`/events/${event.id}/edit`} className={buttonVariants({ variant: "outline" })}>
+              <Pencil data-icon="inline-start" aria-hidden />
+              {t("detail.edit")}
+            </Link>
+          )}
+          <ShareEventButton text={text} />
+        </div>
+      )}
 
       <section data-skeleton-result="event-places" aria-labelledby="event-places" className="flex flex-col gap-3">
         <h2 id="event-places" className="text-lg font-semibold">
@@ -198,10 +202,12 @@ async function EventContent({ params }: { params: PageProps<"/[locale]/events/[i
         </div>
       )}
 
-      <div data-skeleton-result="event-manage" className="flex flex-wrap gap-2 border-t pt-6">
-        {!cancelled && <CancelEventDialog eventId={event.id} />}
-        <DeleteEventDialog eventId={event.id} />
-      </div>
+      {organiser && (
+        <div data-skeleton-result="event-manage" className="flex flex-wrap gap-2 border-t pt-6">
+          {!cancelled && <CancelEventDialog eventId={event.id} />}
+          <DeleteEventDialog eventId={event.id} />
+        </div>
+      )}
     </div>
   );
 }

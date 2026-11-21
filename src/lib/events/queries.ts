@@ -1,9 +1,21 @@
 import "server-only";
 import { z } from "zod";
+import { getCurrentUser } from "@/lib/auth/user";
 import { PAGE_SIZE, readAll, uniqueById } from "@/lib/pagination";
 import type { Enums } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/server";
+import type { Counts, JoinRole, Signup } from "./join";
 import type { NavPlace } from "./nav-links";
+import {
+  type ChangeEntry,
+  parseAuthorsRow,
+  parseChangeRows,
+  parseCountsRows,
+  parseRosterRows,
+  type RosterRow,
+} from "./signup-rows";
+
+export type { ChangeEntry, ChangeField, RosterRow } from "./signup-rows";
 
 // RLS on events / event_places decides who reads (release gate: events.manage only); for anyone else these are empty.
 
@@ -149,15 +161,22 @@ const uuid = z.uuid();
 export async function getEvent(id: string): Promise<EventDetail | null> {
   if (!uuid.safeParse(id).success) return null;
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("events")
-    .select(
-      `${SUMMARY_COLUMNS}, description, limit_people, limit_bikes, min_cc, full_members_only, cancel_reason, updated_at, created_by, updated_by, created_by_profile:profiles!events_created_by_fkey(full_name), updated_by_profile:profiles!events_updated_by_fkey(full_name)`,
-    )
-    .eq("id", id)
-    .maybeSingle();
-  if (error) throw new Error(`getEvent failed: ${error.code}`);
+  const [event, authors] = await Promise.all([
+    supabase
+      .from("events")
+      .select(
+        `${SUMMARY_COLUMNS}, description, limit_people, limit_bikes, min_cc, full_members_only, cancel_reason, updated_at`,
+      )
+      .eq("id", id)
+      .maybeSingle(),
+    supabase.rpc("event_authors", { p_event: id }),
+  ]);
+  if (event.error) throw new Error(`getEvent failed: ${event.error.code}`);
+  if (authors.error) throw new Error(`getEvent authors failed: ${authors.error.code}`);
+  const data = event.data;
   if (data === null) return null;
+  // Names come from event_authors (ön alım members can't read profiles); no row: keep the page, show no names.
+  const names = parseAuthorsRow(authors.data);
   return {
     ...toSummary(data),
     description: data.description,
@@ -166,9 +185,107 @@ export async function getEvent(id: string): Promise<EventDetail | null> {
     minCc: data.min_cc,
     fullMembersOnly: data.full_members_only,
     cancelReason: data.cancel_reason,
-    createdByName: data.created_by_profile?.full_name ?? null,
-    updatedByName: data.updated_by_profile?.full_name ?? null,
+    createdByName: names?.createdByName ?? null,
+    updatedByName: names?.updatedByName ?? null,
     updatedAt: data.updated_at,
-    editedByOther: data.updated_by !== null && data.updated_by !== data.created_by,
+    editedByOther: names?.editedByOther ?? false,
+  };
+}
+
+/** The roster RPC answers an unknown event with P0002; the page treats it as not found. */
+class EventNotFoundError extends Error {}
+
+/** Counts per event (zeros included for existing events); empty input: no request. */
+export async function getEventCounts(ids: string[]): Promise<Map<string, Counts>> {
+  if (ids.length === 0) return new Map();
+  const supabase = await createClient();
+  // One row per event: a long list of events can pass max_rows, so read in chunks (the RPC orders by event_id).
+  const { items } = await readAll(async (from, to) => {
+    const { data, error } = await supabase.rpc("event_counts", { p_events: ids }).order("event_id").range(from, to);
+    if (error) throw new Error(`getEventCounts failed: ${error.code}`);
+    return parseCountsRows(data);
+  });
+  return new Map(items.map(({ eventId, ...counts }) => [eventId, counts]));
+}
+
+/**
+ * Who joined, as the viewer may see it (the RPC decides: organisers everyone with flags; active members the active
+ * participants while upcoming; otherwise no rows). Null: unknown event. Everything up to LIST_CEILING.
+ */
+export async function getRoster(id: string): Promise<{ rows: RosterRow[]; overCeiling: boolean } | null> {
+  if (!uuid.safeParse(id).success) return null;
+  const supabase = await createClient();
+  try {
+    // The RPC's own order (Turkish name, then profile id) is total: it is what the chunks page through.
+    const { items, overCeiling } = await readAll(async (from, to) => {
+      const { data, error } = await supabase.rpc("event_roster", { p_event: id }).range(from, to);
+      if (error) {
+        if (error.code === "P0002") throw new EventNotFoundError();
+        throw new Error(`getRoster failed: ${error.code}`);
+      }
+      return parseRosterRows(data);
+    });
+    return { rows: uniqueByProfile(items), overCeiling };
+  } catch (error) {
+    if (error instanceof EventNotFoundError) return null;
+    throw error;
+  }
+}
+
+/** Chunks are separate requests: a row can repeat at a chunk boundary. */
+function uniqueByProfile(rows: RosterRow[]): RosterRow[] {
+  const seen = new Set<string>();
+  return rows.filter((row) => !seen.has(row.profileId) && seen.add(row.profileId));
+}
+
+/** What edits changed on an event, newest first, with the author's name for organisers only. */
+export async function getChangeLog(id: string): Promise<{ entries: ChangeEntry[]; overCeiling: boolean }> {
+  if (!uuid.safeParse(id).success) return { entries: [], overCeiling: false };
+  const supabase = await createClient();
+  const { items, overCeiling } = await readAll(async (from, to) => {
+    const { data, error } = await supabase.rpc("event_change_log", { p_event: id }).range(from, to);
+    if (error) throw new Error(`getChangeLog failed: ${error.code}`);
+    return parseChangeRows(data);
+  });
+  return { entries: uniqueById(items), overCeiling };
+}
+
+const signupRow = z.object({ event_id: z.string(), role: z.enum(["rider", "passenger"]), guests: z.number() });
+
+/** The caller's own sign-ups by event id (RLS: own rows, behind the gate). */
+export async function getMySignups(): Promise<Map<string, Signup>> {
+  const supabase = await createClient();
+  const { items } = await readAll(async (from, to) => {
+    const { data, error } = await supabase
+      .from("event_signups")
+      .select("event_id, role, guests")
+      .order("event_id")
+      .range(from, to);
+    if (error) throw new Error(`getMySignups failed: ${error.code}`);
+    return z.array(signupRow).parse(data);
+  });
+  return new Map(
+    items.map((r): [string, Signup] => [r.event_id, { role: r.role satisfies JoinRole, guests: r.guests }]),
+  );
+}
+
+/** What the join rules need to know about the caller (own bikes and contacts via RLS). */
+export async function getMyJoinContext(): Promise<{
+  probation: boolean;
+  maxCc: number | null;
+  hasEmergencyContact: boolean;
+}> {
+  const [user, supabase] = await Promise.all([getCurrentUser(), createClient()]);
+  const [bikes, contacts] = await Promise.all([
+    supabase.from("member_motorcycles").select("cc").not("cc", "is", null),
+    supabase.from("member_emergency_contacts").select("id", { count: "exact", head: true }),
+  ]);
+  if (bikes.error) throw new Error(`getMyJoinContext bikes failed: ${bikes.error.code}`);
+  if (contacts.error) throw new Error(`getMyJoinContext contacts failed: ${contacts.error.code}`);
+  const ccs = bikes.data.flatMap((b) => (b.cc === null ? [] : [b.cc]));
+  return {
+    probation: user?.profile?.status === "probation",
+    maxCc: ccs.length === 0 ? null : Math.max(...ccs),
+    hasEmergencyContact: (contacts.count ?? 0) > 0,
   };
 }
