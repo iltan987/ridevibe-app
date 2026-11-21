@@ -146,7 +146,8 @@ function parseApple(url: URL): ParsedPlace | null {
   return point === null ? null : { kind: "point", point };
 }
 
-function toUrl(text: string): URL | null {
+/** The first http(s) link in pasted text (shared links often come with a name before them), or null. */
+export function toUrl(text: string): URL | null {
   const link = /https?:\/\/\S+/.exec(text);
   if (link === null) return null;
   try {
