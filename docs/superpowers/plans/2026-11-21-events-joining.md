@@ -77,7 +77,7 @@ planned after iltan's full check (`docs/follow-ups.md` "Next up").
   |---|---|---|
   | Gate refuses, or the caller is not active/probation | `42501` | — |
   | Unknown event | `P0002` | — |
-  | Malformed input (guests out of range, unknown role) | `22023` | — |
+  | Malformed input: guests out of range (an unknown role fails the enum cast first: `22P02`) | `22023` | — |
   | Rule refusal | `P0001` | one of `started`, `cancelled`, `people_limit`, `bike_limit`, `min_cc`, `full_members_only`, `has_signups` |
 
 - **Roster visibility** (spec §3):
