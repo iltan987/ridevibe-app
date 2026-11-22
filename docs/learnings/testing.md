@@ -43,6 +43,10 @@
      (`require` from the project's `node_modules/@supabase/ssr/dist/main/utils/…`)
   5. restart the stack normally afterwards (email sign-in off again).
 - Local test users: see below (password `test-password-123`).
+- **By hand in your own browser** (2026-11-22): `node scripts/dev/login-as.mjs <email>` prints a console snippet;
+  paste it in DevTools on the local app (it clears old `sb-127-auth-token*` chunks, sets the new ones, reloads). One
+  browser profile = one user: use separate Chrome profiles (not incognito windows, they share cookies) to be several
+  users at once. Needs step 1 (email sign-in on) and the user created with the test password.
 
 ### Validating pure TS logic quickly (2026-11-07)
 - `npx --yes tsx --tsconfig tsconfig.json script.ts` works (path aliases resolve). `pnpm dlx tsx` fails under
@@ -53,7 +57,8 @@
   role that has *only* the permission in question (create it in the UI as `admin@test.local`). The DB tests cover the
   same rules at the data level.
 - Local test users: `admin@test.local` (admin role), `organizer@test.local` (Organizatör), `reviewer@test.local`
-  (Başvuru Sorumlusu), `member@test.local`.
+  (Başvuru Sorumlusu), `member@test.local`, `member2@test.local`, `probation@test.local` (ön alım),
+  `pending@test.local`.
 - Seed many rows (e.g. 30 pending users via `insert into auth.users … generate_series`) to test pagination
   (`PAGE_SIZE` = 25), then delete them.
 
