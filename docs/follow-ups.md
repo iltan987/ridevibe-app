@@ -461,8 +461,11 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 - **Event page details to settle** (2026-11-21, events organiser event page) — (a) "Yandex Navigasyon" is a bare
   `yandexnavi://` link: without the app iOS shows an error and Android does nothing (a store fallback needs per-OS
   detection); (b) map-app names are the official Turkish ones ("Google Haritalar", "Apple Haritalar", "Yandex
-  Haritalar", "Yandex Navigasyon"; option: "Google Maps" as people say it). `src/components/events/place-actions.tsx`.
-  Deferred: check the links on an Android phone and an iPhone and decide with iltan.
+  Haritalar", "Yandex Navigasyon"; option: "Google Maps" as people say it). `src/components/events/place-actions.tsx`;
+  (c) a venue-only place (Google place link, no pin) opens in Yandex and Apple as a text search: Yandex lists every
+  matching branch ("Starbucks, Caferağa, …" shows three Starbucks; iltan, 2026-11-22). By design (spec §4, see "Google
+  Places API for place links"); options: a form hint or warning when a place has no pin, label those entries as a
+  search, or require a pin. Deferred: check the links on an Android phone and an iPhone and decide with iltan.
 - **Event form details to settle** (2026-11-21, events organiser form) — (a) no warning when leaving with unsaved
   changes; (b) two organisers editing at once: the later save wins silently (no `updated_at` check); (c) an abandoned
   edit draft is kept by Next (hidden route) and shown on a later visit even if someone else changed the event; (d)
