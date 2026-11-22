@@ -314,6 +314,7 @@
       "venueUnnamed": "Mekân linki eklendi",
       "removePin": "İğneyi kaldır",
       "removeVenue": "Mekânı kaldır",
+      "venueNoPin": "Yandex ve Apple Haritalar bu mekânı yalnızca arama olarak açar; aynı adlı birkaç yer çıkabilir. Tam yer için haritada yere uzun basıp iğneyi de ekle.",
       "placeErrors": {
         "unreadable": "Bu linkten konum okunamadı; haritada yere uzun bas ve iğneyi paylaş ya da koordinatı yapıştır (ör. 41.0255, 29.0154)",
         "forbidden": "Bu işlem için yetkin yok.",
