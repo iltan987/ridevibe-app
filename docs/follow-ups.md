@@ -465,7 +465,8 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   (c) a venue-only place (Google place link, no pin) opens in Yandex and Apple as a text search: Yandex lists every
   matching branch ("Starbucks, Caferağa, …" shows three Starbucks; iltan, 2026-11-22). By design (spec §4, see "Google
   Places API for place links"); options: a form hint or warning when a place has no pin, label those entries as a
-  search, or require a pin. Deferred: check the links on an Android phone and an iPhone and decide with iltan.
+  search, or require a pin; iltan chose the form warning (built 2026-11-22: `venueNoPin` in `place-field.tsx`).
+  Deferred: check the links on an Android phone and an iPhone and decide (a) and (b) with iltan.
 - **Event form details to settle** (2026-11-21, events organiser form) — (a) no warning when leaving with unsaved
   changes; (b) two organisers editing at once: the later save wins silently (no `updated_at` check); (c) an abandoned
   edit draft is kept by Next (hidden route) and shown on a later visit even if someone else changed the event; (d)

@@ -314,6 +314,7 @@
       "venueUnnamed": "Venue link added",
       "removePin": "Remove pin",
       "removeVenue": "Remove venue",
+      "venueNoPin": "Yandex and Apple Maps open this venue only as a search and may show several places with the same name. For the exact spot, long-press the map and add the pin too.",
       "placeErrors": {
         "unreadable": "Couldn't read a location from this link; long-press the spot on the map and share the pin, or paste coordinates (e.g. 41.0255, 29.0154)",
         "forbidden": "You don't have permission to do this.",

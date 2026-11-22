@@ -1,6 +1,6 @@
 "use client";
 
-import { ExternalLink, LoaderCircle, MapPin, Store, X } from "lucide-react";
+import { ExternalLink, LoaderCircle, MapPin, Store, TriangleAlert, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { type ReactNode, useRef } from "react";
 import { Button } from "@/components/ui/button";
@@ -57,6 +57,7 @@ export function PlaceField({
     error: `${idBase}-error`,
     pin: `${idBase}-pin`,
     venue: `${idBase}-venue`,
+    noPin: `${idBase}-no-pin`,
   };
 
   async function resolve(text: string) {
@@ -93,6 +94,8 @@ export function PlaceField({
   const venueLinks =
     place.venue && navLinks({ name: place.name, point: null, venueUrl: place.venue.url, venueLabel: null });
   const pinText = pointLinks ? t("pin", { coords: pointLinks.coords ?? "" }) : null;
+  // A venue link has no coordinates: Apple and Yandex can only search its name and address (spec §4).
+  const venueOnly = place.venue !== null && place.point === null;
   // The place's one status line for screen readers: reading, the slot just filled, or why it failed.
   const status =
     place.pending !== null
@@ -163,7 +166,9 @@ export function PlaceField({
             enterKeyHint="done"
             aria-invalid={!!pasteErrorText}
             aria-busy={place.pending !== null}
-            aria-describedby={[ids.hint, pasteErrorText ? ids.error : null].filter(Boolean).join(" ")}
+            aria-describedby={[ids.hint, pasteErrorText ? ids.error : null, venueOnly ? ids.noPin : null]
+              .filter(Boolean)
+              .join(" ")}
             className="h-10 pr-9 md:h-9"
           />
           {place.pending !== null && (
@@ -210,6 +215,13 @@ export function PlaceField({
             />
           )}
         </ul>
+      )}
+
+      {venueOnly && (
+        <p id={ids.noPin} role="note" className="flex gap-2 rounded-lg border border-sun/40 bg-sun/10 p-3 text-sm">
+          <TriangleAlert aria-hidden className="mt-0.5 size-4 shrink-0" />
+          <span>{t("venueNoPin")}</span>
+        </p>
       )}
     </div>
   );
