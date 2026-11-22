@@ -47,6 +47,10 @@
   paste it in DevTools on the local app (it clears old `sb-127-auth-token*` chunks, sets the new ones, reloads). One
   browser profile = one user: use separate Chrome profiles (not incognito windows, they share cookies) to be several
   users at once. Needs step 1 (email sign-in on) and the user created with the test password.
+- **Demo data by hand** (2026-11-22): `scripts/dev/seed.sql` (20 members, 6 upcoming + 30 past events, sign-ups,
+  a change-log entry; needs the test users) and `scripts/dev/unseed.sql`; run each with `docker exec -i
+  supabase_db_ridevibe psql -U postgres -v ON_ERROR_STOP=1 < <file>`. Not in `supabase/seed.sql`: the E2E scripts
+  expect a nearly empty DB (members E2E: only its fixtures active; events E2E: ≤ 50 past events). Unseed before E2E.
 
 ### Validating pure TS logic quickly (2026-11-07)
 - `npx --yes tsx --tsconfig tsconfig.json script.ts` works (path aliases resolve). `pnpm dlx tsx` fails under
