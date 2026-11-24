@@ -14,6 +14,11 @@ export function localizedUrl(locale: Locale, path: PagePath): string {
   return path === "/" ? `${SITE_URL}/en` : `${SITE_URL}/en${path}`;
 }
 
+/** Absolute URL of an event page (always the production site: links are only shared from there). */
+export function eventUrl(locale: Locale, id: string): string {
+  return `${SITE_URL}${locale === "tr" ? "" : "/en"}/events/${id}`;
+}
+
 export function ogLocale(locale: Locale): "tr_TR" | "en_US" {
   return locale === "tr" ? "tr_TR" : "en_US";
 }

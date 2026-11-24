@@ -1,6 +1,6 @@
 import { Ban, CalendarDays, MapPin, Pencil } from "lucide-react";
 import type { Metadata } from "next";
-import { getFormatter, getTranslations } from "next-intl/server";
+import { getFormatter, getLocale, getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { CancelEventDialog } from "@/components/events/cancel-event-dialog";
@@ -27,9 +27,10 @@ import {
   getMySignups,
   getRoster,
 } from "@/lib/events/queries";
-import { shareText } from "@/lib/events/places";
+import { memberShareText, shareText } from "@/lib/events/places";
 import { isUuid } from "@/lib/events/signup-rows";
 import { isUpcoming } from "@/lib/events/time";
+import { eventUrl } from "@/lib/seo/site";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("Events");
@@ -37,8 +38,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 // The event, its counts, joining, the change box, its places with the map-app menus, the roster per viewer (spec §3),
-// sharing, cancel and delete. Organisers only during the release gate (spec §9): everyone else gets a 404 (RLS returns
-// no row anyway), so the page's content sits inside the boundary.
+// sharing, cancel and delete. Active and ön alım members only (spec §9); the content sits inside the boundary.
 export default async function EventPage({ params }: PageProps<"/[locale]/events/[id]">) {
   const t = await getTranslations("Events");
   return (
@@ -64,6 +64,9 @@ const WHEN = {
   hourCycle: "h23",
 } as const;
 
+/** The members' share text names the day only. */
+const SHARE_DAY = { weekday: "long", day: "numeric", month: "long" } as const;
+
 /** The share text's date line: the year goes, the reader knows it. */
 const SHARE_WHEN = {
   weekday: "long",
@@ -84,7 +87,7 @@ async function EventContent({ params }: { params: PageProps<"/[locale]/events/[i
   const organiser = can(user.access, "events.manage");
   const probation = user.profile?.status === "probation";
 
-  const [event, counts, roster, changeLog, mySignups, joinContext, t, tSides, format] = await Promise.all([
+  const [event, counts, roster, changeLog, mySignups, joinContext, t, tSides, format, locale] = await Promise.all([
     getEvent(id),
     getEventCounts([id]),
     probation ? null : getRoster(id),
@@ -94,6 +97,7 @@ async function EventContent({ params }: { params: PageProps<"/[locale]/events/[i
     getTranslations("Events"),
     getTranslations("Admin.sides"),
     getFormatter(),
+    getLocale(),
   ]);
   if (!event) notFound();
 
@@ -106,11 +110,15 @@ async function EventContent({ params }: { params: PageProps<"/[locale]/events/[i
   const cancelled = event.status === "cancelled";
   const start = new Date(event.startsAt);
   const when = event.endsAt ? format.dateTimeRange(start, new Date(event.endsAt), WHEN) : format.dateTime(start, WHEN);
-  const text = shareText(event, {
-    when: format.dateTime(start, SHARE_WHEN),
-    cancelledTitle: (title) => t("detail.shareCancelled", { title }),
-    changeLead: changes.lead,
-  });
+  const url = eventUrl(locale, event.id);
+  const text = organiser
+    ? shareText(event, {
+        when: format.dateTime(start, SHARE_WHEN),
+        cancelledTitle: (title) => t("detail.shareCancelled", { title }),
+        changeLead: changes.lead,
+        url,
+      })
+    : memberShareText(event, { day: format.dateTime(start, SHARE_DAY), url });
   const single = event.places.length === 1;
   // A meet-up's one place needs no role: the section heading says "Buluşma yeri".
   const roleLabel = (i: number) => {
@@ -169,17 +177,15 @@ async function EventContent({ params }: { params: PageProps<"/[locale]/events/[i
         </div>
       </header>
 
-      {organiser && (
-        <div data-skeleton-result="event-actions" className="flex flex-wrap gap-2">
-          {!cancelled && (
-            <Link href={`/events/${event.id}/edit`} className={buttonVariants({ variant: "outline" })}>
-              <Pencil data-icon="inline-start" aria-hidden />
-              {t("detail.edit")}
-            </Link>
-          )}
-          <ShareEventButton text={text} />
-        </div>
-      )}
+      <div data-skeleton-result="event-actions" className="flex flex-wrap gap-2">
+        {organiser && !cancelled && (
+          <Link href={`/events/${event.id}/edit`} className={buttonVariants({ variant: "outline" })}>
+            <Pencil data-icon="inline-start" aria-hidden />
+            {t("detail.edit")}
+          </Link>
+        )}
+        <ShareEventButton text={text} />
+      </div>
 
       <JoinPanel
         eventId={event.id}

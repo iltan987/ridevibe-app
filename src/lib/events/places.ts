@@ -9,8 +9,7 @@ export function routeSummary(places: Named[]): string {
 }
 
 /**
- * The organiser's WhatsApp text. It has no event link until the joining branch releases Events (follow-ups). No
- * personal data, never the roster. A cancelled event leads with the cancellation and its reason (spec §6); a
+ * The organiser's WhatsApp text, ending with the event link. No personal data, never the roster. A cancelled event leads with the cancellation and its reason (spec §6); a
  * scheduled one with `changeLead` (the newest change, if any) before the title.
  */
 export function shareText(
@@ -19,7 +18,8 @@ export function shareText(
     when,
     cancelledTitle,
     changeLead,
-  }: { when: string; cancelledTitle: (title: string) => string; changeLead: string | null },
+    url,
+  }: { when: string; cancelledTitle: (title: string) => string; changeLead: string | null; url: string },
 ): string {
   const cancelled = event.status === "cancelled";
   return [
@@ -28,7 +28,13 @@ export function shareText(
     cancelled ? event.cancelReason : null,
     when,
     routeSummary(event.places),
+    url,
   ]
     .filter((line) => line !== null && line !== "")
     .join("\n");
+}
+
+/** The members' WhatsApp text: title, day (no time or place: the link shows them to members) and the event link. */
+export function memberShareText(event: { title: string }, { day, url }: { day: string; url: string }): string {
+  return [event.title, day, url].join("\n");
 }
