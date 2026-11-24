@@ -27,18 +27,21 @@ type Kind = (typeof KINDS)[number];
  * Upcoming events in the browser: side, kind and "Katıldıklarım" chips and pages over the full list from the server,
  * with the state in the URL (`?side=…&kind=…&mine=1&page=…`, defaults left out; chips and pages push a history entry,
  * nothing goes to the server). "Tümü" clears every filter; a pressed chip clears its own filter. `counts` by event id
- * (the counts line of each card), `joined`: the ids of the viewer's own sign-ups.
+ * (the counts line of each card), `joined`: the ids of the viewer's own sign-ups, `canCreate`: the viewer is an
+ * organiser (the empty list then points to "Etkinlik oluştur").
  */
 export function EventsList({
   events,
   counts,
   joined,
   overCeiling,
+  canCreate,
 }: {
   events: EventSummary[];
   counts: Partial<Record<string, Counts>>;
   joined: string[];
   overCeiling: boolean;
+  canCreate: boolean;
 }) {
   const t = useTranslations("Events");
   const tSides = useTranslations("Members.sides");
@@ -137,7 +140,9 @@ export function EventsList({
 
       <div ref={listTop} className="scroll-mt-20">
         {view.items.length === 0 ? (
-          <p className="py-10 text-center text-muted-foreground">{events.length === 0 ? t("empty") : t("noResults")}</p>
+          <p className="py-10 text-center text-muted-foreground">
+            {events.length === 0 ? t(canCreate ? "emptyCreate" : "empty") : t("noResults")}
+          </p>
         ) : (
           <ul className="flex flex-col gap-3">
             {view.items.map((event) => (

@@ -11,8 +11,8 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t("create"), robots: { index: false } };
 }
 
-// Organisers only (`events.manage`); everyone else gets a 404 (release gate, spec §9), so the heading and the form sit
-// inside the boundary with the permission check.
+// Organisers only (`events.manage`); everyone else gets a 404, so the heading and the form sit inside the boundary
+// with the permission check.
 export default async function NewEventPage() {
   const t = await getTranslations("Events");
   return (

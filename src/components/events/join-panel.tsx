@@ -109,7 +109,9 @@ export function JoinPanel({
     const active = document.activeElement;
     if (!last || !unusable(last) || (active !== null && active !== document.body && active !== last)) return;
     const other = last === fewerRef.current ? moreRef.current : last === moreRef.current ? fewerRef.current : null;
-    (other && !unusable(other) ? other : headingRef.current)?.focus();
+    // The heading is above the controls: focusing it must not scroll the page away from where the user was.
+    if (other && !unusable(other)) other.focus();
+    else headingRef.current?.focus({ preventScroll: true });
   });
   const focusHandlers = {
     // Only the panel's own DOM: React also bubbles focus from the portaled leave dialog (its `finalFocus` handles it).

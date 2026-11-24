@@ -1,7 +1,7 @@
 -- ---------------------------------------------------------------------------
 -- Event sign-ups (spec §3, §5; docs/superpowers/plans/2026-11-21-events-joining.md): a member joins an event as
 -- rider (own bike) or passenger, with up to 3 guests (non-member passengers, a count only). Written only by
--- join_event / leave_event; readable only as one's own row, behind the release gate (private.can_see_events,
+-- join_event / leave_event; readable only as one's own row, behind the events gate (private.can_see_events,
 -- 40_events.sql). Others see counts and rosters only through RPCs.
 -- Only sign-ups of active and ön alım (probation) profiles count (limits, counts, rosters, "has sign-ups"): see
 -- private.counted_event_signups. Others' rows are kept and come back with the status. Deleting an account or an

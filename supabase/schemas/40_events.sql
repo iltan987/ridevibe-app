@@ -123,7 +123,7 @@ $$;
 revoke all on function private.can_see_events() from public, anon;
 grant execute on function private.can_see_events() to authenticated;
 
--- Whether the signed-in caller sees events (the app shows "Çok yakında" / a 404 otherwise).
+-- Whether the signed-in caller sees events (the app shows the public teaser otherwise).
 create or replace function public.can_see_events()
 returns boolean
 language sql

@@ -233,7 +233,8 @@
     },
     "cancelled": "Cancelled",
     "meta": "{time} · {places}",
-    "empty": "No upcoming events. Add one with “Create event”.",
+    "empty": "No upcoming events. New ones will show up here as they are added.",
+    "emptyCreate": "No upcoming events. Add one with “Create event”.",
     "noResults": "No events match this filter.",
     "pastEmpty": "No past events yet.",
     "ceiling": "This list is incomplete: there are more than 2,000 upcoming events and only the first 2,000 are shown. Please tell the admins.",
@@ -241,7 +242,7 @@
     "teaser": {
       "signIn": "Sign in",
       "apply": "Apply",
-      "intro": "When the weather allows, we ride together every weekend: half a day or a full day, depending on the route. The start time and meeting point are for members. Riders of every age and every bike, and passengers too, ride with us: if you'd like to join, apply.",
+      "intro": "When the weather allows, we ride together every weekend: half a day or a full day, depending on the route. The start time and meeting point are for members. Riders of every bike, and passengers too, ride with us: if you'd like to join, apply.",
       "total": "{count, plural, one {# upcoming ride} other {# upcoming rides}}",
       "empty": "No rides planned right now. New ones will show up here as they are added.",
       "ceiling": "This list is incomplete: only the first {shown} of {total} upcoming rides are shown. Please tell the admins."

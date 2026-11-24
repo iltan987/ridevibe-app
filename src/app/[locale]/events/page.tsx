@@ -54,12 +54,13 @@ async function Events() {
   ]);
   if (overCeiling) console.error("upcoming events over ceiling", { count: `${LIST_CEILING}+` });
   const counts = await getEventCounts(events.map((event) => event.id));
+  const canCreate = can(user?.access, "events.manage");
 
   return (
     <>
       <div data-skeleton-result="events-heading" className="flex min-h-8 items-center justify-between gap-3">
         <h1 className="heading text-3xl">{t("title")}</h1>
-        {can(user?.access, "events.manage") && (
+        {canCreate && (
           <Link href="/events/new" className={buttonVariants()}>
             <Plus data-icon="inline-start" aria-hidden />
             {t("create")}
@@ -71,6 +72,7 @@ async function Events() {
         counts={Object.fromEntries(counts)}
         joined={[...mySignups.keys()]}
         overCeiling={overCeiling}
+        canCreate={canCreate}
       />
       <InstallBanner />
     </>
