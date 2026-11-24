@@ -87,7 +87,7 @@ open to anonymous visitors; instead:
 - **Follow-up:** `unlink_application` RPC (`applications.decide`, open applications only) so a wrong link can be undone
   without SQL.
 
-## Status (2026-11-13)
+## Status (2026-11-24)
 
 Live at https://ridevibe.com.tr: TR/EN site, Google sign-in (roles/statuses), public application form, draft privacy
 notice, staff-only applications list/detail. Google OAuth app is **published** (any Google account can sign in;
@@ -100,6 +100,8 @@ Graph, robots.txt, sitemap.xml, icons, structured data (spec
 `docs/superpowers/specs/2026-11-13-home-content-design.md`).
 The home page was redesigned 2026-11-14 ("Rota + 34": route line, 34 plate, new hero; spec
 `docs/superpowers/specs/2026-11-14-home-redesign-design.md`).
+Events (MVP step 3) released 2026-11-24, pending rollout: members create, join and share events; visitors see upcoming
+rides on `/events` and the home page.
 
 ## MVP for Samet (agreed 2026-11-08)
 
@@ -128,7 +130,11 @@ Build in this order, one branch each:
    Apple Maps or Yandex; members join as rider or passenger with up to 3 guests; optional limits on people and bikes;
    requirements: minimum cc (riders) and "full members only" (ön alım stage, 2026-11-18); a change log and WhatsApp
    share instead of notifications; visitors see a ride teaser (area line only). Built in two branches (organizer
-   side behind an organizers-only gate, then joining + release). Later: the map (iteration 2), Web Push with
+   side behind an organizers-only gate, then joining + release). **Released** 2026-11-24 (branch
+   `feat/events-release`, pending rollout): the gate is open to club members (active and ön alım), visitors get the
+   ride teaser on `/events` and the home page, an event link shows that event's card and a generated link preview,
+   share texts carry the link; privacy notice version `2026-11-24-draft-10`. Spec
+   `docs/superpowers/specs/2026-11-24-events-release-design.md`. Later: the map (iteration 2), Web Push with
    reminders and the waiting list (iteration 3).
 4. **Announcements** — short organizer posts, pinned on the home page.
 5. Right after the MVP: **event photo gallery** (Cloudflare R2).
@@ -260,6 +266,10 @@ file and in `docs/follow-ups.md` are such questions.
   comments are the candidate's data), so an art. 11 request is answered with each note's content and date, by hand
   within 30 days. The author's name is the staff member's own personal data and is **never** shared. Members never
   see notes in the app. Notice §5 and the notes dialog hint say so.
+- **Events** (decided 2026-11-24, Claude, no lawyer): sign-ups (rider/passenger, guest count, never guest names) and
+  who created/changed an event rest on legitimate interest (KVKK art. 5/2-f, checked against the law text on
+  mevzuat.gov.tr: art. 5 is unchanged by the 2024 amendment); kept like other member data; deleting an account deletes
+  its sign-ups and nulls its authorship. Public teaser data (title, kind, day, area) is no personal data. Notice §2–§6.
 - Retention: instead of keeping expired records "archived" (still personal data → not allowed past the purpose),
   **anonymise** them: strip name/contact/birth date/free text, keep counts, district/side, source, dates for stats.
 

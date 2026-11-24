@@ -174,6 +174,12 @@ Two branches, one plan each, same spec:
    (Sequencing changed while planning branch 1, 2026-11-20: the teaser, home section and change log would have been
    hidden or inert code until branch 2.)
 
+**Release (built 2026-11-24, branch `feat/events-release`, spec
+`docs/superpowers/specs/2026-11-24-events-release-design.md`):** the gate is open (`private.can_see_events()` =
+`private.is_club_member()`), the visitor teaser, home section, hero button, `/events` in the sitemap, the event link
+in share texts with a per-event preview, and the notice section (version `2026-11-24-draft-10`) are built. The gate
+paragraphs below describe the state before it.
+
 **Release gate (iltan, option A):** after branch 1 is merged and deployed, only `events.manage` holders see events
 (the list, details and the teaser); everyone else, visitors included, still gets the "coming soon" page, the home
 section and the "Etkinlikleri Gör" hero button stay hidden, `/events` stays `noindex` and out of the sitemap.

@@ -59,6 +59,11 @@ export function PrivacyTr() {
           kısa ve olgusal notlar (not, yazan kişi ve tarih).
         </li>
         <li>
+          <strong>Etkinlik bilgileri:</strong> kulüp etkinliklerine katılım kaydınız (sürücü veya artçı olarak,
+          yanınızda getireceğiniz misafir sayısıyla; misafirlerin adı alınmaz) ve kulüp ekibindeyseniz oluşturduğunuz
+          veya değiştirdiğiniz etkinliklerde adınız ve yaptığınız değişikliklerin kaydı.
+        </li>
+        <li>
           <strong>Oturum çerezi:</strong> giriş yapabilmeniz için zorunlu çerez.
         </li>
         <li>
@@ -79,6 +84,10 @@ export function PrivacyTr() {
       <ul>
         <li>Üyelik başvurunuzu değerlendirmek ve sizinle (WhatsApp, telefon veya e-posta ile) iletişime geçmek,</li>
         <li>Üyeliğinizi yönetmek, etkinlik ve sürüşleri planlamak, katılımı ve grup sürüşü güvenliğini sağlamak,</li>
+        <li>
+          Kulübün etkinliklerini düzenlemek: katılımları ve katılım sınırlarını yönetmek, kimin katıldığını
+          organizatörlere göstermek ve etkinlikte yapılan değişiklikleri katılımcılara duyurmak,
+        </li>
         <li>18 yaş şartını kontrol etmek ve doğum gününüzü kutlamak,</li>
         <li>Hangi tanıtım kanallarının ve reklamların işe yaradığını ölçmek,</li>
         <li>Açık rızanız varsa, etkinlik fotoğraflarını kulüp galerisinde paylaşmak,</li>
@@ -122,6 +131,10 @@ export function PrivacyTr() {
           başkasının hayatını ya da beden bütünlüğünü korumak (KVKK m.5/2-b).
         </li>
         <li>
+          Etkinlik katılımları ve etkinlik kayıtları için, temel hak ve özgürlüklerinize zarar vermemek kaydıyla kulübün
+          meşru menfaati (KVKK m.5/2-f): kulüp etkinliklerinin düzenlenmesi ve güvenliği.
+        </li>
+        <li>
           Ön alım dönemi ve kulüp notları için, temel hak ve özgürlüklerinize zarar vermemek kaydıyla kulübün meşru
           menfaati (KVKK m.5/2-f): sürüş ve etkinlik güvenliği ile kulüp düzeninin korunması.
         </li>
@@ -157,6 +170,16 @@ export function PrivacyTr() {
         ekibi (bu görev verilmiş aktif üyeler) ve kulübün yöneticileri görebilir; üyeliği pasif olan kişilerin bilgileri
         bu kişilere gösterilmez. Kan grubu işlemleri ve acil durum bilgisi görüntülemeleri kaydedilir; kayıtları
         yalnızca yöneticiler görebilir. Bu bilgiler yalnızca acil durumda sağlık ekipleriyle paylaşılır.
+      </p>
+      <p>
+        Etkinlikler: etkinliklerin ayrıntılarını (saat, buluşma yeri, katılımcılar) yalnızca kulüp üyeleri görür.
+        Organizatörler (etkinlik yetkisi verilen aktif üyeler) katılımcı listesinin tamamını görür. Tam üyeler, etkinlik
+        sona erene kadar katılan tam üyelerin adlarını görür; ön alım dönemindeki üyeler yalnızca katılımcı sayılarını
+        görür ve kendi adları tam üyelere gösterilmez, yalnızca sayı olarak yer alır. Etkinlik sona erdikten sonra
+        üyeler yalnızca sayıları görür. Etkinliği oluşturan veya en son değiştiren ekip üyesinin adı kulüp üyelerine
+        gösterilir. Herkese açık sayfalarda ve paylaşılan etkinlik bağlantılarının önizlemesinde yalnızca etkinliğin
+        başlığı, türü, günü ve bölgesi yer alır; bunlar kişisel veri içermez. WhatsApp&apos;ta paylaşılan etkinlik
+        metinlerinde de kişisel veri bulunmaz.
       </p>
       <p>Hizmeti sunabilmek için aşağıdaki hizmet sağlayıcılarını (veri işleyen) kullanıyoruz:</p>
       <ul>
@@ -210,6 +233,12 @@ export function PrivacyTr() {
         <li>
           Kulüp notları: diğer üye bilgileriyle aynı süre saklanır; hesabınız silindiğinde (14 günlük sürenin sonunda)
           silinir. Yanlış veya gereksiz bir not yöneticiler tarafından silinebilir.
+        </li>
+        <li>
+          Etkinlik katılımları: diğer üye bilgileriyle aynı süre saklanır; geçmiş etkinliklerin katılımcı listesi bu
+          süre boyunca kulüp içi katılım takibi için organizatörlerde kalır. Hesabınız silindiğinde katılım kayıtlarınız
+          da silinir; oluşturduğunuz veya değiştirdiğiniz etkinlikler kulüpte kalır, ancak adınız bu etkinliklerden ve
+          değişiklik kayıtlarından kaldırılır.
         </li>
         <li>
           Hesap silme: hesap sayfanızdan istediğiniz zaman hesabınızın silinmesini talep edebilirsiniz; hesabınız diğer

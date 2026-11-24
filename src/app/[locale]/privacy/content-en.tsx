@@ -63,6 +63,11 @@ export function PrivacyEn() {
           the club (the note, who wrote it and when).
         </li>
         <li>
+          <strong>Event data:</strong> your sign-ups for club events (as a rider or a passenger, with the number of
+          guests you bring; guests&apos; names are not collected) and, if you are on the club team, your name on the
+          events you create or change and a record of your changes.
+        </li>
+        <li>
           <strong>Session cookie:</strong> a cookie that is strictly necessary for signing in.
         </li>
         <li>
@@ -83,6 +88,10 @@ export function PrivacyEn() {
       <ul>
         <li>To review your membership application and contact you (via WhatsApp, phone or email),</li>
         <li>To manage your membership, plan events and rides, and ensure participation and group riding safety,</li>
+        <li>
+          To organise the club&apos;s events: manage sign-ups and their limits, show organisers who is coming and tell
+          participants about changes to an event,
+        </li>
         <li>To check the 18+ requirement and to celebrate your birthday,</li>
         <li>To measure which promotion channels and ads work,</li>
         <li>With your explicit consent, to share event photos in the club gallery,</li>
@@ -123,6 +132,10 @@ export function PrivacyEn() {
           emergency, protecting the life or bodily integrity of you or another person (KVKK art. 5/2-b).
         </li>
         <li>
+          For event sign-ups and event records, the club&apos;s legitimate interest, provided it does not harm your
+          fundamental rights (KVKK art. 5/2-f): organising the club&apos;s events and keeping them safe.
+        </li>
+        <li>
           For the ön alım period and club notes, the club&apos;s legitimate interest, provided it does not harm your
           fundamental rights (KVKK art. 5/2-f): ride and event safety and keeping order in the club.
         </li>
@@ -159,6 +172,15 @@ export function PrivacyEn() {
         information of members whose membership is inactive is not shown to these people. Operations on blood types and
         views of emergency information are logged; only admins can see the log. This information is shared with health
         teams only in an emergency.
+      </p>
+      <p>
+        Events: only club members see an event&apos;s details (time, meeting point, participants). Organisers (active
+        members given the events task) see the full list of participants. Full members see the names of the full members
+        taking part until the event is over; members in the ön alım period see only the numbers, and their own names are
+        not shown to full members, only counted. After an event, members see only the numbers. The name of the team
+        member who created or last changed an event is shown to club members. Public pages and the preview of a shared
+        event link show only the event&apos;s title, kind, day and area; these contain no personal data. Event texts
+        shared on WhatsApp contain no personal data either.
       </p>
       <p>To provide the service we use these service providers (data processors):</p>
       <ul>
@@ -209,6 +231,12 @@ export function PrivacyEn() {
         <li>
           Club notes: kept for the same period as other member data; deleted when your account is deleted (at the end of
           the 14 days). An incorrect or unnecessary note can be deleted by admins.
+        </li>
+        <li>
+          Event sign-ups: kept for the same period as other member data; for that period the participant lists of past
+          events stay with the organisers to keep track of attendance in the club. When your account is deleted, your
+          sign-ups are deleted too; events you created or changed stay with the club, but your name is removed from them
+          and from their change records.
         </li>
         <li>
           Account deletion: you can request deletion on your account page at any time; your account is hidden from other
