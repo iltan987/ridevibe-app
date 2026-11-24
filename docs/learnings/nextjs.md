@@ -231,3 +231,21 @@ Bundled docs are the source of truth: `node_modules/next/dist/docs/` (grep them 
   later navigation (a form action that calls `signOut()` and redirects). auth-js clears the local session even when
   the logout answers 401/403/404 for an already-revoked session.
 - **Source:** `auth-js` `GoTrueClient._signOut`, `GoTrueAdminApi.signOut`; `src/lib/account/deletion-actions.ts`.
+
+### First `"use cache"`: public event reads (2026-11-24)
+- **Pattern:** `src/lib/events/public.ts` (`getTeaserRides`, `getEventPreview`): `"use cache"` + `cacheTag(PUBLIC_EVENTS_TAG)`
+  + `cacheLife("hours")`, calling Supabase through `createPublicClient()` (`src/lib/supabase/public.ts`: no cookies, no
+  session, `persistSession: false`). `createClient()` in `server.ts` reads `cookies()` / `connection()`: never use it
+  inside a cache scope (`next-request-in-use-cache`). Organiser actions call `updateTag(PUBLIC_EVENTS_TAG)` (Server
+  Actions only; the next read waits for fresh data).
+- **Tested (throwaway route handler, built + started, removed):** supabase-js `rpc()` works inside `"use cache"` with no
+  cookies, also at build (the entry is prerendered into the shell). A function that **throws is not cached**: the next
+  call re-ran it, the one after hit the cache. So readers must throw on a Supabase error, never return `[]` (that would
+  be cached as "no rides" for up to an hour). In a production build the caller gets a masked "An error occurred in the
+  Server Components render" message (the real error is only in the server log): log or map the code before it leaves
+  the cached function if the message matters.
+- **`cacheLife("hours")`:** stale 5 min / revalidate 1 h / expire 1 day. A background refresh runs after the hour
+  (stale-while-revalidate), so a ride that passed at Istanbul midnight can stay listed up to about an hour (accepted).
+  Rows planted by psql never expire the tag; only `updateTag` / `revalidateTag` or the lifetime do: E2E that checks
+  cached data plants fixtures before `pnpm build && pnpm start`, or edits through the organiser UI.
+- **Source:** `01-directives/use-cache.md`, `04-functions/cacheLife.md`, `updateTag.md`; the spike above.

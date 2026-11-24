@@ -31,9 +31,7 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   `src/app/[locale]/events/past/page.tsx:21-22`, `src/app/[locale]/events/page.tsx:30`; `scripts/e2e/events-e2e.mjs`
   `gateScenario` (~555-619: expects `member@` to get "Çok yakında" / a 404); `events-join-e2e.mjs`'s gate
   open/restore and its hard-coded "gate restored to organisers only" check; spec §6 "Members get a plain share of the
-  event link too" (not built yet). Also for the release: server refusals (`refused` / `notFound` / `hasSignups`)
-  should call `refresh()` in `src/lib/events/actions.ts` so the panel and the delete button aren't stale after a lost
-  race (filed as "Events joining app minors" (a)), and the join panel's focus handling when controls disable or
+  event link too" (not built yet). Also for the release: the join panel's focus handling when controls disable or
   unmount (filed as "Events joining UI minors" (a)).
 - **Full Events check on production (iltan, before the release step)** — branch 1 feedback (the UI / form / card
   items marked "Deferred: … decide with iltan" below); tick `events.manage` for the Organizatör role in
@@ -372,12 +370,10 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   row survival.
 
 ### App logic
-- **Events joining app minors** (2026-11-22, events joining, task reviews) — (a) a server refusal doesn't refresh
-  the page: after a lost race the panel keeps the stale counts and "Katılıyorum" (seen in the E2E; a reload shows
-  "Kişi sınırı doldu."); (b) the panel's role/guests state is seeded once from `mine` (a refresh after another tab's
-  change keeps the old choice); (c) `JoinPanel` receives the whole `EventDetail`; (d) the event page calls
-  `getRoster` for active members on past events and then hides it; (e) `REASONS` in `join.ts` is a
-  `Record<string, …>`, leaving an unreachable `null`; (f) `isUuid` / `z.uuid()` refuse ids with non-RFC version
+- **Events joining app minors** (2026-11-22, events joining, task reviews) — (a) the panel's role/guests state is seeded once from `mine` (a
+  refresh after another tab's change keeps the old choice); (b) `JoinPanel` receives the whole `EventDetail`; (c) the event page calls
+  `getRoster` for active members on past events and then hides it; (d) `REASONS` in `join.ts` is a
+  `Record<string, …>`, leaving an unreachable `null`; (e) `isUuid` / `z.uuid()` refuse ids with non-RFC version
   bits (consistent with `getEvent`; only hand-planted fixtures have such ids). Harmless today.
 - **`pageMetadata` call sites repeat a preamble** (2026-11-13, SEO final review) — the five pages calling
   `pageMetadata` each do `getLocale()` + `(await parent).openGraph?.images`; a helper taking `parent` would stop a
