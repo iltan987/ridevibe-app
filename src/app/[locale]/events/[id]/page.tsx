@@ -3,12 +3,14 @@ import type { Metadata } from "next";
 import { getFormatter, getLocale, getTranslations } from "next-intl/server";
 import { notFound, unstable_rethrow } from "next/navigation";
 import { Suspense } from "react";
+import { SessionHintSwitch } from "@/components/auth/session-hint-switch";
 import { CancelEventDialog } from "@/components/events/cancel-event-dialog";
 import { ChangeLog, describeChanges } from "@/components/events/change-log";
 import { DeleteEventDialog } from "@/components/events/delete-event-dialog";
 import { EventCounts } from "@/components/events/event-counts";
 import { EventRoster } from "@/components/events/event-roster";
 import { EventTeaser } from "@/components/events/event-teaser";
+import { EventTeaserSkeleton } from "@/components/events/events-teaser-skeleton";
 import { JoinPanel } from "@/components/events/join-panel";
 import { PlaceActions } from "@/components/events/place-actions";
 import { RouteStrip } from "@/components/events/route-strip";
@@ -81,7 +83,8 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/events/[
 
 // Club members (active and ön alım, the events gate) get the event, its counts, joining, the change box, its places
 // with the map-app menus, the roster per viewer (spec §3), sharing, cancel and delete; everyone else the event's
-// public card with sign-in / apply (release spec §5.4). The content sits inside the boundary.
+// public card with sign-in / apply (release spec §5.4). The content sits inside the boundary; its fallback takes the
+// member's or the teaser's shape from the session cookie (the static shell can't know the viewer).
 export default async function EventPage({ params }: PageProps<"/[locale]/events/[id]">) {
   const t = await getTranslations("Events");
   return (
@@ -89,7 +92,7 @@ export default async function EventPage({ params }: PageProps<"/[locale]/events/
       <Link href="/events" className="text-sm text-muted-foreground hover:text-foreground">
         ← {t("backToList")}
       </Link>
-      <Suspense fallback={<EventSkeleton />}>
+      <Suspense fallback={<SessionHintSwitch signedIn={<EventSkeleton />} signedOut={<EventTeaserSkeleton />} />}>
         <EventContent params={params} />
       </Suspense>
     </section>
@@ -329,13 +332,13 @@ async function EventContent({ params }: { params: PageProps<"/[locale]/events/[i
 }
 
 /**
- * Mirrors a typical ride as an organiser sees it before joining: badges, title, date, area and counts lines, the
- * edit/share row, the join panel (heading, Sürücü/Artçı, the guests stepper with its hint, the button and its empty
- * status line), the route card with two places (strip, then name block and the action buttons, which wrap to two rows
- * on a phone), a one-line description, the roster with two rows (each with its safety card button), the
- * "Düzenleyen" line and the cancel/delete row with the "people joined" hint under it. Measured with
- * `scripts/e2e/skeletons.mjs` (organiser, joined or not: the joined panel's summary line is the one difference).
- * Members and ön alım members see no edit/share or cancel/delete rows and a roster only in some cases.
+ * Mirrors a typical ride as an active member sees it before joining (the common viewer since the release): badges,
+ * title, date, area and counts lines, the share button, the join panel (heading, Sürücü/Artçı, the guests stepper with
+ * its hint, the button and its empty status line), the route card with two places (strip, then name block and the
+ * action buttons, which wrap to two rows on a phone), a one-line description, the roster with two rows (name, role)
+ * and the "Oluşturan" line. Measured with `scripts/e2e/skeletons.mjs` (member, organiser, signed out). Organisers also
+ * get the edit button, a safety-card button per roster row and the cancel/delete row (taller); ön alım members no
+ * roster (shorter): the shell can't know the role (follow-ups, "Loading states").
  */
 function EventSkeleton() {
   return (
@@ -361,7 +364,6 @@ function EventSkeleton() {
         </div>
       </div>
       <div data-skeleton="event-actions" className="flex gap-2">
-        <Skeleton className="h-8 w-24" />
         <Skeleton className="h-8 w-44" />
       </div>
       <div data-skeleton="event-join" className="flex flex-col gap-4 rounded-xl border p-4">
@@ -439,9 +441,6 @@ function EventSkeleton() {
                 <div className="flex h-5 items-center">
                   <Skeleton className="h-3.5 w-16" />
                 </div>
-                <div className="pt-1">
-                  <Skeleton className="h-7 w-32" />
-                </div>
               </div>
             </div>
           ))}
@@ -449,14 +448,6 @@ function EventSkeleton() {
       </div>
       <div className="flex h-5 items-center">
         <Skeleton className="h-3.5 w-48" />
-      </div>
-      {/* With people signed up, delete is disabled with a one-line hint below the buttons. */}
-      <div data-skeleton="event-manage" className="flex flex-wrap gap-2 border-t pt-6">
-        <Skeleton className="h-8 w-40" />
-        <Skeleton className="h-8 w-32" />
-        <div className="flex h-5 w-full items-center">
-          <Skeleton className="h-3.5 w-72 max-w-full" />
-        </div>
       </div>
     </div>
   );

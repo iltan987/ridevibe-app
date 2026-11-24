@@ -8,9 +8,9 @@ import { Link } from "@/i18n/navigation";
 // Always dark: the `dark` class makes the tokens resolve to the night palette inside, so cream text sits on the
 // photo's dark gradient in both themes and the bottom edge is straight against a cream page. `text-foreground` on the
 // section: inherited text (the outline "Etkinlikleri Gör") would keep the body's colour, resolved outside the scope.
-// The text is in flow
-// (not absolutely positioned), so the hero grows with large text instead of clipping. The h1 is two fixed lines sized
-// by viewport only: next/font's fallback is never condensed, so wrapping text would reflow at the Saira swap.
+// The text is in flow (not absolutely positioned), so the hero grows with large text instead of clipping. The h1 is
+// two fixed lines sized by viewport only: next/font's fallback is never condensed, so wrapping text would reflow at
+// the Saira swap.
 export function HomeHero() {
   const t = useTranslations("Home");
   return (

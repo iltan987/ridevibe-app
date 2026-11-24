@@ -14,6 +14,9 @@
 // "Kulübe Başvur".
 // The member gets the 2a list (chips, card links, the meet-up and the cancelled ride: the positive controls). With
 // no upcoming ride left: the empty state (SKIP when the DB holds other upcoming rides).
+// Join-panel focus (the member, keyboard, on a planted ride): "−" down to 0 guests moves focus to "+", "+" up to 3 to
+// "−"; "Katılıyorum", "Güncelle" and the leave dialog's confirm leave it on the panel heading, dismissing the dialog
+// returns it to "Katılmaktan vazgeç". The member leaves again.
 // Signed out, on a planted ride: the card (title, area, day; no link), "Giriş yap" (back to this event via `?next=`)
 // and "Başvur"; the HTML holds no place name, start time or description. A meet-up shows no area line; a cancelled
 // ride says "İptal edildi". A malformed id and an unknown uuid are the 404 page. The pending user gets the card and
@@ -317,6 +320,120 @@ async function memberControl() {
     check("control: a member gets no teaser", (await teaser(page)) === null);
     await go(page, `/events/${CANCELLED.id}`);
     check("control: a member reads the cancel reason", (await page.content()).includes("E2E gizli neden"));
+  } finally {
+    await ctx.close();
+  }
+}
+
+/** What has keyboard focus: a button's label or text, the join panel's heading, or the tag name. */
+const focused = (page) =>
+  page.evaluate(() => {
+    const a = document.activeElement;
+    if (!a || a === document.body) return "body";
+    if (a.tagName === "H2") return `h2:${a.textContent.trim()}`;
+    return a.getAttribute("aria-label") ?? `${a.tagName.toLowerCase()}:${a.textContent.trim()}`;
+  });
+/** Focuses the first visible element matching selector and text (regexp source); false when there is none. */
+const focusOn = (page, selector, text = "") =>
+  page.evaluate(
+    (selector, text) => {
+      const el = [...document.querySelectorAll(selector)].find(
+        (e) => e.getBoundingClientRect().width > 0 && new RegExp(text).test(e.textContent),
+      );
+      el?.scrollIntoView({ block: "center" });
+      el?.focus();
+      return el !== undefined;
+    },
+    selector,
+    text,
+  );
+const shiftTab = async (page) => {
+  await page.keyboard.down("Shift");
+  await page.keyboard.press("Tab");
+  await page.keyboard.up("Shift");
+};
+
+/**
+ * The join panel keeps keyboard focus when the focused control disables or unmounts (follow-ups "Events joining UI
+ * minors" (a)): "−" down to 0 guests → "+"; "+" up to 3 → "−"; "Katılıyorum", "Güncelle" (disabled while saving, then
+ * unchanged) and confirming "Katılmaktan vazgeç" → the panel heading; dismissing that dialog → back to its trigger.
+ * The member leaves again at the end.
+ */
+async function joinFocusScenario() {
+  const ctx = await browser.createBrowserContext();
+  const page = await newPage(ctx);
+  const fewer = "Bir misafir çıkar";
+  const more = "Bir misafir ekle";
+  try {
+    await signIn(page, "member@test.local", BASE);
+    await go(page, `/events/${RIDE.id}`);
+    check("focus: the more-guests button exists", await focusOn(page, `button[aria-label="${more}"]`));
+    await page.keyboard.press("Enter"); // 1 guest
+    await shiftTab(page);
+    check('focus: Shift+Tab from "+" reaches "−"', (await focused(page)) === fewer, await focused(page));
+    await page.keyboard.press("Enter"); // 0 guests: "−" disables
+    await sleep(300);
+    check('focus: "−" down to 0 guests moves focus to "+"', (await focused(page)) === more, await focused(page));
+    for (let i = 0; i < 3; i++) await page.keyboard.press("Enter"); // 3 guests: "+" disables
+    await sleep(300);
+    check('focus: "+" up to 3 guests moves focus to "−"', (await focused(page)) === fewer, await focused(page));
+    for (let i = 0; i < 3; i++) await page.keyboard.press("Enter"); // back to 0
+    await sleep(300);
+    check('focus: focus on "+" again at 0 guests', (await focused(page)) === more, await focused(page));
+
+    await focusOn(page, "button", "^Katılıyorum$");
+    await page.keyboard.press("Enter");
+    const joined = await until(page, () =>
+      [...document.querySelectorAll("h2")].some((h) => h.textContent.trim() === "Katılıyorsun"),
+    );
+    check("focus: joined", joined !== null);
+    await sleep(300);
+    check(
+      '"Katılıyorum" (unmounted after joining) leaves focus on the panel heading',
+      (await focused(page)) === "h2:Katılıyorsun",
+      await focused(page),
+    );
+
+    await focusOn(page, `button[aria-label="${more}"]`);
+    await page.keyboard.press("Enter"); // 1 guest: "Güncelle" enables
+    await focusOn(page, "button", "^Güncelle$");
+    await page.keyboard.press("Enter");
+    const updated = await until(page, () => document.body.innerText.includes("Katılımın güncellendi."));
+    check("focus: updated", updated !== null);
+    await sleep(300);
+    check(
+      '"Güncelle" (disabled once saved) leaves focus on the panel heading',
+      (await focused(page)) === "h2:Katılıyorsun",
+      await focused(page),
+    );
+
+    await focusOn(page, "button", "^Katılmaktan vazgeç$");
+    await page.keyboard.press("Enter");
+    await until(page, () => document.querySelector('[role="alertdialog"]') !== null);
+    await sleep(400);
+    await page.keyboard.press("Escape");
+    await sleep(600);
+    check(
+      "dismissing the leave dialog returns focus to its trigger",
+      (await focused(page)) === "button:Katılmaktan vazgeç",
+      await focused(page),
+    );
+    await page.keyboard.press("Enter");
+    const dialog = await until(page, () => document.querySelector('[role="alertdialog"]') !== null);
+    check("focus: the leave dialog opens", dialog !== null);
+    await sleep(400);
+    await focusOn(page, '[role="alertdialog"] button', "^Evet, vazgeç$");
+    await page.keyboard.press("Enter");
+    const left = await until(page, () =>
+      [...document.querySelectorAll("h2")].some((h) => h.textContent.trim() === "Katılıyor musun?"),
+    );
+    check("focus: left", left !== null);
+    await sleep(600); // the dialog's closing animation, then its final focus
+    check(
+      "leaving through the dialog leaves focus on the panel heading",
+      (await focused(page)) === "h2:Katılıyor musun?",
+      await focused(page),
+    );
   } finally {
     await ctx.close();
   }
@@ -856,6 +973,7 @@ try {
   await listPendingScenario("pending-noapp@test.local");
   if (hasPendingApp) await listPendingScenario("pending-app@test.local");
   await memberControl();
+  await joinFocusScenario();
   for (const [width, height] of [
     [390, 844],
     [1280, 900],

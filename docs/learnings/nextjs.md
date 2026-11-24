@@ -299,7 +299,10 @@ Bundled docs are the source of truth: `node_modules/next/dist/docs/` (grep them 
 - **Cause:** during build-time prerendering a `fetch` without cache options is cached in the fetch cache "to dedupe
   between export workers" (`isImplicitBuildTimeCache` in `next/dist/server/lib/patch-fetch.js`); the entry
   (supabase-js `rpc()` is a POST, cached by URL + body) is written to `.next/cache/fetch-cache` with the enclosing
-  scope's revalidate (900 s here) and the next build reads it. At request time such fetches are not cached
+  scope's revalidate and the next build reads it. Inside `"use cache"` that is the scope store's `revalidate`, which
+  starts at the default profile's 900 s and stays there: `cacheLife()` sets only `explicitRevalidate`
+  (`use-cache-wrapper.js`, `cache-life.js`), so the 900 s holds whichever profile the function calls (`"hours"` here),
+  before or after the fetch. At request time such fetches are not cached
   (`autoNoCache`); `"use cache"` alone governs them.
 - **Do:** for E2E that needs fresh data in a prerendered page, don't rely on "plant, then build": expire the tag
   through the organiser UI after starting the server (`expireTeaserList` in `scripts/e2e/events-public-e2e.mjs`). In

@@ -22,14 +22,14 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   description, counts or names; meet-ups too, unlike the teaser: the link reaches only whom it was shared with; a
   generated Open Graph image per event in the club style, iltan wants it over the generic image; today
   `generateMetadata` in `events/[id]/page.tsx` returns the generic title), privacy notice + one
-  `PRIVACY_NOTICE_VERSION` bump, per-viewer event-page skeletons (Loading states below), the
-  navigation review (below). Restore iltan's local admin before any local browser review (the build reset the local
+  `PRIVACY_NOTICE_VERSION` bump. Restore iltan's local admin before any local browser review (the build reset the local
   DB: iltan signs in with Google locally once, then set the admin role by SQL).
   Leftovers that still say or do "organisers only" once the body flips (final review): `scripts/e2e/events-e2e.mjs`
   `gateScenario` (~555-619: expects `member@` to get "Çok yakında" / a 404); `events-join-e2e.mjs`'s gate
   open/restore and its hard-coded "gate restored to organisers only" check; spec §6 "Members get a plain share of the
-  event link too" (not built yet). Also for the release: the join panel's focus handling when controls disable or
-  unmount (filed as "Events joining UI minors" (a)).
+  event link too" (not built yet). `/events` for members with no upcoming event says "Yenisini “Etkinlik oluştur” ile
+  ekleyebilirsin" (`Events.empty`, `events-list.tsx`) to everyone, but only organisers have that button: give
+  non-organisers a plain "Yaklaşan etkinlik yok." (seen in the Task 8 navigation check, 2026-11-24).
 - **Full Events check on production (iltan, before the release step)** — branch 1 feedback (the UI / form / card
   items marked "Deferred: … decide with iltan" below); tick `events.manage` for the Organizatör role in
   `/admin/roles`; on a real Android phone and iPhone check every "Konumu aç" / "Yol tarifi" app link and Yandex Navi
@@ -170,9 +170,6 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 - **Medical notes** (2026-11-10, idea) — free-text medical notes (allergies, conditions); special-category data rules
   apply (consent, `members.safety`, access log; see the safety-data spec). The first-aid flag was dropped (2026-11-12,
   iltan): first aid is mandatory training for the motorcycle license.
-- **Navigation review once events exist** (2026-11-10, members) — the bottom tab bar has 5 tabs at 390px after
-  `/members` (4 for members and open applicants since 2026-11-11, "Başvur" hidden); re-check labels and spacing when
-  Events lands.
 - **My garage** (2026-11-10, member request via iltan) — a personal garage per member: their bikes (today's
   `member_motorcycles`) with important dates (insurance/sigorta, inspection/muayene, last and next service or
   maintenance, …) and personal notes. Design questions: private to the owner (unlike the directory's brand/model/cc);
@@ -484,8 +481,7 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   failed "Koordinatları kopyala" isn't announced again (the live text doesn't change); (c) a label-less (Yandex)
   venue's status line follows the place-name field on every keystroke ("Mekân: …"); (d) two comment lines over 120
   characters (`event-card.tsx`, `events-list.tsx`; Prettier doesn't wrap comments). Cosmetic.
-- **Events joining UI minors** (2026-11-22, events joining, Task 5 review) — (a) focus is lost when "+"/"−" or
-  "Güncelle" become disabled, or when leaving unmounts the buttons; (b) reason texts aren't tied to the controls
+- **Events joining UI minors** (2026-11-22, events joining, Task 5 review) — (b) reason texts aren't tied to the controls
   with `aria-describedby`; (c) the bike-limit reason ("…artçı olarak katılabilirsin") also shows to someone already
   joined as Artçı; (d) copy options: "En az cc" → "En az motor hacmi", "Katılımın silindi." → "Katılımını geri
   çektin.". `src/components/events/join-panel.tsx`, `messages/*.json`. Deferred: polish for the release review.
@@ -575,22 +571,31 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   review"; harmless).
 
 ### Loading states
-- **`/events`: signed-in non-members see the members' skeleton first** (2026-11-24, events release Task 6) — the
-  fallback picks its shape from the session cookie (`SessionHintSwitch`): signed out → `EventsTeaserSkeleton`, a
-  session → `EventsSkeleton` (chips, event cards). Pending, inactive and `deleting` accounts have a session but get the
-  teaser, so they see the wrong skeleton for a moment (layout shift). A per-viewer hint like `apply-hint.ts` (last
-  streamed answer in `localStorage`) could fix it; few such visitors, so accepted.
+- **`/events` and `/events/[id]`: signed-in non-members see the members' skeleton first** (2026-11-24, events release
+  Tasks 6 and 8) — the fallbacks pick their shape from the session cookie (`SessionHintSwitch`): signed out → the
+  teaser skeleton (`EventsTeaserSkeleton` / `EventTeaserSkeleton`), a session → the members' one (`EventsSkeleton` /
+  `EventSkeleton`). Pending, inactive and `deleting` accounts have a session but get the teaser, so they see the wrong
+  skeleton for a moment (layout shift; on the event page ~1,150px taller than the 158px teaser). A per-viewer hint
+  like `apply-hint.ts` (last streamed answer in `localStorage`) could fix it; few such visitors, so accepted.
+- **`/events` teaser: the empty state is 294px shorter than its skeleton** (2026-11-24, events release Task 8) —
+  `EventsTeaserSkeleton` reserves the total line and three ride cards; with no upcoming ride the teaser shows one
+  paragraph (`py-10`) instead (measured Δh 294 at 390 and 1280, signed out), so the buttons below jump up. Accepted:
+  the club rides weekly, so the list is rarely empty, and a padded empty state that tall would look broken.
+  `src/components/events/events-teaser-skeleton.tsx`, `events-teaser.tsx`.
 - **`/events` member skeleton: a joined card's badge row** (2026-11-21, events organiser side) — `EventsSkeleton` is
   the `/events` fallback for sessions now (measured 2026-11-24: every block Δh 0 at 390/1280, TR/EN, rides with a
   route strip), but a joined card's badge row ("Katılıyorsun" + kind + side) may wrap to two lines at 375px, and a
   meet-up card has no route strip (96px shorter). `CardCounts` and the card skeleton's counts line have no
   `data-skeleton` marks.
-- **Event page skeleton is the organiser's view** (2026-11-22, events joining) — measured as an organiser who has
-  not joined a ride with two sign-ups (every block Δh 0 at 390/1280). Other viewers differ: joined, the panel has a
-  summary line (+28px); members see no edit/share or cancel/delete rows and a roster only while the event is
-  upcoming; ön alım members never see a roster; more participants make the roster longer (data). The status and the
-  sign-up are request-time data, so the fallback can't know them (a per-viewer hint like `apply-hint.ts` could).
-  `src/app/[locale]/events/[id]/page.tsx` (`EventSkeleton`). Deferred to the release (2b), when members see the page.
+- **Event page skeleton is an active member's view** (2026-11-22, events joining; re-measured 2026-11-24, events
+  release Task 8) — `EventSkeleton` mirrors an active member who has not joined a ride with two places, a one-line
+  description and two sign-ups (Turkish, 390/1280: every block Δh 0; signed out, `EventTeaserSkeleton` Δh 0). Other
+  viewers differ, and the fallback can't know the role or the sign-up (request-time data): organisers get the edit
+  button (same row), a safety-card button per roster row (roster −72px with two rows) and the cancel/delete row, so
+  their page is 181px taller than the skeleton (everything above the roster matches); ön alım members see no roster
+  (page 220px shorter); joined, the panel has a summary line (+28px); more participants make the roster longer (data);
+  past events hide the roster from members. A per-viewer hint like `apply-hint.ts` could fix the organiser case.
+  `src/app/[locale]/events/[id]/page.tsx` (`EventSkeleton`). Accepted: members are the common viewer.
 - **Event page skeleton mirrors a ride** (2026-11-21, events organiser event page) — a meet-up has no route strip,
   so its page is 96px shorter than the skeleton (layout shift); a ride with stops, no description or no area is
   another height. `src/app/[locale]/events/[id]/page.tsx` (`EventSkeleton`). Deferred: rides are the common case.

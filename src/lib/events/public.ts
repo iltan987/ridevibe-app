@@ -1,5 +1,6 @@
 import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
+import { unstable_rethrow } from "next/navigation";
 import { createPublicClient } from "../supabase/public";
 import { isUuid } from "./signup-rows";
 import { type EventPreview, parsePreviewRows, parseTeaserRows, type TeaserRide } from "./public-rows";
@@ -41,8 +42,10 @@ export async function getHomeRides(): Promise<{ rides: TeaserRide[]; total: numb
     const result = await getTeaserRides();
     cacheLife("hours");
     return result;
-  } catch {
-    // (getTeaserRides has logged the cause.)
+  } catch (error) {
+    unstable_rethrow(error);
+    // `getTeaserRides` logs database errors; a parse error (masked in production) shows only here. No row data.
+    console.error("home rides failed", { name: error instanceof Error ? error.name : typeof error });
     cacheLife("minutes");
     return null;
   }

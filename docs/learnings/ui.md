@@ -309,3 +309,18 @@
 - **Do:** in a skeleton, give the legend line its height plus a negative margin of (gap − legend margin)
   (`-mb-1.5 h-6` for `gap-3`, `src/components/events/event-form-skeleton.tsx`); measure, don't compute.
 - **Source:** found by measuring `/events/new` with JS off (events Task 7).
+
+### A focused button that disables or unmounts drops focus to `<body>`; a dialog's `finalFocus` must decide late (2026-11-24)
+- **Symptom:** in the join panel, pressing "−" down to 0 guests, "Katılıyorum", "Güncelle" or the leave dialog's
+  confirm with the keyboard left `document.activeElement` on `<body>` (the next Tab starts at the top of the page).
+  `finalFocus={isPending ? headingRef : true}` on the leave dialog still ended on `<body>`.
+- **Cause:** Chrome blurs a focused control once it gets `disabled` or leaves the DOM, and nothing moves focus on.
+  The dialog returns focus after its closing animation, when the action's transition had already ended: the prop then
+  said `true` (back to the trigger), and the trigger had been disabled or unmounted.
+- **Do:** after every render (`useLayoutEffect` without deps), if the last control focused inside the component is
+  now disabled or disconnected and focus is on `<body>` (or still on it), focus the closest working control, else a
+  heading with `tabIndex={-1}` (track the control with `onFocus` / `onBlur` on the container; ignore focus bubbling
+  in from portals). For a Base UI dialog pass `finalFocus` a function that checks the trigger when called
+  (`() => (trigger usable ? true : headingRef.current)`). Code: `src/components/events/join-panel.tsx`; E2E:
+  `joinFocusScenario` in `scripts/e2e/events-public-e2e.mjs`.
+- **Source:** found by testing (events release Task 8).

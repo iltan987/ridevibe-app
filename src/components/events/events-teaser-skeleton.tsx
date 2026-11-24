@@ -3,11 +3,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 /**
  * One `TeaserCard` of a ride: the date block (weekday, day, month: 16 + 36 + 16px) beside title, area line and badge
- * row (24 + 20 + 24px, `gap-1`).
+ * row (24 + 20 + 24px, `gap-1`). `name`: its `data-skeleton` mark, if any.
  */
-function TeaserCardSkeleton() {
+function TeaserCardSkeleton({ name }: { name?: string }) {
   return (
-    <div data-skeleton="events-teaser-row" className="flex gap-4 rounded-xl border bg-card p-4">
+    <div data-skeleton={name} className="flex gap-4 rounded-xl border bg-card p-4">
       <Skeleton className="h-17 w-12 shrink-0" />
       <div className="flex flex-1 flex-col gap-1">
         <div className="flex h-6 items-center">
@@ -43,12 +43,28 @@ export function EventsTeaserSkeleton() {
       </div>
       <div className="flex flex-col gap-3">
         {[0, 1, 2].map((i) => (
-          <TeaserCardSkeleton key={i} />
+          <TeaserCardSkeleton key={i} name="events-teaser-row" />
         ))}
       </div>
       <div data-skeleton="events-teaser-actions" className="flex gap-2">
         <Skeleton className="h-9 w-30" />
         <Skeleton className="h-9 w-22" />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Fallback of `/events/[id]` for signed-out visitors (`EventTeaser`): a ride's card, then "Giriş yap" and "Başvur"
+ * (default size, 32px), `gap-4` apart.
+ */
+export function EventTeaserSkeleton() {
+  return (
+    <div data-skeleton="event-teaser" className="flex flex-col gap-4">
+      <TeaserCardSkeleton />
+      <div className="flex gap-2">
+        <Skeleton className="h-8 w-22" />
+        <Skeleton className="h-8 w-16" />
       </div>
     </div>
   );
