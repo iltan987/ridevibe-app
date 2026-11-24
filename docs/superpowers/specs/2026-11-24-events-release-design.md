@@ -70,7 +70,7 @@ sees the same card and a way to apply; visitors find upcoming rides on `/events`
 3. A server-side read with the secret key: bypasses RLS entirely; one wrong select publishes the roster.
 
 **Freshness of the public data** (the home page is static today):
-1. *Chosen:* cached reads (`"use cache"` + a cache tag, a cache life short enough that a ride drops off by Istanbul midnight after its day) refreshed by the
+1. *Chosen:* cached reads (`"use cache"` + a cache tag, a cache life of about an hour, so a passed ride drops off within about an hour after Istanbul midnight) refreshed by the
    organiser actions (save, cancel, delete) through tag invalidation. The home page and `/events` teaser stay fast.
    First use of `"use cache"` in the project: needs a cookie-less Supabase client (a cache scope can't read cookies),
    and the learnings file gets the findings.
@@ -95,7 +95,7 @@ in the backlog item).
   area, side. The filter works on the day, never on `starts_at` against `now()`: the RPC is callable directly with the
   public key, and a ride vanishing at its start time would publish the time to anyone polling it **(Claude, builder
   check)**. A ride stays in the teaser until its day ends (members' "upcoming" keeps its own 12 h grace); cached
-  pages expire by Istanbul midnight at the latest. pgTAP: a ride later today and one that started an hour ago today are
+  pages drop it within about an hour after Istanbul midnight (hourly cache life). pgTAP: a ride later today and one that started an hour ago today are
   both listed; yesterday's is not. No id: the list cards don't link, and an id would let anyone call the per-event read for every ride
   **(Claude)**. Read fully with `readAll` under `LIST_CEILING` (CLAUDE.md lists); ordered by start then id.
 - **One event:** by id (uuid; malformed → no row, never an error page): title, kind, day, area (rides only),
