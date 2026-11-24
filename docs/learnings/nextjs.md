@@ -247,7 +247,8 @@ Bundled docs are the source of truth: `node_modules/next/dist/docs/` (grep them 
 - **`cacheLife("hours")`:** stale 5 min / revalidate 1 h / expire 1 day. A background refresh runs after the hour
   (stale-while-revalidate), so a ride that passed at Istanbul midnight can stay listed up to about an hour (accepted).
   Rows planted by psql never expire the tag; only `updateTag` / `revalidateTag` or the lifetime do: E2E that checks
-  cached data plants fixtures before `pnpm build && pnpm start`, or edits through the organiser UI.
+  cached data edits through the organiser UI (planting before `pnpm build` is not enough: the build may reuse a fetch
+  response up to 15 minutes old, entry "`next build` reuses fetch responses" below).
 - **Source:** `01-directives/use-cache.md`, `04-functions/cacheLife.md`, `updateTag.md`; the spike above.
 
 ### `generateMetadata` reading params + a cached read: streamed for browsers, in `<head>` only for listed bots (2026-11-24)
@@ -274,3 +275,34 @@ Bundled docs are the source of truth: `node_modules/next/dist/docs/` (grep them 
 - **Do:** one `readFile(join(process.cwd(), "src/assets/…"))` per file with a literal path, at module scope; check
   `.next/server/app/<route>/route.js.nft.json` after `pnpm build` (`src/app/[locale]/events/[id]/opengraph-image.tsx`).
 - **Source:** found by testing (build output).
+
+### A prerendered page reading a cached function: a throw after `updateTag` is a 500 for the whole page (2026-11-24)
+- **Symptom:** the home page (`/`, partial prerender) with the "next rides" section: after an organiser write
+  (`updateTag("events-public")`) with the public RPC failing (tested: execute revoked from `anon`), every load of `/`
+  answered **500** until the read worked again; no stale copy was served.
+- **Cause:** `updateTag` expires the tag at once, so the next request regenerates the page in the foreground instead
+  of serving stale; a throw from the cached reader fails that render. (The docs' "last successfully generated page
+  keeps being served" holds for the background, stale-while-revalidate regeneration after `revalidate`, not for an
+  expired entry: after `updateTag` or past `expire`.)
+- **Do:** on a page that must not go down for an optional section, read through a wrapper that is itself
+  `"use cache"`, catches, and caches the failure briefly: `cacheLife("hours")` + the result on success,
+  `cacheLife("minutes")` + `null` on failure (conditional `cacheLife`, one call per run; `cacheLife.md`, "Conditional
+  cache lifetimes"); the section renders nothing for null. Measured: 200 without the section while failing, the
+  section back about 80 s after the fix (revalidate 60 s, then the background regeneration).
+  Keep the tag in the wrapper too. Code: `getHomeRides` in `src/lib/events/public.ts`. Pages that are about the data
+  (`/events`) keep the throw (an error page beats a silently empty list).
+- **Source:** found by testing (events release, home section).
+
+### `next build` reuses fetch responses from `.next/cache/fetch-cache` for up to 15 minutes (2026-11-24)
+- **Symptom:** a build right after planting rows (and after revoking the RPC's grant) prerendered the home page with
+  the list of the build 6 minutes earlier and logged no error: the RPC was never called.
+- **Cause:** during build-time prerendering a `fetch` without cache options is cached in the fetch cache "to dedupe
+  between export workers" (`isImplicitBuildTimeCache` in `next/dist/server/lib/patch-fetch.js`); the entry
+  (supabase-js `rpc()` is a POST, cached by URL + body) is written to `.next/cache/fetch-cache` with the enclosing
+  scope's revalidate (900 s here) and the next build reads it. At request time such fetches are not cached
+  (`autoNoCache`); `"use cache"` alone governs them.
+- **Do:** for E2E that needs fresh data in a prerendered page, don't rely on "plant, then build": expire the tag
+  through the organiser UI after starting the server (`expireTeaserList` in `scripts/e2e/events-public-e2e.mjs`). In
+  production a deploy within 15 minutes of the previous build can prerender a list that old (Vercel restores
+  `.next/cache`); the next organiser write or the hourly revalidation replaces it (accepted).
+- **Source:** found by testing; `patch-fetch.js`.

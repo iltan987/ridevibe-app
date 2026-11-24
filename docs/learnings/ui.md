@@ -256,7 +256,11 @@
 - **Cause:** the tokens (`text-foreground`, `bg-background`) follow the page theme; the photo gradient doesn't.
 - **Do:** give the section `className="dark …"`: the `.dark` scope makes the tokens resolve to the night palette inside
   it, in both themes (`src/components/home/home-hero.tsx`).
-- **Source:** found by testing (home hero).
+- **Also set `text-foreground` on the section** (2026-11-24): the class re-resolves the variables, but `color` is
+  inherited as a computed value from `body` (resolved in the page theme). Anything that doesn't set its own text colour
+  (an outline button: `buttonVariants({ variant: "outline" })` sets none) stays dark-on-dark in the light theme. The
+  events E2E compares the hero button's colour with the h1's in the light theme.
+- **Source:** found by testing (home hero; "Etkinlikleri Gör", events release).
 
 ### A `font-stretch` display heading reflows at the font swap: use fixed lines (2026-11-14)
 - **Symptom:** first visit on a slow network: the home hero h1 ("Let's ride together.") wrapped to 3 lines, then

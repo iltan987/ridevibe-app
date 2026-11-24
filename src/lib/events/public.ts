@@ -18,11 +18,34 @@ export async function getTeaserRides(): Promise<{ rides: TeaserRide[]; total: nu
   cacheTag(PUBLIC_EVENTS_TAG);
   cacheLife("hours");
   const { data, error, count } = await createPublicClient().rpc("event_teasers", undefined, { count: "exact" });
-  if (error) throw new Error("event_teasers failed", { cause: error.code });
+  if (error) {
+    // Logged here: in a production build an error leaving a cached function reaches the caller masked (learnings).
+    console.error("event_teasers failed", { code: error.code });
+    throw new Error("event_teasers failed", { cause: error.code });
+  }
   const rides = parseTeaserRows(data);
   const total = count ?? rides.length;
   if (total > rides.length) console.error("event teasers over max_rows", { total });
   return { rides, total };
+}
+
+/**
+ * The home page's read of `getTeaserRides`: null instead of a throw when it fails, cached for minutes only. The home
+ * page is prerendered: a throw while it regenerates after `updateTag` (or after its 1-day expiry) would be a 500 for
+ * the whole page, so the section is left out until a regeneration a minute or so later succeeds (learnings).
+ */
+export async function getHomeRides(): Promise<{ rides: TeaserRide[]; total: number } | null> {
+  "use cache";
+  cacheTag(PUBLIC_EVENTS_TAG);
+  try {
+    const result = await getTeaserRides();
+    cacheLife("hours");
+    return result;
+  } catch {
+    // (getTeaserRides has logged the cause.)
+    cacheLife("minutes");
+    return null;
+  }
 }
 
 /**

@@ -120,7 +120,11 @@ Run against a **local** stack only (local Supabase + a server on port 3123); nev
   gets the full event page. Link preview, fetched as WhatsApp's crawler (bots get the tags in `<head>`, browsers get
   them streamed into `<body>`, `docs/learnings/nextjs.md`): `og:title` = title, `og:description` = kind · day · area
   ("İptal edildi · " first when cancelled; English on `/en`), `og:url`, `og:locale`, noindex, no start time; generic
-  for unknown ids. The list and the preview are cached reads (`"use cache"`, tag `events-public`) that planted rows
+  for unknown ids. Home `/` signed out (`/en` once): the "next rides" section with the first 3 of the 4 planted
+  rides, no meet-up/cancelled ride or private field, "Tüm etkinlikler (4 sürüş)" to `/events`; the hero's
+  "Etkinlikleri Gör" (`data-home-events`) to `/events`, cream text in the light theme too; after `admin@` cancels the
+  first ride through the UI, `/` lists the next three; with no upcoming ride, no section.
+  The list and the preview are cached reads (`"use cache"`, tag `events-public`) that planted rows
   never expire: after planting, `admin@test.local` cancels a planted ride through the UI (`updateTag`), so a running
   server is fine, no restart or rebuild. Needs `pnpm start -p 3123`, local email sign-in and those users (recipe in
   `probation-e2e.mjs`). Plants and deletes its rows (events titled `E2E Önizleme …`, fixed ids) through

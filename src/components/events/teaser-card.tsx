@@ -9,7 +9,8 @@ import { cn } from "@/lib/utils";
  * An event as non-members see it (events release spec §3): the date block (weekday, day, month), the title (struck
  * through when cancelled), the area line (rides) and badges ("İptal edildi", kind, side). Public data only: no time,
  * place, count or link (`EventCard` is the members' version). `day` is the Istanbul day ("YYYY-MM-DD").
- * `headingLevel`: "h1" when the card is the page's subject (the event page), "h2" in lists.
+ * `headingLevel`: "h1" when the card is the page's subject (the event page), "h2" in lists, "h3" in a list under its
+ * own h2 (the home section).
  */
 export function TeaserCard({
   title,
@@ -26,7 +27,7 @@ export function TeaserCard({
   area: string | null;
   side?: Enums<"istanbul_side"> | null;
   cancelled?: boolean;
-  headingLevel?: "h1" | "h2";
+  headingLevel?: "h1" | "h2" | "h3";
 }) {
   const t = useTranslations("Events");
   const tSides = useTranslations("Admin.sides");

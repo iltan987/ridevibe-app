@@ -15,7 +15,7 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   after iltan's production check below: open the gate (one migration replacing `private.can_see_events()`'s body with
   `select private.is_club_member()`; flip the pgTAP gate assertions in `events.test.sql` / `event_signups.test.sql`
   and drop their in-transaction swap; `events-join-e2e.mjs` then needs no gate swap), visitor teaser (area line
-  only), home section + "Etkinlikleri Gör" hero button (item below), the
+  only), home section + "Etkinlikleri Gör" hero button, the
   event link back in the share text (`shareText` / `ShareEventButton`, absolute URL from the origin + `getPathname`;
   members would meet a 404 before), a per-event link preview (2026-11-24, iltan: WhatsApp fetches it signed out, so a
   public read of teaser-safe fields only: title, kind, day, area line, "İptal edildi"; never time, places,
@@ -145,8 +145,6 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   it yet (the account-deletion purge only covers self-deleted accounts and their kept applications). Natural home:
   another step in `private.purge_deleted_accounts`'s nightly job (or a sibling job), with "membership ended" needing a
   date (`profiles.status_changed_at` now records when a member became `inactive`; null for changes before 2026-11-18). Also the retention of pending accounts that never apply (item below).
-- **"Etkinlikleri Gör" back in the hero** (2026-11-13, home content) — removed while Events has no content; restore the
-  secondary hero button when Events ships.
 - **Event poster upload** (2026-11-24, iltan) — organisers already post an AI-made poster per event in the WhatsApp
   channel; let them upload it as the event's cover and link-preview image, the generated preview (Events 2b) staying
   the fallback. Needs image storage (R2), so with the gallery work.

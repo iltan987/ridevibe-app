@@ -25,11 +25,18 @@
 // ride, an 80-character title with Turkish capitals, `/en`, an unknown uuid and a malformed id (the last two: the
 // generic club card). The PNGs go to OUT_DIR (`og-*.png`): look at them (layout, Turkish glyphs, two lines then an
 // ellipsis, English text on `/en`).
+// Home page (`/`, prerendered; signed out at 390px and 1280px, `/en` once): the "next rides" section lists the first 3
+// upcoming rides (4 planted: the 4th stays off) soonest first as cards that link nowhere, no meet-up or cancelled ride,
+// no place name, time, description or `/events/<id>` link, and "Tüm etkinlikler (4 sürüş)" to `/events`; the hero's
+// `data-home-events` button "Etkinlikleri Gör" goes to `/events` and keeps the hero's cream text in the light theme
+// too. Invalidation: admin@ cancels the first listed ride through the event page's cancel dialog, then a signed-out
+// load of `/` lists the next three and "Tüm etkinlikler" without a count; with no upcoming ride the section is gone.
 // Cached reads: the list (`getTeaserRides`) and the preview per event id (`getEventPreview`) are `"use cache"` reads
-// tagged `events-public`, and rows planted by psql never expire that cache. So the script plants its rows (fixed ids,
-// same content every run) and then expires the tag through the organiser UI: admin@ cancels a planted ride (FLUSH,
-// set back to scheduled by psql first), and `cancelEvent` calls `updateTag`. It does that again after deleting the
-// listed rides for the empty state. A running server is fine: no restart or rebuild needed.
+// tagged `events-public` (the home page's prerender carries the tag too), and rows planted by psql never expire that
+// cache. So the script plants its rows (fixed ids, same content every run) and then expires the tag through the
+// organiser UI: admin@ cancels a planted ride (FLUSH, set back to scheduled by psql first), and `cancelEvent` calls
+// `updateTag`. It does that again after deleting the listed rides for the empty state. A running server is fine: no
+// restart or rebuild needed.
 // Fixture rows (events titled "E2E Önizleme …" with fixed ids) are planted and deleted through `docker exec psql`
 // (DB_CONTAINER, local only) before and after the run. Env: PUPPETEER_DIR (required), OUT_DIR (screenshots), BASE_URL.
 import { execFileSync } from "node:child_process";
@@ -80,8 +87,15 @@ const LONG = {
 const EARLY = { id: "00000000-0000-4000-8000-00000000e405", title: "E2E Önizleme Riva Sürüşü", area: "Beykoz → Riva" };
 const PAST = { id: "00000000-0000-4000-8000-00000000e406", title: "E2E Önizleme Geçmiş Sürüş" };
 const FLUSH = { id: "00000000-0000-4000-8000-00000000e407", title: "E2E Önizleme Önbellek Sürüşü" };
-const LISTED = [EARLY, RIDE, LONG];
-const ALL_IDS = [RIDE, MEETUP, CANCELLED, LONG, EARLY, PAST, FLUSH].map((e) => `'${e.id}'`).join(", ");
+// The 4th upcoming ride: the home section shows only 3.
+const LATE = {
+  id: "00000000-0000-4000-8000-00000000e408",
+  title: "E2E Önizleme Kilyos Sürüşü",
+  area: "Sarıyer → Kilyos",
+};
+const LISTED = [EARLY, RIDE, LONG, LATE];
+const EVENTS = [RIDE, MEETUP, CANCELLED, LONG, EARLY, PAST, FLUSH, LATE];
+const ALL_IDS = EVENTS.map((e) => `'${e.id}'`).join(", ");
 const UNKNOWN = "00000000-0000-4000-8000-00000000e4ff";
 // Never in a public page: place names, the start time, the description.
 const SECRET = { place: "E2E Gizli", time: "08:30", description: "E2E gizli açıklama" };
@@ -128,7 +142,15 @@ function plant() {
   sql(
     `insert into events (id, kind, title, side, area, starts_at) values ('${FLUSH.id}', 'ride', '${FLUSH.title}', 'european', 'Şişli → Kilyos', ${at(30, "09:00")})`,
   );
+  sql(
+    `insert into events (id, kind, title, side, area, starts_at) values ('${LATE.id}', 'ride', '${LATE.title}', 'european', '${LATE.area}', ${at(12, "09:00")})`,
+  );
 }
+/** Upcoming scheduled rides in the DB that this script did not plant (they would change the expected lists). */
+const otherUpcomingRides = () =>
+  sql(
+    `select count(*) from events where kind = 'ride' and status = 'scheduled' and (starts_at at time zone 'Europe/Istanbul')::date >= (now() at time zone 'Europe/Istanbul')::date and id not in (${ALL_IDS})`,
+  );
 /** The Istanbul day of a planted event, as the page formats it (weekday long, day, month long). */
 function dayText(id, locale) {
   const day = sql(`select (starts_at at time zone 'Europe/Istanbul')::date from events where id = '${id}'`);
@@ -326,29 +348,38 @@ async function click(page, selector, text) {
   return true;
 }
 
-/**
- * Expires the cached public reads (tag `events-public`) the way production does: the organiser cancels FLUSH through
- * the UI (`cancelEvent` calls `updateTag`). FLUSH is set back to scheduled by psql first, so this works every time.
- */
-async function expireTeaserList() {
-  sql(`update events set status = 'scheduled', cancelled_at = null, cancel_reason = null where id = '${FLUSH.id}'`);
+/** Sets a planted event back to scheduled (psql: does not expire the cached reads). */
+const reschedule = (event) =>
+  sql(`update events set status = 'scheduled', cancelled_at = null, cancel_reason = null where id = '${event.id}'`);
+
+/** The organiser (admin@) cancels a scheduled event through its page's cancel dialog (`cancelEvent` → `updateTag`). */
+async function cancelThroughUi(event) {
   const ctx = await browser.createBrowserContext();
   const page = await newPage(ctx, { width: 1280, height: 900 });
   try {
     await signIn(page, "admin@test.local", BASE);
-    await go(page, `/events/${FLUSH.id}`);
+    await go(page, `/events/${event.id}`);
     if (!(await click(page, "button", "Etkinliği iptal et"))) throw new Error('organiser: no "Etkinliği iptal et"');
     if (!(await until(page, () => !!document.querySelector("[role=alertdialog] textarea"))))
       throw new Error("organiser: no cancel dialog");
     await click(page, "[role=alertdialog] button", "^\\s*İptal et\\s*$");
-    for (let i = 0; i < 100 && sql(`select status from events where id = '${FLUSH.id}'`) !== "cancelled"; i++)
+    for (let i = 0; i < 100 && sql(`select status from events where id = '${event.id}'`) !== "cancelled"; i++)
       await sleep(100);
-    if (sql(`select status from events where id = '${FLUSH.id}'`) !== "cancelled")
-      throw new Error("organiser: FLUSH was not cancelled");
+    if (sql(`select status from events where id = '${event.id}'`) !== "cancelled")
+      throw new Error(`organiser: "${event.title}" was not cancelled`);
     await sleep(300); // the action's response (and its updateTag) has landed
   } finally {
     await ctx.close();
   }
+}
+
+/**
+ * Expires the cached public reads (tag `events-public`) the way production does: the organiser cancels FLUSH through
+ * the UI. FLUSH is set back to scheduled by psql first, so this works every time.
+ */
+async function expireTeaserList() {
+  reschedule(FLUSH);
+  await cancelThroughUi(FLUSH);
 }
 
 /** The visible `/events` teaser: heading, intro, total line, card titles, links. Null when not shown. */
@@ -370,8 +401,7 @@ const eventsTeaser = (page) =>
 /** Links to an event page (`/events/<uuid>`) anywhere in the HTML (markup and RSC payload). */
 const eventLinks = (html) => html.match(/\/events\/[0-9a-f]{8}-[0-9a-f]{4}-/gi) ?? [];
 /** The planted titles among the listed ones (the DB may hold other rides). */
-const PLANTED = (titles) =>
-  titles.filter((t) => [RIDE, MEETUP, CANCELLED, LONG, EARLY, PAST, FLUSH].some((e) => e.title === t));
+const PLANTED = (titles) => titles.filter((t) => EVENTS.some((e) => e.title === t));
 
 async function listSignedOutScenario(width, height) {
   const label = `${width}px signed out /events`;
@@ -491,10 +521,161 @@ async function listMemberControl() {
   }
 }
 
+/** The visible home "next rides" section: heading, card titles, links, text. Null when not shown. */
+const homeRides = (page) =>
+  page.evaluate(() => {
+    const visible = (e) => e.getBoundingClientRect().width > 0;
+    const root = [...document.querySelectorAll("[data-home-next-rides]")].find(visible);
+    if (!root) return null;
+    return {
+      h2: [...root.querySelectorAll("h2")].map((h) => h.textContent.trim()),
+      titles: [...root.querySelectorAll("article h3")].map((h) => h.textContent.trim()),
+      text: root.innerText,
+      links: [...root.querySelectorAll("a")].filter(visible).map((a) => [a.textContent.trim(), a.getAttribute("href")]),
+      cardLinks: root.querySelectorAll("article a").length,
+    };
+  });
+/** The hero's visible "Etkinlikleri Gör" button: text, href, and its text colour next to the hero heading's. */
+const heroEvents = (page) =>
+  page.evaluate(() => {
+    const visible = (e) => e.getBoundingClientRect().width > 0;
+    const hero = [...document.querySelectorAll("main [data-home-hero]")].find(visible);
+    const a = hero && [...hero.querySelectorAll("a[data-home-events]")].find(visible);
+    if (!a) return null;
+    return {
+      text: a.textContent.trim(),
+      href: a.getAttribute("href"),
+      color: getComputedStyle(a).color,
+      headingColor: getComputedStyle(hero.querySelector("h1")).color,
+    };
+  });
+
+async function homeScenario(width, height) {
+  const label = `${width}px signed out /`;
+  const exact = otherUpcomingRides() === "0";
+  const ctx = await browser.createBrowserContext();
+  const page = await newPage(ctx, { width, height });
+  try {
+    await go(page, "/");
+    const home = await homeRides(page);
+    check(`${label}: next rides section shown`, home !== null);
+    if (home) {
+      check(`${label}: one section heading`, home.h2.length === 1 && home.h2[0].length > 0, JSON.stringify(home.h2));
+      check(`${label}: at most 3 rides`, home.titles.length === 3, JSON.stringify(home.titles));
+      if (exact)
+        check(
+          `${label}: the first 3 planted rides, soonest first`,
+          JSON.stringify(home.titles) === JSON.stringify(LISTED.slice(0, 3).map((e) => e.title)),
+          JSON.stringify(home.titles),
+        );
+      else console.log("SKIP exact home list (other upcoming rides in the DB)");
+      check(`${label}: area line`, home.text.includes(EARLY.area), home.text);
+      check(`${label}: cards link nowhere`, home.cardLinks === 0);
+      const all = home.links.find(([, href]) => href === "/events");
+      check(
+        `${label}: "Tüm etkinlikler" with the total, to /events`,
+        exact ? all?.[0] === "Tüm etkinlikler (4 sürüş)" : /^Tüm etkinlikler/.test(all?.[0] ?? ""),
+        JSON.stringify(home.links),
+      );
+      check(`${label}: no other link in the section`, home.links.length === 1, JSON.stringify(home.links));
+    }
+    const html = await page.content();
+    for (const [what, title] of [
+      ["meet-up", MEETUP.title],
+      ["cancelled ride", CANCELLED.title],
+      ["past ride", PAST.title],
+      ["cancelled FLUSH ride", FLUSH.title],
+    ])
+      check(`${label}: HTML holds no ${what}`, !html.includes(title));
+    if (exact) check(`${label}: HTML holds no 4th ride`, !html.includes(LATE.title));
+    for (const [what, value] of Object.entries(SECRET)) check(`${label}: HTML holds no ${what}`, !html.includes(value));
+    check(`${label}: HTML holds no /events/<id> link`, eventLinks(html).length === 0, eventLinks(html).join(" "));
+
+    const hero = await heroEvents(page);
+    check(
+      `${label}: hero "Etkinlikleri Gör" to /events`,
+      hero?.text === "Etkinlikleri Gör" && hero.href === "/events",
+      JSON.stringify(hero),
+    );
+    check(
+      `${label}: hero button text is the hero's cream (dark theme)`,
+      hero !== null && hero.color === hero.headingColor,
+      JSON.stringify(hero),
+    );
+    await page.screenshot({ path: path.join(DIR, `home-hero-${width}.png`) });
+    const section = await page.$("[data-home-next-rides]");
+    if (section) await section.screenshot({ path: path.join(DIR, `home-next-rides-${width}.png`) });
+
+    // Light theme: the hero stays in the night palette (`dark` class), so the button keeps the cream text.
+    await page.evaluate(() => localStorage.setItem("theme", "light"));
+    await go(page, "/");
+    const light = await heroEvents(page);
+    const isLight = await page.evaluate(() => !document.documentElement.classList.contains("dark"));
+    check(
+      `${label}: light theme: hero button text stays cream`,
+      isLight && light !== null && light.color === light.headingColor,
+      JSON.stringify(light),
+    );
+    await page.screenshot({ path: path.join(DIR, `home-hero-light-${width}.png`) });
+    if (section) {
+      const lightSection = await page.$("[data-home-next-rides]");
+      await lightSection?.screenshot({ path: path.join(DIR, `home-next-rides-light-${width}.png`) });
+    }
+
+    if (width === 1280) {
+      await page.evaluate(() => localStorage.removeItem("theme"));
+      await go(page, "/en");
+      const en = await homeRides(page);
+      const enAll = en?.links.find(([, href]) => href === "/en/events");
+      check(
+        '/en signed out: "All events" with the total, to /en/events',
+        exact ? enAll?.[0] === "All events (4 rides)" : /^All events/.test(enAll?.[0] ?? ""),
+        JSON.stringify(en?.links),
+      );
+      const enHero = await heroEvents(page);
+      check(
+        '/en signed out: hero "See events" to /en/events',
+        enHero?.text === "See events" && enHero.href === "/en/events",
+        JSON.stringify(enHero),
+      );
+    }
+  } finally {
+    await ctx.close();
+  }
+}
+
+/** The organiser cancels the first listed ride through the UI; a signed-out load of `/` then drops it. */
+async function homeInvalidationScenario() {
+  const label = "390px signed out /, after the organiser cancels the first ride";
+  if (otherUpcomingRides() !== "0") {
+    console.log("SKIP home invalidation (other upcoming rides in the DB)");
+    return;
+  }
+  await cancelThroughUi(EARLY);
+  const ctx = await browser.createBrowserContext();
+  const page = await newPage(ctx);
+  try {
+    await go(page, "/");
+    const home = await homeRides(page);
+    check(
+      `${label}: the next three rides`,
+      JSON.stringify(home?.titles) === JSON.stringify([RIDE, LONG, LATE].map((e) => e.title)),
+      JSON.stringify(home?.titles),
+    );
+    check(`${label}: HTML holds no cancelled ride`, !(await page.content()).includes(EARLY.title));
+    check(
+      `${label}: "Tüm etkinlikler" without a count`,
+      home?.links.some(([text, href]) => text === "Tüm etkinlikler" && href === "/events") ?? false,
+      JSON.stringify(home?.links),
+    );
+  } finally {
+    await ctx.close();
+    reschedule(EARLY);
+  }
+}
+
 async function listEmptyScenario() {
-  const others = sql(
-    `select count(*) from events where kind = 'ride' and status = 'scheduled' and (starts_at at time zone 'Europe/Istanbul')::date >= (now() at time zone 'Europe/Istanbul')::date and id not in (${ALL_IDS})`,
-  );
+  const others = otherUpcomingRides();
   if (others !== "0") {
     console.log(`SKIP /events empty state (${others} other upcoming rides in the DB)`);
     return;
@@ -517,6 +698,9 @@ async function listEmptyScenario() {
       JSON.stringify(list.links),
     );
     await page.screenshot({ path: path.join(DIR, "events-public-list-empty-390.png"), fullPage: true });
+    await go(page, "/");
+    check("390px signed out /, no rides: no next rides section", (await homeRides(page)) === null);
+    check('390px signed out /, no rides: hero "Etkinlikleri Gör" stays', (await heroEvents(page))?.href === "/events");
   } finally {
     await ctx.close();
   }
@@ -681,8 +865,16 @@ try {
   await pendingScenario("pending-noapp@test.local", 390, 844);
   if (hasPendingApp) await pendingScenario("pending-app@test.local", 390, 844);
   else console.log("SKIP pending-app@test.local (no linked application with status new/contacted)");
+  for (const [width, height] of [
+    [390, 844],
+    [1280, 900],
+  ]) {
+    await homeScenario(width, height);
+  }
   await metadataChecks();
   await imageChecks();
+  // After the rest: it cancels EARLY (set back to scheduled by psql, which the cached reads don't see).
+  await homeInvalidationScenario();
   // Last: it deletes the listed rides.
   await listEmptyScenario();
 } catch (e) {

@@ -30,6 +30,7 @@
     "title": "<line>Birlikte</line> <line>sürelim.</line>",
     "subtitle": "Hafta sonu sürüşleri, uzun turlar ve yeni dostluklar. Asya'dan Avrupa'ya, İstanbul'un her yakasından motorcularla tanış.",
     "apply": "Kulübe Başvur",
+    "seeEvents": "Etkinlikleri Gör",
     "heroAlt": "Deniz kenarındaki bir yolda mola veren kulüp üyeleri",
     "rides": {
       "title": "Hafta sonu yolda, hafta içi bir arada",
@@ -44,6 +45,12 @@
       "district3": "Kadıköy",
       "district4": "Beykoz",
       "alt": "Gece Üsküdar sahilinde kulüp üyeleri, arkada Kız Kulesi"
+    },
+    "nextRides": {
+      "title": "Sıradaki sürüşler",
+      "body": "Saat ve buluşma noktası üyelerimize açık.",
+      "all": "Tüm etkinlikler",
+      "allWithTotal": "Tüm etkinlikler ({count} sürüş)"
     },
     "who": {
       "title": "Her yaştan, her motordan",

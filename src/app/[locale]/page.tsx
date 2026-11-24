@@ -5,6 +5,7 @@ import { HomeClosing } from "@/components/home/home-closing";
 import { HomeFaq } from "@/components/home/home-faq";
 import { HomeHero } from "@/components/home/home-hero";
 import { HomeJoin } from "@/components/home/home-join";
+import { HomeNextRides } from "@/components/home/home-next-rides";
 import { HomeRides } from "@/components/home/home-rides";
 import { HomeWho } from "@/components/home/home-who";
 import { LicensePlate } from "@/components/home/license-plate";
@@ -34,6 +35,7 @@ export default function HomePage() {
       <LicensePlate />
       <Route>
         <HomeRides />
+        <HomeNextRides />
         <HomeWho />
         <HomeJoin />
         <HomeFaq />
