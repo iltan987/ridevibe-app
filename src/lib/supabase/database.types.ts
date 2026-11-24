@@ -392,9 +392,19 @@ isOneToOne: false
               "bikes": number,"event_id": string,"guests": number,"members": number,"people": number,"probation": number
             }[]
                            },
+"event_preview":
+{ Args: { "p_id": string }; Returns: {
+              "area": string,"cancelled": boolean,"day": string,"kind": Database["public"]['Enums']["event_kind"],"title": string
+            }[]
+                           },
 "event_roster":
 { Args: { "p_event": string }; Returns: {
               "avatar_url": string,"full_name": string,"guests": number,"has_emergency_contact": boolean,"probation": boolean,"profile_id": string,"role": Database["public"]['Enums']["event_role"]
+            }[]
+                           },
+"event_teasers":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "area": string,"day": string,"side": Database["public"]['Enums']["istanbul_side"],"title": string
             }[]
                            },
 "join_event":

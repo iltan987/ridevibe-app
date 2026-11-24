@@ -1,5 +1,5 @@
 -- Run with: pnpm db:test
--- Events and their places (events.manage): grants, the release gate (only organisers read events until the release,
+-- Events and their places (events.manage): grants, the release gate (members and ön alım members read events,
 -- `private.can_see_events`), save/cancel/delete RPCs with their input rules, and what happens when an organiser's account goes.
 begin;
 create extension if not exists pgtap with schema extensions;
@@ -95,7 +95,7 @@ select is((select count(*)::int from pg_proc where proname = 'cancel_event' and 
   'exactly one cancel_event');
 
 -- ---------------------------------------------------------------------------
--- Release gate (RLS through private.can_see_events): only events.manage holders read events and places
+-- Release gate (RLS through private.can_see_events): club members (active, ön alım) read events and places
 -- ---------------------------------------------------------------------------
 select pg_temp.login('00000000-0000-0000-0000-000000000742');
 select is((select count(*)::int from public.events where id in ('00000000-0000-0000-0000-000000000751', '00000000-0000-0000-0000-000000000752')),
@@ -121,18 +121,18 @@ reset role;
 
 select pg_temp.login('00000000-0000-0000-0000-000000000743');
 select is((select count(*)::int from public.events where id in ('00000000-0000-0000-0000-000000000751', '00000000-0000-0000-0000-000000000752')),
-  0, 'member sees no events before release');
-select ok(not public.can_see_events(), 'member does not pass the gate before release');
+  2, 'member sees both fixture events');
+select ok(public.can_see_events(), 'member passes the gate');
 select is((select count(*)::int from public.event_places where event_id in ('00000000-0000-0000-0000-000000000751', '00000000-0000-0000-0000-000000000752')),
-  0, 'member sees no places before release');
+  4, 'member sees the places');
 reset role;
 
 select pg_temp.login('00000000-0000-0000-0000-000000000744');
 select is((select count(*)::int from public.events where id in ('00000000-0000-0000-0000-000000000751', '00000000-0000-0000-0000-000000000752')),
-  0, 'probation member holding the role sees no events (rights are active-only)');
-select ok(not public.can_see_events(), 'probation member holding the role does not pass the gate');
+  2, 'ön alım member sees both fixture events');
+select ok(public.can_see_events(), 'ön alım member passes the gate');
 select is((select count(*)::int from public.event_places where event_id in ('00000000-0000-0000-0000-000000000751', '00000000-0000-0000-0000-000000000752')),
-  0, 'probation member holding the role sees no places');
+  4, 'ön alım member sees the places');
 reset role;
 
 select pg_temp.login('00000000-0000-0000-0000-000000000745');

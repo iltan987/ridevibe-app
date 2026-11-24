@@ -11,7 +11,7 @@
 -- RELEASE GATE (spec §9): who sees events at all is decided in one place,
 -- private.can_see_events() below. The read policies on events, places and
 -- sign-ups and the join/leave RPCs (42_event_signups.sql) ask it, and the app
--- asks its public wrapper, so the release replaces that one function body.
+-- asks its public wrapper. The gate is open to club members (active and ön alım).
 -- The organiser RPCs here check events.manage instead.
 -- ---------------------------------------------------------------------------
 
@@ -107,9 +107,9 @@ alter table public.events enable row level security;
 alter table public.event_places enable row level security;
 alter table public.event_changes enable row level security;
 
--- The release gate. In this branch only organisers (events.manage) pass; the release (branch 2b) changes the body to
--- `select private.is_club_member()` (members and ön alım members, spec §3). Granted to authenticated because the
--- policies call it; the app reads it through public.can_see_events().
+-- RELEASE GATE. Open to club members: active and ön alım (probation) members pass; pending, inactive and deleting
+-- accounts and signed-out visitors don't. One function so every policy, RPC and page asks the same question. Granted
+-- to authenticated because the policies call it; the app reads it through public.can_see_events().
 create or replace function private.can_see_events()
 returns boolean
 language sql
@@ -117,7 +117,7 @@ stable
 security definer
 set search_path = ''
 as $$
-  select private.has_permission('events.manage')
+  select private.is_club_member()
 $$;
 
 revoke all on function private.can_see_events() from public, anon;
@@ -135,6 +135,44 @@ $$;
 
 revoke all on function public.can_see_events() from public, anon;
 grant execute on function public.can_see_events() to authenticated;
+
+-- Public teaser list for signed-out visitors: scheduled rides from today (Istanbul day) on. Anti-goal: no time, no
+-- place names or coordinates, no description, no counts, no ids, no names of people: only the day, title, area line
+-- and side. The day is computed here so no client ever sees a timestamp.
+create or replace function public.event_teasers()
+returns table (day date, title text, area text, side public.istanbul_side)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select (e.starts_at at time zone 'Europe/Istanbul')::date, e.title, e.area, e.side
+  from public.events e
+  where e.kind = 'ride'
+    and e.status = 'scheduled'
+    and (e.starts_at at time zone 'Europe/Istanbul')::date >= (now() at time zone 'Europe/Istanbul')::date
+  order by e.starts_at, e.id
+$$;
+
+revoke all on function public.event_teasers() from public;
+grant execute on function public.event_teasers() to anon, authenticated;
+
+-- Public preview of one event (link previews, the signed-out event card): any kind, any date, cancelled included; zero
+-- rows when the id is unknown. Anti-goal: same as event_teasers (no time, places, description, counts or names).
+create or replace function public.event_preview(p_id uuid)
+returns table (kind public.event_kind, title text, day date, area text, cancelled boolean)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select e.kind, e.title, (e.starts_at at time zone 'Europe/Istanbul')::date, e.area, e.status = 'cancelled'
+  from public.events e
+  where e.id = p_id
+$$;
+
+revoke all on function public.event_preview(uuid) from public;
+grant execute on function public.event_preview(uuid) to anon, authenticated;
 
 -- Upcoming = started at most 12 hours ago, or not yet ended: the rule the app's lists use (listUpcomingEvents). Past
 -- events keep their counts but show members no names (event_roster).

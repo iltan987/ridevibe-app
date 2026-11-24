@@ -1,14 +1,13 @@
 -- Run with: pnpm db:test
--- Event sign-ups (docs/superpowers/plans/2026-11-21-events-joining.md, Global Constraints): the release gate in one
+-- Event sign-ups (docs/superpowers/plans/2026-11-21-events-joining.md, Global Constraints): the gate in one
 -- function (private.can_see_events), join_event / leave_event with their rules and refusal hints, "don't make it
 -- worse" after an organiser tightens a rule, delete_event only without counted sign-ups, cascade when an account goes;
 -- counts, rosters per viewer, authors and the change log save_event writes.
--- Two sections: GATE CLOSED (this branch: only events.manage holders) and GATE OPEN (the release body, swapped in
--- inside this transaction).
+-- The gate is open to club members (active, ön alım): one gate section, then the rules and read RPCs.
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(155);
+select plan(133);
 
 -- Fixtures: 0761 organiser (active, role 0769 holding only events.manage, 250 cc bike), 0762 second organiser (same
 -- role, a bike without cc), 0763 active member without a role, 0764 ön alım member, 0765 organiser in deleting, 0766
@@ -193,30 +192,11 @@ select throws_ok($$ insert into public.event_signups (event_id, profile_id, role
   '23514', null, 'the table refuses 4 guests');
 
 -- ===========================================================================
--- GATE CLOSED (this branch): only events.manage holders see events, read their sign-ups and join/leave.
+-- Gate: club members (active, ön alım) pass; deleting, inactive and signed-out callers don't. The members' own
+-- passes are checked below, after 0771 has room again.
 -- ===========================================================================
 select pg_temp.login('00000000-0000-0000-0000-000000000761');
 select ok(public.can_see_events(), 'organiser passes the gate');
-reset role;
-
-select pg_temp.login('00000000-0000-0000-0000-000000000763');
-select ok(not public.can_see_events(), 'member without the permission does not pass the gate');
-select throws_ok($$ select public.join_event('00000000-0000-0000-0000-000000000771', 'passenger') $$, '42501', null,
-  'member refused before the release (join)');
-select throws_ok($$ select public.leave_event('00000000-0000-0000-0000-000000000772') $$, '42501', null,
-  'member refused before the release (leave)');
-select is((select count(*)::int from public.event_signups where profile_id = '00000000-0000-0000-0000-000000000763'), 0,
-  'member reads not even their own sign-up before the release');
-reset role;
-
-select pg_temp.login('00000000-0000-0000-0000-000000000764');
-select ok(not public.can_see_events(), 'ön alım member does not pass the gate');
-select throws_ok($$ select public.join_event('00000000-0000-0000-0000-000000000771', 'passenger') $$, '42501', null,
-  'ön alım member refused before the release (join)');
-select throws_ok($$ select public.leave_event('00000000-0000-0000-0000-000000000772') $$, '42501', null,
-  'ön alım member refused before the release (leave)');
-select is((select count(*)::int from public.event_signups where profile_id = '00000000-0000-0000-0000-000000000764'), 0,
-  'ön alım member reads not even their own sign-ups before the release');
 reset role;
 
 select pg_temp.login('00000000-0000-0000-0000-000000000765');
@@ -402,7 +382,7 @@ select is((select count(*)::int from public.event_signups where profile_id = '00
   'deleting the account removes its sign-ups (cascade)');
 
 -- ---------------------------------------------------------------------------
--- Read RPCs before the release: organisers see the full roster; everyone else is refused
+-- Read RPCs: organisers see the full roster
 -- ---------------------------------------------------------------------------
 select pg_temp.login('00000000-0000-0000-0000-000000000761');
 select is((select array_agg(row(r.profile_id, r.full_name, r.role, r.guests, r.probation, r.has_emergency_contact)::text
@@ -423,45 +403,8 @@ select is((select array_agg(row(c.*)::text order by c.event_id)
   'counts (people, bikes, members, guests, ön alım): zeros included, unknown ids left out, deleting / inactive not counted');
 reset role;
 
-select pg_temp.login('00000000-0000-0000-0000-000000000763');
-select throws_ok($$ select * from public.event_counts(array['00000000-0000-0000-0000-000000000780']::uuid[]) $$, '42501', null,
-  'member refused before the release (counts)');
-select throws_ok($$ select * from public.event_roster('00000000-0000-0000-0000-000000000780') $$, '42501', null,
-  'member refused before the release (roster)');
-select throws_ok($$ select * from public.event_authors('00000000-0000-0000-0000-000000000780') $$, '42501', null,
-  'member refused before the release (authors)');
-select throws_ok($$ select * from public.event_change_log('00000000-0000-0000-0000-000000000780') $$, '42501', null,
-  'member refused before the release (change log)');
-reset role;
-
-select pg_temp.login('00000000-0000-0000-0000-000000000764');
-select throws_ok($$ select * from public.event_counts(array['00000000-0000-0000-0000-000000000780']::uuid[]) $$, '42501', null,
-  'ön alım member refused before the release (counts)');
-select throws_ok($$ select * from public.event_roster('00000000-0000-0000-0000-000000000780') $$, '42501', null,
-  'ön alım member refused before the release (roster)');
-select throws_ok($$ select * from public.event_authors('00000000-0000-0000-0000-000000000780') $$, '42501', null,
-  'ön alım member refused before the release (authors)');
-select throws_ok($$ select * from public.event_change_log('00000000-0000-0000-0000-000000000780') $$, '42501', null,
-  'ön alım member refused before the release (change log)');
-reset role;
-
 -- ===========================================================================
--- GATE SWAP: open the gate as the release will (members and ön alım members). Safe on every database the suite runs
--- on, production included: this runs inside the test transaction and is rolled back at the end; until then no other
--- session sees the uncommitted definition (MVCC on pg_proc), so the live gate never opens.
--- ===========================================================================
-create or replace function private.can_see_events()
-returns boolean
-language sql
-stable
-security definer
-set search_path = ''
-as $$
-  select private.is_club_member()
-$$;
-
--- ===========================================================================
--- GATE OPEN (release body)
+-- Members' own passes
 -- ===========================================================================
 -- Room on 0771 again (it holds 0761 passenger, 0767 passenger after the account above went)
 update public.events set limit_people = 10, limit_bikes = 10 where id = '00000000-0000-0000-0000-000000000771';
@@ -495,27 +438,8 @@ select is((select hint from pg_temp.last_error($$ select public.join_event('0000
   where sqlstate = 'P0001'), 'full_members_only', '… but not join again');
 reset role;
 
-select pg_temp.login('00000000-0000-0000-0000-000000000765');
-select ok(not public.can_see_events(), 'deleting member does not pass the open gate');
-select throws_ok($$ select public.join_event('00000000-0000-0000-0000-000000000771', 'passenger') $$, '42501', null,
-  'deleting member cannot join after the release');
-reset role;
-
-select pg_temp.login('00000000-0000-0000-0000-000000000766');
-select ok(not public.can_see_events(), 'inactive member does not pass the open gate');
-select throws_ok($$ select public.join_event('00000000-0000-0000-0000-000000000771', 'passenger') $$, '42501', null,
-  'inactive member cannot join after the release');
-select is((select count(*)::int from public.event_signups where profile_id = '00000000-0000-0000-0000-000000000766'), 0,
-  'inactive member reads no sign-ups');
-reset role;
-
-set local role anon;
-select throws_ok($$ select public.join_event('00000000-0000-0000-0000-000000000771', 'passenger') $$, '42501', null,
-  'anon still cannot join after the release');
-reset role;
-
 -- ---------------------------------------------------------------------------
--- Rosters and counts per viewer after the release (0780: organiser 0761 rider + 1, member 0763, ön alım 0764 + 2,
+-- Rosters and counts per viewer (0780: organiser 0761 rider + 1, member 0763, ön alım 0764 + 2,
 -- deleting 0765 and inactive 0766 with guests)
 -- ---------------------------------------------------------------------------
 select pg_temp.login('00000000-0000-0000-0000-000000000763');
