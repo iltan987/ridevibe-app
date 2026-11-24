@@ -1,10 +1,11 @@
 "use server";
 
-import { refresh } from "next/cache";
+import { refresh, updateTag } from "next/cache";
 import { z } from "zod";
 import { can } from "@/lib/auth/permissions";
 import { getCurrentUser } from "@/lib/auth/user";
 import { createClient } from "@/lib/supabase/server";
+import { PUBLIC_EVENTS_TAG } from "./public";
 import { type JoinActionResult, joinResult, joinSchema, reasonFromHint } from "./join";
 import { resolvePlace, type ResolvePlaceResult } from "./resolve-place";
 import { eventInputSchema, toRpcArgs } from "./schema";
@@ -31,6 +32,12 @@ function fail(code: string | undefined, where: string): { status: "invalid" | "f
   return { status: "error" };
 }
 
+/** A refusal that says the page the caller sees is stale (lost race, event gone): re-render it with fresh data. */
+function refreshIfStale<T extends { status: string }>(result: T): T {
+  if (result.status === "refused" || result.status === "notFound" || result.status === "hasSignups") refresh();
+  return result;
+}
+
 /**
  * Reads a pasted place, following a short map link on the server. Organisers only: it makes this server request
  * a map host. Never logs the text (it can hold the sharer's position).
@@ -50,7 +57,8 @@ export async function saveEvent(id: string | null, input: unknown): Promise<Save
   const args = toRpcArgs(parsed.data);
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("save_event", id === null ? args : { ...args, p_id: id });
-  if (error) return fail(error.code, "saveEvent");
+  if (error) return refreshIfStale(fail(error.code, "saveEvent"));
+  updateTag(PUBLIC_EVENTS_TAG);
   refresh();
   return { status: "ok", id: data };
 }
@@ -63,7 +71,8 @@ export async function cancelEvent(id: string, reason: string): Promise<EventActi
     p_id: input.data.id,
     ...(input.data.reason === "" ? {} : { p_reason: input.data.reason }),
   });
-  if (error) return fail(error.code, "cancelEvent");
+  if (error) return refreshIfStale(fail(error.code, "cancelEvent"));
+  updateTag(PUBLIC_EVENTS_TAG);
   refresh();
   return { status: "ok" };
 }
@@ -74,9 +83,11 @@ export async function deleteEvent(id: string): Promise<DeleteEventResult> {
   const supabase = await createClient();
   const { error } = await supabase.rpc("delete_event", { p_id: id });
   if (error) {
-    if (error.code === "P0001" && reasonFromHint(error.hint) === "hasSignups") return { status: "hasSignups" };
-    return fail(error.code, "deleteEvent");
+    if (error.code === "P0001" && reasonFromHint(error.hint) === "hasSignups")
+      return refreshIfStale({ status: "hasSignups" as const });
+    return refreshIfStale(fail(error.code, "deleteEvent"));
   }
+  updateTag(PUBLIC_EVENTS_TAG);
   refresh();
   return { status: "ok" };
 }
@@ -95,7 +106,7 @@ export async function joinEvent(id: string, input: unknown): Promise<JoinActionR
   const result = joinResult(error);
   if (result.status === "error") console.error("joinEvent failed", { code: error?.code });
   if (result.status === "ok") refresh();
-  return result;
+  return refreshIfStale(result);
 }
 
 export async function leaveEvent(id: string): Promise<JoinActionResult> {
@@ -105,5 +116,5 @@ export async function leaveEvent(id: string): Promise<JoinActionResult> {
   const result = joinResult(error);
   if (result.status === "error") console.error("leaveEvent failed", { code: error?.code });
   if (result.status === "ok") refresh();
-  return result;
+  return refreshIfStale(result);
 }

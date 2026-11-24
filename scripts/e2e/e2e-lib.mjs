@@ -29,9 +29,13 @@ export async function launch({ scrollbars = false, args = [] } = {}) {
   });
 }
 
-/** New page at 390×844 (or given viewport), Turkish. */
+/** New page at 390×844 (or given viewport), Turkish, without the browser's HTTP cache. Locally `next start` sends
+ *  prerendered pages with `s-maxage=…, stale-while-revalidate=…` (Vercel strips both; browsers there get `max-age=0, must-revalidate`, i.e. conditional requests):
+ *  Chrome then serves them from its cache and revalidates in the background, and those requests never report
+ *  finished, so `networkidle0` would hang (docs/learnings/testing.md). */
 export async function newPage(browserOrContext, viewport = { width: 390, height: 844 }) {
   const page = await browserOrContext.newPage();
+  await page.setCacheEnabled(false);
   await page.setViewport(viewport);
   await page.setExtraHTTPHeaders({ "Accept-Language": "tr" });
   return page;

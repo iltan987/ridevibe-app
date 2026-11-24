@@ -2,17 +2,21 @@ import Image from "next/image";
 import { useTranslations } from "next-intl";
 import heroRoad from "@/assets/home/hero-road.jpg";
 import { HomeApplyButton } from "@/components/home/home-apply-button";
+import { buttonVariants } from "@/components/ui/button";
+import { Link } from "@/i18n/navigation";
 
 // Always dark: the `dark` class makes the tokens resolve to the night palette inside, so cream text sits on the
-// photo's dark gradient in both themes and the bottom edge is straight against a cream page. The text is in flow
-// (not absolutely positioned), so the hero grows with large text instead of clipping. The h1 is two fixed lines sized
-// by viewport only: next/font's fallback is never condensed, so wrapping text would reflow at the Saira swap.
+// photo's dark gradient in both themes and the bottom edge is straight against a cream page. `text-foreground` on the
+// section: inherited text (the outline "Etkinlikleri Gör") would keep the body's colour, resolved outside the scope.
+// The text is in flow (not absolutely positioned), so the hero grows with large text instead of clipping. The h1 is
+// two fixed lines sized by viewport only: next/font's fallback is never condensed, so wrapping text would reflow at
+// the Saira swap.
 export function HomeHero() {
   const t = useTranslations("Home");
   return (
     <section
       data-home-hero
-      className="dark relative flex min-h-160 flex-col justify-end overflow-hidden bg-background md:min-h-190"
+      className="dark relative flex min-h-160 flex-col justify-end overflow-hidden bg-background text-foreground md:min-h-190"
     >
       <Image
         src={heroRoad}
@@ -43,7 +47,12 @@ export function HomeHero() {
           <p className="mt-3.5 mb-4.5 max-w-[30ch] text-pretty text-foreground/90 md:mt-5 md:mb-6 md:max-w-[34ch] md:text-xl">
             {t("subtitle")}
           </p>
-          <HomeApplyButton />
+          <div className="flex flex-wrap gap-2">
+            <HomeApplyButton />
+            <Link href="/events" data-home-events className={buttonVariants({ variant: "outline", size: "lg" })}>
+              {t("seeEvents")}
+            </Link>
+          </div>
         </div>
       </div>
     </section>

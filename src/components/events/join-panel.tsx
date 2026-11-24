@@ -2,7 +2,16 @@
 
 import { Minus, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { type ReactNode, useId, useState, useTransition } from "react";
+import {
+  type FocusEvent,
+  type ReactNode,
+  type RefObject,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,6 +47,11 @@ type Outcome =
   | { kind: "refused"; reason: JoinReason }
   | { kind: "failed"; status: "invalid" | "forbidden" | "notFound" | "error" };
 
+/** A control the keyboard can no longer use: native `disabled` or Base UI's disabled radio. */
+function unusable(el: Element): boolean {
+  return !el.isConnected || el.matches(":disabled, [aria-disabled='true'], [data-disabled]");
+}
+
 function outcomeOf(result: JoinActionResult, what: "joined" | "updated" | "left"): Outcome {
   if (result.status === "ok") return { kind: "done", what };
   if (result.status === "refused") return { kind: "refused", reason: result.reason };
@@ -49,6 +63,9 @@ function outcomeOf(result: JoinActionResult, what: "joined" | "updated" | "left"
  * join rules refuse (`checkJoin`, the same rules as `join_event`) are disabled with the reason; the database still
  * decides and its refusals show the same texts. A started or cancelled event shows that state instead. After a new
  * sign-up without an emergency contact, a nudge links to the profile's emergency section.
+ * Keyboard focus never falls to <body> when the focused control disables or unmounts ("−" at 0 guests, "+" at the
+ * limit, saving, "Katılıyorum" replaced by "Güncelle", leaving): it moves to the stepper's other button, else to the
+ * panel heading.
  */
 export function JoinPanel({
   eventId,
@@ -78,6 +95,34 @@ export function JoinPanel({
   const [nudge, setNudge] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const fewerRef = useRef<HTMLButtonElement>(null);
+  const moreRef = useRef<HTMLButtonElement>(null);
+  const leaveRef = useRef<HTMLButtonElement>(null);
+  // The panel's last focused control while focus is in the panel (null once the user moves focus elsewhere).
+  const lastFocus = useRef<Element | null>(null);
+
+  // After every render: if the focused control was disabled or removed by it, Chrome moves focus to <body> (or keeps
+  // it on the dead control); take it to the closest control that still works.
+  useLayoutEffect(() => {
+    const last = lastFocus.current;
+    const active = document.activeElement;
+    if (!last || !unusable(last) || (active !== null && active !== document.body && active !== last)) return;
+    const other = last === fewerRef.current ? moreRef.current : last === moreRef.current ? fewerRef.current : null;
+    // The heading is above the controls: focusing it must not scroll the page away from where the user was.
+    if (other && !unusable(other)) other.focus();
+    else headingRef.current?.focus({ preventScroll: true });
+  });
+  const focusHandlers = {
+    // Only the panel's own DOM: React also bubbles focus from the portaled leave dialog (its `finalFocus` handles it).
+    onFocus: (e: FocusEvent<HTMLElement>) => {
+      if (e.currentTarget.contains(e.target)) lastFocus.current = e.target;
+    },
+    // Focus moved on by the user (the control still works): nothing to rescue.
+    onBlur: (e: FocusEvent<HTMLElement>) => {
+      if (e.target === lastFocus.current && !unusable(e.target)) lastFocus.current = null;
+    },
+  };
 
   const check = (next: Signup) => checkJoin({ event, counts, mine, next, probation, maxCc, now });
   // The smallest footprint (the sign-up as it is, or a passenger alone): refused only when nothing would pass.
@@ -127,7 +172,7 @@ export function JoinPanel({
 
   if (closed === "started" || closed === "cancelled") {
     return (
-      <Panel id={id} heading={heading}>
+      <Panel id={id} heading={heading} headingRef={headingRef} focusHandlers={focusHandlers}>
         {mine && <p className="text-sm">{summary(mine)}</p>}
         <p className="text-sm text-muted-foreground">{reasonText(closed)}</p>
       </Panel>
@@ -135,7 +180,7 @@ export function JoinPanel({
   }
 
   return (
-    <Panel id={id} heading={heading}>
+    <Panel id={id} heading={heading} headingRef={headingRef} focusHandlers={focusHandlers}>
       {mine && <p className="-mt-2 text-sm text-muted-foreground">{summary(mine)}</p>}
       {closed && <p className="text-sm">{reasonText(closed)}</p>}
 
@@ -185,6 +230,7 @@ export function JoinPanel({
           </span>
           <div role="group" aria-labelledby={`${id}-guests`} className="flex items-center gap-2">
             <Button
+              ref={fewerRef}
               variant="outline"
               size="icon"
               aria-label={t("join.fewerGuests")}
@@ -197,6 +243,7 @@ export function JoinPanel({
               {next.guests}
             </output>
             <Button
+              ref={moreRef}
               variant="outline"
               size="icon"
               aria-label={t("join.moreGuests")}
@@ -218,7 +265,7 @@ export function JoinPanel({
               <Button disabled={isPending || closed !== null || unchanged} onClick={submit}>
                 {t("join.update")}
               </Button>
-              <Button variant="outline" disabled={isPending} onClick={() => setLeaveOpen(true)}>
+              <Button ref={leaveRef} variant="outline" disabled={isPending} onClick={() => setLeaveOpen(true)}>
                 {t("join.leave")}
               </Button>
             </>
@@ -248,7 +295,10 @@ export function JoinPanel({
       )}
 
       <AlertDialog open={leaveOpen} onOpenChange={(open) => !isPending && setLeaveOpen(open)}>
-        <AlertDialogContent>
+        {/* Dismissed: back to the trigger. Confirmed: the trigger is disabled (saving) or gone, so the heading. */}
+        <AlertDialogContent
+          finalFocus={() => (leaveRef.current && !unusable(leaveRef.current) ? true : headingRef.current)}
+        >
           <AlertDialogHeader>
             <AlertDialogTitle>{t("join.leaveDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>{t("join.leaveDialog.body")}</AlertDialogDescription>
@@ -265,14 +315,28 @@ export function JoinPanel({
   );
 }
 
-function Panel({ id, heading, children }: { id: string; heading: string; children: ReactNode }) {
+function Panel({
+  id,
+  heading,
+  headingRef,
+  focusHandlers,
+  children,
+}: {
+  id: string;
+  heading: string;
+  headingRef: RefObject<HTMLHeadingElement | null>;
+  focusHandlers: { onFocus: (e: FocusEvent<HTMLElement>) => void; onBlur: (e: FocusEvent<HTMLElement>) => void };
+  children: ReactNode;
+}) {
   return (
     <section
       aria-labelledby={`${id}-heading`}
       data-skeleton-result="event-join"
       className="flex flex-col gap-4 rounded-xl border bg-card p-4"
+      {...focusHandlers}
     >
-      <h2 id={`${id}-heading`} className="text-lg font-semibold">
+      {/* Focus target when the focused control goes away (`tabIndex={-1}`: reachable by script only). */}
+      <h2 ref={headingRef} id={`${id}-heading`} tabIndex={-1} className="text-lg font-semibold outline-none">
         {heading}
       </h2>
       {children}

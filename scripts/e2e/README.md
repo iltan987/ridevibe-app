@@ -69,8 +69,9 @@ Run against a **local** stack only (local Supabase + a server on port 3123); nev
   (active) and `probation@test.local` (status `probation`, `status_changed_at` 5 days ago, "Ön Alım Fixture"); recipe in
   the script header. Resets the fixture and deletes its notes through `docker exec … psql` (`DB_CONTAINER`, local only)
   before and after. Works on a DB with other active members. Screenshots go to `OUT_DIR`.
-- `events-e2e.mjs` — events, organiser side, behind the release gate (PASS/FAIL lines, exit code != 0 on failure;
-  390px and 1280px). As `admin@test.local` it creates a ride whose start is typed coordinates, whose stop is a pasted
+- `events-e2e.mjs` — events, organiser side and who sees what (PASS/FAIL lines, exit code != 0 on failure; 390px
+  and 1280px). First, with no upcoming event in the DB (SKIP otherwise): the member's empty `/events` reads "Yenileri
+  eklendikçe burada görünecek.", the organiser's points to "Etkinlik oluştur". As `admin@test.local` it creates a ride whose start is typed coordinates, whose stop is a pasted
   long Google place link (venue only) and whose finish is a pasted long Google route link with the Kız Kulesi origin
   (long links: no network; pasted through a real `paste` event), checks that the paste boxes are emptied and that the
   origin `41.021111`/`29.004167` is neither in the page nor in any column of `events`/`event_places` (`psql`), the
@@ -80,17 +81,15 @@ Run against a **local** stack only (local Supabase + a server on port 3123); nev
   URL follow, no document/RSC request), cancel with a reason (banner, share text, struck card with "İptal edildi") and
   delete; `/events/past` pages over 27 planted past meet-ups (`?page=2` via the pager, `?page=99` and `?page=1`
   redirect). `member@test.local` and `probation@test.local` (given the role "E2E Organizatör" with `events.manage`:
-  rights need an active member) get "Çok yakında" on `/events` and the 404 page on `/events/{id}`, `/events/new` and
-  `/events/past`, with no event title in the HTML. Needs `pnpm start -p 3123`, local email sign-in and those three
-  users (recipe in `probation-e2e.mjs`). Plants and deletes its rows (events titled `E2E …`, the role) through `docker
+  rights need an active member) get the list with the planted meet-up, the event with its place and `/events/past`,
+  no "Etkinlik oluştur" and the 404 page on `/events/new`; `pending-noapp@test.local` gets the public teaser (no
+  meet-up, past event or place in the HTML), the meet-up's public card (no place) and the 404 page on `/events/new`
+  and `/events/past`. Needs `pnpm start -p 3123`, local email sign-in and those four users (recipe in
+  `probation-e2e.mjs`). Plants and deletes its rows (events titled `E2E …`, the role) through `docker
   exec … psql` (`DB_CONTAINER`, local only) before and after; other upcoming events are fine, other past events must
   be older than the planted ones (1–27 days) and leave at most two pages. Screenshots go to `OUT_DIR`.
-- `events-join-e2e.mjs` — events joining behind the release gate (PASS/FAIL lines, exit code != 0 on failure; 390px
-  and 1280px). With the gate closed: the member gets "Çok yakında" and a 404 on an event; the organiser gets a 404 on
-  `/events/not-a-uuid`. Then it **opens the gate locally** (replaces `private.can_see_events()` with the release body
-  `select private.is_club_member()` through `docker exec psql`) and restores the definition from
-  `supabase/schemas/40_events.sql` in `finally` (a FAIL/WARNING line if that fails; `pnpm db:reset` restores it
-  too). Per viewport: the organiser creates a ride (3 people, 1 bike, 400 cc); the member (a planted 250 cc bike)
+- `events-join-e2e.mjs` — events joining (PASS/FAIL lines, exit code != 0 on failure; 390px and 1280px). The
+  organiser gets a 404 on `/events/not-a-uuid`. Per viewport: the organiser creates a ride (3 people, 1 bike, 400 cc); the member (a planted 250 cc bike)
   sees Sürücü disabled with "Motor ekle" → `/account#motorcycles`, joins as Artçı with a guest and gets the
   emergency-contact nudge; member2 and the organiser join at once for the last place while a psql session holds the
   event row (both `join_event` calls seen waiting on the lock in `pg_stat_activity`): exactly one wins, the other
@@ -105,6 +104,30 @@ Run against a **local** stack only (local Supabase + a server on port 3123); nev
   Plants and deletes its rows (events titled `E2E Katılım …` / `E2E Sadece Tam …` with their sign-ups and change
   log, the member's `E2E` bike) through `docker exec … psql` (`DB_CONTAINER`, local only) before and after. Other
   upcoming events are fine. Screenshots go to `OUT_DIR`.
+- `events-public-e2e.mjs` — events for non-members (PASS/FAIL lines, exit code != 0 on failure; 390px and 1280px).
+  `/events` signed out: heading, intro, total line, the planted upcoming rides in day order as cards that link nowhere,
+  "Kulübe Başvur" and "Giriş yap" back to `/events` (`/en/events` once: English heading, total, "Sign in"); no meet-up,
+  cancelled or past ride, place name, start time, description or `/events/<id>` link in the HTML; the pending users
+  get the list without "Giriş yap" (`pending-app@`: no "Kulübe Başvur"); with no upcoming ride left, the empty state
+  (SKIP when the DB holds other upcoming rides). Positive control: `member@test.local` gets the 2a list (chips, card
+  links, the meet-up, the cancelled ride, start times; the past ride on `/events/past`).
+  Signed out on a planted ride: the event's card (title, area, kind; no link), "Giriş yap" back to the event via
+  `?next=` and "Başvur"; no place name, start time, description or cancel reason in the HTML; a meet-up has no area
+  line, a cancelled ride says "İptal edildi" (struck title); a malformed id and an unknown uuid are 404s.
+  `pending-noapp@test.local` gets the card and "Başvur" but no "Giriş yap"; `pending-app@test.local` (linked
+  application `new`/`contacted`; SKIP without it) reads "Başvurun inceleniyor". Positive control: `member@test.local`
+  gets the full event page. Link preview, fetched as WhatsApp's crawler (bots get the tags in `<head>`, browsers get
+  them streamed into `<body>`, `docs/learnings/nextjs.md`): `og:title` = title, `og:description` = kind · day · area
+  ("İptal edildi · " first when cancelled; English on `/en`), `og:url`, `og:locale`, noindex, no start time; generic
+  for unknown ids. Home `/` signed out (`/en` once): the "next rides" section with the first 3 of the 4 planted
+  rides, no meet-up/cancelled ride or private field, "Tüm etkinlikler (4 sürüş)" to `/events`; the hero's
+  "Etkinlikleri Gör" (`data-home-events`) to `/events`, cream text in the light theme too; after `admin@` cancels the
+  first ride through the UI, `/` lists the next three; with no upcoming ride, no section.
+  The list and the preview are cached reads (`"use cache"`, tag `events-public`) that planted rows
+  never expire: after planting, `admin@test.local` cancels a planted ride through the UI (`updateTag`), so a running
+  server is fine, no restart or rebuild. Needs `pnpm start -p 3123`, local email sign-in and those users (recipe in
+  `probation-e2e.mjs`). Plants and deletes its rows (events titled `E2E Önizleme …`, fixed ids) through
+  `docker exec … psql` (`DB_CONTAINER`, local only). Screenshots go to `OUT_DIR`.
 - `header-e2e.mjs` — `<head>` theme script across a language switch and an unknown path (theme kept, client-created
   script inert, no React "script tag" warning), theme sync to other tabs, no colour transitions on a theme switch, the
   user-menu skeleton (signed out: button; signed in: the avatar, photo kept on a language switch; language button
@@ -156,9 +179,9 @@ Run against a **local** stack only (local Supabase + a server on port 3123); nev
   `member@test.local` ("Test Üye"), both active (recipe in `safety-e2e.mjs`). Restores both fixtures through
   `docker exec … psql` (`DB_CONTAINER`, local only) before the run and in `finally`. Screenshots go to `OUT_DIR`.
 - `seo-check.mjs` — SEO checks with plain `fetch` (no puppeteer, no fixtures; PASS/FAIL lines, exit code != 0 on
-  failure): robots.txt and sitemap.xml, `<head>` of `/`, `/en`, `/apply`, `/en/apply` (title/description differ per
-  language, canonical = og:url = production URL, Open Graph, Twitter card, no noindex), canonical without query
-  strings, 200 + noindex on privacy/events/gallery and the private pages (meta or `x-robots-tag`), the `og:image`
+  failure): robots.txt and sitemap.xml, `<head>` of `/`, `/en`, `/apply`, `/en/apply`, `/events`, `/en/events`
+  (title/description differ per language, canonical = og:url = production URL, Open Graph, Twitter card, no noindex),
+  canonical without query strings, 200 + noindex on privacy/gallery and the private pages (meta or `x-robots-tag`), the `og:image`
   of `/` (200, `image/*`, under 600 KB), one JSON-LD graph on `/` and `/en`, the locale
   rules (`Accept-Language` ignored, `NEXT_LOCALE=en` redirects, 1-year cookie on `/en`), the hreflang `link` header
   and the PNG icon. Local: `pnpm build && pnpm start -p 3123`, then `node scripts/e2e/seo-check.mjs`; production:

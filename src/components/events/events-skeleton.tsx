@@ -42,20 +42,18 @@ function EventCardSkeleton() {
 }
 
 /**
- * Fallback for the organiser event lists: heading row (title, plus the "Etkinlik oluştur" button with `create`), total
- * row (count + link), the filter chips (`chips`: the upcoming list only), three cards and the pager's range line
- * (lists usually fit one page). Mirrors the page layout: sections are `gap-6` apart.
- *
- * Today only `/events/past` uses it (`chips={false}`, no `create`). The `chips` default and `create` are kept for the
- * joining branch, which makes this the fallback of `/events` (ruling R3, events plan): not dead code.
+ * Fallback for the members' event lists: heading row, total row (count + link), the filter chips (`chips`: the
+ * upcoming list only), three cards and the pager's range line (lists usually fit one page). Mirrors the page layout:
+ * sections are `gap-6` apart. `/events` shows it when a session cookie exists (`SessionHintSwitch`; signed out:
+ * `EventsTeaserSkeleton`), `/events/past` with `chips={false}`. The organisers' "Etkinlik oluştur" button sits in the
+ * heading row without changing its height, so the skeleton leaves it out.
  */
-export function EventsSkeleton({ chips = true, create = false }: { chips?: boolean; create?: boolean }) {
+export function EventsSkeleton({ chips = true }: { chips?: boolean }) {
   return (
     <div className="flex flex-col gap-6">
       {/* The heading's `text-3xl` line is 36px (the button is 32px). */}
       <div data-skeleton="events-heading" className="flex h-9 items-center justify-between gap-3">
         <Skeleton className="h-7.5 w-48" />
-        {create && <Skeleton className="h-8 w-36" />}
       </div>
       <div data-skeleton="events-total" className="flex h-5 items-center justify-between gap-3">
         <Skeleton className="h-3.5 w-28" />

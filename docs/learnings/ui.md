@@ -92,6 +92,10 @@
   module memory only, cleared on sign-out; nothing stored). Only a hard load still shows the grey circle.
 - **Also:** colour transitions (`transition-all` on buttons etc.) fade for ~150ms when the theme class flips while the
   page snaps; `applyResolvedTheme` disables transitions during a flip (next-themes' `disableTransitionOnChange`).
+- **Whole fallbacks by session (2026-11-24):** `SessionHintSwitch` (`src/components/auth/session-hint-switch.tsx`)
+  renders both skeletons (server components passed as props) in a wrapper whose first child is
+  `sessionHintParentScript`; the children toggle with `hidden in-data-session:block` / `in-data-session:hidden`
+  (Tailwind 4's `in-*` matches any marked ancestor). Used by `/events` (members' list vs public teaser).
 - **Source:** found by testing (`scripts/e2e/header-e2e.mjs` logs the skeleton box per animation frame).
 
 ### A guessing fallback inside a pathname `<Suspense>` appears several times in the HTML (2026-11-11)
@@ -252,7 +256,11 @@
 - **Cause:** the tokens (`text-foreground`, `bg-background`) follow the page theme; the photo gradient doesn't.
 - **Do:** give the section `className="dark …"`: the `.dark` scope makes the tokens resolve to the night palette inside
   it, in both themes (`src/components/home/home-hero.tsx`).
-- **Source:** found by testing (home hero).
+- **Also set `text-foreground` on the section** (2026-11-24): the class re-resolves the variables, but `color` is
+  inherited as a computed value from `body` (resolved in the page theme). Anything that doesn't set its own text colour
+  (an outline button: `buttonVariants({ variant: "outline" })` sets none) stays dark-on-dark in the light theme. The
+  events E2E compares the hero button's colour with the h1's in the light theme.
+- **Source:** found by testing (home hero; "Etkinlikleri Gör", events release).
 
 ### A `font-stretch` display heading reflows at the font swap: use fixed lines (2026-11-14)
 - **Symptom:** first visit on a slow network: the home hero h1 ("Let's ride together.") wrapped to 3 lines, then
@@ -301,3 +309,18 @@
 - **Do:** in a skeleton, give the legend line its height plus a negative margin of (gap − legend margin)
   (`-mb-1.5 h-6` for `gap-3`, `src/components/events/event-form-skeleton.tsx`); measure, don't compute.
 - **Source:** found by measuring `/events/new` with JS off (events Task 7).
+
+### A focused button that disables or unmounts drops focus to `<body>`; a dialog's `finalFocus` must decide late (2026-11-24)
+- **Symptom:** in the join panel, pressing "−" down to 0 guests, "Katılıyorum", "Güncelle" or the leave dialog's
+  confirm with the keyboard left `document.activeElement` on `<body>` (the next Tab starts at the top of the page).
+  `finalFocus={isPending ? headingRef : true}` on the leave dialog still ended on `<body>`.
+- **Cause:** Chrome blurs a focused control once it gets `disabled` or leaves the DOM, and nothing moves focus on.
+  The dialog returns focus after its closing animation, when the action's transition had already ended: the prop then
+  said `true` (back to the trigger), and the trigger had been disabled or unmounted.
+- **Do:** after every render (`useLayoutEffect` without deps), if the last control focused inside the component is
+  now disabled or disconnected and focus is on `<body>` (or still on it), focus the closest working control, else a
+  heading with `tabIndex={-1}` (track the control with `onFocus` / `onBlur` on the container; ignore focus bubbling
+  in from portals). For a Base UI dialog pass `finalFocus` a function that checks the trigger when called
+  (`() => (trigger usable ? true : headingRef.current)`). Code: `src/components/events/join-panel.tsx`; E2E:
+  `joinFocusScenario` in `scripts/e2e/events-public-e2e.mjs`.
+- **Source:** found by testing (events release Task 8).

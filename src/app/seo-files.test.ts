@@ -15,7 +15,9 @@ test("sitemap lists the public pages in both locales and nothing else", () => {
   assert.deepEqual(sitemap(), [
     { url: "https://ridevibe.com.tr/" },
     { url: "https://ridevibe.com.tr/apply" },
+    { url: "https://ridevibe.com.tr/events" },
     { url: "https://ridevibe.com.tr/en" },
     { url: "https://ridevibe.com.tr/en/apply" },
+    { url: "https://ridevibe.com.tr/en/events" },
   ]);
 });

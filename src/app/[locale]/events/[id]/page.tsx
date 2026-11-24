@@ -1,13 +1,16 @@
 import { Ban, CalendarDays, MapPin, Pencil } from "lucide-react";
 import type { Metadata } from "next";
-import { getFormatter, getTranslations } from "next-intl/server";
-import { notFound } from "next/navigation";
+import { getFormatter, getLocale, getTranslations } from "next-intl/server";
+import { notFound, unstable_rethrow } from "next/navigation";
 import { Suspense } from "react";
+import { SessionHintSwitch } from "@/components/auth/session-hint-switch";
 import { CancelEventDialog } from "@/components/events/cancel-event-dialog";
 import { ChangeLog, describeChanges } from "@/components/events/change-log";
 import { DeleteEventDialog } from "@/components/events/delete-event-dialog";
 import { EventCounts } from "@/components/events/event-counts";
 import { EventRoster } from "@/components/events/event-roster";
+import { EventTeaser } from "@/components/events/event-teaser";
+import { EventTeaserSkeleton } from "@/components/events/events-teaser-skeleton";
 import { JoinPanel } from "@/components/events/join-panel";
 import { PlaceActions } from "@/components/events/place-actions";
 import { RouteStrip } from "@/components/events/route-strip";
@@ -17,7 +20,9 @@ import { buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "@/i18n/navigation";
 import { can } from "@/lib/auth/permissions";
-import { requireEventsAccess } from "@/lib/events/access";
+import { getCurrentUser } from "@/lib/auth/user";
+import { canSeeEvents } from "@/lib/events/access";
+import { dayToDate } from "@/lib/events/day";
 import { NO_COUNTS } from "@/lib/events/join";
 import {
   getChangeLog,
@@ -27,18 +32,59 @@ import {
   getMySignups,
   getRoster,
 } from "@/lib/events/queries";
-import { shareText } from "@/lib/events/places";
+import { memberShareText, shareText } from "@/lib/events/places";
+import { getEventPreview } from "@/lib/events/public";
 import { isUuid } from "@/lib/events/signup-rows";
 import { isUpcoming } from "@/lib/events/time";
+import { sharedOpenGraph } from "@/lib/seo/metadata";
+import { eventImageUrl, eventUrl, OG_IMAGE_SIZE, SITE_NAME } from "@/lib/seo/site";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("Events");
-  return { title: t("title"), robots: { index: false } };
+/**
+ * The link preview (events release spec §5.7): the event's public data only (title; kind · day · area, "İptal
+ * edildi · " first when cancelled), in the page's locale, for every viewer; never indexed. Unknown or malformed id: the
+ * generic title. The preview read is cached per id, so this adds no request beside the page's own.
+ */
+export async function generateMetadata({ params }: PageProps<"/[locale]/events/[id]">): Promise<Metadata> {
+  const { id } = await params;
+  const [preview, locale, t, format] = await Promise.all([
+    // A failed read must not take the members' page down with it: generic metadata then (not cached, retried).
+    getEventPreview(id).catch((error: unknown) => {
+      unstable_rethrow(error);
+      // The cached reader logged the error code (`readEventPreview`).
+      console.error("event preview for metadata failed");
+      return null;
+    }),
+    getLocale(),
+    getTranslations("Events"),
+    getFormatter(),
+  ]);
+  if (!preview) return { title: t("title"), robots: { index: false } };
+  const day = format.dateTime(dayToDate(preview.day), { weekday: "long", day: "numeric", month: "long" });
+  const parts = [preview.cancelled && t("cancelled"), t(`kinds.${preview.kind}`), day, preview.area];
+  const description = parts.filter((part) => typeof part === "string").join(" · ");
+  // Lowercased like the preview's cache key: one URL per event, whatever the case in the shared link.
+  const eventId = id.toLowerCase();
+  // The image of this segment's `opengraph-image.tsx`, named here: Next's own URL for it starts with `/tr/` for
+  // Turkish, which the locale proxy redirects (`eventImageUrl`). Setting `images` makes Next skip the file's entry.
+  const image = { url: eventImageUrl(locale, eventId), ...OG_IMAGE_SIZE, type: "image/png", alt: SITE_NAME };
+  return {
+    title: preview.title,
+    description,
+    openGraph: {
+      ...sharedOpenGraph(locale),
+      url: eventUrl(locale, eventId),
+      title: preview.title,
+      description,
+      images: [image],
+    },
+    robots: { index: false },
+  };
 }
 
-// The event, its counts, joining, the change box, its places with the map-app menus, the roster per viewer (spec §3),
-// sharing, cancel and delete. Organisers only during the release gate (spec §9): everyone else gets a 404 (RLS returns
-// no row anyway), so the page's content sits inside the boundary.
+// Club members (active and ön alım, the events gate) get the event, its counts, joining, the change box, its places
+// with the map-app menus, the roster per viewer (spec §3), sharing, cancel and delete; everyone else the event's
+// public card with sign-in / apply (release spec §5.4). The content sits inside the boundary; its fallback takes the
+// member's or the teaser's shape from the session cookie (the static shell can't know the viewer).
 export default async function EventPage({ params }: PageProps<"/[locale]/events/[id]">) {
   const t = await getTranslations("Events");
   return (
@@ -46,7 +92,7 @@ export default async function EventPage({ params }: PageProps<"/[locale]/events/
       <Link href="/events" className="text-sm text-muted-foreground hover:text-foreground">
         ← {t("backToList")}
       </Link>
-      <Suspense fallback={<EventSkeleton />}>
+      <Suspense fallback={<SessionHintSwitch signedIn={<EventSkeleton />} signedOut={<EventTeaserSkeleton />} />}>
         <EventContent params={params} />
       </Suspense>
     </section>
@@ -64,6 +110,9 @@ const WHEN = {
   hourCycle: "h23",
 } as const;
 
+/** The members' share text names the day only. */
+const SHARE_DAY = { weekday: "long", day: "numeric", month: "long" } as const;
+
 /** The share text's date line: the year goes, the reader knows it. */
 const SHARE_WHEN = {
   weekday: "long",
@@ -76,15 +125,16 @@ const SHARE_WHEN = {
 
 async function EventContent({ params }: { params: PageProps<"/[locale]/events/[id]">["params"] }) {
   const { id } = await params;
-  const user = await requireEventsAccess(`/events/${id}`);
   // A malformed id is no event (the counts RPC would otherwise fail on the uuid cast and show the error page).
   if (!isUuid(id)) notFound();
+  const user = await getCurrentUser();
+  if (user === null || !(await canSeeEvents())) return <EventTeaser id={id} signedIn={user !== null} />;
   // Viewers (spec §3): organisers see everyone with flags; active members the active participants' names while the
   // event is upcoming; ön alım members counts only. Every viewer here is active or ön alım (the gate).
   const organiser = can(user.access, "events.manage");
   const probation = user.profile?.status === "probation";
 
-  const [event, counts, roster, changeLog, mySignups, joinContext, t, tSides, format] = await Promise.all([
+  const [event, counts, roster, changeLog, mySignups, joinContext, t, tSides, format, locale] = await Promise.all([
     getEvent(id),
     getEventCounts([id]),
     probation ? null : getRoster(id),
@@ -94,6 +144,7 @@ async function EventContent({ params }: { params: PageProps<"/[locale]/events/[i
     getTranslations("Events"),
     getTranslations("Admin.sides"),
     getFormatter(),
+    getLocale(),
   ]);
   if (!event) notFound();
 
@@ -106,11 +157,11 @@ async function EventContent({ params }: { params: PageProps<"/[locale]/events/[i
   const cancelled = event.status === "cancelled";
   const start = new Date(event.startsAt);
   const when = event.endsAt ? format.dateTimeRange(start, new Date(event.endsAt), WHEN) : format.dateTime(start, WHEN);
-  const text = shareText(event, {
-    when: format.dateTime(start, SHARE_WHEN),
-    cancelledTitle: (title) => t("detail.shareCancelled", { title }),
-    changeLead: changes.lead,
-  });
+  const url = eventUrl(locale, event.id);
+  const cancelledTitle = (title: string) => t("detail.shareCancelled", { title });
+  const text = organiser
+    ? shareText(event, { when: format.dateTime(start, SHARE_WHEN), cancelledTitle, changeLead: changes.lead, url })
+    : memberShareText(event, { day: format.dateTime(start, SHARE_DAY), cancelledTitle, url });
   const single = event.places.length === 1;
   // A meet-up's one place needs no role: the section heading says "Buluşma yeri".
   const roleLabel = (i: number) => {
@@ -169,17 +220,15 @@ async function EventContent({ params }: { params: PageProps<"/[locale]/events/[i
         </div>
       </header>
 
-      {organiser && (
-        <div data-skeleton-result="event-actions" className="flex flex-wrap gap-2">
-          {!cancelled && (
-            <Link href={`/events/${event.id}/edit`} className={buttonVariants({ variant: "outline" })}>
-              <Pencil data-icon="inline-start" aria-hidden />
-              {t("detail.edit")}
-            </Link>
-          )}
-          <ShareEventButton text={text} />
-        </div>
-      )}
+      <div data-skeleton-result="event-actions" className="flex flex-wrap gap-2">
+        {organiser && !cancelled && (
+          <Link href={`/events/${event.id}/edit`} className={buttonVariants({ variant: "outline" })}>
+            <Pencil data-icon="inline-start" aria-hidden />
+            {t("detail.edit")}
+          </Link>
+        )}
+        <ShareEventButton text={text} />
+      </div>
 
       <JoinPanel
         eventId={event.id}
@@ -279,13 +328,13 @@ async function EventContent({ params }: { params: PageProps<"/[locale]/events/[i
 }
 
 /**
- * Mirrors a typical ride as an organiser sees it before joining: badges, title, date, area and counts lines, the
- * edit/share row, the join panel (heading, Sürücü/Artçı, the guests stepper with its hint, the button and its empty
- * status line), the route card with two places (strip, then name block and the action buttons, which wrap to two rows
- * on a phone), a one-line description, the roster with two rows (each with its safety card button), the
- * "Düzenleyen" line and the cancel/delete row with the "people joined" hint under it. Measured with
- * `scripts/e2e/skeletons.mjs` (organiser, joined or not: the joined panel's summary line is the one difference).
- * Members and ön alım members see no edit/share or cancel/delete rows and a roster only in some cases.
+ * Mirrors a typical ride as an active member sees it before joining (the common viewer since the release): badges,
+ * title, date, area and counts lines, the share button, the join panel (heading, Sürücü/Artçı, the guests stepper with
+ * its hint, the button and its empty status line), the route card with two places (strip, then name block and the
+ * action buttons, which wrap to two rows on a phone), a one-line description, the roster with two rows (name, role)
+ * and the "Oluşturan" line. Measured with `scripts/e2e/skeletons.mjs` (member, organiser, signed out). Organisers also
+ * get the edit button, a safety-card button per roster row and the cancel/delete row (taller); ön alım members no
+ * roster (shorter): the shell can't know the role (follow-ups, "Loading states").
  */
 function EventSkeleton() {
   return (
@@ -311,7 +360,6 @@ function EventSkeleton() {
         </div>
       </div>
       <div data-skeleton="event-actions" className="flex gap-2">
-        <Skeleton className="h-8 w-24" />
         <Skeleton className="h-8 w-44" />
       </div>
       <div data-skeleton="event-join" className="flex flex-col gap-4 rounded-xl border p-4">
@@ -389,9 +437,6 @@ function EventSkeleton() {
                 <div className="flex h-5 items-center">
                   <Skeleton className="h-3.5 w-16" />
                 </div>
-                <div className="pt-1">
-                  <Skeleton className="h-7 w-32" />
-                </div>
               </div>
             </div>
           ))}
@@ -399,14 +444,6 @@ function EventSkeleton() {
       </div>
       <div className="flex h-5 items-center">
         <Skeleton className="h-3.5 w-48" />
-      </div>
-      {/* With people signed up, delete is disabled with a one-line hint below the buttons. */}
-      <div data-skeleton="event-manage" className="flex flex-wrap gap-2 border-t pt-6">
-        <Skeleton className="h-8 w-40" />
-        <Skeleton className="h-8 w-32" />
-        <div className="flex h-5 w-full items-center">
-          <Skeleton className="h-3.5 w-72 max-w-full" />
-        </div>
       </div>
     </div>
   );

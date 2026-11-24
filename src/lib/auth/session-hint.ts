@@ -12,12 +12,17 @@ export function hasSessionCookie(cookie: string): boolean {
 }
 
 /**
- * Runs as an inline script directly after the skeleton, before first paint. Stringified with `toString()`, so it
- * must be self-contained: the regex comes in as an argument (a regex literal stringifies to valid JS).
+ * Runs as an inline script before first paint and marks an element with `data-session`: the one before it
+ * (`sessionHintScript`, the user-menu skeleton) or, safer, the one it is the first child of (`sessionHintParentScript`:
+ * it runs before any of that element's content is parsed, wherever the stream splits; docs/learnings/ui.md).
+ * Stringified with `toString()`, so it must be self-contained: the regex comes in as an argument (a regex literal
+ * stringifies to valid JS).
  */
-function markSessionHint(doc: Document, sessionCookie: RegExp): void {
-  const el = doc.currentScript && doc.currentScript.previousElementSibling;
+function markSessionHint(doc: Document, sessionCookie: RegExp, parent: boolean): void {
+  const script = doc.currentScript;
+  const el = script && (parent ? script.parentElement : script.previousElementSibling);
   if (el && sessionCookie.test(doc.cookie)) el.setAttribute("data-session", "");
 }
 
-export const sessionHintScript = `(${markSessionHint.toString()})(document, ${SESSION_COOKIE.toString()})`;
+export const sessionHintScript = `(${markSessionHint.toString()})(document, ${SESSION_COOKIE.toString()}, false)`;
+export const sessionHintParentScript = `(${markSessionHint.toString()})(document, ${SESSION_COOKIE.toString()}, true)`;

@@ -231,3 +231,81 @@ Bundled docs are the source of truth: `node_modules/next/dist/docs/` (grep them 
   later navigation (a form action that calls `signOut()` and redirects). auth-js clears the local session even when
   the logout answers 401/403/404 for an already-revoked session.
 - **Source:** `auth-js` `GoTrueClient._signOut`, `GoTrueAdminApi.signOut`; `src/lib/account/deletion-actions.ts`.
+
+### First `"use cache"`: public event reads (2026-11-24)
+- **Pattern:** `src/lib/events/public.ts` (`getTeaserRides`, `getEventPreview`): `"use cache"` + `cacheTag(PUBLIC_EVENTS_TAG)`
+  + `cacheLife("hours")`, calling Supabase through `createPublicClient()` (`src/lib/supabase/public.ts`: no cookies, no
+  session, `persistSession: false`). `createClient()` in `server.ts` reads `cookies()` / `connection()`: never use it
+  inside a cache scope (`next-request-in-use-cache`). Organiser actions call `updateTag(PUBLIC_EVENTS_TAG)` (Server
+  Actions only; the next read waits for fresh data).
+- **Tested (throwaway route handler, built + started, removed):** supabase-js `rpc()` works inside `"use cache"` with no
+  cookies, also at build (the entry is prerendered into the shell). A function that **throws is not cached**: the next
+  call re-ran it, the one after hit the cache. So readers must throw on a Supabase error, never return `[]` (that would
+  be cached as "no rides" for up to an hour). In a production build the caller gets a masked "An error occurred in the
+  Server Components render" message (the real error is only in the server log): log or map the code before it leaves
+  the cached function if the message matters.
+- **`cacheLife("hours")`:** stale 5 min / revalidate 1 h / expire 1 day. A background refresh runs after the hour
+  (stale-while-revalidate), so a ride that passed at Istanbul midnight can stay listed up to about an hour (accepted).
+  Rows planted by psql never expire the tag; only `updateTag` / `revalidateTag` or the lifetime do: E2E that checks
+  cached data edits through the organiser UI (planting before `pnpm build` is not enough: the build may reuse a fetch
+  response up to 15 minutes old, entry "`next build` reuses fetch responses" below).
+- **Source:** `01-directives/use-cache.md`, `04-functions/cacheLife.md`, `updateTag.md`; the spike above.
+
+### `generateMetadata` reading params + a cached read: streamed for browsers, in `<head>` only for listed bots (2026-11-24)
+- **Need:** per-event link previews on `/events/[id]` (`generateMetadata({ params })` → `getEventPreview(id)`, a
+  `"use cache"` read) under Cache Components.
+- **Observed:** `pnpm build` accepts it with no marker: the page already has request-time content behind
+  `<Suspense>` (the session), so metadata just defers with it (`generate-metadata.md`, "With Cache Components"; only an
+  otherwise fully prerenderable page would need `"use cache"` in `generateMetadata` or a dynamic marker). The tags
+  then **stream**: for a normal browser (`curl`, `fetch` with Node's UA) `og:title` etc. arrive at the end of
+  `<body>`; for an HTML-limited bot (`HTML_LIMITED_BOT_UA_RE` in `next/dist/shared/lib/router/utils/html-bots.js`:
+  WhatsApp, facebookexternalhit, Twitterbot, Slackbot, Discordbot, LinkedInBot, …; Telegram's
+  "TelegramBot (like TwitterBot)" matches via "TwitterBot") rendering blocks and they are in `<head>`.
+- **Do:** check preview tags with a bot user agent (`User-Agent: WhatsApp/2.23.20.0 A`) and assert they sit before
+  `</head>` (`scripts/e2e/events-public-e2e.mjs`); a body-only match from a plain `fetch` proves nothing about previews.
+  Keep the uuid check outside the cached function so junk ids make no cache entry (`getEventPreview` →
+  `readEventPreview`).
+- **Source:** bundled `generate-metadata.md` ("Streaming metadata", "With Cache Components"); found by testing.
+
+### `readFile(join(process.cwd(), variable))` traces the whole folder into the function (2026-11-24)
+- **Symptom:** the event image route's `route.js.nft.json` listed every file under `src/assets/` (the 1 MB badge
+  original and the home photos) though it reads five files.
+- **Cause:** output file tracing (`@vercel/nft`) resolves `join(process.cwd(), "<literal>")` exactly, but a helper
+  taking the file name as a parameter becomes a wildcard over the folder.
+- **Do:** one `readFile(join(process.cwd(), "src/assets/…"))` per file with a literal path, at module scope; check
+  `.next/server/app/<route>/route.js.nft.json` after `pnpm build` (`src/app/[locale]/events/[id]/opengraph-image.tsx`).
+- **Source:** found by testing (build output).
+
+### A prerendered page reading a cached function: a throw after `updateTag` is a 500 for the whole page (2026-11-24)
+- **Symptom:** the home page (`/`, partial prerender) with the "next rides" section: after an organiser write
+  (`updateTag("events-public")`) with the public RPC failing (tested: execute revoked from `anon`), every load of `/`
+  answered **500** until the read worked again; no stale copy was served.
+- **Cause:** `updateTag` expires the tag at once, so the next request regenerates the page in the foreground instead
+  of serving stale; a throw from the cached reader fails that render. (The docs' "last successfully generated page
+  keeps being served" holds for the background, stale-while-revalidate regeneration after `revalidate`, not for an
+  expired entry: after `updateTag` or past `expire`.)
+- **Do:** on a page that must not go down for an optional section, read through a wrapper that is itself
+  `"use cache"`, catches, and caches the failure briefly: `cacheLife("hours")` + the result on success,
+  `cacheLife("minutes")` + `null` on failure (conditional `cacheLife`, one call per run; `cacheLife.md`, "Conditional
+  cache lifetimes"); the section renders nothing for null. Measured: 200 without the section while failing, the
+  section back about 80 s after the fix (revalidate 60 s, then the background regeneration).
+  Keep the tag in the wrapper too. Code: `getHomeRides` in `src/lib/events/public.ts`. Pages that are about the data
+  (`/events`) keep the throw (an error page beats a silently empty list).
+- **Source:** found by testing (events release, home section).
+
+### `next build` reuses fetch responses from `.next/cache/fetch-cache` for up to 15 minutes (2026-11-24)
+- **Symptom:** a build right after planting rows (and after revoking the RPC's grant) prerendered the home page with
+  the list of the build 6 minutes earlier and logged no error: the RPC was never called.
+- **Cause:** during build-time prerendering a `fetch` without cache options is cached in the fetch cache "to dedupe
+  between export workers" (`isImplicitBuildTimeCache` in `next/dist/server/lib/patch-fetch.js`); the entry
+  (supabase-js `rpc()` is a POST, cached by URL + body) is written to `.next/cache/fetch-cache` with the enclosing
+  scope's revalidate and the next build reads it. Inside `"use cache"` that is the scope store's `revalidate`, which
+  starts at the default profile's 900 s and stays there: `cacheLife()` sets only `explicitRevalidate`
+  (`use-cache-wrapper.js`, `cache-life.js`), so the 900 s holds whichever profile the function calls (`"hours"` here),
+  before or after the fetch. At request time such fetches are not cached
+  (`autoNoCache`); `"use cache"` alone governs them.
+- **Do:** for E2E that needs fresh data in a prerendered page, don't rely on "plant, then build": expire the tag
+  through the organiser UI after starting the server (`expireTeaserList` in `scripts/e2e/events-public-e2e.mjs`). In
+  production a deploy within 15 minutes of the previous build can prerender a list that old (Vercel restores
+  `.next/cache`); the next organiser write or the hourly revalidation replaces it (accepted).
+- **Source:** found by testing; `patch-fetch.js`.

@@ -91,7 +91,7 @@ pnpm db:backup                # encrypted production backup alone (--local: the 
 pnpm exec supabase migration up   # apply new migrations locally, keeping data (db:reset wipes auth users; after
                                   # an iteration that reset, restore iltan's local admin before browser review)
 kill $(ss -ltnp | grep ':3123 ' | grep -oP 'pid=\K[0-9]+')   # stop a local server; never `pkill -f` (kills own shell)
-PUPPETEER_DIR=~/e2e-tools node scripts/e2e/{nav,members,safety,header,apply,apply-nav,install,cross-tab,lists,deletion,events,events-join}-e2e.mjs   # browser E2E vs `pnpm start -p 3123` (setup: scripts/e2e/README.md)
+PUPPETEER_DIR=~/e2e-tools node scripts/e2e/{nav,members,safety,header,apply,apply-nav,install,cross-tab,lists,deletion,events,events-join,events-public}-e2e.mjs   # browser E2E vs `pnpm start -p 3123` (setup: scripts/e2e/README.md)
 node scripts/e2e/seo-check.mjs   # SEO head/robots/sitemap/JSON-LD check, no puppeteer; `BASE=https://ridevibe.com.tr` for production
 # signed-in parts need fixture users (admin@/member@/pending-noapp@test.local) that `db:reset` wipes: recreate per README
 # headless hides scrollbars (launch({ scrollbars: true }) keeps them); Next keeps the previous route hidden in the DOM: select visible elements
@@ -156,12 +156,15 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
   on non-deleting others; notes about admin-role holders: admins only; delete: admins only, never about oneself;
   nobody reads notes about themselves. Counts via the security-invoker view `member_note_counts`.
   KVKK art. 11 request: content + date by hand, never the author's name (PLAN.md "Access requests and staff notes").
-- **Events** (`public.events` + `event_places`, `supabase/schemas/40_events.sql`, permission `events.manage`): release
-  gate = one function, `private.can_see_events()` (today `events.manage` only; policies, RPCs and pages via
-  `public.can_see_events()` ask it; the release replaces its body with `private.is_club_member()`). Until then
-  non-organisers get "Çok yakında" on `/events`; on the other event routes signed-out visitors go to sign-in and
-  signed-in non-organisers get a 404; the WhatsApp share text has no event link. Writes only via `save_event` /
-  `cancel_event` / `delete_event` (refuses `has_signups`); `save_event` logs changes of events with counted sign-ups.
+- **Events** (`public.events` + `event_places`, `supabase/schemas/40_events.sql`, permission `events.manage`): gate =
+  one function, `private.can_see_events()` (= `private.is_club_member()`; policies, RPCs and pages via
+  `public.can_see_events()` ask it). Everyone else gets teasers: `/events` lists upcoming rides, `/events/[id]` the
+  event's card, the home page the next rides, plus per-event link-preview metadata and image. Their only reads are
+  `event_teasers()` / `event_preview(uuid)` (anon; title, kind, Istanbul day, area: never the time, places, counts or
+  names; the day is computed in SQL), cached with `"use cache"` + tag `events-public` (`src/lib/events/public.ts`);
+  organiser actions call `updateTag`, psql writes don't expire it. Share texts end with the event link. Writes only
+  via `save_event` / `cancel_event` / `delete_event` (refuses `has_signups`); `save_event` logs changes of events with
+  counted sign-ups.
   Sign-ups (`42_event_signups.sql`) only via `join_event` / `leave_event` (security definer, lock the event row
   first); counted = `private.counted_event_signups` (active/probation); rule refusals are `P0001` + `hint`, mapped in
   `src/lib/events/join.ts`; reads via `event_counts` / `event_roster` / `event_authors` / `event_change_log`. A place = point and/or venue

@@ -1,7 +1,7 @@
 -- ---------------------------------------------------------------------------
 -- Event sign-ups (spec §3, §5; docs/superpowers/plans/2026-11-21-events-joining.md): a member joins an event as
 -- rider (own bike) or passenger, with up to 3 guests (non-member passengers, a count only). Written only by
--- join_event / leave_event; readable only as one's own row, behind the release gate (private.can_see_events,
+-- join_event / leave_event; readable only as one's own row, behind the events gate (private.can_see_events,
 -- 40_events.sql). Others see counts and rosters only through RPCs.
 -- Only sign-ups of active and ön alım (probation) profiles count (limits, counts, rosters, "has sign-ups"): see
 -- private.counted_event_signups. Others' rows are kept and come back with the status. Deleting an account or an
@@ -34,7 +34,7 @@ grant select on table public.event_signups to authenticated;
 
 alter table public.event_signups enable row level security;
 
-create policy "event_signups: read own behind the release gate"
+create policy "event_signups: read own sign-ups of visible events"
 on public.event_signups
 for select
 to authenticated
@@ -100,8 +100,8 @@ begin
     raise exception 'events are not open to you' using errcode = '42501';
   end if;
 
-  -- 2. caller status. Defence in depth: both gate bodies (events.manage needs active; the release's is_club_member)
-  -- already refuse every other status, so no test can fail without it. Keep it: it states the join rule here.
+  -- 2. caller status. Defence in depth: the gate (club members: active and ön alım) already refuses every other
+  -- status, so no test can fail without it. Keep it: it states the join rule here.
   select p.status into v_member from public.profiles p where p.id = uid;
   if v_member is null or v_member not in ('active', 'probation') then
     raise exception 'only active and ön alım members join events' using errcode = '42501';

@@ -4,8 +4,8 @@ import { buttonVariants } from "@/components/ui/button";
 import { whatsAppShareUrl } from "@/lib/applications/contact";
 
 /**
- * "WhatsApp'ta paylaş" (organisers, spec §6): `text` comes from `shareText`. It carries no event link until the joining
- * branch releases Events (members would meet sign-in and a 404); put the link back then (docs/follow-ups.md).
+ * "WhatsApp'ta paylaş": `text` comes from `shareText` (organisers, spec §6) or `memberShareText` (members); both
+ * end with the event link.
  */
 export function ShareEventButton({ text }: { text: string }) {
   const t = useTranslations("Events.detail");

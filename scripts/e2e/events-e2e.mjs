@@ -1,18 +1,24 @@
-// Events, organiser side, behind the release gate (PASS/FAIL lines, exit code != 0 on failure; 390px and 1280px).
+// Events, organiser side and who sees what (PASS/FAIL lines, exit code != 0 on failure; 390px and 1280px).
 // Needs a production server on :3123 (pnpm build && pnpm start -p 3123) and email sign-in enabled locally
 // (docs/learnings/testing.md, "Testing as a signed-in user locally") with these fixtures:
-//   admin@test.local      active, admin role (every permission: the organiser)
-//   member@test.local     active, no role
-//   probation@test.local  status probation (the script gives it a role holding events.manage, then removes it)
-// Fixture recipe: the header of scripts/e2e/probation-e2e.mjs (the same three users).
+//   admin@test.local         active, admin role (every permission: the organiser)
+//   member@test.local        active, no role
+//   probation@test.local     status probation (the script gives it a role holding events.manage, then removes it)
+//   pending-noapp@test.local status pending
+// Fixture recipe: the header of scripts/e2e/probation-e2e.mjs (pending users: keep status `pending`).
 // As the organiser it creates a ride per viewport whose start is typed coordinates, whose stop is a pasted long Google
 // place link (venue only) and whose finish is a pasted long Google route link with the Kız Kulesi origin (long links:
 // no network), checks the paste box is emptied and the origin is in neither the page nor any column of
 // `events`/`event_places`, the list with side/kind chips (no server request), the map-app links of all three places
-// (Yandex longitude first in `pt=`, no Navi for the venue-only stop), the WhatsApp share link (`text=` with title and route but no event link, no `phone=`),
+// (Yandex longitude first in `pt=`, no Navi for the venue-only stop), the WhatsApp share link (`text=` with title, route and the event link last, no `phone=`),
 // an edit of the start time (stored UTC = Istanbul wall time − 3 h), cancel with a reason (banner, struck card) and
-// delete; `/events/past` pages over planted past events (> 25). The member and the probation organiser get "Çok
-// yakında" on `/events` and a 404 on `/events/{id}`, `/events/new` and `/events/past`.
+// delete; `/events/past` pages over planted past events (> 25). The member and the probation organiser (no rights
+// before they are active) get the list, the event with its place and the past list, no "Etkinlik oluştur" and a 404
+// on `/events/new`; the pending user gets the public teaser (no meet-up or place in the HTML), the meet-up's public card
+// and a 404 on `/events/new` and `/events/past`. Before planting, with no upcoming event in the DB: the member's and the
+// organiser's empty-list texts. Cached public reads (rows planted by psql never expire them): the
+// pending user runs after the organiser has deleted an event through the UI (`updateTag`) in the same viewport, so
+// the meet-up's card is read fresh; the teaser list is only checked for what it must not hold.
 // Fixture rows (events titled "E2E …", the role "E2E Organizatör") are planted and deleted through `docker exec psql`
 // (DB_CONTAINER, local only) before and after the run. Env: PUPPETEER_DIR (required), OUT_DIR (screenshots), BASE_URL.
 import { execFileSync } from "node:child_process";
@@ -54,7 +60,7 @@ const ROUTE_URL =
   "https://www.google.com/maps/dir/41.021111,29.004167/%C4%B0BB+Pa%C5%9Faliman%C4%B1+Sosyal+Tesisi/data=!4m8!4m7!1m1!4e1!1m3!2m2!1d29.0!2d41.0!3e0!3d41.0322013!4d29.0229043!5m1!1e1";
 const NAMES = { start: "E2E Başlangıç", stop: "Starbucks Moda", finish: "Paşalimanı" };
 
-// Planted rows: an upcoming meet-up on the European side (filters, gate checks) and past meet-ups (paging).
+// Planted rows: an upcoming meet-up on the European side (filters, access checks) and past meet-ups (paging).
 const MEETUP_ID = "00000000-0000-4000-8000-00000000e2e1";
 const MEETUP_TITLE = "E2E Buluşma Avrupa";
 const PAST_COUNT = 27;
@@ -370,10 +376,10 @@ async function organiserScenario(width, height) {
       share ?? "none",
     );
     check(
-      `${label} share text: title and route, no event link`,
+      `${label} share text: title, route and the event link last`,
       shared.startsWith(title) &&
         shared.includes(`${NAMES.start} → ${NAMES.finish}`) &&
-        !shared.includes(`/events/${id}`),
+        shared.endsWith(`\nhttps://ridevibe.com.tr/events/${id}`),
       shared.replace(/\n/g, " ¶ "),
     );
     const pageHtml = await page.content();
@@ -389,7 +395,6 @@ async function organiserScenario(width, height) {
       both.includes(title) && both.includes(MEETUP_TITLE),
       JSON.stringify(both),
     );
-    check(`${label} organiser sees no "Çok yakında"`, !(await bodyText(page)).includes("Çok yakında"));
     await page.screenshot({ path: path.join(DIR, `events-list-${width}.png`), fullPage: true });
     const steps = [
       ["Avrupa", "side=european", [MEETUP_TITLE], [title]],
@@ -552,7 +557,31 @@ async function pastScenario(width, height) {
   }
 }
 
-async function gateScenario(email, who, width, height) {
+// textContent: a 404 heading is CSS-uppercased ("SAYFA BULUNAMADI" in innerText).
+const headings = (page) =>
+  page.evaluate(() =>
+    [...document.querySelectorAll("h1")]
+      .filter((h) => h.getBoundingClientRect().width > 0)
+      .map((h) => h.textContent.trim()),
+  );
+/** A 404 for an organiser page. The form's and the list's labels ship with every page's client messages, so "not
+ *  shown" is checked on the rendered text. */
+async function check404(page, label, p) {
+  await go(page, p);
+  const h1 = await headings(page);
+  const t = await bodyText(page);
+  check(
+    `${label} ${p} is a 404`,
+    JSON.stringify(h1) === '["Sayfa bulunamadı"]' && !t.includes("Harita linki") && !t.includes("geçmiş etkinlik"),
+    JSON.stringify(h1),
+  );
+  check(`${label} ${p} HTML holds no event title`, !(await page.content()).includes("E2E "));
+}
+
+/** Club members without organiser rights (an active member; an ön alım member whose role holds `events.manage`, which
+ *  gives nobody rights before they are active): the list, the event with its places and the past list, but no
+ *  "Etkinlik oluştur" and a 404 on `/events/new`. */
+async function memberScenario(email, who, width, height) {
   const label = `${width}px ${who}`;
   const ctx = await browser.createBrowserContext();
   const page = await newPage(ctx, { width, height });
@@ -560,39 +589,92 @@ async function gateScenario(email, who, width, height) {
     await signIn(page, email, BASE);
     await go(page, "/events");
     const text = await bodyText(page);
-    const h1 = await page.evaluate(() =>
-      [...document.querySelectorAll("h1")].filter((h) => h.getBoundingClientRect().width > 0).map((h) => h.textContent),
-    );
     check(
-      `${label} /events says "Çok yakında"`,
-      JSON.stringify(h1) === '["Etkinlikler"]' && text.includes("Çok yakında"),
-      JSON.stringify(h1),
+      `${label} /events lists the planted meet-up`,
+      JSON.stringify(await headings(page)) === '["Etkinlikler"]' && text.includes(MEETUP_TITLE),
+      JSON.stringify(await headings(page)),
     );
     check(`${label} /events has no "Etkinlik oluştur"`, !text.includes("Etkinlik oluştur"));
-    check(`${label} /events HTML holds no event title`, !(await page.content()).includes(MEETUP_TITLE));
-    for (const p of [`/events/${MEETUP_ID}`, "/events/new", "/events/past"]) {
-      await go(page, p);
-      // textContent: the heading is CSS-uppercased ("SAYFA BULUNAMADI" in innerText). The form's and the list's
-      // labels ship with every page's client messages, so "not shown" is checked on the rendered text.
-      const h1 = await page.evaluate(() =>
-        [...document.querySelectorAll("h1")]
-          .filter((h) => h.getBoundingClientRect().width > 0)
-          .map((h) => h.textContent.trim()),
-      );
-      const t = await bodyText(page);
-      check(
-        `${label} ${p} is a 404`,
-        JSON.stringify(h1) === '["Sayfa bulunamadı"]' && !t.includes("Harita linki") && !t.includes("geçmiş etkinlik"),
-        JSON.stringify(h1),
-      );
-      check(`${label} ${p} HTML holds no event title`, !(await page.content()).includes("E2E "));
-    }
+    await go(page, `/events/${MEETUP_ID}`);
+    check(
+      `${label} /events/{id} is the event with its place`,
+      JSON.stringify(await headings(page)) === JSON.stringify([MEETUP_TITLE]) &&
+        (await bodyText(page)).includes("E2E Karaköy"),
+      JSON.stringify(await headings(page)),
+    );
+    await go(page, "/events/past");
+    check(
+      `${label} /events/past lists past events`,
+      JSON.stringify(await headings(page)) === '["Geçmiş etkinlikler"]' &&
+        (await bodyText(page)).includes("E2E Geçmiş 01"),
+      JSON.stringify(await headings(page)),
+    );
+    await check404(page, label, "/events/new");
   } finally {
     await ctx.close();
   }
 }
 
+/** A pending account (outside the club): the public teaser of upcoming rides (no meet-up), the meet-up's public card
+ *  without its place, and a 404 on the members' and organisers' pages. */
+async function pendingScenario(width, height) {
+  const label = `${width}px pending`;
+  const ctx = await browser.createBrowserContext();
+  const page = await newPage(ctx, { width, height });
+  try {
+    await signIn(page, "pending-noapp@test.local", BASE);
+    await go(page, "/events");
+    check(
+      `${label} /events is the teaser`,
+      JSON.stringify(await headings(page)) === '["Etkinlikler"]' && (await bodyText(page)).includes("Hava uygunsa"),
+      JSON.stringify(await headings(page)),
+    );
+    const html = await page.content();
+    check(
+      `${label} /events HTML holds no meet-up, past event or place`,
+      !html.includes(MEETUP_TITLE) && !html.includes("E2E Geçmiş") && !html.includes("E2E Karaköy"),
+    );
+    await go(page, `/events/${MEETUP_ID}`);
+    check(
+      `${label} /events/{id} is the public card`,
+      JSON.stringify(await headings(page)) === JSON.stringify([MEETUP_TITLE]),
+      JSON.stringify(await headings(page)),
+    );
+    check(`${label} /events/{id} HTML holds no place`, !(await page.content()).includes("E2E Karaköy"));
+    for (const p of ["/events/new", "/events/past"]) await check404(page, label, p);
+  } finally {
+    await ctx.close();
+  }
+}
+
+/** No upcoming event (390px, before planting): a member reads that new ones will show up here, the organiser is
+ *  pointed to "Etkinlik oluştur". SKIP when the DB holds other recent or upcoming events. */
+async function emptyScenario() {
+  const others = sql("select count(*) from events where coalesce(ends_at, starts_at) > now() - interval '1 day'");
+  if (others !== "0") {
+    console.log(`SKIP empty /events (${others} other recent or upcoming events in the DB)`);
+    return;
+  }
+  for (const [who, expected] of [
+    ["member", "Yaklaşan etkinlik yok. Yenileri eklendikçe burada görünecek."],
+    ["admin", "Yaklaşan etkinlik yok. Yenisini “Etkinlik oluştur” ile ekleyebilirsin."],
+  ]) {
+    const ctx = await browser.createBrowserContext();
+    const page = await newPage(ctx);
+    try {
+      await signIn(page, `${who}@test.local`, BASE);
+      await go(page, "/events");
+      const text = await bodyText(page);
+      check(`390px ${who}: empty /events reads "${expected}"`, text.includes(expected), text.replace(/\n/g, " ¶ "));
+    } finally {
+      await ctx.close();
+    }
+  }
+}
+
 try {
+  clean();
+  await emptyScenario();
   plant();
   check(
     "probation fixture holds a role with events.manage",
@@ -600,23 +682,15 @@ try {
       `select count(*) from profiles p join role_permissions rp on rp.role_id = p.role_id where p.id = '${ID.probation}' and p.status = 'probation' and rp.permission = 'events.manage'`,
     ) === "1",
   );
-  // Positive control for the gate checks: the organiser reads the planted event.
-  {
-    const ctx = await browser.createBrowserContext();
-    const page = await newPage(ctx);
-    await signIn(page, "admin@test.local", BASE);
-    await go(page, `/events/${MEETUP_ID}`);
-    check("control: the organiser sees the planted meet-up", (await bodyText(page)).includes(MEETUP_TITLE));
-    await ctx.close();
-  }
   for (const [width, height] of [
     [390, 844],
     [1280, 900],
   ]) {
     await organiserScenario(width, height);
     await pastScenario(width, height);
-    await gateScenario("member@test.local", "member", width, height);
-    await gateScenario("probation@test.local", "probation organiser", width, height);
+    await memberScenario("member@test.local", "member", width, height);
+    await memberScenario("probation@test.local", "probation organiser", width, height);
+    await pendingScenario(width, height);
   }
 } catch (e) {
   fails++;

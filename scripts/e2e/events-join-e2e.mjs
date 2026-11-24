@@ -1,4 +1,4 @@
-// Events joining, behind the release gate (PASS/FAIL lines, exit code != 0 on failure; 390px and 1280px).
+// Events joining (PASS/FAIL lines, exit code != 0 on failure; 390px and 1280px).
 // Needs a production server on :3123 (pnpm build && pnpm start -p 3123) and email sign-in enabled locally
 // (docs/learnings/testing.md, "Testing as a signed-in user locally") with these fixtures:
 //   admin@test.local      active, admin role (every permission: the organiser), "Test Admin"
@@ -6,10 +6,8 @@
 //   member2@test.local    active, no role, "İkinci Üye"
 //   probation@test.local  status probation, "Ön Alım Fixture"
 // Fixture recipe: the header of scripts/e2e/probation-e2e.mjs (add member2 like member).
-// The gate: with the organiser-only body the member gets "Çok yakında" and a 404 on an event, and a malformed event id
-// is a 404 for the organiser. Then the script opens the gate locally by replacing `private.can_see_events()` with
-// `select private.is_club_member()` (the release body) through `docker exec psql`, and restores the definition from
-// supabase/schemas/40_events.sql in `finally` (a warning if that fails; `pnpm db:reset` restores it too).
+// A malformed event id is a 404 for the organiser. Who may see events at all (the gate: club members) is
+// `events-e2e.mjs`'s and pgTAP's part.
 // Per viewport the organiser creates a ride (limits 3 people / 1 bike / 400 cc); the member (a 250 cc bike only) sees
 // Sürücü disabled with the "Motor ekle" link, joins as Artçı with a guest and gets the emergency-contact nudge;
 // member2 and the organiser join at once for the last place while a psql session holds the event row (both requests
@@ -22,16 +20,13 @@
 // "E2E" bike) are planted and deleted through `docker exec psql` (DB_CONTAINER, local only) before and after the run.
 // Env: PUPPETEER_DIR (required), OUT_DIR (screenshots), BASE_URL, DB_CONTAINER.
 import { execFileSync, spawn } from "node:child_process";
-import { readFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { launch, newPage, signIn, watchServer } from "./e2e-lib.mjs";
 
 const DIR = process.env.OUT_DIR ?? os.tmpdir();
 const BASE = process.env.BASE_URL ?? "http://localhost:3123";
 const DB = process.env.DB_CONTAINER ?? "supabase_db_ridevibe";
-const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let fails = 0;
 const check = (name, ok, extra = "") => {
@@ -53,21 +48,6 @@ for (const [who, id] of Object.entries(ID)) {
 }
 const NAME = Object.fromEntries(USERS.map((n) => [n, sql(`select full_name from profiles where id = '${ID[n]}'`)]));
 
-// The gate as the schema defines it (organisers only until the release), and the release body for this run.
-const GATE_SQL = /create or replace function private\.can_see_events\(\)[\s\S]*?\$\$;/.exec(
-  readFileSync(path.join(REPO, "supabase/schemas/40_events.sql"), "utf8"),
-)?.[0];
-if (!GATE_SQL || !GATE_SQL.includes("select private.has_permission('events.manage')")) {
-  console.log("FAIL can't read the gate function from supabase/schemas/40_events.sql");
-  process.exit(1);
-}
-const OPEN_GATE_SQL = GATE_SQL.replace(
-  "select private.has_permission('events.manage')",
-  "select private.is_club_member()",
-);
-const gateBody = () =>
-  sql("select prosrc from pg_proc where proname = 'can_see_events' and pronamespace = 'private'::regnamespace");
-
 const BIKE = { brand: "E2E", model: "Vespa", cc: 250 };
 const MIN_CC = 400;
 
@@ -88,8 +68,27 @@ function plantFullMembersOnly(width) {
 
 const browser = await launch();
 const bodyText = (page) => page.evaluate(() => document.body.innerText);
+/**
+ * Hard navigation, then waits for the page itself: `load`, a visible `<h1>` in `<main>` and no skeleton left there
+ * (every Suspense boundary revealed), then hydration. Not `networkidle0`: it waits on every prefetch of a linked
+ * route and timed out at random (Chrome's background revalidations, docs/learnings/testing.md).
+ */
 async function go(page, p) {
-  await page.goto(BASE + p, { waitUntil: "networkidle0" });
+  await page.goto(BASE + p, { waitUntil: "load" });
+  const ready = await until(
+    page,
+    () => {
+      const main = document.querySelector("main");
+      return (
+        !!main &&
+        !main.querySelector("[data-skeleton]") &&
+        [...main.querySelectorAll("h1")].some((h) => h.getBoundingClientRect().width > 0)
+      );
+    },
+    null,
+    15000,
+  );
+  if (!ready) throw new Error(`${p}: the page never showed its content`);
   await sleep(400); // hydration
 }
 async function until(page, fn, arg, ms = 10000) {
@@ -237,31 +236,8 @@ async function editEvent(page, id, label, fill) {
   await sleep(400);
 }
 
-async function gateClosedScenario(fmoId) {
-  check(
-    "gate body is organisers-only before the run",
-    gateBody().trim() === "select private.has_permission('events.manage')",
-    gateBody(),
-  );
-  const { ctx, page } = await as("member", 390, 844);
-  try {
-    await go(page, "/events");
-    check('gate closed: member gets "Çok yakında" on /events', (await bodyText(page)).includes("Çok yakında"));
-    await go(page, `/events/${fmoId}`);
-    const h1 = await page.evaluate(() =>
-      [...document.querySelectorAll("h1")]
-        .filter((h) => h.getBoundingClientRect().width > 0)
-        .map((h) => h.textContent.trim()),
-    );
-    check(
-      "gate closed: member gets a 404 on an event",
-      JSON.stringify(h1) === '["Sayfa bulunamadı"]',
-      JSON.stringify(h1),
-    );
-    check("gate closed: the 404 holds no event title", !(await page.content()).includes("E2E Sadece Tam"));
-  } finally {
-    await ctx.close();
-  }
+/** A malformed event id is the 404 page, also for the organiser (the counts RPC would fail on the uuid cast). */
+async function malformedIdScenario() {
   const admin = await as("admin", 390, 844);
   try {
     await go(admin.page, "/events/not-a-uuid");
@@ -636,7 +612,6 @@ async function joinScenario(width, height, fmoId) {
   }
 }
 
-let opened = false;
 try {
   clean();
   check(
@@ -655,11 +630,7 @@ try {
     `insert into member_motorcycles (profile_id, brand, model, cc) values ('${ID.member}', '${BIKE.brand}', '${BIKE.model}', ${BIKE.cc})`,
   );
   const fmo = { 390: plantFullMembersOnly(390), 1280: plantFullMembersOnly(1280) };
-  await gateClosedScenario(fmo[390]);
-
-  sql(OPEN_GATE_SQL);
-  opened = true;
-  check("gate opened locally (release body)", gateBody().trim() === "select private.is_club_member()", gateBody());
+  await malformedIdScenario();
   for (const [width, height] of [
     [390, 844],
     [1280, 900],
@@ -671,17 +642,6 @@ try {
   console.log("FAIL unexpected error —", e.stack ?? e);
 } finally {
   // Cleanup must not hide the real failure above.
-  try {
-    sql(GATE_SQL);
-    const body = gateBody().trim();
-    check("gate restored to organisers only", body === "select private.has_permission('events.manage')", body);
-  } catch (e) {
-    fails++;
-    console.log(
-      `FAIL WARNING: the gate could not be restored${opened ? " and is OPEN" : ""} (run pnpm db:reset) —`,
-      e.message,
-    );
-  }
   try {
     clean();
   } catch (e) {
