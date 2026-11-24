@@ -19,6 +19,17 @@ export function eventUrl(locale: Locale, id: string): string {
   return `${SITE_URL}${locale === "tr" ? "" : "/en"}/events/${id}`;
 }
 
+/** Size of the generated link-preview images (`opengraph-image.tsx`). */
+export const OG_IMAGE_SIZE = { width: 1200, height: 630 } as const;
+
+/**
+ * Absolute URL of an event's link-preview image. Set explicitly in the page metadata: the URL Next derives from the
+ * file carries the internal locale segment (`/tr/events/…`), which the locale proxy answers with a redirect.
+ */
+export function eventImageUrl(locale: Locale, id: string): string {
+  return `${eventUrl(locale, id)}/opengraph-image`;
+}
+
 export function ogLocale(locale: Locale): "tr_TR" | "en_US" {
   return locale === "tr" ? "tr_TR" : "en_US";
 }

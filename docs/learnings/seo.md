@@ -68,3 +68,24 @@ with `scripts/e2e/seo-check.mjs` (`scripts/e2e/README.md`).
 - **Do:** get the tags right before the first share; after a fix test by hand in WhatsApp, Telegram and iMessage.
   Telegram may show no preview at all because of an open bug (bugs.telegram.org/c/61650): don't chase it.
 - **Source:** spec research, "After deploy" checklist.
+
+### A generated `opengraph-image` under `[locale]` gets a `/tr/` URL; ImageResponse caches for a year (2026-11-24)
+- **Symptom:** with `src/app/[locale]/events/[id]/opengraph-image.tsx`, the Turkish page's `og:image` was
+  `https://ridevibe.com.tr/tr/events/<id>/opengraph-image?<hash>`; the locale proxy answers that with a 307 to the
+  unprefixed path (and turns the query into `?<hash>=`). The PNG itself came with
+  `cache-control: public, immutable, no-transform, max-age=31536000`.
+- **Cause:** Next fills the metadata image URL from the internal route params (`locale: "tr"`); `localePrefix:
+  "as-needed"` redirects the default prefix. `ImageResponse` (`@vercel/og`) sets that header in production unless
+  `headers` overrides it. A page whose own `openGraph` has an `images` key makes Next skip the segment's file image
+  (`mergeStaticMetadata` in `next/dist/lib/metadata/metadata-resolution-primitives.js`).
+- **Do:** name the image in the page's `generateMetadata` (`eventImageUrl` in `src/lib/seo/site.ts`, size
+  `OG_IMAGE_SIZE`, `type`, `alt`); the file stays the route. Pass `headers: { "cache-control": … }` to
+  `ImageResponse` when the image follows data (`public, max-age=3600` beside a `cacheLife("hours")` read;
+  `no-store` for a fallback after a failed read). Vercel's CDN caches a function response only with `s-maxage` /
+  `CDN-Cache-Control`, so `max-age` alone reaches browsers and crawlers only. Fonts: satori takes ttf/otf/woff and no
+  variable fonts; google/fonts has Saira at normal width only as a variable font, so the image uses the static
+  `SairaExtraCondensed-ExtraBold` / `SairaSemiCondensed-SemiBold` (`src/assets/fonts/`, OFL, reserved name "Saira":
+  ship the files unmodified). Text clamping in satori needs `display: "block"` + `lineClamp: 2` (ellipsis included).
+  Check the PNGs by eye (`scripts/e2e/events-public-e2e.mjs` saves them to `OUT_DIR`).
+- **Source:** bundled `opengraph-image.md` / `image-response.md`; `next/dist/compiled/@vercel/og/index.node.js`;
+  Vercel docs "CDN cache"; found by testing.

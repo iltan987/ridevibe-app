@@ -265,3 +265,12 @@ Bundled docs are the source of truth: `node_modules/next/dist/docs/` (grep them 
   Keep the uuid check outside the cached function so junk ids make no cache entry (`getEventPreview` →
   `readEventPreview`).
 - **Source:** bundled `generate-metadata.md` ("Streaming metadata", "With Cache Components"); found by testing.
+
+### `readFile(join(process.cwd(), variable))` traces the whole folder into the function (2026-11-24)
+- **Symptom:** the event image route's `route.js.nft.json` listed every file under `src/assets/` (the 1 MB badge
+  original and the home photos) though it reads five files.
+- **Cause:** output file tracing (`@vercel/nft`) resolves `join(process.cwd(), "<literal>")` exactly, but a helper
+  taking the file name as a parameter becomes a wildcard over the folder.
+- **Do:** one `readFile(join(process.cwd(), "src/assets/…"))` per file with a literal path, at module scope; check
+  `.next/server/app/<route>/route.js.nft.json` after `pnpm build` (`src/app/[locale]/events/[id]/opengraph-image.tsx`).
+- **Source:** found by testing (build output).

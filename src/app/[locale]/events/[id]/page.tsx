@@ -35,7 +35,7 @@ import { getEventPreview } from "@/lib/events/public";
 import { isUuid } from "@/lib/events/signup-rows";
 import { isUpcoming } from "@/lib/events/time";
 import { sharedOpenGraph } from "@/lib/seo/metadata";
-import { eventUrl } from "@/lib/seo/site";
+import { eventImageUrl, eventUrl, OG_IMAGE_SIZE, SITE_NAME } from "@/lib/seo/site";
 
 /**
  * The link preview (events release spec §5.7): the event's public data only (title; kind · day · area, "İptal
@@ -48,6 +48,7 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/events/[
     // A failed read must not take the members' page down with it: generic metadata then (not cached, retried).
     getEventPreview(id).catch((error: unknown) => {
       unstable_rethrow(error);
+      // The cached reader logged the error code (`readEventPreview`).
       console.error("event preview for metadata failed");
       return null;
     }),
@@ -59,11 +60,21 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/events/[
   const day = format.dateTime(dayToDate(preview.day), { weekday: "long", day: "numeric", month: "long" });
   const parts = [preview.cancelled && t("cancelled"), t(`kinds.${preview.kind}`), day, preview.area];
   const description = parts.filter((part) => typeof part === "string").join(" · ");
+  // Lowercased like the preview's cache key: one URL per event, whatever the case in the shared link.
+  const eventId = id.toLowerCase();
+  // The image of this segment's `opengraph-image.tsx`, named here: Next's own URL for it starts with `/tr/` for
+  // Turkish, which the locale proxy redirects (`eventImageUrl`). Setting `images` makes Next skip the file's entry.
+  const image = { url: eventImageUrl(locale, eventId), ...OG_IMAGE_SIZE, type: "image/png", alt: SITE_NAME };
   return {
     title: preview.title,
     description,
-    // No `images` key: the image comes from the `opengraph-image` file of this segment.
-    openGraph: { ...sharedOpenGraph(locale), url: eventUrl(locale, id), title: preview.title, description },
+    openGraph: {
+      ...sharedOpenGraph(locale),
+      url: eventUrl(locale, eventId),
+      title: preview.title,
+      description,
+      images: [image],
+    },
     robots: { index: false },
   };
 }

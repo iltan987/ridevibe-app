@@ -40,6 +40,10 @@ async function readEventPreview(id: string): Promise<EventPreview | null> {
   cacheTag(PUBLIC_EVENTS_TAG);
   cacheLife("hours");
   const { data, error } = await createPublicClient().rpc("event_preview", { p_id: id });
-  if (error) throw new Error("event_preview failed", { cause: error.code });
+  if (error) {
+    // Logged here: in a production build an error leaving a cached function reaches the caller masked (learnings).
+    console.error("event_preview failed", { code: error.code });
+    throw new Error("event_preview failed", { cause: error.code });
+  }
   return parsePreviewRows(data);
 }

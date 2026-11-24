@@ -11,13 +11,19 @@
 // ride says "İptal edildi". A malformed id and an unknown uuid are the 404 page. The pending user gets the card and
 // "Başvur" but no "Giriş yap"; pending-app reads "Başvurun inceleniyor" and no "Başvur". The page `<head>` (fetched
 // as WhatsApp's crawler, which gets blocking metadata) has the event title as `og:title`, kind · day · area as
-// `og:description` (English on `/en`), "İptal edildi · " first for a cancelled event, no start time, and noindex.
+// `og:description` (English on `/en`), "İptal edildi · " first for a cancelled event, no start time, and noindex;
+// `og:url` is the lowercased id even when the link has capitals. Link-preview image (`opengraph-image`): the page's
+// `og:image` (and `twitter:image`) points to it; it answers 200 `image/png` 1200x630 for a ride, a meet-up, a cancelled
+// ride, an 80-character title with Turkish capitals, `/en`, an unknown uuid and a malformed id (the last two: the
+// generic club card). The PNGs go to OUT_DIR (`og-*.png`): look at them (layout, Turkish glyphs, two lines then an
+// ellipsis, English text on `/en`).
 // Cached reads: the preview is read per event id through `"use cache"` (`getEventPreview`, tag `events-public`), and
 // rows planted by psql never expire that cache. The script plants its rows (fixed ids, same content every run) before
 // its first request, so a running server is fine; after changing the fixtures below, restart the server (or rebuild).
 // Fixture rows (events titled "E2E Önizleme …" with fixed ids) are planted and deleted through `docker exec psql`
 // (DB_CONTAINER, local only) before and after the run. Env: PUPPETEER_DIR (required), OUT_DIR (screenshots), BASE_URL.
 import { execFileSync } from "node:child_process";
+import { writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { launch, newPage, signIn } from "./e2e-lib.mjs";
@@ -53,6 +59,12 @@ const CANCELLED = {
   title: "E2E Önizleme İptal Sürüş",
   area: "Kadıköy → Şile",
 };
+// 80 characters (the maximum) with Turkish capitals and lowercase letters early, so they show before the ellipsis.
+const LONG = {
+  id: "00000000-0000-4000-8000-00000000e404",
+  title: "İĞNEADA ŞİLE ÇÖĞÜŞ TURU: ığdır şüçö Kıyı Yolu, Ağva ve Ömerli Üzerinden Gün Boyu",
+  area: "Şişli → İğneada, Gümüşçay",
+};
 const UNKNOWN = "00000000-0000-4000-8000-00000000e4ff";
 // Never in a public page: place names, the start time, the description.
 const SECRET = { place: "E2E Gizli", time: "08:30", description: "E2E gizli açıklama" };
@@ -62,7 +74,7 @@ const at = (days, hhmm) =>
   `(((now() at time zone 'Europe/Istanbul')::date + ${days}) + time '${hhmm}') at time zone 'Europe/Istanbul'`;
 
 function clean() {
-  sql(`delete from events where id in ('${RIDE.id}', '${MEETUP.id}', '${CANCELLED.id}')`);
+  sql(`delete from events where id in ('${RIDE.id}', '${MEETUP.id}', '${CANCELLED.id}', '${LONG.id}')`);
 }
 function plant() {
   clean();
@@ -83,6 +95,12 @@ function plant() {
   );
   sql(
     `insert into event_places (event_id, position, name, lat, lng) values ('${CANCELLED.id}', 0, '${SECRET.place} A', 41.0255, 29.0154), ('${CANCELLED.id}', 1, '${SECRET.place} B', 41.1710, 29.5560)`,
+  );
+  sql(
+    `insert into events (id, kind, title, side, area, starts_at) values ('${LONG.id}', 'ride', '${LONG.title}', 'european', '${LONG.area}', ${at(8, "07:00")})`,
+  );
+  sql(
+    `insert into event_places (event_id, position, name, lat, lng) values ('${LONG.id}', 0, '${SECRET.place} C', 41.0600, 28.9870), ('${LONG.id}', 1, '${SECRET.place} D', 41.8790, 27.9570)`,
   );
 }
 /** The Istanbul day of a planted event, as the page formats it (weekday long, day, month long). */
@@ -245,10 +263,12 @@ async function memberControl() {
     await go(page, `/events/${RIDE.id}`);
     const html = await page.content();
     check(
-      "control: a member gets the full event page (place names, time)",
-      html.includes(SECRET.place) && html.includes(SECRET.time),
+      "control: a member gets the full event page (place names, time, description)",
+      html.includes(SECRET.place) && html.includes(SECRET.time) && html.includes(SECRET.description),
     );
     check("control: a member gets no teaser", (await teaser(page)) === null);
+    await go(page, `/events/${CANCELLED.id}`);
+    check("control: a member reads the cancel reason", (await page.content()).includes("E2E gizli neden"));
   } finally {
     await ctx.close();
   }
@@ -311,6 +331,14 @@ async function metadataChecks() {
       description,
     );
   }
+  {
+    const { html } = await fetchHtml(`/events/${RIDE.id.toUpperCase()}`);
+    check(
+      "meta capitals in the link: og:url has the lowercased id",
+      meta(metas(html), "og:url")?.content === `https://ridevibe.com.tr/events/${RIDE.id}`,
+      meta(metas(html), "og:url")?.content,
+    );
+  }
   for (const p of [`/events/${UNKNOWN}`, "/events/not-a-uuid"]) {
     const { html } = await fetchHtml(p);
     const m = metas(html);
@@ -318,6 +346,68 @@ async function metadataChecks() {
       `meta ${p}: generic (no event title, noindex)`,
       !html.includes("E2E Önizleme") && /noindex/.test(meta(m, "robots")?.content ?? ""),
     );
+  }
+}
+
+/** Width and height from a PNG's IHDR chunk; null when the bytes are not a PNG. */
+function pngSize(bytes) {
+  const signature = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+  if (bytes.length < 24 || signature.some((b, i) => bytes[i] !== b)) return null;
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  return { width: view.getUint32(16), height: view.getUint32(20) };
+}
+
+async function imageChecks() {
+  const { html } = await fetchHtml(`/events/${RIDE.id}`);
+  const m = metas(html);
+  const image = m.find((x) => x.key === "og:image")?.content ?? "";
+  const imageUrl = image ? new URL(image) : null;
+  check(
+    "image: the page's og:image is this event's opengraph-image",
+    imageUrl?.origin === "https://ridevibe.com.tr" && imageUrl.pathname === `/events/${RIDE.id}/opengraph-image`,
+    image,
+  );
+  check("image: og:image in <head> for WhatsApp", m.find((x) => x.key === "og:image")?.inHead === true);
+  check(
+    "image: twitter:image is the same image (large card)",
+    m.find((x) => x.key === "twitter:image")?.content === image &&
+      m.find((x) => x.key === "twitter:card")?.content === "summary_large_image",
+    m.find((x) => x.key === "twitter:image")?.content,
+  );
+  check(
+    "image: og:image:width/height 1200x630, type image/png",
+    m.find((x) => x.key === "og:image:width")?.content === "1200" &&
+      m.find((x) => x.key === "og:image:height")?.content === "630" &&
+      m.find((x) => x.key === "og:image:type")?.content === "image/png",
+  );
+  {
+    const en = metas((await fetchHtml(`/en/events/${RIDE.id}`)).html).find((x) => x.key === "og:image")?.content;
+    check("image /en: og:image under /en", en === `https://ridevibe.com.tr/en/events/${RIDE.id}/opengraph-image`, en);
+  }
+  const query = imageUrl?.search ?? "";
+  const cases = [
+    ["ride", `/events/${RIDE.id}/opengraph-image${query}`],
+    ["meetup", `/events/${MEETUP.id}/opengraph-image`],
+    ["cancelled", `/events/${CANCELLED.id}/opengraph-image`],
+    ["long-title", `/events/${LONG.id}/opengraph-image`],
+    ["en-ride", `/en/events/${RIDE.id}/opengraph-image`],
+    ["en-cancelled", `/en/events/${CANCELLED.id}/opengraph-image`],
+    ["unknown", `/events/${UNKNOWN}/opengraph-image`],
+    ["malformed", "/events/not-a-uuid/opengraph-image"],
+  ];
+  for (const [name, p] of cases) {
+    const res = await fetch(BASE + p, { headers: { "User-Agent": WHATSAPP_UA } });
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    const size = pngSize(bytes);
+    check(
+      `image ${name}: 200 image/png 1200x630`,
+      res.status === 200 &&
+        res.headers.get("content-type") === "image/png" &&
+        size?.width === 1200 &&
+        size.height === 630,
+      `${res.status} ${res.headers.get("content-type")} ${JSON.stringify(size)} ${bytes.length} B, cache-control: ${res.headers.get("cache-control")}`,
+    );
+    if (res.status === 200) await writeFile(path.join(DIR, `og-${name}.png`), bytes);
   }
 }
 
@@ -334,6 +424,7 @@ try {
   if (hasPendingApp) await pendingScenario("pending-app@test.local", 390, 844);
   else console.log("SKIP pending-app@test.local (no linked application with status new/contacted)");
   await metadataChecks();
+  await imageChecks();
 } catch (e) {
   fails++;
   console.log("FAIL unexpected error —", e.stack ?? e);

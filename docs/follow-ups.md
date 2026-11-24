@@ -227,6 +227,12 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   "docs(plan): application gaps implementation plan" commit (2026-11-09): recompute it from the reflog on iltan's PC
   (`docs/learnings/tooling.md`), never write an old SHA into this public repo (it points straight at the old data).
 
+- **Unknown event link: `og:image` goes through a redirect** (2026-11-24, events release Task 5) — a found event
+  names its image URL in its metadata (`eventImageUrl`), but the generic metadata of an unknown or malformed id keeps
+  Next's file-derived URL `/tr/events/<id>/opengraph-image?<hash>`, which the locale proxy 307-redirects to the
+  unprefixed path (the generic club card, 200). Naming it there too means repeating the layout's `openGraph` fields;
+  nobody shares dead links on purpose.
+
 - **Events organiser side: parked edges** (2026-11-21, events organiser side, task reviews) — (a) the event pages
   answer an unknown or gated id with the 404 page but status 200 (soft 404, same as the admin pages); (b) delete
   calls `router.replace("/events")`; the action's `refresh()` could re-render the deleted page first (no flash seen);
