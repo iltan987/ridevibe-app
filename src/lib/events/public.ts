@@ -25,12 +25,20 @@ export async function getTeaserRides(): Promise<{ rides: TeaserRide[]; total: nu
   return { rides, total };
 }
 
-/** The public card of one event (any kind, past or cancelled); null for an unknown id (no request for a malformed one). */
+/**
+ * The public card of one event (any kind, past or cancelled); null for an unknown id. A malformed id returns null
+ * before the cache, so junk URLs make neither a request nor a cache entry.
+ */
 export async function getEventPreview(id: string): Promise<EventPreview | null> {
+  if (!isUuid(id)) return null;
+  // One cache entry per event, whatever the letter case in the URL.
+  return readEventPreview(id.toLowerCase());
+}
+
+async function readEventPreview(id: string): Promise<EventPreview | null> {
   "use cache";
   cacheTag(PUBLIC_EVENTS_TAG);
   cacheLife("hours");
-  if (!isUuid(id)) return null;
   const { data, error } = await createPublicClient().rpc("event_preview", { p_id: id });
   if (error) throw new Error("event_preview failed", { cause: error.code });
   return parsePreviewRows(data);

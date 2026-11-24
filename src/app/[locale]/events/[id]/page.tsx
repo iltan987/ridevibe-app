@@ -1,13 +1,14 @@
 import { Ban, CalendarDays, MapPin, Pencil } from "lucide-react";
 import type { Metadata } from "next";
 import { getFormatter, getLocale, getTranslations } from "next-intl/server";
-import { notFound } from "next/navigation";
+import { notFound, unstable_rethrow } from "next/navigation";
 import { Suspense } from "react";
 import { CancelEventDialog } from "@/components/events/cancel-event-dialog";
 import { ChangeLog, describeChanges } from "@/components/events/change-log";
 import { DeleteEventDialog } from "@/components/events/delete-event-dialog";
 import { EventCounts } from "@/components/events/event-counts";
 import { EventRoster } from "@/components/events/event-roster";
+import { EventTeaser } from "@/components/events/event-teaser";
 import { JoinPanel } from "@/components/events/join-panel";
 import { PlaceActions } from "@/components/events/place-actions";
 import { RouteStrip } from "@/components/events/route-strip";
@@ -17,7 +18,9 @@ import { buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "@/i18n/navigation";
 import { can } from "@/lib/auth/permissions";
-import { requireEventsAccess } from "@/lib/events/access";
+import { getCurrentUser } from "@/lib/auth/user";
+import { canSeeEvents } from "@/lib/events/access";
+import { dayToDate } from "@/lib/events/day";
 import { NO_COUNTS } from "@/lib/events/join";
 import {
   getChangeLog,
@@ -28,17 +31,46 @@ import {
   getRoster,
 } from "@/lib/events/queries";
 import { memberShareText, shareText } from "@/lib/events/places";
+import { getEventPreview } from "@/lib/events/public";
 import { isUuid } from "@/lib/events/signup-rows";
 import { isUpcoming } from "@/lib/events/time";
+import { sharedOpenGraph } from "@/lib/seo/metadata";
 import { eventUrl } from "@/lib/seo/site";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("Events");
-  return { title: t("title"), robots: { index: false } };
+/**
+ * The link preview (events release spec §5.7): the event's public data only (title; kind · day · area, "İptal
+ * edildi · " first when cancelled), in the page's locale, for every viewer; never indexed. Unknown or malformed id: the
+ * generic title. The preview read is cached per id, so this adds no request beside the page's own.
+ */
+export async function generateMetadata({ params }: PageProps<"/[locale]/events/[id]">): Promise<Metadata> {
+  const { id } = await params;
+  const [preview, locale, t, format] = await Promise.all([
+    // A failed read must not take the members' page down with it: generic metadata then (not cached, retried).
+    getEventPreview(id).catch((error: unknown) => {
+      unstable_rethrow(error);
+      console.error("event preview for metadata failed");
+      return null;
+    }),
+    getLocale(),
+    getTranslations("Events"),
+    getFormatter(),
+  ]);
+  if (!preview) return { title: t("title"), robots: { index: false } };
+  const day = format.dateTime(dayToDate(preview.day), { weekday: "long", day: "numeric", month: "long" });
+  const parts = [preview.cancelled && t("cancelled"), t(`kinds.${preview.kind}`), day, preview.area];
+  const description = parts.filter((part) => typeof part === "string").join(" · ");
+  return {
+    title: preview.title,
+    description,
+    // No `images` key: the image comes from the `opengraph-image` file of this segment.
+    openGraph: { ...sharedOpenGraph(locale), url: eventUrl(locale, id), title: preview.title, description },
+    robots: { index: false },
+  };
 }
 
-// The event, its counts, joining, the change box, its places with the map-app menus, the roster per viewer (spec §3),
-// sharing, cancel and delete. Active and ön alım members only (spec §9); the content sits inside the boundary.
+// Club members (active and ön alım, the events gate) get the event, its counts, joining, the change box, its places
+// with the map-app menus, the roster per viewer (spec §3), sharing, cancel and delete; everyone else the event's
+// public card with sign-in / apply (release spec §5.4). The content sits inside the boundary.
 export default async function EventPage({ params }: PageProps<"/[locale]/events/[id]">) {
   const t = await getTranslations("Events");
   return (
@@ -79,9 +111,10 @@ const SHARE_WHEN = {
 
 async function EventContent({ params }: { params: PageProps<"/[locale]/events/[id]">["params"] }) {
   const { id } = await params;
-  const user = await requireEventsAccess(`/events/${id}`);
   // A malformed id is no event (the counts RPC would otherwise fail on the uuid cast and show the error page).
   if (!isUuid(id)) notFound();
+  const user = await getCurrentUser();
+  if (user === null || !(await canSeeEvents())) return <EventTeaser id={id} signedIn={user !== null} />;
   // Viewers (spec §3): organisers see everyone with flags; active members the active participants' names while the
   // event is upcoming; ön alım members counts only. Every viewer here is active or ön alım (the gate).
   const organiser = can(user.access, "events.manage");

@@ -20,7 +20,7 @@ import { UPCOMING_GRACE_MS } from "./time";
 
 export type { ChangeEntry, ChangeField, RosterRow } from "./signup-rows";
 
-// RLS on events / event_places decides who reads (release gate: events.manage only); for anyone else these are empty.
+// RLS on events / event_places decides who reads (the events gate: club members); for anyone else these are empty.
 
 /** A place as the pages, `navLinks` and the form use it. */
 export type EventPlace = NavPlace;

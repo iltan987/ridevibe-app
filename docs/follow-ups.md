@@ -27,7 +27,6 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   navigation review (below). Restore iltan's local admin before any local browser review (the build reset the local
   DB: iltan signs in with Google locally once, then set the admin role by SQL).
   Leftovers that still say or do "organisers only" once the body flips (final review): comments in
-  `src/lib/events/access.ts:11`, `src/lib/events/queries.ts:23`, `src/app/[locale]/events/[id]/page.tsx:39-41`,
   `src/app/[locale]/events/past/page.tsx:21-22`, `src/app/[locale]/events/page.tsx:30`; `scripts/e2e/events-e2e.mjs`
   `gateScenario` (~555-619: expects `member@` to get "Çok yakında" / a 404); `events-join-e2e.mjs`'s gate
   open/restore and its hard-coded "gate restored to organisers only" check; spec §6 "Members get a plain share of the

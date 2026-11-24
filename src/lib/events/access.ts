@@ -8,8 +8,8 @@ import { createClient } from "@/lib/supabase/server";
 type Href = Parameters<typeof getPathname>[0]["href"];
 
 /**
- * Whether the signed-in user may see events: the database gate (`private.can_see_events`, release gate: organisers
- * only until the joining branch ships). False without a session (no request) and on an error (the code is logged).
+ * Whether the signed-in user may see events: the database gate (`private.can_see_events`: club members, active and
+ * ön alım). False without a session (no request) and on an error (the code is logged).
  * Deduplicated per request; reads the session, so render behind <Suspense>.
  */
 export const canSeeEvents = cache(async (): Promise<boolean> => {
@@ -23,7 +23,7 @@ export const canSeeEvents = cache(async (): Promise<boolean> => {
   return data;
 });
 
-/** Page gate for event routes: signed out → sign-in, no access → 404. */
+/** Page gate for members-only event routes (`/events/past`): signed out → sign-in, no access → 404. */
 export function requireEventsAccess(returnTo: Href) {
   return requireAccess(returnTo, () => canSeeEvents());
 }

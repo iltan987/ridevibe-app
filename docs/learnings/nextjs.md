@@ -249,3 +249,19 @@ Bundled docs are the source of truth: `node_modules/next/dist/docs/` (grep them 
   Rows planted by psql never expire the tag; only `updateTag` / `revalidateTag` or the lifetime do: E2E that checks
   cached data plants fixtures before `pnpm build && pnpm start`, or edits through the organiser UI.
 - **Source:** `01-directives/use-cache.md`, `04-functions/cacheLife.md`, `updateTag.md`; the spike above.
+
+### `generateMetadata` reading params + a cached read: streamed for browsers, in `<head>` only for listed bots (2026-11-24)
+- **Need:** per-event link previews on `/events/[id]` (`generateMetadata({ params })` → `getEventPreview(id)`, a
+  `"use cache"` read) under Cache Components.
+- **Observed:** `pnpm build` accepts it with no marker: the page already has request-time content behind
+  `<Suspense>` (the session), so metadata just defers with it (`generate-metadata.md`, "With Cache Components"; only an
+  otherwise fully prerenderable page would need `"use cache"` in `generateMetadata` or a dynamic marker). The tags
+  then **stream**: for a normal browser (`curl`, `fetch` with Node's UA) `og:title` etc. arrive at the end of
+  `<body>`; for an HTML-limited bot (`HTML_LIMITED_BOT_UA_RE` in `next/dist/shared/lib/router/utils/html-bots.js`:
+  WhatsApp, facebookexternalhit, Twitterbot, Slackbot, Discordbot, LinkedInBot, …; Telegram's
+  "TelegramBot (like TwitterBot)" matches via "TwitterBot") rendering blocks and they are in `<head>`.
+- **Do:** check preview tags with a bot user agent (`User-Agent: WhatsApp/2.23.20.0 A`) and assert they sit before
+  `</head>` (`scripts/e2e/events-public-e2e.mjs`); a body-only match from a plain `fetch` proves nothing about previews.
+  Keep the uuid check outside the cached function so junk ids make no cache entry (`getEventPreview` →
+  `readEventPreview`).
+- **Source:** bundled `generate-metadata.md` ("Streaming metadata", "With Cache Components"); found by testing.

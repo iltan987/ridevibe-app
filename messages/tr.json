@@ -230,6 +230,10 @@
     "pastEmpty": "Henüz geçmiş etkinlik yok.",
     "ceiling": "Liste eksik: 2.000'den fazla yaklaşan etkinlik var, yalnızca ilk 2.000 etkinlik gösteriliyor. Lütfen yöneticilere haber ver.",
     "backToList": "Etkinliklere dön",
+    "teaser": {
+      "signIn": "Giriş yap",
+      "apply": "Başvur"
+    },
     "detail": {
       "when": "Tarih:",
       "area": "Bölge:",

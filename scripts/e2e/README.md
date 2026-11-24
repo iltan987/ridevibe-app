@@ -105,6 +105,20 @@ Run against a **local** stack only (local Supabase + a server on port 3123); nev
   Plants and deletes its rows (events titled `E2E Katılım …` / `E2E Sadece Tam …` with their sign-ups and change
   log, the member's `E2E` bike) through `docker exec … psql` (`DB_CONTAINER`, local only) before and after. Other
   upcoming events are fine. Screenshots go to `OUT_DIR`.
+- `events-public-e2e.mjs` — events for non-members (PASS/FAIL lines, exit code != 0 on failure; 390px and 1280px).
+  Signed out on a planted ride: the event's card (title, area, kind; no link), "Giriş yap" back to the event via
+  `?next=` and "Başvur"; no place name, start time, description or cancel reason in the HTML; a meet-up has no area
+  line, a cancelled ride says "İptal edildi" (struck title); a malformed id and an unknown uuid are 404s.
+  `pending-noapp@test.local` gets the card and "Başvur" but no "Giriş yap"; `pending-app@test.local` (linked
+  application `new`/`contacted`; SKIP without it) reads "Başvurun inceleniyor". Positive control: `member@test.local`
+  gets the full event page. Link preview, fetched as WhatsApp's crawler (bots get the tags in `<head>`, browsers get
+  them streamed into `<body>`, `docs/learnings/nextjs.md`): `og:title` = title, `og:description` = kind · day · area
+  ("İptal edildi · " first when cancelled; English on `/en`), `og:url`, `og:locale`, noindex, no start time; generic
+  for unknown ids. The preview is a cached read per event id (`"use cache"`): the script plants its rows (fixed ids,
+  same content every run) before its first request, so a running server is fine; after changing the fixtures, restart
+  it. Needs `pnpm start -p 3123`, local email sign-in and those users (recipe in `probation-e2e.mjs`). Plants and
+  deletes its rows (events titled `E2E Önizleme …`, fixed ids) through `docker exec … psql` (`DB_CONTAINER`, local
+  only). Screenshots go to `OUT_DIR`.
 - `header-e2e.mjs` — `<head>` theme script across a language switch and an unknown path (theme kept, client-created
   script inert, no React "script tag" warning), theme sync to other tabs, no colour transitions on a theme switch, the
   user-menu skeleton (signed out: button; signed in: the avatar, photo kept on a language switch; language button

@@ -230,6 +230,10 @@
     "pastEmpty": "No past events yet.",
     "ceiling": "This list is incomplete: there are more than 2,000 upcoming events and only the first 2,000 are shown. Please tell the admins.",
     "backToList": "Back to events",
+    "teaser": {
+      "signIn": "Sign in",
+      "apply": "Apply"
+    },
     "detail": {
       "when": "Date:",
       "area": "Area:",
