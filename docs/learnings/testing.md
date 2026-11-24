@@ -122,6 +122,17 @@
 - **Source:** found by testing (loading-states Task 6). Wrapping hints (`FieldDescription`) change heights between
   390px and 1280px, so measure both viewports.
 
+### JS off also stops the hint scripts: signed-in fallbacks measured in their signed-out shape (2026-11-24)
+- **Symptom:** `skeletons.mjs` measured the `/events` teaser skeleton for `member@` (the members' skeleton never
+  showed), and the user-menu skeleton 4px short (28px button box against the 32px avatar) for every signed-in state.
+- **Cause:** `setJavaScriptEnabled(false)` also stops the inline hint scripts (`sessionHintScript`,
+  `sessionHintParentScript`, `applyHintScript`) that set `data-session` / `data-apply-hidden` before first paint in a
+  real browser, so every session-shaped fallback stayed in its signed-out shape.
+- **Do:** `skeletons.mjs` replays every inline script that reads `currentScript` after a JS-off load
+  (`page.evaluate` still works: `new Function("document", text)` with `{ cookie, currentScript: script, defaultView }`).
+  Read older "user-menu −4" rows for signed-in states as this artifact.
+- **Source:** found by testing (events release Task 6).
+
 ### Members E2E fixtures: plant `side`, use `docker exec -i`, measure skeletons against a typical card (2026-11-10)
 - **Symptom 1:** the "Avrupa" side chip showed 0 members and a fixture card showed "Beşiktaş" without "· Avrupa", although
   `district` was set. **Cause:** `profiles.side` is derived by the app (`updateLocation`), not by a trigger; profiles

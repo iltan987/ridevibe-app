@@ -18,8 +18,9 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t("pastTitle"), robots: { index: false } };
 }
 
-// Past events grow without bound: paged on the server (`?page=N`) like /admin/applications. Organisers only during
-// the release gate (spec §9); the heading sits inside the boundary so nobody else learns the page exists.
+// Past events grow without bound: paged on the server (`?page=N`) like /admin/applications. Club members only
+// (`requireEventsAccess`: signed out → sign-in, others → 404); the heading sits inside the boundary so non-members
+// don't learn the page exists.
 export default function PastEventsPage({ searchParams }: PageProps<"/[locale]/events/past">) {
   return (
     <section className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8">

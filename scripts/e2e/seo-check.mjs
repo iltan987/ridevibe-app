@@ -59,10 +59,12 @@ const canonical = (html) => tags(html, "link").find((l) => l.rel === "canonical"
   check("robots.txt Sitemap line", r.body.includes(`Sitemap: ${SITE}/sitemap.xml`));
   const s = await get("/sitemap.xml");
   const locs = [...s.body.matchAll(/<loc>([^<]*)<\/loc>/g)].map((m) => m[1]).sort();
-  const want = [`${SITE}`, `${SITE}/apply`, `${SITE}/en`, `${SITE}/en/apply`].map(norm).sort();
+  const want = [`${SITE}`, `${SITE}/apply`, `${SITE}/events`, `${SITE}/en`, `${SITE}/en/apply`, `${SITE}/en/events`]
+    .map(norm)
+    .sort();
   check("sitemap.xml 200", s.status === 200 && /xml/.test(s.res.headers.get("content-type") ?? ""));
   check(
-    "sitemap.xml has exactly the four URLs",
+    "sitemap.xml has exactly the six URLs",
     JSON.stringify(locs.map(norm)) === JSON.stringify(want),
     locs.join(" "),
   );
@@ -74,6 +76,8 @@ const pages = [
   { path: "/en", url: `${SITE}/en`, locale: "en_US", alt: "tr_TR" },
   { path: "/apply", url: `${SITE}/apply`, locale: "tr_TR", alt: "en_US" },
   { path: "/en/apply", url: `${SITE}/en/apply`, locale: "en_US", alt: "tr_TR" },
+  { path: "/events", url: `${SITE}/events`, locale: "tr_TR", alt: "en_US" },
+  { path: "/en/events", url: `${SITE}/en/events`, locale: "en_US", alt: "tr_TR" },
 ];
 const heads = {};
 for (const p of pages) {
@@ -115,6 +119,15 @@ check(
   "/apply and /en/apply descriptions differ",
   one(heads["/apply"], "description") !== one(heads["/en/apply"], "description"),
 );
+check("/events and /en/events titles differ", title(heads["/events"]) !== title(heads["/en/events"]));
+check(
+  "/events and /en/events descriptions differ",
+  one(heads["/events"], "description") !== one(heads["/en/events"], "description"),
+);
+check(
+  "/events description is its own (not the site's)",
+  one(heads["/events"], "description") !== one(heads["/"], "description"),
+);
 
 // query strings do not leak into canonical
 {
@@ -124,17 +137,7 @@ check(
 }
 
 // noindex
-for (const path of [
-  "/privacy",
-  "/en/privacy",
-  "/events",
-  "/en/events",
-  "/gallery",
-  "/en/gallery",
-  "/members",
-  "/account",
-  "/sign-in",
-]) {
+for (const path of ["/privacy", "/en/privacy", "/gallery", "/en/gallery", "/members", "/account", "/sign-in"]) {
   const { res, body } = await get(path);
   const robots = one(body, "robots") ?? "";
   check(

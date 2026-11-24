@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import vm from "node:vm";
-import { hasSessionCookie, sessionHintScript } from "./session-hint.ts";
+import { hasSessionCookie, sessionHintParentScript, sessionHintScript } from "./session-hint.ts";
 
 const SIGNED_IN = [
   "sb-127-auth-token=base64-abc",
@@ -39,4 +39,19 @@ test("sessionHintScript marks the previous sibling exactly when hasSessionCookie
   for (const c of SIGNED_IN) assert.equal(runScript(c).get("data-session"), "", c);
   for (const c of SIGNED_OUT) assert.equal(runScript(c).has("data-session"), false, c);
   assert.doesNotThrow(() => runScript(SIGNED_IN[0], false));
+});
+
+/** Same for the first-child variant: returns the attributes set on the script's parent element. */
+function runParentScript(cookie: string, hasParent = true) {
+  const attrs = new Map<string, string>();
+  const el = { setAttribute: (k: string, v: string) => attrs.set(k, v) };
+  const context = { document: { cookie, currentScript: { parentElement: hasParent ? el : null } } };
+  vm.runInNewContext(sessionHintParentScript, context);
+  return attrs;
+}
+
+test("sessionHintParentScript marks its parent exactly when hasSessionCookie is true", () => {
+  for (const c of SIGNED_IN) assert.equal(runParentScript(c).get("data-session"), "", c);
+  for (const c of SIGNED_OUT) assert.equal(runParentScript(c).has("data-session"), false, c);
+  assert.doesNotThrow(() => runParentScript(SIGNED_IN[0], false));
 });

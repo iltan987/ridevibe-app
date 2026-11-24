@@ -1,11 +1,19 @@
-// Events for non-members: the per-event teaser page and its link-preview metadata (PASS/FAIL lines, exit code != 0 on
-// failure). Needs a production server on :3123 (pnpm build && pnpm start -p 3123) and email sign-in enabled locally
-// (docs/learnings/testing.md, "Testing as a signed-in user locally") with these fixtures:
-//   member@test.local        active, no role (the positive control: members still get the full event page)
+// Events for non-members: the `/events` teaser list, the per-event teaser page and its link-preview metadata (PASS/FAIL
+// lines, exit code != 0 on failure). Needs a production server on :3123 (pnpm build && pnpm start -p 3123) and email
+// sign-in enabled locally (docs/learnings/testing.md, "Testing as a signed-in user locally") with these fixtures:
+//   admin@test.local         active, admin role (the organiser who expires the cached list, see below)
+//   member@test.local        active, no role (the positive control: members still get the full list and event page)
 //   pending-noapp@test.local pending, no application
 //   pending-app@test.local   pending, one linked application with status `new` (optional: SKIP without it)
 // Fixture recipe: the header of scripts/e2e/probation-e2e.mjs (pending users: keep status `pending`; link the
 // application of pending-app via `applications.profile_id`, scripts/e2e/README.md).
+// `/events` signed out (390px and 1280px; `/en/events` once): the heading "Etkinlikler", the intro, the total line, the
+// planted upcoming rides in day order (a ride planted last but earliest comes first) as cards that link nowhere,
+// "Kulübe Başvur" and "Giriş yap" (back to `/events`); the HTML holds no meet-up, cancelled or past ride, place name,
+// start time, description or `/events/<id>` link. The pending users get the list and no "Giriş yap"; pending-app no
+// "Kulübe Başvur".
+// The member gets the 2a list (chips, card links, the meet-up and the cancelled ride: the positive controls). With
+// no upcoming ride left: the empty state (SKIP when the DB holds other upcoming rides).
 // Signed out, on a planted ride: the card (title, area, day; no link), "Giriş yap" (back to this event via `?next=`)
 // and "Başvur"; the HTML holds no place name, start time or description. A meet-up shows no area line; a cancelled
 // ride says "İptal edildi". A malformed id and an unknown uuid are the 404 page. The pending user gets the card and
@@ -17,9 +25,11 @@
 // ride, an 80-character title with Turkish capitals, `/en`, an unknown uuid and a malformed id (the last two: the
 // generic club card). The PNGs go to OUT_DIR (`og-*.png`): look at them (layout, Turkish glyphs, two lines then an
 // ellipsis, English text on `/en`).
-// Cached reads: the preview is read per event id through `"use cache"` (`getEventPreview`, tag `events-public`), and
-// rows planted by psql never expire that cache. The script plants its rows (fixed ids, same content every run) before
-// its first request, so a running server is fine; after changing the fixtures below, restart the server (or rebuild).
+// Cached reads: the list (`getTeaserRides`) and the preview per event id (`getEventPreview`) are `"use cache"` reads
+// tagged `events-public`, and rows planted by psql never expire that cache. So the script plants its rows (fixed ids,
+// same content every run) and then expires the tag through the organiser UI: admin@ cancels a planted ride (FLUSH,
+// set back to scheduled by psql first), and `cancelEvent` calls `updateTag`. It does that again after deleting the
+// listed rides for the empty state. A running server is fine: no restart or rebuild needed.
 // Fixture rows (events titled "E2E Önizleme …" with fixed ids) are planted and deleted through `docker exec psql`
 // (DB_CONTAINER, local only) before and after the run. Env: PUPPETEER_DIR (required), OUT_DIR (screenshots), BASE_URL.
 import { execFileSync } from "node:child_process";
@@ -40,7 +50,7 @@ const check = (name, ok, extra = "") => {
 const sql = (q) =>
   execFileSync("docker", ["exec", DB, "psql", "-U", "postgres", "-tA", "-c", q], { encoding: "utf8" }).trim();
 
-for (const who of ["member", "pending-noapp"]) {
+for (const who of ["admin", "member", "pending-noapp"]) {
   if (!sql(`select id from auth.users where email = '${who}@test.local'`)) {
     console.log(`FAIL fixture ${who}@test.local is missing (recipe in the header)`);
     process.exit(1);
@@ -65,6 +75,13 @@ const LONG = {
   title: "İĞNEADA ŞİLE ÇÖĞÜŞ TURU: ığdır şüçö Kıyı Yolu, Ağva ve Ömerli Üzerinden Gün Boyu",
   area: "Şişli → İğneada, Gümüşçay",
 };
+// The `/events` list: a ride planted last but earliest (the order comes from the day), a past ride (never listed) and
+// the ride the organiser cancels through the UI to expire the cached list (`expireTeaserList`).
+const EARLY = { id: "00000000-0000-4000-8000-00000000e405", title: "E2E Önizleme Riva Sürüşü", area: "Beykoz → Riva" };
+const PAST = { id: "00000000-0000-4000-8000-00000000e406", title: "E2E Önizleme Geçmiş Sürüş" };
+const FLUSH = { id: "00000000-0000-4000-8000-00000000e407", title: "E2E Önizleme Önbellek Sürüşü" };
+const LISTED = [EARLY, RIDE, LONG];
+const ALL_IDS = [RIDE, MEETUP, CANCELLED, LONG, EARLY, PAST, FLUSH].map((e) => `'${e.id}'`).join(", ");
 const UNKNOWN = "00000000-0000-4000-8000-00000000e4ff";
 // Never in a public page: place names, the start time, the description.
 const SECRET = { place: "E2E Gizli", time: "08:30", description: "E2E gizli açıklama" };
@@ -74,7 +91,7 @@ const at = (days, hhmm) =>
   `(((now() at time zone 'Europe/Istanbul')::date + ${days}) + time '${hhmm}') at time zone 'Europe/Istanbul'`;
 
 function clean() {
-  sql(`delete from events where id in ('${RIDE.id}', '${MEETUP.id}', '${CANCELLED.id}', '${LONG.id}')`);
+  sql(`delete from events where id in (${ALL_IDS})`);
 }
 function plant() {
   clean();
@@ -101,6 +118,15 @@ function plant() {
   );
   sql(
     `insert into event_places (event_id, position, name, lat, lng) values ('${LONG.id}', 0, '${SECRET.place} C', 41.0600, 28.9870), ('${LONG.id}', 1, '${SECRET.place} D', 41.8790, 27.9570)`,
+  );
+  sql(
+    `insert into events (id, kind, title, side, area, starts_at) values ('${EARLY.id}', 'ride', '${EARLY.title}', 'asian', '${EARLY.area}', ${at(1, "09:00")})`,
+  );
+  sql(
+    `insert into events (id, kind, title, side, area, starts_at) values ('${PAST.id}', 'ride', '${PAST.title}', 'asian', 'Kadıköy → Polonezköy', ${at(-2, "09:00")})`,
+  );
+  sql(
+    `insert into events (id, kind, title, side, area, starts_at) values ('${FLUSH.id}', 'ride', '${FLUSH.title}', 'european', 'Şişli → Kilyos', ${at(30, "09:00")})`,
   );
 }
 /** The Istanbul day of a planted event, as the page formats it (weekday long, day, month long). */
@@ -274,6 +300,228 @@ async function memberControl() {
   }
 }
 
+async function until(page, fn, arg, ms = 10000) {
+  const t0 = Date.now();
+  while (Date.now() - t0 < ms) {
+    const v = await page.evaluate(fn, arg).catch(() => null);
+    if (v) return v;
+    await sleep(100);
+  }
+  return null;
+}
+/** Clicks the first visible element matching selector and text (regexp source); false when there is none. */
+async function click(page, selector, text) {
+  const handle = await page.evaluateHandle(
+    (selector, text) =>
+      [...document.querySelectorAll(selector)].find(
+        (e) => e.getBoundingClientRect().width > 0 && new RegExp(text).test(e.textContent),
+      ) ?? null,
+    selector,
+    text,
+  );
+  const el = handle.asElement();
+  if (!el) return false;
+  await el.evaluate((b) => b.scrollIntoView({ block: "center" })); // the fixed tab bar would eat the click
+  await el.click();
+  return true;
+}
+
+/**
+ * Expires the cached public reads (tag `events-public`) the way production does: the organiser cancels FLUSH through
+ * the UI (`cancelEvent` calls `updateTag`). FLUSH is set back to scheduled by psql first, so this works every time.
+ */
+async function expireTeaserList() {
+  sql(`update events set status = 'scheduled', cancelled_at = null, cancel_reason = null where id = '${FLUSH.id}'`);
+  const ctx = await browser.createBrowserContext();
+  const page = await newPage(ctx, { width: 1280, height: 900 });
+  try {
+    await signIn(page, "admin@test.local", BASE);
+    await go(page, `/events/${FLUSH.id}`);
+    if (!(await click(page, "button", "Etkinliği iptal et"))) throw new Error('organiser: no "Etkinliği iptal et"');
+    if (!(await until(page, () => !!document.querySelector("[role=alertdialog] textarea"))))
+      throw new Error("organiser: no cancel dialog");
+    await click(page, "[role=alertdialog] button", "^\\s*İptal et\\s*$");
+    for (let i = 0; i < 100 && sql(`select status from events where id = '${FLUSH.id}'`) !== "cancelled"; i++)
+      await sleep(100);
+    if (sql(`select status from events where id = '${FLUSH.id}'`) !== "cancelled")
+      throw new Error("organiser: FLUSH was not cancelled");
+    await sleep(300); // the action's response (and its updateTag) has landed
+  } finally {
+    await ctx.close();
+  }
+}
+
+/** The visible `/events` teaser: heading, intro, total line, card titles, links. Null when not shown. */
+const eventsTeaser = (page) =>
+  page.evaluate(() => {
+    const visible = (e) => e.getBoundingClientRect().width > 0;
+    const root = [...document.querySelectorAll("[data-skeleton-result=events-teaser]")].find(visible);
+    if (!root) return null;
+    return {
+      h1: [...root.querySelectorAll("h1")].map((h) => h.textContent.trim()),
+      intro: root.querySelector("[data-skeleton-result=events-teaser-intro] p")?.textContent.trim() ?? "",
+      total: root.querySelector("[data-skeleton-result=events-teaser-total]")?.textContent.trim() ?? null,
+      titles: [...root.querySelectorAll("article h2")].map((h) => h.textContent.trim()),
+      text: root.innerText,
+      links: [...root.querySelectorAll("a")].filter(visible).map((a) => [a.textContent.trim(), a.getAttribute("href")]),
+      cardLinks: root.querySelectorAll("article a").length,
+    };
+  });
+/** Links to an event page (`/events/<uuid>`) anywhere in the HTML (markup and RSC payload). */
+const eventLinks = (html) => html.match(/\/events\/[0-9a-f]{8}-[0-9a-f]{4}-/gi) ?? [];
+/** The planted titles among the listed ones (the DB may hold other rides). */
+const PLANTED = (titles) =>
+  titles.filter((t) => [RIDE, MEETUP, CANCELLED, LONG, EARLY, PAST, FLUSH].some((e) => e.title === t));
+
+async function listSignedOutScenario(width, height) {
+  const label = `${width}px signed out /events`;
+  const ctx = await browser.createBrowserContext();
+  const page = await newPage(ctx, { width, height });
+  try {
+    await go(page, "/events");
+    const list = await eventsTeaser(page);
+    check(`${label}: teaser shown`, list !== null);
+    if (!list) return;
+    check(`${label}: heading "Etkinlikler"`, JSON.stringify(list.h1) === '["Etkinlikler"]', JSON.stringify(list.h1));
+    check(`${label}: intro about the weekend rides`, list.intro.includes("hafta sonu"), list.intro);
+    check(`${label}: total line`, /^\d+ yaklaşan sürüş$/.test(list.total ?? ""), list.total);
+    check(
+      `${label}: planted rides in day order`,
+      JSON.stringify(PLANTED(list.titles)) === JSON.stringify(LISTED.map((e) => e.title)),
+      JSON.stringify(list.titles),
+    );
+    check(`${label}: area line`, list.text.includes(RIDE.area), list.text);
+    check(`${label}: cards link nowhere`, list.cardLinks === 0);
+    const signInLink = list.links.find(([text]) => text === "Giriş yap");
+    const next = signInLink ? new URL(signInLink[1], BASE) : null;
+    check(
+      `${label}: "Giriş yap" returns to /events`,
+      next?.pathname === "/sign-in" && next.searchParams.get("next") === "/events",
+      JSON.stringify(list.links),
+    );
+    check(
+      `${label}: "Kulübe Başvur" goes to /apply`,
+      list.links.some(([text, href]) => text === "Kulübe Başvur" && href.startsWith("/apply")),
+      JSON.stringify(list.links),
+    );
+    const html = await page.content();
+    for (const [what, title] of [
+      ["meet-up", MEETUP.title],
+      ["cancelled ride", CANCELLED.title],
+      ["past ride", PAST.title],
+      ["cancelled FLUSH ride", FLUSH.title],
+    ])
+      check(`${label}: HTML holds no ${what}`, !html.includes(title));
+    for (const [what, value] of Object.entries(SECRET)) check(`${label}: HTML holds no ${what}`, !html.includes(value));
+    check(`${label}: HTML holds no /events/<id> link`, eventLinks(html).length === 0, eventLinks(html).join(" "));
+    await page.screenshot({ path: path.join(DIR, `events-public-list-${width}.png`), fullPage: true });
+
+    if (width === 1280) {
+      await go(page, "/en/events");
+      const en = await eventsTeaser(page);
+      check('/en/events signed out: heading "Events"', JSON.stringify(en?.h1) === '["Events"]', JSON.stringify(en?.h1));
+      check("/en/events signed out: English total line", /^\d+ upcoming rides?$/.test(en?.total ?? ""), en?.total);
+      const enSignIn = en?.links.find(([text]) => text === "Sign in");
+      const enNext = enSignIn ? new URL(enSignIn[1], BASE) : null;
+      check(
+        '/en/events signed out: "Sign in" returns to /en/events',
+        enNext?.pathname === "/en/sign-in" && enNext.searchParams.get("next") === "/en/events",
+        JSON.stringify(en?.links),
+      );
+    }
+  } finally {
+    await ctx.close();
+  }
+}
+
+async function listPendingScenario(email) {
+  const label = `390px ${email} /events`;
+  const ctx = await browser.createBrowserContext();
+  const page = await newPage(ctx);
+  try {
+    await signIn(page, email, BASE);
+    await go(page, "/events");
+    const list = await eventsTeaser(page);
+    check(
+      `${label}: teaser with the planted rides`,
+      JSON.stringify(PLANTED(list?.titles ?? [])) === JSON.stringify(LISTED.map((e) => e.title)),
+      JSON.stringify(list?.titles),
+    );
+    if (!list) return;
+    check(
+      `${label}: no "Giriş yap"`,
+      !list.links.some(([, href]) => href.includes("/sign-in")),
+      JSON.stringify(list.links),
+    );
+    const apply = list.links.some(([text, href]) => text === "Kulübe Başvur" && href.startsWith("/apply"));
+    if (email === "pending-noapp@test.local") check(`${label}: "Kulübe Başvur"`, apply, JSON.stringify(list.links));
+    else check(`${label}: no "Kulübe Başvur" (application under review)`, !apply, JSON.stringify(list.links));
+    check(`${label}: HTML holds no /events/<id> link`, eventLinks(await page.content()).length === 0);
+  } finally {
+    await ctx.close();
+  }
+}
+
+async function listMemberControl() {
+  const label = "control: member /events";
+  const ctx = await browser.createBrowserContext();
+  const page = await newPage(ctx);
+  try {
+    await signIn(page, "member@test.local", BASE);
+    await go(page, "/events");
+    check(`${label} gets no teaser`, (await eventsTeaser(page)) === null);
+    const chips = await page.evaluate(
+      () =>
+        [...document.querySelectorAll("[data-skeleton-result=events-chips]")].filter(
+          (e) => e.getBoundingClientRect().width > 0,
+        ).length,
+    );
+    check(`${label} gets the 2a list (filter chips)`, chips === 1, String(chips));
+    const html = await page.content();
+    check(`${label}: links to the event pages`, html.includes(`/events/${RIDE.id}`) && eventLinks(html).length > 0);
+    check(
+      `${label}: the meet-up and the cancelled ride`,
+      html.includes(MEETUP.title) && html.includes(CANCELLED.title),
+    );
+    check(`${label}: start times`, html.includes(SECRET.time));
+    await go(page, "/events/past");
+    check("control: member /events/past lists the past ride", (await page.content()).includes(PAST.title));
+  } finally {
+    await ctx.close();
+  }
+}
+
+async function listEmptyScenario() {
+  const others = sql(
+    `select count(*) from events where kind = 'ride' and status = 'scheduled' and (starts_at at time zone 'Europe/Istanbul')::date >= (now() at time zone 'Europe/Istanbul')::date and id not in (${ALL_IDS})`,
+  );
+  if (others !== "0") {
+    console.log(`SKIP /events empty state (${others} other upcoming rides in the DB)`);
+    return;
+  }
+  sql(`delete from events where id in (${LISTED.map((e) => `'${e.id}'`).join(", ")})`);
+  await expireTeaserList();
+  const ctx = await browser.createBrowserContext();
+  const page = await newPage(ctx);
+  try {
+    await go(page, "/events");
+    const list = await eventsTeaser(page);
+    check("390px signed out /events, no rides: teaser shown", list !== null);
+    if (!list) return;
+    check("390px signed out /events, no rides: no cards", list.titles.length === 0, JSON.stringify(list.titles));
+    check("390px signed out /events, no rides: empty state", list.text.includes("planlanmış bir sürüş yok"), list.text);
+    check("390px signed out /events, no rides: no total line", list.total === null, list.total);
+    check(
+      '390px signed out /events, no rides: "Kulübe Başvur" and "Giriş yap" stay',
+      list.links.some(([text]) => text === "Kulübe Başvur") && list.links.some(([text]) => text === "Giriş yap"),
+      JSON.stringify(list.links),
+    );
+    await page.screenshot({ path: path.join(DIR, "events-public-list-empty-390.png"), fullPage: true });
+  } finally {
+    await ctx.close();
+  }
+}
+
 async function metadataChecks() {
   const meta = (list, key) => list.find((m) => m.key === key);
   {
@@ -413,6 +661,16 @@ async function imageChecks() {
 
 try {
   plant();
+  await expireTeaserList();
+  await listMemberControl();
+  for (const [width, height] of [
+    [390, 844],
+    [1280, 900],
+  ]) {
+    await listSignedOutScenario(width, height);
+  }
+  await listPendingScenario("pending-noapp@test.local");
+  if (hasPendingApp) await listPendingScenario("pending-app@test.local");
   await memberControl();
   for (const [width, height] of [
     [390, 844],
@@ -425,6 +683,8 @@ try {
   else console.log("SKIP pending-app@test.local (no linked application with status new/contacted)");
   await metadataChecks();
   await imageChecks();
+  // Last: it deletes the listed rides.
+  await listEmptyScenario();
 } catch (e) {
   fails++;
   console.log("FAIL unexpected error —", e.stack ?? e);

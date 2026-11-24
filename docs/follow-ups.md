@@ -15,19 +15,17 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   after iltan's production check below: open the gate (one migration replacing `private.can_see_events()`'s body with
   `select private.is_club_member()`; flip the pgTAP gate assertions in `events.test.sql` / `event_signups.test.sql`
   and drop their in-transaction swap; `events-join-e2e.mjs` then needs no gate swap), visitor teaser (area line
-  only), home section + "Etkinlikleri Gör" hero button (item below), `/events` indexable + sitemap (item below), the
+  only), home section + "Etkinlikleri Gör" hero button (item below), the
   event link back in the share text (`shareText` / `ShareEventButton`, absolute URL from the origin + `getPathname`;
   members would meet a 404 before), a per-event link preview (2026-11-24, iltan: WhatsApp fetches it signed out, so a
   public read of teaser-safe fields only: title, kind, day, area line, "İptal edildi"; never time, places,
   description, counts or names; meet-ups too, unlike the teaser: the link reaches only whom it was shared with; a
   generated Open Graph image per event in the club style, iltan wants it over the generic image; today
   `generateMetadata` in `events/[id]/page.tsx` returns the generic title), privacy notice + one
-  `PRIVACY_NOTICE_VERSION` bump, `<InstallBanner />` on
-  `/events`, per-viewer event-page skeletons and the `/events` list fallback (Loading states below), the
+  `PRIVACY_NOTICE_VERSION` bump, per-viewer event-page skeletons (Loading states below), the
   navigation review (below). Restore iltan's local admin before any local browser review (the build reset the local
   DB: iltan signs in with Google locally once, then set the admin role by SQL).
-  Leftovers that still say or do "organisers only" once the body flips (final review): comments in
-  `src/app/[locale]/events/past/page.tsx:21-22`, `src/app/[locale]/events/page.tsx:30`; `scripts/e2e/events-e2e.mjs`
+  Leftovers that still say or do "organisers only" once the body flips (final review): `scripts/e2e/events-e2e.mjs`
   `gateScenario` (~555-619: expects `member@` to get "Çok yakında" / a 404); `events-join-e2e.mjs`'s gate
   open/restore and its hard-coded "gate restored to organisers only" check; spec §6 "Members get a plain share of the
   event link too" (not built yet). Also for the release: the join panel's focus handling when controls disable or
@@ -210,9 +208,9 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   but no search (it grows without bound, so it isn't loaded whole like `/admin/members`). Add a server-side search
   (debounced, `?q=`) only if staff ask for it.
 
-- **Index `/events` and `/gallery` once they have content** (2026-11-13, SEO round 1) — today they are thin pages
-  (near-empty 200s get reported as soft 404s); make them indexable and add them to `src/app/sitemap.ts` with real
-  content, public events only.
+- **Index `/gallery` once it has content** (2026-11-13, SEO round 1) — today it is a thin page (near-empty 200s get
+  reported as soft 404s); make it indexable and add it to `src/app/sitemap.ts` with real content. (`/events` became
+  indexable with the events release: the public ride teaser.)
 - **Index `/privacy` and add it to the sitemap when the notice is final** (2026-11-13, SEO round 1) — it stays
   `noindex` while the notice is a draft.
 - **Event structured data only for public events at a physical place** (2026-11-13, SEO round 1) — members-only rides
@@ -579,12 +577,16 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   review"; harmless).
 
 ### Loading states
-- **`/events` shows "Çok yakında" while an organiser's list loads** (2026-11-21, events organiser side; ruling R3) —
-  during the release gate the page's fallback is `ComingSoon` (what everyone but organisers keeps), so organisers see
-  a "coming soon" flash before their list. The release (2b) makes `EventsSkeleton` (chips incl. "Katıldıklarım",
-  `w-34` estimated; create button) the fallback; measure it then with `scripts/e2e/skeletons.mjs`. Its card is
-  measured on `/events/past` (Δh 0, 2026-11-22), but a joined card's badge row ("Katılıyorsun" + kind + side) may
-  wrap to two lines at 375px. `CardCounts` and the card skeleton's counts line have no `data-skeleton` marks.
+- **`/events`: signed-in non-members see the members' skeleton first** (2026-11-24, events release Task 6) — the
+  fallback picks its shape from the session cookie (`SessionHintSwitch`): signed out → `EventsTeaserSkeleton`, a
+  session → `EventsSkeleton` (chips, event cards). Pending, inactive and `deleting` accounts have a session but get the
+  teaser, so they see the wrong skeleton for a moment (layout shift). A per-viewer hint like `apply-hint.ts` (last
+  streamed answer in `localStorage`) could fix it; few such visitors, so accepted.
+- **`/events` member skeleton: a joined card's badge row** (2026-11-21, events organiser side) — `EventsSkeleton` is
+  the `/events` fallback for sessions now (measured 2026-11-24: every block Δh 0 at 390/1280, TR/EN, rides with a
+  route strip), but a joined card's badge row ("Katılıyorsun" + kind + side) may wrap to two lines at 375px, and a
+  meet-up card has no route strip (96px shorter). `CardCounts` and the card skeleton's counts line have no
+  `data-skeleton` marks.
 - **Event page skeleton is the organiser's view** (2026-11-22, events joining) — measured as an organiser who has
   not joined a ride with two sign-ups (every block Δh 0 at 390/1280). Other viewers differ: joined, the panel has a
   summary line (+28px); members see no edit/share or cancel/delete rows and a roster only while the event is
@@ -660,7 +662,8 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   jump a little on load. Accepted: card content varies per member.
 - **Session hint script has the same chunk-boundary risk** (2026-11-14) — `sessionHintScript` (user-menu skeleton)
   still follows its element and marks `previousElementSibling`; the apply hint moved to first-child/`parentElement`
-  (`docs/learnings/ui.md`). Move it too if `header-e2e` ever shows an unmarked frame.
+  (`docs/learnings/ui.md`), and `sessionHintParentScript` (first child, used by `SessionHintSwitch` on `/events`)
+  exists since 2026-11-24. Move the user menu to it too if `header-e2e` ever shows an unmarked frame.
 
 ### Tooling
 - **Dead-code sweep** (2026-11-11, iltan) — iltan wants dead code removed when there is no reason to keep it, and a

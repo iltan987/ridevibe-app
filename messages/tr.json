@@ -2,7 +2,8 @@
   "Metadata": {
     "title": "Ride & Vibe",
     "homeTitle": "Ride & Vibe · İstanbul Motosiklet Kulübü",
-    "description": "İstanbul'un motosiklet kulübü. Hafta sonu sürüşleri, uzun turlar ve yeni dostluklar; her yaştan sürücüye açık. Kulübe başvur."
+    "description": "İstanbul'un motosiklet kulübü. Hafta sonu sürüşleri, uzun turlar ve yeni dostluklar; her yaştan sürücüye açık. Kulübe başvur.",
+    "eventsDescription": "Ride & Vibe'ın yaklaşan sürüşleri: hava uygunsa her hafta sonu İstanbul'dan Şile, Ağva, Riva ya da Polonezköy'e toplu sürüş. Katılmak için kulübe başvur."
   },
   "Nav": {
     "home": "Ana Sayfa",
@@ -232,7 +233,11 @@
     "backToList": "Etkinliklere dön",
     "teaser": {
       "signIn": "Giriş yap",
-      "apply": "Başvur"
+      "apply": "Başvur",
+      "intro": "Hava uygunsa her hafta sonu toplu sürüşe çıkıyoruz; rotaya göre yarım ya da tam gün. Saat ve buluşma noktası üyelerimize açık. Her yaştan, her motordan sürücü ve artçılar aramızda: sen de katılmak istersen başvur.",
+      "total": "{count} yaklaşan sürüş",
+      "empty": "Şu an planlanmış bir sürüş yok. Yenileri eklendikçe burada görünecek.",
+      "ceiling": "Liste eksik: {total} yaklaşan sürüşün yalnızca ilk {shown} tanesi gösteriliyor. Lütfen yöneticilere haber ver."
     },
     "detail": {
       "when": "Tarih:",

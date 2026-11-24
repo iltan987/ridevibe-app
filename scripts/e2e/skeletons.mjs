@@ -9,7 +9,8 @@
 //    -> box of the first visible [data-skeleton=name].
 //  - JS on, network idle: box of the first visible [data-skeleton-result=name] (Next keeps old routes hidden in the DOM).
 // Theme: the inline head script reads localStorage "theme"; JS on -> set before load; JS off -> the script can't run,
-//   so the `dark` class on <html> is toggled afterwards via a CDP evaluate (the stylesheet is the same).
+//   so the `dark` class on <html> is toggled afterwards via a CDP evaluate (the stylesheet is the same). The session
+//   and apply hint scripts (`currentScript`) are replayed the same way, so signed-in states measure their fallback.
 // Any [data-skeleton] / [data-skeleton-result] on the page is picked up, so new fallbacks need no script change.
 import { writeFileSync } from "node:fs";
 import { launch, newPage, signIn, throttle } from "./e2e-lib.mjs";
@@ -119,6 +120,15 @@ async function measure(page, route, js, theme) {
   await page.goto(url, { waitUntil: js ? "networkidle0" : "load", timeout: 60000 });
   if (!js) {
     await page.evaluate((th) => document.documentElement.classList.toggle("dark", th === "dark"), theme);
+    // JS off also stops the inline hint scripts that shape fallbacks before first paint (session and apply hints:
+    // they read `document.currentScript`); replay each with its own element as `currentScript`.
+    await page.evaluate(() => {
+      for (const script of document.querySelectorAll("script:not([src])")) {
+        if (!script.textContent.includes("currentScript")) continue;
+        const doc = { cookie: document.cookie, currentScript: script, defaultView: window };
+        new Function("document", script.textContent)(doc);
+      }
+    });
   } else {
     await new Promise((r) => setTimeout(r, 400));
   }

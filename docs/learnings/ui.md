@@ -92,6 +92,10 @@
   module memory only, cleared on sign-out; nothing stored). Only a hard load still shows the grey circle.
 - **Also:** colour transitions (`transition-all` on buttons etc.) fade for ~150ms when the theme class flips while the
   page snaps; `applyResolvedTheme` disables transitions during a flip (next-themes' `disableTransitionOnChange`).
+- **Whole fallbacks by session (2026-11-24):** `SessionHintSwitch` (`src/components/auth/session-hint-switch.tsx`)
+  renders both skeletons (server components passed as props) in a wrapper whose first child is
+  `sessionHintParentScript`; the children toggle with `hidden in-data-session:block` / `in-data-session:hidden`
+  (Tailwind 4's `in-*` matches any marked ancestor). Used by `/events` (members' list vs public teaser).
 - **Source:** found by testing (`scripts/e2e/header-e2e.mjs` logs the skeleton box per animation frame).
 
 ### A guessing fallback inside a pathname `<Suspense>` appears several times in the HTML (2026-11-11)

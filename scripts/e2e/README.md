@@ -106,6 +106,12 @@ Run against a **local** stack only (local Supabase + a server on port 3123); nev
   log, the member's `E2E` bike) through `docker exec … psql` (`DB_CONTAINER`, local only) before and after. Other
   upcoming events are fine. Screenshots go to `OUT_DIR`.
 - `events-public-e2e.mjs` — events for non-members (PASS/FAIL lines, exit code != 0 on failure; 390px and 1280px).
+  `/events` signed out: heading, intro, total line, the planted upcoming rides in day order as cards that link nowhere,
+  "Kulübe Başvur" and "Giriş yap" back to `/events` (`/en/events` once: English heading, total, "Sign in"); no meet-up,
+  cancelled or past ride, place name, start time, description or `/events/<id>` link in the HTML; the pending users
+  get the list without "Giriş yap" (`pending-app@`: no "Kulübe Başvur"); with no upcoming ride left, the empty state
+  (SKIP when the DB holds other upcoming rides). Positive control: `member@test.local` gets the 2a list (chips, card
+  links, the meet-up, the cancelled ride, start times; the past ride on `/events/past`).
   Signed out on a planted ride: the event's card (title, area, kind; no link), "Giriş yap" back to the event via
   `?next=` and "Başvur"; no place name, start time, description or cancel reason in the HTML; a meet-up has no area
   line, a cancelled ride says "İptal edildi" (struck title); a malformed id and an unknown uuid are 404s.
@@ -114,11 +120,11 @@ Run against a **local** stack only (local Supabase + a server on port 3123); nev
   gets the full event page. Link preview, fetched as WhatsApp's crawler (bots get the tags in `<head>`, browsers get
   them streamed into `<body>`, `docs/learnings/nextjs.md`): `og:title` = title, `og:description` = kind · day · area
   ("İptal edildi · " first when cancelled; English on `/en`), `og:url`, `og:locale`, noindex, no start time; generic
-  for unknown ids. The preview is a cached read per event id (`"use cache"`): the script plants its rows (fixed ids,
-  same content every run) before its first request, so a running server is fine; after changing the fixtures, restart
-  it. Needs `pnpm start -p 3123`, local email sign-in and those users (recipe in `probation-e2e.mjs`). Plants and
-  deletes its rows (events titled `E2E Önizleme …`, fixed ids) through `docker exec … psql` (`DB_CONTAINER`, local
-  only). Screenshots go to `OUT_DIR`.
+  for unknown ids. The list and the preview are cached reads (`"use cache"`, tag `events-public`) that planted rows
+  never expire: after planting, `admin@test.local` cancels a planted ride through the UI (`updateTag`), so a running
+  server is fine, no restart or rebuild. Needs `pnpm start -p 3123`, local email sign-in and those users (recipe in
+  `probation-e2e.mjs`). Plants and deletes its rows (events titled `E2E Önizleme …`, fixed ids) through
+  `docker exec … psql` (`DB_CONTAINER`, local only). Screenshots go to `OUT_DIR`.
 - `header-e2e.mjs` — `<head>` theme script across a language switch and an unknown path (theme kept, client-created
   script inert, no React "script tag" warning), theme sync to other tabs, no colour transitions on a theme switch, the
   user-menu skeleton (signed out: button; signed in: the avatar, photo kept on a language switch; language button
@@ -170,9 +176,9 @@ Run against a **local** stack only (local Supabase + a server on port 3123); nev
   `member@test.local` ("Test Üye"), both active (recipe in `safety-e2e.mjs`). Restores both fixtures through
   `docker exec … psql` (`DB_CONTAINER`, local only) before the run and in `finally`. Screenshots go to `OUT_DIR`.
 - `seo-check.mjs` — SEO checks with plain `fetch` (no puppeteer, no fixtures; PASS/FAIL lines, exit code != 0 on
-  failure): robots.txt and sitemap.xml, `<head>` of `/`, `/en`, `/apply`, `/en/apply` (title/description differ per
-  language, canonical = og:url = production URL, Open Graph, Twitter card, no noindex), canonical without query
-  strings, 200 + noindex on privacy/events/gallery and the private pages (meta or `x-robots-tag`), the `og:image`
+  failure): robots.txt and sitemap.xml, `<head>` of `/`, `/en`, `/apply`, `/en/apply`, `/events`, `/en/events`
+  (title/description differ per language, canonical = og:url = production URL, Open Graph, Twitter card, no noindex),
+  canonical without query strings, 200 + noindex on privacy/gallery and the private pages (meta or `x-robots-tag`), the `og:image`
   of `/` (200, `image/*`, under 600 KB), one JSON-LD graph on `/` and `/en`, the locale
   rules (`Accept-Language` ignored, `NEXT_LOCALE=en` redirects, 1-year cookie on `/en`), the hreflang `link` header
   and the PNG icon. Local: `pnpm build && pnpm start -p 3123`, then `node scripts/e2e/seo-check.mjs`; production:
