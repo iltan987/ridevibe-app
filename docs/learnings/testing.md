@@ -409,8 +409,23 @@
 - **Gotcha:** reading a radio label's text with `label.querySelector("span span")` returned "" for the *checked*
   option only: Base UI's `Radio.Indicator` renders a `<span>` (with an inner dot `<span>`) only while checked, and it
   comes first. Select the label's own text element by class (`span.font-medium`).
-- **Opening the release gate for a run:** replace `private.can_see_events()` with `create or replace` through psql
-  (privileges are kept) and restore it from the schema file's own statement in `finally` (regex
-  `create or replace function private\.can_see_events\(\)[\s\S]*?\$\$;` over `40_events.sql`), so a later edit of
-  the schema can't leave a stale hard-coded restore.
 - **Source:** found by testing (events joining Task 6).
+
+### E2E: `networkidle0` hangs once `/` is prerendered with a revalidate: Chrome's stale-while-revalidate (2026-11-24)
+- **Symptom:** `events-join-e2e.mjs`, `cross-tab-e2e.mjs` and `deletion-e2e.mjs` failed at random with
+  `TimeoutError: Navigation timeout` in a `goto(…, { waitUntil: "networkidle0" })`, the page itself fully shown. The
+  open requests were the header's segment prefetches of `/` (`/?_rsc=…`, `next-router-segment-prefetch` `/_tree` and
+  `/$d$locale/__PAGE__`), from the second visit of a page in the same browser context on.
+- **Cause:** since the home page reads cached rides (`cacheLife("hours")`), `next start` sends its prerendered
+  segments with `Cache-Control: s-maxage=3600, stale-while-revalidate=82800` (Next's `getCacheControlHeader`; a page
+  without a revalidate gets `s-maxage=31536000` and no SWR). Chrome's own HTTP cache honours `stale-while-revalidate`:
+  it answers the repeat request from disk (`fromDiskCache: true`) and sends a background revalidation of the same URL.
+  CDP sees that request's response but never a `loadingFinished`, so puppeteer counts it in flight until the page
+  navigates. In production Vercel consumes `s-maxage` / `stale-while-revalidate` and browsers get `public, max-age=0,
+  must-revalidate` (vercel.com/docs/headers/cache-control-headers), so it is a local-only effect.
+- **Do:** `newPage()` in `scripts/e2e/e2e-lib.mjs` turns the HTTP cache off (`page.setCacheEnabled(false)`), which
+  is also what production browsers effectively get. A page made without `newPage()` needs the same. Prefer waiting
+  for the page's own content over network idle anyway (`go()` in `events-join-e2e.mjs`: `load`, a visible `<h1>` in
+  `<main>`, no `[data-skeleton]` left). Diagnose such hangs with a CDP `Network.*` listener (`fromDiskCache`,
+  `loadingFinished`), not puppeteer's request events.
+- **Source:** found by testing (events release Task 8 → Task 9; probe: two tabs, the same four pages four times).

@@ -16,7 +16,7 @@
 // no upcoming ride left: the empty state (SKIP when the DB holds other upcoming rides).
 // Join-panel focus (the member, keyboard, on a planted ride): "−" down to 0 guests moves focus to "+", "+" up to 3 to
 // "−"; "Katılıyorum", "Güncelle" and the leave dialog's confirm leave it on the panel heading, dismissing the dialog
-// returns it to "Katılmaktan vazgeç". The member leaves again.
+// returns it to "Katılmaktan vazgeç". The member leaves again (and by psql in `finally` if a check broke off).
 // Signed out, on a planted ride: the card (title, area, day; no link), "Giriş yap" (back to this event via `?next=`)
 // and "Başvur"; the HTML holds no place name, start time or description. A meet-up shows no area line; a cancelled
 // ride says "İptal edildi". A malformed id and an unknown uuid are the 404 page. The pending user gets the card and
@@ -435,6 +435,11 @@ async function joinFocusScenario() {
       await focused(page),
     );
   } finally {
+    // A check that failed midway may leave the member joined: leave by psql (sign-ups are no public data, so the
+    // cached public reads need no expiry).
+    sql(
+      `delete from event_signups where event_id = '${RIDE.id}' and profile_id = (select id from auth.users where email = 'member@test.local')`,
+    );
     await ctx.close();
   }
 }

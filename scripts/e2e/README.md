@@ -69,8 +69,9 @@ Run against a **local** stack only (local Supabase + a server on port 3123); nev
   (active) and `probation@test.local` (status `probation`, `status_changed_at` 5 days ago, "Ön Alım Fixture"); recipe in
   the script header. Resets the fixture and deletes its notes through `docker exec … psql` (`DB_CONTAINER`, local only)
   before and after. Works on a DB with other active members. Screenshots go to `OUT_DIR`.
-- `events-e2e.mjs` — events, organiser side, behind the release gate (PASS/FAIL lines, exit code != 0 on failure;
-  390px and 1280px). As `admin@test.local` it creates a ride whose start is typed coordinates, whose stop is a pasted
+- `events-e2e.mjs` — events, organiser side and who sees what (PASS/FAIL lines, exit code != 0 on failure; 390px
+  and 1280px). First, with no upcoming event in the DB (SKIP otherwise): the member's empty `/events` reads "Yenileri
+  eklendikçe burada görünecek.", the organiser's points to "Etkinlik oluştur". As `admin@test.local` it creates a ride whose start is typed coordinates, whose stop is a pasted
   long Google place link (venue only) and whose finish is a pasted long Google route link with the Kız Kulesi origin
   (long links: no network; pasted through a real `paste` event), checks that the paste boxes are emptied and that the
   origin `41.021111`/`29.004167` is neither in the page nor in any column of `events`/`event_places` (`psql`), the
@@ -80,17 +81,15 @@ Run against a **local** stack only (local Supabase + a server on port 3123); nev
   URL follow, no document/RSC request), cancel with a reason (banner, share text, struck card with "İptal edildi") and
   delete; `/events/past` pages over 27 planted past meet-ups (`?page=2` via the pager, `?page=99` and `?page=1`
   redirect). `member@test.local` and `probation@test.local` (given the role "E2E Organizatör" with `events.manage`:
-  rights need an active member) get "Çok yakında" on `/events` and the 404 page on `/events/{id}`, `/events/new` and
-  `/events/past`, with no event title in the HTML. Needs `pnpm start -p 3123`, local email sign-in and those three
-  users (recipe in `probation-e2e.mjs`). Plants and deletes its rows (events titled `E2E …`, the role) through `docker
+  rights need an active member) get the list with the planted meet-up, the event with its place and `/events/past`,
+  no "Etkinlik oluştur" and the 404 page on `/events/new`; `pending-noapp@test.local` gets the public teaser (no
+  meet-up, past event or place in the HTML), the meet-up's public card (no place) and the 404 page on `/events/new`
+  and `/events/past`. Needs `pnpm start -p 3123`, local email sign-in and those four users (recipe in
+  `probation-e2e.mjs`). Plants and deletes its rows (events titled `E2E …`, the role) through `docker
   exec … psql` (`DB_CONTAINER`, local only) before and after; other upcoming events are fine, other past events must
   be older than the planted ones (1–27 days) and leave at most two pages. Screenshots go to `OUT_DIR`.
-- `events-join-e2e.mjs` — events joining behind the release gate (PASS/FAIL lines, exit code != 0 on failure; 390px
-  and 1280px). With the gate closed: the member gets "Çok yakında" and a 404 on an event; the organiser gets a 404 on
-  `/events/not-a-uuid`. Then it **opens the gate locally** (replaces `private.can_see_events()` with the release body
-  `select private.is_club_member()` through `docker exec psql`) and restores the definition from
-  `supabase/schemas/40_events.sql` in `finally` (a FAIL/WARNING line if that fails; `pnpm db:reset` restores it
-  too). Per viewport: the organiser creates a ride (3 people, 1 bike, 400 cc); the member (a planted 250 cc bike)
+- `events-join-e2e.mjs` — events joining (PASS/FAIL lines, exit code != 0 on failure; 390px and 1280px). The
+  organiser gets a 404 on `/events/not-a-uuid`. Per viewport: the organiser creates a ride (3 people, 1 bike, 400 cc); the member (a planted 250 cc bike)
   sees Sürücü disabled with "Motor ekle" → `/account#motorcycles`, joins as Artçı with a guest and gets the
   emergency-contact nudge; member2 and the organiser join at once for the last place while a psql session holds the
   event row (both `join_event` calls seen waiting on the lock in `pg_stat_activity`): exactly one wins, the other
