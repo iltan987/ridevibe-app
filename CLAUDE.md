@@ -99,6 +99,8 @@ node scripts/e2e/seo-check.mjs   # SEO head/robots/sitemap/JSON-LD check, no pup
 # background tabs: streamed parts stay unrevealed/unhydrated until first shown (React reveals via rAF) — no visibility
 #   filters there; to load a tab in the background, bringToFront() another first; seed shared localStorage before other tabs exist
 # throwaway spikes need no app code: `window.next.router` (refresh/replace/push) is callable from puppeteer page scripts
+node scripts/dev/login-as.mjs <email>   # sign in as a local test user by hand: paste the printed snippet in DevTools (needs email sign-in on)
+# demo data: `scripts/dev/seed.sql` / `unseed.sql` via `docker exec -i supabase_db_ridevibe psql -U postgres -v ON_ERROR_STOP=1 < <file>`; unseed before E2E
 ```
 
 Signed-in local E2E needs email sign-in: `SUPABASE_AUTH_EMAIL_ENABLED=true pnpm exec supabase start` (temporary;
