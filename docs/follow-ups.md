@@ -152,6 +152,9 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   date (`profiles.status_changed_at` now records when a member became `inactive`; null for changes before 2026-11-18). Also the retention of pending accounts that never apply (item below).
 - **"Etkinlikleri Gör" back in the hero** (2026-11-13, home content) — removed while Events has no content; restore the
   secondary hero button when Events ships.
+- **Event poster upload** (2026-11-24, iltan) — organisers already post an AI-made poster per event in the WhatsApp
+  channel; let them upload it as the event's cover and link-preview image, the generated preview (Events 2b) staying
+  the fallback. Needs image storage (R2), so with the gallery work.
 - **Gallery candidates** (2026-11-13, home content) — Glob Coffee and small-café photos, not committed; the small-café
   one needs the stranger cropped. For the Gallery feature, after consent is confirmed.
 - **`unlink_application` RPC** (2026-11-09, final review) — undo a wrong link without SQL (`applications.decide`, open

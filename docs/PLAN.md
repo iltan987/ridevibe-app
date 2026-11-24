@@ -197,6 +197,11 @@ after delivery (members' phones pay the storage). The app does what WhatsApp can
 gallery per event, visible to members who join later.
 
 - Photos are resized on the phone before upload (~2048 px full + small thumbnail), stored on R2.
+- **Not Google Drive** (iltan's idea, 2026-11-24; Claude): the club's Google account has 15 GB, but Drive is not made to
+  serve images to a website (direct-link tricks are unofficial and rate-limited), a members-only gallery would be
+  either "anyone with the link" or proxied through Vercel on every view (bandwidth), and the app would hold a token
+  for the whole club account (Drive, maybe Gmail) instead of a key limited to one bucket. Drive stays the club's own
+  archive of originals outside the app. Re-check R2's and Google's current terms when the gallery is designed.
 - Videos: only a few curated clips per event (added by organizers, size/length limits) or a link to the event's
   Instagram reel. Full video hosting (Cloudflare Stream, ~$5–10/month) only if members ask for it after using the app.
 
