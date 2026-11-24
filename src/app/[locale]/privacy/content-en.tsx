@@ -177,10 +177,10 @@ export function PrivacyEn() {
         Events: only club members see an event&apos;s details (time, meeting point, participants). Organisers (active
         members given the events task) see the full list of participants. Full members see the names of the full members
         taking part until the event is over; members in the ön alım period see only the numbers, and their own names are
-        not shown to full members, only counted. After an event, members see only the numbers. The name of the team
-        member who created or last changed an event is shown to club members. Public pages and the preview of a shared
-        event link show only the event&apos;s title, kind, day and area; these contain no personal data. Event texts
-        shared on WhatsApp contain no personal data either.
+        not shown to other members except organisers, only counted. After an event, members see only the numbers. The
+        name of the team member who created or last changed an event is shown to club members. Public pages and the
+        preview of a shared event link show only the event&apos;s title, kind, day and area; these contain no personal
+        data. Event texts shared on WhatsApp contain no personal data either.
       </p>
       <p>To provide the service we use these service providers (data processors):</p>
       <ul>

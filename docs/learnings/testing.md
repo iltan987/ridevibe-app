@@ -424,7 +424,8 @@
   navigates. In production Vercel consumes `s-maxage` / `stale-while-revalidate` and browsers get `public, max-age=0,
   must-revalidate` (vercel.com/docs/headers/cache-control-headers), so it is a local-only effect.
 - **Do:** `newPage()` in `scripts/e2e/e2e-lib.mjs` turns the HTTP cache off (`page.setCacheEnabled(false)`), which
-  is also what production browsers effectively get. A page made without `newPage()` needs the same. Prefer waiting
+  removes the local-only `stale-while-revalidate` effect (production browsers get `must-revalidate`, i.e.
+  conditional requests, not "no cache"). A page made without `newPage()` needs the same. Prefer waiting
   for the page's own content over network idle anyway (`go()` in `events-join-e2e.mjs`: `load`, a visible `<h1>` in
   `<main>`, no `[data-skeleton]` left). Diagnose such hangs with a CDP `Network.*` listener (`fromDiskCache`,
   `loadingFinished`), not puppeteer's request events.

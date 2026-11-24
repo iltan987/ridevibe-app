@@ -158,14 +158,10 @@ async function EventContent({ params }: { params: PageProps<"/[locale]/events/[i
   const start = new Date(event.startsAt);
   const when = event.endsAt ? format.dateTimeRange(start, new Date(event.endsAt), WHEN) : format.dateTime(start, WHEN);
   const url = eventUrl(locale, event.id);
+  const cancelledTitle = (title: string) => t("detail.shareCancelled", { title });
   const text = organiser
-    ? shareText(event, {
-        when: format.dateTime(start, SHARE_WHEN),
-        cancelledTitle: (title) => t("detail.shareCancelled", { title }),
-        changeLead: changes.lead,
-        url,
-      })
-    : memberShareText(event, { day: format.dateTime(start, SHARE_DAY), url });
+    ? shareText(event, { when: format.dateTime(start, SHARE_WHEN), cancelledTitle, changeLead: changes.lead, url })
+    : memberShareText(event, { day: format.dateTime(start, SHARE_DAY), cancelledTitle, url });
   const single = event.places.length === 1;
   // A meet-up's one place needs no role: the section heading says "Buluşma yeri".
   const roleLabel = (i: number) => {

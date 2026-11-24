@@ -8,7 +8,7 @@
 -- origin is never stored.
 -- Events outlive their authors: created_by / updated_by are nulled when the
 -- profile goes.
--- RELEASE GATE (spec §9): who sees events at all is decided in one place,
+-- Release gate (spec §9, open): who sees events at all is decided in one place,
 -- private.can_see_events() below. The read policies on events, places and
 -- sign-ups and the join/leave RPCs (42_event_signups.sql) ask it, and the app
 -- asks its public wrapper. The gate is open to club members (active and ön alım).
@@ -187,13 +187,13 @@ $$;
 
 revoke all on function private.event_is_upcoming(timestamptz, timestamptz) from public, anon, authenticated;
 
-create policy "events: read behind the release gate"
+create policy "events: read by club members"
 on public.events
 for select
 to authenticated
 using ((select private.can_see_events()));
 
-create policy "event_places: read behind the release gate"
+create policy "event_places: read by club members"
 on public.event_places
 for select
 to authenticated

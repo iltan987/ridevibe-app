@@ -98,6 +98,8 @@ in the backlog item).
   pages drop it within about an hour after Istanbul midnight (hourly cache life). pgTAP: a ride later today and one that started an hour ago today are
   both listed; yesterday's is not. No id: the list cards don't link, and an id would let anyone call the per-event read for every ride
   **(Claude)**. Read fully with `readAll` under `LIST_CEILING` (CLAUDE.md lists); ordered by start then id.
+  *As built:* one request with an exact count, a loud log and `CeilingNotice` past `max_rows`, no `readAll` chunks or
+  numbered pages (the rows have no id to order by, and there are few weekly rides) **(Claude, as built)**.
 - **One event:** by id (uuid; malformed → no row, never an error page): title, kind, day, area (rides only),
   cancelled flag. Any event, past or future.
 - Both `stable`, `set search_path = ''`, granted to `anon, authenticated` only; pgTAP proves the exact column set

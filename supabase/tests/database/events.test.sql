@@ -1,5 +1,5 @@
 -- Run with: pnpm db:test
--- Events and their places (events.manage): grants, the release gate (members and ön alım members read events,
+-- Events and their places (events.manage): grants, the read gate (members and ön alım members read events,
 -- `private.can_see_events`), save/cancel/delete RPCs with their input rules, and what happens when an organiser's account goes.
 begin;
 create extension if not exists pgtap with schema extensions;

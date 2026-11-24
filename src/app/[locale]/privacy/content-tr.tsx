@@ -175,11 +175,11 @@ export function PrivacyTr() {
         Etkinlikler: etkinliklerin ayrıntılarını (saat, buluşma yeri, katılımcılar) yalnızca kulüp üyeleri görür.
         Organizatörler (etkinlik yetkisi verilen aktif üyeler) katılımcı listesinin tamamını görür. Tam üyeler, etkinlik
         sona erene kadar katılan tam üyelerin adlarını görür; ön alım dönemindeki üyeler yalnızca katılımcı sayılarını
-        görür ve kendi adları tam üyelere gösterilmez, yalnızca sayı olarak yer alır. Etkinlik sona erdikten sonra
-        üyeler yalnızca sayıları görür. Etkinliği oluşturan veya en son değiştiren ekip üyesinin adı kulüp üyelerine
-        gösterilir. Herkese açık sayfalarda ve paylaşılan etkinlik bağlantılarının önizlemesinde yalnızca etkinliğin
-        başlığı, türü, günü ve bölgesi yer alır; bunlar kişisel veri içermez. WhatsApp&apos;ta paylaşılan etkinlik
-        metinlerinde de kişisel veri bulunmaz.
+        görür ve kendi adları organizatörler dışındaki üyelere gösterilmez, yalnızca sayı olarak yer alır. Etkinlik sona
+        erdikten sonra üyeler yalnızca sayıları görür. Etkinliği oluşturan veya en son değiştiren ekip üyesinin adı
+        kulüp üyelerine gösterilir. Herkese açık sayfalarda ve paylaşılan etkinlik bağlantılarının önizlemesinde
+        yalnızca etkinliğin başlığı, türü, günü ve bölgesi yer alır; bunlar kişisel veri içermez. WhatsApp&apos;ta
+        paylaşılan etkinlik metinlerinde de kişisel veri bulunmaz.
       </p>
       <p>Hizmeti sunabilmek için aşağıdaki hizmet sağlayıcılarını (veri işleyen) kullanıyoruz:</p>
       <ul>

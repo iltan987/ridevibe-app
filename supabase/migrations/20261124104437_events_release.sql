@@ -182,3 +182,8 @@ begin
   where (event_signups.role, event_signups.guests) is distinct from (excluded.role, excluded.guests);
 end;
 $function$;
+
+-- The read policies no longer speak of a "release gate" (the gate is open).
+alter policy "events: read behind the release gate" on public.events rename to "events: read by club members";
+alter policy "event_places: read behind the release gate" on public.event_places rename to "event_places: read by club members";
+alter policy "event_signups: read own behind the release gate" on public.event_signups rename to "event_signups: read own sign-ups of visible events";

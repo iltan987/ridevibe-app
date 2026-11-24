@@ -16,7 +16,8 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   generated image; tap the link: it must open a browser where Google sign-in works (Android Custom Tab / iOS Safari).
   If WhatsApp opens an in-app web view somewhere, add it to `detectInAppBrowser` (`src/lib/auth/in-app-browser.ts`)
   as a fix at once. Claude, read-only: `has_function_privilege('anon', 'public.event_teasers()', 'execute')` and
-  `'public.event_preview(uuid)'` true on production; `BASE=https://ridevibe.com.tr node scripts/e2e/seo-check.mjs`.
+  `'public.event_preview(uuid)'` true on production; after the first real create or cancel on production, `/` and
+  `/events` signed out reflect it within seconds (`updateTag` on Vercel); `BASE=https://ridevibe.com.tr node scripts/e2e/seo-check.mjs`.
   For a local browser review first: restore iltan's local admin (the build reset the local DB: iltan signs in with
   Google locally once, then set the admin role by SQL).
 - **Full Events check on production (iltan)** — branch 1 feedback (the UI / form / card items marked "Deferred: …
@@ -360,18 +361,18 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 ### App logic
 - **Events release minors** (2026-11-24, events release, task reviews) — (a) `events_public.test.sql` scopes its gate
   reads by title, not by fixture id; (b) `getTeaserRides`: `count ?? rides.length` turns off the over-`max_rows` log
-  when the count comes back null; (c) `memberShareText` has no "İPTAL" marker for a cancelled event (the link preview
-  shows it); the organiser/member share branch is covered only by E2E; (d) the event image route is not CDN-cached
+  when the count comes back null; (c) the organiser/member share branch is covered only by E2E; (d) the event image route is not CDN-cached
   (`max-age` only, rendered again per unfurl) and its URL has no content hash, so Facebook/X may keep an old preview
   after a cancel (WhatsApp caching is accepted in the spec); `toLocaleUpperCase` there lacks a comment, its
-  translations load outside the `try`, the wordmark `replace()` is fragile, E2E doesn't assert `cache-control`; (e) the
+  translations load outside the `try`, the wordmark `replace()` is fragile, E2E doesn't assert `cache-control`; the throw path of `getTeaserRides` / `readEventPreview` ("error → throw, not
+  cached") has no automated test (verified by a spike); random well-formed uuids each cost one function call, one DB
+  read and one satori render on `/events/<uuid>/opengraph-image` (cache bounded, no leak; a Vercel firewall rate limit
+  is the remedy if abused); (e) the
   `/events` teaser cards' day/kind are not E2E-checked, the pending-app hidden "Başvur" row is unasserted, and
-  `skeletons.mjs` replays have no per-script `try`; (f) `/` now expires after one day (a blocking render after a quiet
+  `skeletons.mjs` replays have no per-script `try`; `events-public-e2e.mjs` scenario `finally` blocks call `sql()`
+  without a `try`; inactive and deleting accounts are not browser-tested on `/events` (pgTAP covers them); (f) `/` now expires after one day (a blocking render after a quiet
   day) and the home section caches the full ride list to show 3; (g) the join-panel heading is `outline-none` (a
-  script-only focus target, no ring), plus a stale-tracking edge case in its focus rescue; (h) three policies keep
-  "behind the release gate" in their names (`events` / `event_places` in `40_events.sql`, `event_signups` in
-  `42_event_signups.sql`): renaming needs a migration (`alter policy … rename to`), left for the next events schema
-  change. Harmless today.
+  script-only focus target, no ring), plus a stale-tracking edge case in its focus rescue. Harmless today.
 - **Events joining app minors** (2026-11-22, events joining, task reviews) — (a) the panel's role/guests state is seeded once from `mine` (a
   refresh after another tab's change keeps the old choice); (b) `JoinPanel` receives the whole `EventDetail`; (c) the event page calls
   `getRoster` for active members on past events and then hides it; (d) `REASONS` in `join.ts` is a

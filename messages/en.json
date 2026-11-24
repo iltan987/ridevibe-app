@@ -242,10 +242,10 @@
     "teaser": {
       "signIn": "Sign in",
       "apply": "Apply",
-      "intro": "When the weather allows, we ride together every weekend: half a day or a full day, depending on the route. The start time and meeting point are for members. Riders of every bike, and passengers too, ride with us: if you'd like to join, apply.",
+      "intro": "When the weather allows, we ride together every weekend: half a day or a full day, depending on the route. The start time and meeting point are for members. Riders on every kind of bike, and passengers too, ride with us: if you'd like to join, apply.",
       "total": "{count, plural, one {# upcoming ride} other {# upcoming rides}}",
       "empty": "No rides planned right now. New ones will show up here as they are added.",
-      "ceiling": "This list is incomplete: only the first {shown} of {total} upcoming rides are shown. Please tell the admins."
+      "ceiling": "This list is incomplete: only the first {shown} of {total} upcoming rides are shown. The admins are looking into it."
     },
     "detail": {
       "when": "Date:",

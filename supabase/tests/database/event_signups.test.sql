@@ -7,11 +7,11 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(141);
+select plan(144);
 
 -- Fixtures: 0761 organiser (active, role 0769 holding only events.manage, 250 cc bike), 0762 second organiser (same
 -- role, a bike without cc), 0763 active member without a role, 0764 ön alım member, 0765 organiser in deleting, 0766
--- inactive organiser, 0767 organiser with a 400 cc bike.
+-- inactive organiser, 0767 organiser with a 400 cc bike, 0768 pending account (the profile default).
 insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-000000000761', 'pgtap-ej-organiser@pgtap.invalid',  '{"full_name": "Orhan Pgtapkatilim"}'),
   ('00000000-0000-0000-0000-000000000762', 'pgtap-ej-organiser2@pgtap.invalid', '{"full_name": "Selin Pgtapkatilim"}'),
@@ -19,7 +19,8 @@ insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-000000000764', 'pgtap-ej-probation@pgtap.invalid',  '{"full_name": "Okan Pgtapkatilim"}'),
   ('00000000-0000-0000-0000-000000000765', 'pgtap-ej-deleting@pgtap.invalid',   '{"full_name": "Deniz Pgtapkatilim"}'),
   ('00000000-0000-0000-0000-000000000766', 'pgtap-ej-inactive@pgtap.invalid',   '{"full_name": "Emre Pgtapkatilim"}'),
-  ('00000000-0000-0000-0000-000000000767', 'pgtap-ej-organiser3@pgtap.invalid', '{"full_name": "Burak Pgtapkatilim"}');
+  ('00000000-0000-0000-0000-000000000767', 'pgtap-ej-organiser3@pgtap.invalid', '{"full_name": "Burak Pgtapkatilim"}'),
+  ('00000000-0000-0000-0000-000000000768', 'pgtap-ej-pending@pgtap.invalid',    '{"full_name": "Pınar Pgtapkatilim"}');
 insert into public.roles (id, name) values ('00000000-0000-0000-0000-000000000769', 'pgtap-ej-organiser');
 insert into public.role_permissions (role_id, permission) values
   ('00000000-0000-0000-0000-000000000769', 'events.manage');
@@ -215,6 +216,14 @@ select throws_ok($$ select public.leave_event('00000000-0000-0000-0000-000000000
   'inactive organiser cannot leave');
 select is((select count(*)::int from public.event_signups where profile_id = '00000000-0000-0000-0000-000000000766'), 0,
   'inactive organiser reads no sign-ups');
+reset role;
+
+select pg_temp.login('00000000-0000-0000-0000-000000000768');
+select ok(not public.can_see_events(), 'pending account does not pass the gate');
+select throws_ok($$ select public.join_event('00000000-0000-0000-0000-000000000771', 'passenger') $$, '42501', null,
+  'pending account cannot join');
+select throws_ok($$ select * from public.event_counts(array['00000000-0000-0000-0000-000000000780']::uuid[]) $$, '42501', null,
+  'pending account cannot read event_counts');
 reset role;
 
 set local role anon;

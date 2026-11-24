@@ -69,7 +69,16 @@ test("shareText: on a cancelled event the cancellation wins over a change lead",
 
 test("memberShareText: title, day and link, nothing else", () => {
   assert.equal(
-    memberShareText({ title: "Ağva" }, { day: "29 Kasım Cumartesi", url }),
+    memberShareText({ title: "Ağva", status: "scheduled" }, { day: "29 Kasım Cumartesi", cancelledTitle, url }),
     `Ağva\n29 Kasım Cumartesi\n${url}`,
   );
+});
+
+test("memberShareText: a cancelled event leads with the cancellation, the link stays last", () => {
+  const lines = memberShareText(
+    { title: "Ağva", status: "cancelled" },
+    { day: "29 Kasım Cumartesi", cancelledTitle, url },
+  ).split("\n");
+  assert.equal(lines[0], cancelledTitle("Ağva"));
+  assert.equal(lines.at(-1), url);
 });

@@ -3,7 +3,10 @@ import { useTranslations } from "next-intl";
 import { buttonVariants } from "@/components/ui/button";
 import { whatsAppShareUrl } from "@/lib/applications/contact";
 
-/** "WhatsApp'ta paylaş": `text` comes from `shareText` (organisers, spec §6) or `memberShareText` (members); both end with the event link. */
+/**
+ * "WhatsApp'ta paylaş": `text` comes from `shareText` (organisers, spec §6) or `memberShareText` (members); both
+ * end with the event link.
+ */
 export function ShareEventButton({ text }: { text: string }) {
   const t = useTranslations("Events.detail");
 

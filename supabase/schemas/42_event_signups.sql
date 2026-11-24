@@ -34,7 +34,7 @@ grant select on table public.event_signups to authenticated;
 
 alter table public.event_signups enable row level security;
 
-create policy "event_signups: read own behind the release gate"
+create policy "event_signups: read own sign-ups of visible events"
 on public.event_signups
 for select
 to authenticated

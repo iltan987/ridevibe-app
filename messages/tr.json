@@ -245,7 +245,7 @@
       "intro": "Hava uygunsa her hafta sonu toplu sürüşe çıkıyoruz; rotaya göre yarım ya da tam gün. Saat ve buluşma noktası üyelerimize açık. Her motordan sürücü ve artçılar aramızda: sen de katılmak istersen başvur.",
       "total": "{count} yaklaşan sürüş",
       "empty": "Şu an planlanmış bir sürüş yok. Yenileri eklendikçe burada görünecek.",
-      "ceiling": "Liste eksik: {total} yaklaşan sürüşün yalnızca ilk {shown} tanesi gösteriliyor. Lütfen yöneticilere haber ver."
+      "ceiling": "Liste eksik: {total} yaklaşan sürüşün yalnızca ilk {shown} tanesi gösteriliyor. Yöneticiler konuyla ilgileniyor."
     },
     "detail": {
       "when": "Tarih:",
