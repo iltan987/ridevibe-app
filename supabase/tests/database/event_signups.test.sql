@@ -7,7 +7,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(133);
+select plan(141);
 
 -- Fixtures: 0761 organiser (active, role 0769 holding only events.manage, 250 cc bike), 0762 second organiser (same
 -- role, a bike without cc), 0763 active member without a role, 0764 ön alım member, 0765 organiser in deleting, 0766
@@ -401,6 +401,28 @@ select is((select array_agg(row(c.*)::text order by c.event_id)
   array[row('00000000-0000-0000-0000-000000000774'::uuid, 0, 0, 0, 0, 0)::text,
         row('00000000-0000-0000-0000-000000000780'::uuid, 6, 1, 3, 3, 1)::text],
   'counts (people, bikes, members, guests, ön alım): zeros included, unknown ids left out, deleting / inactive not counted');
+reset role;
+
+select pg_temp.login('00000000-0000-0000-0000-000000000765');
+select throws_ok($$ select * from public.event_counts(array['00000000-0000-0000-0000-000000000780']::uuid[]) $$, '42501', null,
+  'deleting account refused (counts)');
+select throws_ok($$ select * from public.event_roster('00000000-0000-0000-0000-000000000780') $$, '42501', null,
+  'deleting account refused (roster)');
+select throws_ok($$ select * from public.event_authors('00000000-0000-0000-0000-000000000780') $$, '42501', null,
+  'deleting account refused (authors)');
+select throws_ok($$ select * from public.event_change_log('00000000-0000-0000-0000-000000000780') $$, '42501', null,
+  'deleting account refused (change log)');
+reset role;
+
+select pg_temp.login('00000000-0000-0000-0000-000000000766');
+select throws_ok($$ select * from public.event_counts(array['00000000-0000-0000-0000-000000000780']::uuid[]) $$, '42501', null,
+  'inactive account refused (counts)');
+select throws_ok($$ select * from public.event_roster('00000000-0000-0000-0000-000000000780') $$, '42501', null,
+  'inactive account refused (roster)');
+select throws_ok($$ select * from public.event_authors('00000000-0000-0000-0000-000000000780') $$, '42501', null,
+  'inactive account refused (authors)');
+select throws_ok($$ select * from public.event_change_log('00000000-0000-0000-0000-000000000780') $$, '42501', null,
+  'inactive account refused (change log)');
 reset role;
 
 -- ===========================================================================

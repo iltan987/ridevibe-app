@@ -10,7 +10,7 @@ select plan(30);
 -- Fixtures: 0797 active member, 0798 ön alım member, 0799 pending, 0789 inactive, 0788 deleting.
 -- Events planted as postgres (Istanbul day arithmetic so the test is stable at any hour):
 -- 0790 ride earlier today (00:00 Istanbul, already started), 0791 ride later today (23:59), 0792 ride tomorrow,
--- 0793 ride yesterday, 0794 cancelled ride tomorrow, 0795 meet-up tomorrow, 0796 ride on 2026-12-01 23:30+03.
+-- 0793 ride yesterday, 0794 cancelled ride tomorrow, 0795 meet-up tomorrow, 0796 ride on 2026-12-01 00:30+03 (UTC: 2026-11-30).
 insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-000000000797', 'pgtap-pub-active@pgtap.invalid',    '{"full_name": "Aylin Pgtapherkes"}'),
   ('00000000-0000-0000-0000-000000000798', 'pgtap-pub-probation@pgtap.invalid', '{"full_name": "Okan Pgtapherkes"}'),
@@ -38,7 +38,7 @@ insert into public.events (id, kind, title, side, area, starts_at, description, 
   ('00000000-0000-0000-0000-000000000793', 'ride', 'pgTAP pub yesterday', 'asian', 'Kadıköy → Ağva',
    (select t0 from pub_today) - interval '12 hours', null, null),
   ('00000000-0000-0000-0000-000000000796', 'ride', 'pgTAP pub late evening', 'asian', 'Çekmeköy → Şile',
-   '2026-12-01 23:30+03', null, null);
+   '2026-12-01 00:30+03', null, null);
 insert into public.events (id, kind, title, side, area, starts_at, status, cancelled_at, cancel_reason) values
   ('00000000-0000-0000-0000-000000000794', 'ride', 'pgTAP pub cancelled', 'asian', 'Kartal → Gebze',
    (select t0 from pub_today) + interval '1 day 12 hours', 'cancelled', now(), 'Yağmur');
@@ -105,7 +105,7 @@ select is((select p.area from public.event_preview('00000000-0000-0000-0000-0000
 select is((select count(*)::int from public.event_preview('00000000-0000-0000-0000-000000000779')), 0,
   'an unknown id returns no rows');
 select is((select p.day from public.event_preview('00000000-0000-0000-0000-000000000796') p), '2026-12-01'::date,
-  '23:30 Istanbul time reads as that Istanbul day (not the UTC one)');
+  '00:30 Istanbul time reads as that Istanbul day (not the UTC one)');
 select throws_ok($$ select 1 from public.events $$, '42501', null, 'anon still cannot read the events table');
 select throws_ok($$ select 1 from public.event_places $$, '42501', null, 'anon still cannot read places');
 reset role;

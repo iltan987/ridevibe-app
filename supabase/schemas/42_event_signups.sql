@@ -100,8 +100,8 @@ begin
     raise exception 'events are not open to you' using errcode = '42501';
   end if;
 
-  -- 2. caller status. Defence in depth: both gate bodies (events.manage needs active; the release's is_club_member)
-  -- already refuse every other status, so no test can fail without it. Keep it: it states the join rule here.
+  -- 2. caller status. Defence in depth: the gate (club members: active and ön alım) already refuses every other
+  -- status, so no test can fail without it. Keep it: it states the join rule here.
   select p.status into v_member from public.profiles p where p.id = uid;
   if v_member is null or v_member not in ('active', 'probation') then
     raise exception 'only active and ön alım members join events' using errcode = '42501';
