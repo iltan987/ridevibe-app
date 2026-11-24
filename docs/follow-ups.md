@@ -17,7 +17,12 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   and drop their in-transaction swap; `events-join-e2e.mjs` then needs no gate swap), visitor teaser (area line
   only), home section + "Etkinlikleri Gör" hero button (item below), `/events` indexable + sitemap (item below), the
   event link back in the share text (`shareText` / `ShareEventButton`, absolute URL from the origin + `getPathname`;
-  members would meet a 404 before), privacy notice + one `PRIVACY_NOTICE_VERSION` bump, `<InstallBanner />` on
+  members would meet a 404 before), a per-event link preview (2026-11-24, iltan: WhatsApp fetches it signed out, so a
+  public read of teaser-safe fields only: title, kind, day, area line, "İptal edildi"; never time, places,
+  description, counts or names; meet-ups too, unlike the teaser: the link reaches only whom it was shared with; a
+  generated Open Graph image per event in the club style, iltan wants it over the generic image; today
+  `generateMetadata` in `events/[id]/page.tsx` returns the generic title), privacy notice + one
+  `PRIVACY_NOTICE_VERSION` bump, `<InstallBanner />` on
   `/events`, per-viewer event-page skeletons and the `/events` list fallback (Loading states below), the
   navigation review (below). Restore iltan's local admin before any local browser review (the build reset the local
   DB: iltan signs in with Google locally once, then set the admin role by SQL).
