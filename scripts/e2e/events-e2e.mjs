@@ -9,7 +9,7 @@
 // place link (venue only) and whose finish is a pasted long Google route link with the Kız Kulesi origin (long links:
 // no network), checks the paste box is emptied and the origin is in neither the page nor any column of
 // `events`/`event_places`, the list with side/kind chips (no server request), the map-app links of all three places
-// (Yandex longitude first in `pt=`, no Navi for the venue-only stop), the WhatsApp share link (`text=` with title and route but no event link, no `phone=`),
+// (Yandex longitude first in `pt=`, no Navi for the venue-only stop), the WhatsApp share link (`text=` with title, route and the event link last, no `phone=`),
 // an edit of the start time (stored UTC = Istanbul wall time − 3 h), cancel with a reason (banner, struck card) and
 // delete; `/events/past` pages over planted past events (> 25). The member and the probation organiser get "Çok
 // yakında" on `/events` and a 404 on `/events/{id}`, `/events/new` and `/events/past`.
@@ -370,10 +370,10 @@ async function organiserScenario(width, height) {
       share ?? "none",
     );
     check(
-      `${label} share text: title and route, no event link`,
+      `${label} share text: title, route and the event link last`,
       shared.startsWith(title) &&
         shared.includes(`${NAMES.start} → ${NAMES.finish}`) &&
-        !shared.includes(`/events/${id}`),
+        shared.endsWith(`\nhttps://ridevibe.com.tr/events/${id}`),
       shared.replace(/\n/g, " ¶ "),
     );
     const pageHtml = await page.content();
