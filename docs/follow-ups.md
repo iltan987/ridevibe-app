@@ -10,20 +10,9 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
 
 ## Next up (iltan asked for these; in priority order; start in a new session)
 
-- **Events release: checks right after the rollout** (2026-11-24, events release spec §6; iltan) — the release
-  (`feat/events-release`) goes live in one step, so on real phones after `pnpm db:push` and the `main` deploy: share a
-  ride to a WhatsApp chat from Android and from an iPhone and check the preview card (title, kind · day · area) and its
-  generated image; tap the link: it must open a browser where Google sign-in works (Android Custom Tab / iOS Safari).
-  If WhatsApp opens an in-app web view somewhere, add it to `detectInAppBrowser` (`src/lib/auth/in-app-browser.ts`)
-  as a fix at once. Claude, read-only: `has_function_privilege('anon', 'public.event_teasers()', 'execute')` and
-  `'public.event_preview(uuid)'` true on production; after the first real create or cancel on production, `/` and
-  `/events` signed out reflect it within seconds (`updateTag` on Vercel); `BASE=https://ridevibe.com.tr node scripts/e2e/seo-check.mjs`.
-  For a local browser review first: restore iltan's local admin (the build reset the local DB: iltan signs in with
-  Google locally once, then set the admin role by SQL).
 - **Full Events check on production (iltan)** — branch 1 feedback (the UI / form / card items marked "Deferred: …
-  decide with iltan" below); tick `events.manage` for the Organizatör role in `/admin/roles`; on a real Android phone
-  and iPhone check every "Konumu aç" / "Yol tarifi" app link and Yandex Navi with and without the app; paste one real
-  `maps.app.goo.gl` link on production to confirm short links resolve from Vercel; joining: join as Sürücü and Artçı
+  decide with iltan" below); on a real Android phone and iPhone check every "Konumu aç" / "Yol tarifi" app link and
+  Yandex Navi with and without the app; paste one real `maps.app.goo.gl` link on production to confirm short links resolve from Vercel; joining: join as Sürücü and Artçı
   (Sürücü needs a bike of at least `min_cc` on `/account`), add and remove guests, set people/bike limits, `min_cc`
   and "Sadece tam üyeler" and tighten them after joining (you can still lower guests, switch to Artçı or leave;
   "Sınır aşıldı" shows), edit the time with someone signed up (the "Güncellendi" box and the share text's first
@@ -48,10 +37,6 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   processor). Sources: vercel.com/docs/analytics, /docs/analytics/limits-and-pricing,
   /docs/speed-insights/limits-and-pricing (checked 2026-11-10). If added, also measure the application funnel on
   `/apply` (opened → each step → sent; 2026-11-11, apply-steps).
-
-- **Organizatör role needs `events.manage` ticked on production** (2026-11-21, events organiser side) — the
-  permission is new and no role but the admin role holds it; tick it for Organizatör in `/admin/roles` (UI, no
-  migration) after the rollout, or organisers get the members' view and can't create events.
 
 - **Ban evasion vs. linking** (2026-11-09, application gaps) — when the ban list is built (PLAN "Member conduct"),
   check new applications *and* staff links (`link_application`) against it.
