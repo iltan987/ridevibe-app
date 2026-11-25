@@ -5,9 +5,15 @@
   `generateStaticParams`. No `setRequestLocale` needed. `localePrefix: "as-needed"` → TR at `/`, EN at `/en`.
 - **Source:** next-intl docs (routing/setup, blog "nextjs-root-params").
 
-### Root params are not available in Server Actions / Route Handlers (2026-11-07)
-- **Do:** in server actions use plain `next/navigation` `redirect("/")` and let the proxy pick the locale
-  (NEXT_LOCALE cookie / Accept-Language). In pages use `redirect({ href, locale })` from `@/i18n/navigation`.
+### Root params (and so `getLocale()`) don't work in Server Actions / Route Handlers (2026-11-07, updated 2026-11-25)
+- **Symptom:** risk of a hard-coded, non-localized redirect (`/sign-in?error=oauth` sent English users to Turkish).
+- **Do:** derive the locale from data you already have (e.g. the locale-prefixed `next` path) and build URLs with
+  `getPathname({ href, locale })` — see `src/lib/auth/sign-in-error.ts`. A plain `redirect("/")` from
+  `next/navigation` only fits where any remembered language will do: the proxy then picks the locale from the
+  `NEXT_LOCALE` cookie, else Turkish (`accept-language` is pinned, "Locale detection order" below; `signOut` in
+  `src/lib/auth/actions.ts`). In pages use `redirect({ href, locale })` from `@/i18n/navigation`.
+- **Source:** Next `02-guides/internationalization.md` ("not in Client Components, Server Actions, or Route
+  Handlers").
 
 ### next-intl `redirect` doesn't narrow types (2026-11-07)
 - **Symptom:** `'user' is possibly 'null'` after `if (!user) redirect(...)`.

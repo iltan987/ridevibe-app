@@ -1,4 +1,11 @@
-# Tooling learnings (ESLint, typescript-eslint, Prettier, Tailwind class lint)
+# Tooling learnings (ESLint, typescript-eslint, Prettier, Tailwind class lint, git hooks and recipes)
+
+## Contents
+
+- [Lint, format and types](#lint-format-and-types)
+- [Git hooks and git recipes](#git-hooks-and-git-recipes)
+
+## Lint, format and types
 
 ### Prettier's class sorting can flip which class wins a `cn` merge (2026-11-15)
 - **Symptom (risk):** after `pnpm format`, an element renders with a different padding/colour although only the class
@@ -72,6 +79,16 @@
   meant to catch.
 - **Source:** whole-branch review of the lint-format branch; probes on this repo.
 
+### Node scripts run directly: use `.mts`, not `.ts` (2026-11-17)
+- **Symptom:** `node scripts/x.ts` prints `[MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of … is not
+  specified` on stderr (for every `.ts` module it loads); in a Claude Code hook that stderr is what Claude is shown.
+- **Cause:** `package.json` has no `"type"`, so Node guesses per file and reparses ESM syntax.
+- **Do:** standalone scripts and their helpers use `.mts` (always ESM; tsconfig, ESLint, lint-staged and
+  `node --test` already include it), e.g. `scripts/db/`. Unit tests under `src/` still warn; harmless there.
+- **Source:** found by testing (Node 24.20).
+
+## Git hooks and git recipes
+
 ### lint-staged's default backup is a `git stash` + `reset --hard` on failure: run it with `--no-stash` (2026-11-15)
 - **Symptom:** risk only (iltan's local `.claude/settings.json` stays unstaged on purpose; a tree-wide restore wiped it
   once). lint-staged 17 by default stores a backup stash and, if a task errors, runs `git reset --hard HEAD` and
@@ -92,14 +109,6 @@
   to confirm it is intact.
 - **Source:** hook test for the pre-commit setup.
 
-### Node scripts run directly: use `.mts`, not `.ts` (2026-11-17)
-- **Symptom:** `node scripts/x.ts` prints `[MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of … is not
-  specified` on stderr (for every `.ts` module it loads); in a Claude Code hook that stderr is what Claude is shown.
-- **Cause:** `package.json` has no `"type"`, so Node guesses per file and reparses ESM syntax.
-- **Do:** standalone scripts and their helpers use `.mts` (always ESM; tsconfig, ESLint, lint-staged and
-  `node --test` already include it), e.g. `scripts/db/`. Unit tests under `src/` still warn; harmless there.
-- **Source:** found by testing (Node 24.20).
-
 ### Merging a branch that changed `.claude/settings.json` while iltan's local edit sits there (2026-11-18)
 - **Symptom:** `git switch main` aborts: "Your local changes to the following files would be overwritten by checkout:
   .claude/settings.json" (the branch committed hook lines; iltan's own uncommitted edit stays in that file).
@@ -108,8 +117,12 @@
   build the `--no-ff` merge commit without a checkout:
   `git update-ref refs/heads/main $(git commit-tree "<branch>^{tree}" -p main -p <branch> -m "Merge branch '<branch>'") $(git rev-parse main)`,
   then `git switch main` (the file is now identical on both sides, the local edit carries over). If `main` moved,
-  ask iltan to commit or set aside their edit instead. Stage only your lines in that file with `git hash-object -w` +
-  `git update-index --cacheinfo` (see the pre-push backup plan, Task 1).
+  ask iltan to commit or set aside their edit instead.
+- **Staging only your lines of that file** (2026-11-15, pre-push backup Task 1): build the index blob from `HEAD`, not
+  from the working tree: `git show HEAD:.claude/settings.json` into a scratchpad file, add your change there (same
+  formatting), `git hash-object -w <file>`, then `git update-index --cacheinfo 100644,<hash>,.claude/settings.json`.
+  Check: `git diff --cached .claude/settings.json` shows only your change, `git diff .claude/settings.json` still
+  only iltan's.
 - **Source:** found while merging `chore/pre-push-backup`.
 
 ### Scrubbing text from history: filter-repo in a fresh clone, then `reset --keep` (2026-11-19)
