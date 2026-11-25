@@ -27,7 +27,8 @@ join, rules, Samet's answers): `docs/content/home-page-questions.md`.
   done: open decisions, deferred features, parked edge cases, review minors, polish. Read it before planning. Every
   item deferred, parked or declared out of scope (incl. "minor (deferred)"/"parked" lines from review ledgers in
   `.superpowers/`, which are git-ignored and deleted after a plan) goes there in the same commit as the work, before
-  any scratch workspace is deleted. Remove items when done or dropped.
+  any scratch workspace is deleted, and so do options offered to iltan for a choice (copy, looks): reports die with
+  the workspace. Remove items when done or dropped.
 - **Nothing project-related lives only on one PC.** Claude Code settings, permissions, plugins and auto memory are
   committed in `.claude/` (memory in `.claude/memory/` via `autoMemoryDirectory`); durable rules still belong here or
   in `docs/`. Final assets go into `docs/` (not `.superpowers/`, the Desktop or the scratchpad); only secrets stay
@@ -60,7 +61,7 @@ join, rules, Samet's answers): `docs/content/home-page-questions.md`.
 
 ```bash
 pnpm dev          # dev server
-pnpm build        # production build (also validates Cache Components rules)
+pnpm build        # production build (also validates Cache Components rules); needs the local Supabase running (`/` prerenders the events teaser)
 pnpm format       # Prettier (TS/JS/CSS/JSON + Tailwind class order); `format:check` only checks; Markdown/SQL by hand
 pnpm lint         # ESLint, type-aware (~30–40 s); `lint:fix` applies the autofixes
 echo '<code>' | pnpm exec eslint --stdin --stdin-filename src/lib/<existing-file>.ts   # probe a rule (a filename not on disk fails typed lint)
@@ -99,6 +100,7 @@ node scripts/e2e/seo-check.mjs   # SEO head/robots/sitemap/JSON-LD check, no pup
 # background tabs: streamed parts stay unrevealed/unhydrated until first shown (React reveals via rAF) — no visibility
 #   filters there; to load a tab in the background, bringToFront() another first; seed shared localStorage before other tabs exist
 # throwaway spikes need no app code: `window.next.router` (refresh/replace/push) is callable from puppeteer page scripts
+# `newPage()` turns the HTTP cache off (`next start` sends `/` with stale-while-revalidate; Chrome's background revalidation never finishes for CDP): wait for page content, not networkidle
 node scripts/dev/login-as.mjs <email>   # sign in as a local test user by hand: paste the printed snippet in DevTools (needs email sign-in on)
 # demo data: `scripts/dev/seed.sql` / `unseed.sql` via `docker exec -i supabase_db_ridevibe psql -U postgres -v ON_ERROR_STOP=1 < <file>`; unseed before E2E
 ```
@@ -304,6 +306,9 @@ recipe and test users in `docs/learnings/testing.md`), then restart normally and
 - **SEO:** public pages build metadata with `pageMetadata()` (`src/lib/seo/`) and pass `(await parent).openGraph?.images`
   (a page's `openGraph` replaces the layout's share-image file); unfinished pages get `index: false`; a new indexable
   page goes into `src/app/sitemap.ts`. Verify with `scripts/e2e/seo-check.mjs` (`docs/learnings/seo.md`).
+  Link previews: WhatsApp/Facebook-type bots get metadata in `<head>`, browsers get it streamed into `<body>`, so
+  check with a bot user agent (`curl -A WhatsApp/2`). An `opengraph-image` under `[locale]` gets a `/tr/…` URL that
+  `proxy.ts` redirects: name the image URL in the metadata yourself (`eventImageUrl`, `src/lib/seo/site.ts`).
   One-off image work (resize, JPEG): sharp from Next's own dependency
   (`require(require.resolve('sharp', { paths: [require.resolve('next', { paths: [process.cwd()] })] }))`, run from
   the repo root), never a new package. Partial blur: `docs/learnings/environment.md`.
