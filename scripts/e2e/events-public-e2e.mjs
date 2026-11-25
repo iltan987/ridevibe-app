@@ -9,18 +9,18 @@
 // application of pending-app via `applications.profile_id`, scripts/e2e/README.md).
 // `/events` signed out (390px and 1280px; `/en/events` once): the heading "Etkinlikler", the intro, the total line, the
 // planted upcoming rides in day order (a ride planted last but earliest comes first) as cards that link nowhere,
-// "Kulübe Başvur" and "Giriş yap" (back to `/events`); the HTML holds no meet-up, cancelled or past ride, place name,
-// start time, description or `/events/<id>` link. The pending users get the list and no "Giriş yap"; pending-app no
+// "Kulübe Başvur" and "Giriş Yap" (back to `/events`); the HTML holds no meet-up, cancelled or past ride, place name,
+// start time, description or `/events/<id>` link. The pending users get the list and no "Giriş Yap"; pending-app no
 // "Kulübe Başvur".
 // The member gets the 2a list (chips, card links, the meet-up and the cancelled ride: the positive controls). With
 // no upcoming ride left: the empty state (SKIP when the DB holds other upcoming rides).
 // Join-panel focus (the member, keyboard, on a planted ride): "−" down to 0 guests moves focus to "+", "+" up to 3 to
 // "−"; "Katılıyorum", "Güncelle" and the leave dialog's confirm leave it on the panel heading, dismissing the dialog
 // returns it to "Katılmaktan vazgeç". The member leaves again (and by psql in `finally` if a check broke off).
-// Signed out, on a planted ride: the card (title, area, day; no link), "Giriş yap" (back to this event via `?next=`)
-// and "Başvur"; the HTML holds no place name, start time or description. A meet-up shows no area line; a cancelled
+// Signed out, on a planted ride: the card (title, area, day; no link), "Giriş Yap" (back to this event via `?next=`)
+// and "Kulübe Başvur"; the HTML holds no place name, start time or description. A meet-up shows no area line; a cancelled
 // ride says "İptal edildi". A malformed id and an unknown uuid are the 404 page. The pending user gets the card and
-// "Başvur" but no "Giriş yap"; pending-app reads "Başvurun inceleniyor" and no "Başvur". The page `<head>` (fetched
+// "Kulübe Başvur" but no "Giriş Yap"; pending-app reads "Başvurun inceleniyor" and no "Başvur". The page `<head>` (fetched
 // as WhatsApp's crawler, which gets blocking metadata) has the event title as `og:title`, kind · day · area as
 // `og:description` (English on `/en`), "İptal edildi · " first for a cancelled event, no start time, and noindex;
 // `og:url` is the lowercased id even when the link has capitals. Link-preview image (`opengraph-image`): the page's
@@ -237,16 +237,16 @@ async function signedOutScenario(width, height) {
     check(`${label} ride: area line`, tz.text.includes(RIDE.area), tz.text);
     check(`${label} ride: kind badge`, tz.text.includes("Sürüş"), tz.text);
     check(`${label} ride: the card links nowhere`, tz.cardLinks === 0);
-    const signInLink = tz.links.find(([text]) => text === "Giriş yap");
+    const signInLink = tz.links.find(([text]) => text === "Giriş Yap");
     const next = signInLink ? new URL(signInLink[1], BASE) : null;
     check(
-      `${label} ride: "Giriş yap" returns to this event`,
+      `${label} ride: "Giriş Yap" returns to this event`,
       next?.pathname === "/sign-in" && next.searchParams.get("next") === `/events/${RIDE.id}`,
       JSON.stringify(tz.links),
     );
     check(
-      `${label} ride: "Başvur" goes to /apply`,
-      tz.links.some(([text, href]) => text === "Başvur" && href.startsWith("/apply")),
+      `${label} ride: "Kulübe Başvur" goes to /apply`,
+      tz.links.some(([text, href]) => text === "Kulübe Başvur" && href.startsWith("/apply")),
       JSON.stringify(tz.links),
     );
     const html = await page.content();
@@ -287,14 +287,14 @@ async function pendingScenario(email, width, height) {
     check(`${label}: teaser shown`, tz?.title === RIDE.title, tz?.title);
     if (!tz) return;
     check(
-      `${label}: no "Giriş yap"`,
+      `${label}: no "Giriş Yap"`,
       !tz.links.some(([, href]) => href.includes("/sign-in")),
       JSON.stringify(tz.links),
     );
     if (email === "pending-noapp@test.local") {
       check(
-        `${label}: "Başvur"`,
-        tz.links.some(([text, href]) => text === "Başvur" && href.startsWith("/apply")),
+        `${label}: "Kulübe Başvur"`,
+        tz.links.some(([text, href]) => text === "Kulübe Başvur" && href.startsWith("/apply")),
       );
     } else {
       check(`${label}: "Başvurun inceleniyor"`, tz.text.includes("Başvurun inceleniyor"), tz.text);
@@ -544,10 +544,10 @@ async function listSignedOutScenario(width, height) {
     );
     check(`${label}: area line`, list.text.includes(RIDE.area), list.text);
     check(`${label}: cards link nowhere`, list.cardLinks === 0);
-    const signInLink = list.links.find(([text]) => text === "Giriş yap");
+    const signInLink = list.links.find(([text]) => text === "Giriş Yap");
     const next = signInLink ? new URL(signInLink[1], BASE) : null;
     check(
-      `${label}: "Giriş yap" returns to /events`,
+      `${label}: "Giriş Yap" returns to /events`,
       next?.pathname === "/sign-in" && next.searchParams.get("next") === "/events",
       JSON.stringify(list.links),
     );
@@ -601,7 +601,7 @@ async function listPendingScenario(email) {
     );
     if (!list) return;
     check(
-      `${label}: no "Giriş yap"`,
+      `${label}: no "Giriş Yap"`,
       !list.links.some(([, href]) => href.includes("/sign-in")),
       JSON.stringify(list.links),
     );
@@ -815,8 +815,8 @@ async function listEmptyScenario() {
     check("390px signed out /events, no rides: empty state", list.text.includes("planlanmış bir sürüş yok"), list.text);
     check("390px signed out /events, no rides: no total line", list.total === null, list.total);
     check(
-      '390px signed out /events, no rides: "Kulübe Başvur" and "Giriş yap" stay',
-      list.links.some(([text]) => text === "Kulübe Başvur") && list.links.some(([text]) => text === "Giriş yap"),
+      '390px signed out /events, no rides: "Kulübe Başvur" and "Giriş Yap" stay',
+      list.links.some(([text]) => text === "Kulübe Başvur") && list.links.some(([text]) => text === "Giriş Yap"),
       JSON.stringify(list.links),
     );
     await page.screenshot({ path: path.join(DIR, "events-public-list-empty-390.png"), fullPage: true });

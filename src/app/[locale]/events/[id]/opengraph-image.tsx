@@ -46,7 +46,6 @@ const WORDMARK_RATIO = 1794 / 572;
 const C = {
   background: "#0b0d10",
   foreground: "#fbf5e5",
-  muted: "#a39c8c",
   primary: "#f98d2f",
   accentText: "#fba04a",
   destructive: "#ff7376",
@@ -129,8 +128,8 @@ function EventCard({
             fontFamily: "Saira ExtraCondensed",
             fontSize: 100,
             lineHeight: 1.02,
-            color: preview.cancelled ? C.muted : C.foreground,
-            textDecorationLine: preview.cancelled ? "line-through" : "none",
+            // A cancelled title stays readable in WhatsApp's small thumbnail; the stamp says it's cancelled.
+            color: C.foreground,
           }}
         >
           {preview.title}

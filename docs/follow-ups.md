@@ -447,12 +447,6 @@ Item format: `- **Title** (YYYY-MM-DD, origin) — what and where. Why deferred 
   `string | null`; `visibility-form.tsx` indentation. All cosmetic or harmless today.
 
 ### UI / accessibility
-- **Events release: copy and look to confirm** (2026-11-24, events release; iltan) — (a) "Giriş yap" on the teaser vs
-  "Giriş Yap" in the header; (b) the `/events` teaser's apply button reads "Kulübe Başvur" (`HomeApplyButton`) while
-  the event card says "Başvur"; (c) the `/events` intro copy (options in the Task 6 report: shorter / more inviting);
-  (d) the cancelled link-preview image has a strike-through title and a red stamp (too loud?); (e) the home page's
-  "Her yaştan, her motordan" heading and the English site description ("open to riders of every age") predate the
-  18+ wording fix on `/events` (iltan chose "no age on the page", 2026-11-14): keep or align.
 - **Event card details to settle** (2026-11-21, events organiser lists) — a multi-day ride's card shows only the
   start day (the event page shows the range). `src/components/events/`. Deferred: look at real events with iltan
   first. (Stop names: the event page lists every place under the strip.)
