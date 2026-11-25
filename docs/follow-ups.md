@@ -104,8 +104,9 @@ lawyer review, CLAUDE.md "Privacy").
   coordinates; organisers who want an exact point long-press the map and share a pin as well. The Places API would
   resolve place links to points but needs a Google Cloud billing account (and a KVKK look at sending the link).
   Revisit if organisers keep adding venue-only places.
-- **Event structured data only for public events at a physical place** (2026-11-13, SEO round 1) — members-only rides
-  are ineligible for Google's Event rich results; add `Event` JSON-LD only if such events appear.
+- **Event structured data only for public events at a physical place** (2026-11-13, SEO round 1) — public event
+  teasers show no place and `/events/[id]` is noindex, so they are ineligible for Google's Event rich results; add
+  `Event` JSON-LD only if public events with a physical place appear.
 - **Ban list: also check staff links** (2026-11-09, application gaps; roadmap: PLAN.md "Member conduct") — when the
   ban list is built, check staff links (`link_application`) against it too, not only new applications and sign-ins.
 - **Notes on the application detail page** (2026-11-18, ön alım + notes; spec non-goal) — notes exist only on
@@ -184,7 +185,7 @@ lawyer review, CLAUDE.md "Privacy").
 - **Pre-scrub commits still fetchable by SHA on GitHub** (2026-11-19, public-repo audit) — the history rewrite
   removed a production company name, a member's name and an unknown phone number, but GitHub serves the orphaned
   commits by SHA until its GC (0 forks/stars at the rewrite, the SHAs were never published elsewhere). If it matters:
-  Support ticket per CLAUDE.md photo-removal step 3, 0 PRs; the First Changed Commit is the old
+  Support ticket per `docs/runbooks/website-photo-removal.md` step 3, 0 PRs; the First Changed Commit is the old
   "docs(plan): application gaps implementation plan" commit (2026-11-09): recompute it from the reflog on iltan's PC
   (`docs/learnings/tooling.md`), never write an old SHA into this public repo (it points straight at the old data).
 - **Emergency contact required to join a ride?** (2026-11-13, safety data; decided 2026-11-20, events spec) — not
