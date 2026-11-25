@@ -23,23 +23,29 @@
 
 ### WSL network can drop entirely (2026-11-07)
 - **Symptom:** DNS failures *and* `ping 1.1.1.1` fails.
+- **Cause:** not investigated.
 - **Do:** check Windows internet; then `wsl --shutdown` in PowerShell and reopen (restart Docker Desktop after).
+- **Source:** not recorded.
 
 ### Missing CLI tools (2026-11-07)
 - No `whois`/`dig` and no sudo assumed. DNS: `https://dns.google/resolve?name=…&type=NS` and Cloudflare DoH
   (`cloudflare-dns.com/dns-query`, header `accept: application/dns-json`); authoritative answers via Node
   `dns.Resolver` + `setServers([ip])`. Domain availability: Vercel MCP `get_bulk_availability` (whois-less).
+- **Source:** not recorded.
 
 ### pnpm 12 blocks dependency build scripts (2026-11-07)
 - **Do:** list them in `pnpm-workspace.yaml` → `allowBuilds:` (`false` unless needed). New entries appear as
   `'pkg': set this to true or false` after installs — decide and fix the file.
+- **Source:** `pnpm-workspace.yaml` (`allowBuilds`), `package.json` (`packageManager: pnpm@12.3.4`).
 
 ### Validating pure TS logic quickly (2026-11-07)
 - `npx --yes tsx --tsconfig tsconfig.json script.ts` works (path aliases resolve). `pnpm dlx tsx` fails under
   pnpm 12 because esbuild's build script is blocked.
+- **Source:** not recorded.
 
 ### Vercel CLI is a pnpm global (2026-11-07)
 - `npm i -g vercel` does nothing useful here; upgrade with `pnpm add -g vercel@latest`.
+- **Source:** `which vercel` → `~/.local/share/pnpm/bin/vercel` (checked 2026-11-25).
 
 ### Stopping a server: never `pkill -f` / `pgrep -f` with a pattern from your own command (2026-11-07)
 - **Symptom:** `pkill -f "next start -p 3123"` killed the running shell (exit 144) mid-command; another Bash call
@@ -59,10 +65,12 @@
 - Pull production env to the scratchpad (`vercel env pull --environment=production <scratchpad file>`), `chmod 600`,
   read single keys with `grep | cut`, mask URLs in output (`sed`), delete the file afterwards. Never print secrets;
   check `.env` contents by key names and format only.
+- **Source:** not recorded.
 
 ### Claude Code memory and plugins are per machine unless committed (2026-11-09)
-- **Symptom:** auto memory (`~/.claude/projects/<project>/memory/`), plugins and permissions (git-ignored
-  `.claude/settings.local.json`) existed only on one PC; a fresh clone would lose them.
+- **Symptom:** auto memory, plugins and permissions existed only on one PC; a fresh clone would lose them.
+- **Cause:** auto memory lives in `~/.claude/projects/<project>/memory/` and permissions in the git-ignored
+  `.claude/settings.local.json`; plugins are installed per machine.
 - **Do:** `.claude/settings.json` (committed) holds `autoMemoryDirectory` (must be absolute or `~/`, so it assumes the
   clone at `~/projects/ridingclub`; honored after the folder-trust dialog), permissions, `idleCompaction` and
   `enabledPlugins`. Memory files are committed in `.claude/memory/`. Enabled plugins still need
@@ -73,7 +81,8 @@
   directory IDs for superpowers / claude-md-management / context7 / frontend-design; typescript-lsp, figma and vercel
   are only in `claude-plugins-official`. Never enable the same plugin from both (duplicate skills).
 - **Check:** `claude -p "print your auto memory directory path"` → `…/ridingclub/.claude/memory/`.
-- **Source:** code.claude.com/docs/en/memory (autoMemoryDirectory), settings-reference, plugins/install; found by testing.
+- **Source:** code.claude.com/docs/en/memory (autoMemoryDirectory), settings-reference, plugins/install; found by
+  testing.
 
 ### Windows GPU tools run from WSL (2026-11-09)
 - **Do:** for GPU work (e.g. Real-ESRGAN `realesrgan-ncnn-vulkan.exe` from the official GitHub release) run the

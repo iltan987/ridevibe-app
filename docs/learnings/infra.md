@@ -7,6 +7,7 @@
   the `x-vercel-id: fra1::…` response header.
 - Project defaulted to Node 26 → pinned `engines.node: "24.x"` (matches local).
 - Hobby plan = personal/non-commercial only; taking payments in the app → Pro ($20/mo).
+- **Source:** `vercel.ts` (`regions`), `package.json` (`engines.node`); the plan terms not recorded.
 
 ### `ridevibe.com.tr` DNS (2026-11-07)
 - Registrar TürkTicaret; `.tr` registry = TRABİS (`ns*.ns.tr`). Nameservers must be **only**
@@ -15,11 +16,13 @@
 - Negative/old answers are cached (SOA minimum 3600 s); give `.tr` changes hours.
 - `www` redirects (308) to the apex, set via `PATCH /v9/projects/{id}/domains/www.ridevibe.com.tr`.
 - With Vercel DNS, all records (e.g. Resend email) can be added from the CLI.
+- **Source:** not recorded.
 
 ### Email (2026-11-07)
 - Resend's `onboarding@resend.dev` only sends to the account owner; real sending needs a verified domain. Supabase's
   built-in auth email is rate-limited and not for production. We avoid email entirely so far (Google sign-in,
   WhatsApp links).
+- **Source:** not recorded.
 
 ### Free-tier limits that shaped the design (2026-11-07, updated 2026-11-25)
 - Supabase Free: 500 MB DB, 1 GB storage, 5 GB egress, **no backups**, pauses after 1 week inactivity → a keep-alive
@@ -27,6 +30,7 @@
   backup before every production push (`pnpm db:push`, or `pnpm db:backup` alone; no nightly job: "Supabase Free plan
   has no automatic backups" below); media planned on Cloudflare R2 (10 GB free, free egress).
 - Videos stay on WhatsApp (it doesn't store media long-term; phones pay the storage).
+- **Source:** plan figures not recorded; keep-alive cron in `vercel.ts`, backups in `docs/runbooks/database-backup.md`.
 
 ### Publishing the Google OAuth app (2026-11-08)
 - "In production" requires app name, support email, **homepage URL and privacy policy URL** on an authorized domain
@@ -34,6 +38,7 @@
   `https://ridevibe.com.tr/privacy` (must actually be live). Basic scopes (openid/email/profile) need no Google review.
 - Until published, only listed test users can sign in. After publishing anyone can — safe because new profiles are
   `pending` until an admin activates them.
+- **Source:** commit bed0357 ("docs: note Google OAuth app published").
 
 ### Vercel cron on Hobby + Supabase pausing (2026-11-08)
 - Hobby: each cron job may run **once a day** (±59 min), but a project can have 100 jobs → schedule the same path
@@ -41,16 +46,19 @@
   only; crons only run on production).
 - Supabase Free pauses after a week of too little "user database activity" (docs: "a few user requests to the
   database each day") → the cron calls `rpc("keep_alive")`, a real query through the Data API, not a health URL.
-- **Source:** vercel.com/docs/cron-jobs/usage-and-pricing, manage-cron-jobs; supabase.com/docs/guides/platform/free-project-pausing.
+- **Source:** vercel.com/docs/cron-jobs/usage-and-pricing, manage-cron-jobs;
+  supabase.com/docs/guides/platform/free-project-pausing.
 
 ### Checking production requests/crons from the CLI on Hobby (2026-11-08)
 - **Symptom:** `vercel logs --since 1h` printed nothing useful; filtering hid the JSON error *"The hobby plan does not
   retain runtime logs for the requested time range"*. Default `runtime` logs were empty even for real traffic.
+- **Cause:** the Hobby plan doesn't keep runtime logs for that range (the hidden error); why the default `runtime`
+  logs stayed empty even for real traffic was not investigated.
 - **Do:** use CDN request records, max ~45 min back:
   `vercel --scope <team> logs requests --project ridevibe-app --environment production --json --since 45m -q 'requestPath:"/api/keep-alive"'`
   Fields are under `.data` (`timestamp`, `httpStatus`, `userAgent`); cron calls show `vercel-cron/1.0`. Free-text
   `-q` isn't supported for requests — use `field:"value"`. Never pipe CLI errors into a filter that can hide them.
-- Verified 2026-11-08: keep-alive cron ran 19:17 UTC → 200.
+- **Source:** found by testing; verified 2026-11-08: keep-alive cron ran 19:17 UTC → 200.
 
 ### `vercel ls` prints its table to stderr; wait on the newest row only (2026-11-10, updated 2026-11-25)
 - **Symptom:** a wait-for-deploy loop (`vercel ls … 2>/dev/null | grep Ready`) never saw "Ready" and ran until its

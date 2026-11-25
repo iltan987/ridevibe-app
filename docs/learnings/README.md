@@ -26,12 +26,25 @@ groups: put a new entry into the group it belongs to.
 
 ## Entry format
 
+Two kinds: something went wrong or surprised us → **problem entry**; reference knowledge that shapes decisions (no
+bug behind it) → **fact entry**.
+
+Problem entry:
+
 ```markdown
 ### Short, searchable title (YYYY-MM-DD)
 - **Symptom:** what you see (error text, wrong behaviour).
-- **Cause:** why it happens (verified, not guessed).
+- **Cause:** why it happens (verified, not guessed; "not investigated" if unknown).
 - **Do:** the rule / fix / workaround to apply. Point to code if relevant.
 - **Source:** doc, file, or "found by testing".
+```
+
+Fact entry:
+
+```markdown
+### Short, searchable title (YYYY-MM-DD)
+- The fact(s), one bullet each; say what to do with them where it matters.
+- **Source:** law/doc link, file, or "found by testing".
 ```
 
 Rules: one fact per entry, imperative "Do", keep it short, fix or delete entries that turn out to be wrong.

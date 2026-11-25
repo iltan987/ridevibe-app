@@ -9,6 +9,8 @@
 ## Zod and validation
 
 ### Zod 4: cross-field rules are skipped while other fields have errors (2026-11-08)
+- **Symptom:** a cross-field rule (`.refine()` / `superRefine` on the object) doesn't report while other fields have
+  errors.
 - **Cause:** refinements/superRefine don't run after non-continuable issues.
 - **Do:** one `.refine()` per rule with `{ path, error, when: onlyIf("a", "b") }` — `when` checks only the issues of
   the fields the rule depends on (see `src/lib/applications/schema.ts`).
@@ -34,8 +36,11 @@
 ### Error messages as i18n keys (2026-11-07)
 - **Do:** schema errors are keys (`ApplyErrorKey`); the form maps them with `t(\`errors.${key}\`)`. Same schema runs in
   the browser and in the server action.
+- **Source:** `src/lib/applications/schema.ts` (`ApplyErrorKey`).
 
 ### `String(formData.get(name))` can print "null" or "[object File]" (2026-11-15)
+- **Symptom:** `no-base-to-string` lint hits on `String(formData.get(name))`, which can print "null" or
+  "[object File]".
 - **Cause:** `FormData.get` returns `string | File | null`; `String()` stringifies whatever it gets.
 - **Do:** read text fields with `formDataText(form, name)` (`src/lib/form-data.ts`: the string as is, `""` for a
   missing or file entry).
@@ -44,16 +49,20 @@
 ### Errors only for touched fields (2026-11-08)
 - **Do:** track touched names via form-level `onBlur` (`closest("[data-field]")`), show all errors after a submit
   attempt, re-validate the whole form on change/blur. Every field wrapper has `data-field={name}`.
+- **Source:** `src/components/apply/apply-form.tsx`, `apply-fields.tsx`.
 
 ### Bot protection: honeypot, not a timer (2026-11-07)
 - **Do:** hidden `website` field → pretend success. A "submitted too fast" check depends on the client clock and can
   reject real users — skipped. Vercel BotID is the planned upgrade.
+- **Source:** `src/components/apply/apply-form.tsx` (hidden `website` input).
 
 ## Submitting and form state
 
 ### Don't use `<form action={serverAction}>` for long forms (2026-11-07)
-- **Cause:** React 19 resets uncontrolled forms after a form action, wiping input on validation errors.
+- **Symptom:** with `<form action={serverAction}>` a validation error wipes the user's input.
+- **Cause:** React 19 resets uncontrolled forms after a form action, also when the action returned errors.
 - **Do:** `onSubmit` + `preventDefault` + `startTransition(async () => await action(formData))`.
+- **Source:** not recorded.
 
 ### React 19 types deprecate `FormEvent`: type `onSubmit` handlers with `SubmitEvent` (2026-11-15)
 - **Symptom:** `@typescript-eslint/no-deprecated` on `React.FormEvent<HTMLFormElement>`.
@@ -156,7 +165,10 @@
 - Pass `flags` from `react-phone-number-input/flags` — the default loads flag images from a third-party site
   (privacy/KVKK).
 - Validate with `isPossiblePhoneNumber` (author's advice: `isValidPhoneNumber` can go stale on new number ranges).
+- **Source:** `node_modules/react-phone-number-input/README.md` ("Validation", flags);
+  `src/components/apply/phone-field.tsx`.
 
 ### Native `<input type="date">` (2026-11-08)
 - Displays in the **device/browser** locale (e.g. mm/dd/yyyy on a US-region PC) but the value is always
   `YYYY-MM-DD`, so the server reads it correctly. No custom date picker needed.
+- **Source:** not recorded.

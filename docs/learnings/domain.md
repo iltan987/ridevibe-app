@@ -4,13 +4,17 @@
 - A1 (≤125 cc), A2, A. **B holders** may ride ≤125 cc only after 2 years with B + 6 h riding lessons + practical exam
   (Karayolları Trafik Yönetmeliği art. 85 change, Resmî Gazete 10 Feb 2024); not for commercial use. A 250 cc
   extension was only discussed in 2026, not law. Form option: `b` = "B (125 cc yetkili)".
+- **Source:** Karayolları Trafik Yönetmeliği art. 85 change (Resmî Gazete, 10 Feb 2024); form option in
+  `src/lib/applications/options.ts` (`LICENSE_CLASSES`).
 
 ### Istanbul districts (2026-11-07)
 - 39 districts: 25 European, 14 Asian; Adalar counts as Asian. List + side mapping in `src/lib/istanbul-districts.ts`.
+- **Source:** `src/lib/istanbul-districts.ts` (header comment: Adalar is administratively on the Asian side).
 
 ### Turkish phone habits (2026-11-08)
 - People type `0546…` (trunk 0) or `90546…`; store E.164 `+905461234567`. WhatsApp link: `whatsAppUrl()` in
   `src/lib/applications/contact.ts` (`api.whatsapp.com/send?phone=<digits>`, see below).
+- **Source:** not recorded.
 
 ### WhatsApp prefilled text: emoji become "�" on desktop with wa.me (2026-11-10)
 - **Symptom:** the approval invite showed `Merhaba Kerim! �` when sent from a PC; on phones the 🏍️ was fine.
@@ -19,6 +23,7 @@
   `curl -sI "https://wa.me/905000000000?text=Hi%20%F0%9F%8F%8D%EF%B8%8F"` → `location: …text=Hi+%EF%BF%BD`.
 - **Do:** link to `https://api.whatsapp.com/send?phone=<digits>&text=<encodeURIComponent(text)>` (`whatsAppUrl()`);
   it keeps the emoji and still opens the app on phones.
+- **Source:** found by testing (the `curl` above); fix in 48195ec.
 
 ### KVKK essentials used so far (not legal advice) (2026-11-07)
 - Privacy notice (aydınlatma metni, art. 10) required; consents separate and never pre-ticked; photo sharing needs
@@ -28,6 +33,7 @@
 - Avoid third-party requests that leak visitor IPs without need (e.g. phone-input flag CDN) and non-essential
   cookies (UTM attribution is passed via URL, no cookie).
 - Store the privacy-notice version with each consent (`privacy_notice_version`).
+- **Source:** KVKK (Law No. 6698) art. 9 and 10; product decisions in `docs/PLAN.md`, "KVKK notes".
 
 ### WhatsApp photos: groups are circles, communities are rounded squares (2026-11-09)
 - **Symptom:** the new group photo showed light corners and a blurred frame; the dark-cornered fix then looked like a

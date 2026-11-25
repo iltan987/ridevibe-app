@@ -15,11 +15,13 @@ merging, Open Graph images and link previews: `seo.md`; locale in Server Actions
 
 ### create-next-app 16 enables Cache Components by default (2026-11-07)
 - **Symptom:** fresh `next.config.ts` has `cacheComponents: true`, `partialPrefetching: true`, `reactCompiler: true`.
+- **Cause:** the Next 16 scaffold turns them on by default.
 - **Do:** treat request-time data (`cookies()`, `headers()`, `searchParams`, session) as needing `<Suspense>`; read
   `01-app/01-getting-started/08-caching.md` and `02-guides/authentication-with-cache-components.md`.
 - **Source:** scaffold output.
 
 ### "Next.js encountered the unstable value `Date.now()` while prerendering" from Supabase auth (2026-11-07)
+- **Symptom:** "Next.js encountered the unstable value `Date.now()` while prerendering", from Supabase auth.
 - **Cause:** auth-js compares token expiry with `Date.now()`; during (runtime) prerender cookies may be available but
   the current time is not allowed.
 - **Do:** call `await connection()` (from `next/server`) at the start of `createClient()` in
@@ -29,12 +31,16 @@ merging, Open Graph images and link previews: `seo.md`; locale in Server Actions
 ### `usePathname()` in layout client components breaks routes with unknown dynamic params (2026-11-07)
 - **Symptom:** dev overlay "N Issues": `encountered URL data usePathname() in a Client Component outside of
   <Suspense>` — appeared only once the first `[id]` route without `generateStaticParams` existed.
+- **Cause:** with `cacheComponents`, a dynamic param not covered by `generateStaticParams` is unknown until request
+  time, so `usePathname` suspends during prerendering, also in a layout component above that page.
 - **Do:** wrap pathname-dependent components in `<Suspense>` with a fallback that renders the same UI without active
   state (pattern: `DesktopNav`, `BottomNav`, `LocaleSwitcher`). `useSearchParams()` always needs `<Suspense>`.
 - **Source:** `03-api-reference/04-functions/use-pathname.md`.
 
 ### `redirect()` inside a Suspense boundary is a streamed client redirect (2026-11-07)
 - **Symptom:** `curl /account` (signed out) returns **200**, not 307; body contains `NEXT_REDIRECT;replace;/sign-in…`.
+- **Cause:** in a streaming context `redirect()` inserts a meta tag that redirects on the client
+  (`03-api-reference/04-functions/redirect.md`).
 - **Do:** that's expected; verify redirects in a real browser, not with curl. Same for the catch-all 404 page (rendered
   client-side via resume; HTML shell is empty).
 - **Source:** found by testing.
@@ -64,11 +70,11 @@ merging, Open Graph images and link previews: `seo.md`; locale in Server Actions
 ## Caching and prerendering
 
 ### First `"use cache"`: public event reads (2026-11-24)
-- **Pattern:** `src/lib/events/public.ts` (`getTeaserRides`, `getEventPreview`): `"use cache"` + `cacheTag(PUBLIC_EVENTS_TAG)`
-  + `cacheLife("hours")`, calling Supabase through `createPublicClient()` (`src/lib/supabase/public.ts`: no cookies, no
-  session, `persistSession: false`). `createClient()` in `server.ts` reads `cookies()` / `connection()`: never use it
-  inside a cache scope (`next-request-in-use-cache`). Organiser actions call `updateTag(PUBLIC_EVENTS_TAG)` (Server
-  Actions only; the next read waits for fresh data).
+- **Pattern:** `src/lib/events/public.ts` (`getTeaserRides`, `getEventPreview`): `"use cache"` +
+  `cacheTag(PUBLIC_EVENTS_TAG)` + `cacheLife("hours")`, calling Supabase through `createPublicClient()`
+  (`src/lib/supabase/public.ts`: no cookies, no session, `persistSession: false`). `createClient()` in `server.ts` reads
+  `cookies()` / `connection()`: never use it inside a cache scope (`next-request-in-use-cache`). Organiser actions call
+  `updateTag(PUBLIC_EVENTS_TAG)` (Server Actions only; the next read waits for fresh data).
 - **Tested (throwaway route handler, built + started, removed):** supabase-js `rpc()` works inside `"use cache"` with no
   cookies, also at build (the entry is prerendered into the shell). A function that **throws is not cached**: the next
   call re-ran it, the one after hit the cache. So readers must throw on a Supabase error, never return `[]` (that would
@@ -156,7 +162,8 @@ merging, Open Graph images and link previews: `seo.md`; locale in Server Actions
   (positioner `hidden`, zero size, not focusable), so the item's `LinkPending` stays mounted and `pending` stays true
   until the page changes. Verified: pending span present 1.2 s after the tap, Escape/arrow keys still work.
 - **Not tested:** the locale switcher (`router.replace` in a transition, no `Link`): see the next entry.
-- **Gotcha (E2E):** `a[href*="/admin/applications"]` also matches the filter chips; match the menu item inside `[role=menu]`.
+- **Gotcha (E2E):** `a[href*="/admin/applications"]` also matches the filter chips; match the menu item inside
+  `[role=menu]`.
 - **Source:** found by testing.
 
 ### Pending-navigation bar: hidden old route, prefetched tabs, locale switcher (2026-11-10)
@@ -179,7 +186,8 @@ merging, Open Graph images and link previews: `seo.md`; locale in Server Actions
 - **Source:** found by testing (throttled puppeteer E2E in the session scratchpad).
 
 ### Instant-navigation dev check: nothing flagged, so no `loading.tsx` (2026-11-10)
-- **Symptom:** unclear whether `cacheComponents` + `partialPrefetching` still need `loading.tsx` for instant navigations.
+- **Symptom:** unclear whether `cacheComponents` + `partialPrefetching` still need `loading.tsx` for instant
+  navigations.
 - **Cause:** Next 16 validates every Page segment in `next dev` (`validationLevel: 'warning'`, see
   `node_modules/next/dist/docs/01-app/02-guides/instant-navigation.md` "Validate instant navigation") for both page
   loads and client navigations, reporting blocking data / missing `<Suspense>` in the dev overlay and terminal.
@@ -211,7 +219,8 @@ merging, Open Graph images and link previews: `seo.md`; locale in Server Actions
   → `/sign-in?next=…`, `/sign-in` → its `next`, public page → re-rendered header.
 - **Cause:** the refresh re-runs the page's server code; a `redirect()` there turns into a client navigation (one RSC
   request for the refresh, one for the target). Client state of unaffected components is kept. Works in hidden tabs.
-- **Do:** let the server decide: `router.refresh()` and no routing logic in the tab (`src/components/auth/auth-sync.tsx`).
+- **Do:** let the server decide: `router.refresh()` and no routing logic in the tab
+  (`src/components/auth/auth-sync.tsx`).
 - **Source:** found by testing (two Puppeteer tabs, production build); `use-router.md` describes `refresh()` but not
   redirects.
 
@@ -263,12 +272,15 @@ merging, Open Graph images and link previews: `seo.md`; locale in Server Actions
 
 ### Route-aware types (`PageProps<"/[locale]/x">`) need regeneration for new routes (2026-11-07)
 - **Symptom:** `TS2344 … does not satisfy the constraint 'AppRoutes'` after adding a page.
+- **Cause:** the route types are generated; a new page is missing from them until they are regenerated.
 - **Do:** `pnpm exec next typegen` (also runs during `dev`/`build`).
+- **Source:** `03-api-reference/06-cli/next.md` ("`next typegen` options").
 
 ### A dev session killed mid-write leaves corrupt `.next/dev/types` that break `tsc` and `next build` (2026-11-08)
 - **Symptom:** `TS1005`/`TS1002` errors in `.next/dev/types/routes.d.ts` / `validator.ts` (half-written files);
   `pnpm build` fails at "Running TypeScript".
-- **Do:** with no dev server running, `rm -rf .next/dev` (regenerated by `pnpm dev`). tsconfig includes that folder.
+- **Cause:** a dev session killed mid-write leaves those files half-written, and tsconfig includes the folder.
+- **Do:** with no dev server running, `rm -rf .next/dev` (regenerated by `pnpm dev`).
 - **Source:** found by testing.
 
 ### Dev server serves stale `messages/*.json` after edits (2026-11-07)

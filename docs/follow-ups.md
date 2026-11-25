@@ -715,12 +715,6 @@ lawyer review, CLAUDE.md "Privacy (KVKK)").
 
 ### Tooling & docs
 
-- **Docs cleanup leftovers** (2026-11-25, docs optimization) — the cleanup merged, moved and regrouped entries but
-  left these out: (a) older learnings entries that are plain bullet lists (most of `infra.md`, `domain.md`,
-  `next-intl.md`, parts of `ui.md`/`supabase.md`/`environment.md`) were not rewritten into the Symptom/Cause/Do/Source
-  format; (b) some prose lines in CLAUDE.md, PLAN.md and learnings run past 120 characters; (c) the finished
-  `docs/superpowers/specs|plans` (~700 KB) stay as they are (archive; could move to `docs/archive/` or be condensed).
-  Low value each; do them when touching the file anyway.
 - **Dead-code sweep** (2026-11-11, iltan) — first sweep: unused exports/files/dependencies (tool still open, see
   "Dead-code tool?" under Open decisions), unused message keys in `messages/*.json`, stale comments and follow-up
   items that point at removed code. Known: `hasStaffAccess` in `src/lib/auth/permissions.ts` has no callers
