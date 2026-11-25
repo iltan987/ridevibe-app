@@ -18,6 +18,8 @@ whether it already exists.
 - `docs/runbooks/`: rarely used step-by-step procedures (`database-backup.md`, `production-checks.md`,
   `account-deletion.md`, `website-photo-removal.md`).
 - `docs/follow-ups.md`: the one backlog.
+- `docs/superpowers/specs|plans/`: each iteration's design spec and plan, kept as history (live docs win on any
+  conflict); index with merge and "later changes" per iteration in its README: add a row when an iteration merges.
 - `scripts/e2e/README.md`: browser E2E setup and the fixture users.
 - `.claude/memory/`: only what the repo doesn't record (who iltan is, temporary arrangements, copy examples).
 
