@@ -52,8 +52,8 @@
 - **Source:** checked with `tsc --strict` (2026-11-15).
 
 ### typescript-eslint is a direct dependency and comes with `eslint-config-next`: keep one version (2026-11-15)
-- **Risk:** two versions load two plugin objects under the same `@typescript-eslint` key; flat config then fails with
-  "Cannot redefine plugin".
+- **Symptom (risk):** flat config fails with "Cannot redefine plugin".
+- **Cause:** two versions load two plugin objects under the same `@typescript-eslint` key.
 - **Do:** after upgrading `typescript-eslint` or `eslint-config-next`, check `pnpm why typescript-eslint` shows one
   version (today 8.72.1, inside `eslint-config-next`'s `^8.56.0`).
 - **Source:** ESLint flat config docs; checked on this repo (Task 2).
@@ -137,7 +137,7 @@
   new `main` into a temp ref, keep the old tip as another ref, `git reset --keep <new>` (refuses instead of
   overwriting local changes), run the tests, force-push with iltan's OK, delete the temp refs. GitHub still serves old
   commits by SHA until its GC; clones/forks keep them. Save filter-repo's "NOTE: First Changed Commit(s)" lines before
-  deleting the clone: a GitHub Support purge needs them (CLAUDE.md, photo removal step 3). Lost them? The old tip
-  stays in the reflog: the earliest commit introducing a value (`git log <old> --reverse -S'<value>'`) is it. Never
-  write an old SHA into the repo: it points straight at the scrubbed data.
+  deleting the clone: a GitHub Support purge needs them (`docs/runbooks/website-photo-removal.md`, step 3). Lost them?
+  The old tip stays in the reflog: the earliest commit introducing a value (`git log <old> --reverse -S'<value>'`) is
+  it. Never write an old SHA into the repo: it points straight at the scrubbed data.
 - **Source:** public-repo audit, 2026-11-19.

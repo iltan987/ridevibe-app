@@ -7,6 +7,8 @@
 
 ### Root params (and so `getLocale()`) don't work in Server Actions / Route Handlers (2026-11-07, updated 2026-11-25)
 - **Symptom:** risk of a hard-coded, non-localized redirect (`/sign-in?error=oauth` sent English users to Turkish).
+- **Cause:** root parameter getters run in Server Components and server-side utilities only, not in Client
+  Components, Server Actions or Route Handlers.
 - **Do:** derive the locale from data you already have (e.g. the locale-prefixed `next` path) and build URLs with
   `getPathname({ href, locale })` — see `src/lib/auth/sign-in-error.ts`. A plain `redirect("/")` from
   `next/navigation` only fits where any remembered language will do: the proxy then picks the locale from the
@@ -17,30 +19,37 @@
 
 ### next-intl `redirect` doesn't narrow types (2026-11-07)
 - **Symptom:** `'user' is possibly 'null'` after `if (!user) redirect(...)`.
+- **Cause:** not investigated.
 - **Do:** write `return redirect(...)`.
+- **Source:** not recorded.
 
 ### Typed messages catch missing translations at compile time (2026-11-07)
 - **Do:** keep `src/global.d.ts` (`Messages: typeof tr.json`). Adding an option value (e.g. license `b`) without a
   message makes `tsc` fail — good. If `tsc` still complains after adding the key, delete `tsconfig.tsbuildinfo`
   (stale incremental cache).
+- **Source:** `src/global.d.ts`.
 
 ### `NextIntlClientProvider` (v4) passes messages automatically (2026-11-07)
 - **Do:** render it without props in the layout; client components can `useTranslations` any namespace.
 - **Note:** use `t.rich("key", { link: (chunks) => <Link…>{chunks}</Link> })` for inline links in messages.
+- **Source:** `src/app/[locale]/layout.tsx` (`<NextIntlClientProvider>` without props).
 
 ### Uppercase in Turkish needs `lang="tr"` (2026-11-07)
 - **Do:** `<html lang={locale}>` — CSS `uppercase` then renders `İSTANBUL` correctly. In JS use
   `toLocaleUpperCase("tr")` (see `src/lib/initials.ts`).
+- **Source:** not recorded (CSS case mapping by `lang`: ui.md, "CSS `uppercase` on a `tr` page dots English i's").
 
 ### Message keys containing dots are nested paths (2026-11-08)
 - **Cause:** next-intl splits keys on `.`; a permission value like `applications.view` can't be a flat key.
 - **Do:** nest the messages (`permissions.applications.view.label`); then `t(\`permissions.${permission}.label\`)`
   works and stays type-checked.
+- **Source:** roles & permissions commit c346e1d.
 
 ### Messages in another language than the viewer's (2026-11-08)
 - **Do:** `getTranslations({ locale, namespace })` renders text in a given locale — used for the WhatsApp invite,
   which must be in the *applicant's* language (`applications.locale`) while the admin browses in theirs. Build the
   link with `getPathname({ href: "/sign-in", locale })` so English applicants get `/en/sign-in`.
+- **Source:** WhatsApp invite in commit 847c318 (application review panel).
 
 ### `redirect` / `getPathname` from `@/i18n/navigation` prefix again: a stored `next` path takes Next's `redirect` (2026-11-12)
 - **Symptom (risk):** `redirect({ href: "/en/members", locale: "en" })` would go to `/en/en/members`.

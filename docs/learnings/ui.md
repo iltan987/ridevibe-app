@@ -15,39 +15,50 @@
 ### Base UI composes with `render`, not `asChild` (2026-11-07)
 - **Do:** `<DropdownMenuTrigger render={<Button … />} />`. For links styled as buttons, put `buttonVariants()` on
   `<Link>`. The rendered component must forward ref and spread props (React 19 function components do).
+- **Source:** not recorded.
 
 ### `cn` comes from the `cn` package (2026-11-07)
 - shadcn 4.x installs `cn` (by shadcn, replaces clsx + tailwind-merge) and adds `shadcn` as a dependency (for
   `shadcn/tailwind.css`). Not a supply-chain issue.
+- **Source:** `package.json` (`cn`, `shadcn`), `src/lib/utils.ts`.
 
 ### `Label`/`FieldLabel` is a plain `<label>` (2026-11-07)
 - **Do:** no `render` prop on it. For a heading of a radio/checkbox group use `FieldTitle` (a div) +
   `aria-labelledby` on the group.
+- **Source:** `src/components/ui/label.tsx`.
 
 ### Use `Menu.LinkItem` for links in dropdowns (2026-11-07)
 - **Do:** `DropdownMenuLinkItem` (added by us to `src/components/ui/dropdown-menu.tsx`) with
   `render={<Link href=… />}`. For actions like sign-out call the server action from `onClick` in a transition.
+- **Source:** `src/components/ui/dropdown-menu.tsx` (`DropdownMenuLinkItem` wraps `MenuPrimitive.LinkItem`).
 
 ### Base UI checkbox/radio submit like native inputs (2026-11-07)
 - They render hidden `<input>`s: `name` + `value` → `FormData` (`getAll` for checkbox groups, unchecked = absent).
 - Their hidden input updates **after** the click handler → re-validate on the next frame (`requestAnimationFrame`).
+- **Source:** not recorded.
 
 ### shadcn `dialog` (base-nova): hard-coded English "Close", and `add` prompts to overwrite `button.tsx` (2026-11-09)
 - **Symptom:** `pnpm dlx shadcn@latest add dialog` stops at "button.tsx already exists. Overwrite?" (non-interactive
   runs abort without writing anything); the generated `DialogContent`/`DialogFooter` render an sr-only/visible
   "Close" that isn't translated.
+- **Cause:** the generated `dialog.tsx` imports `@/components/ui/button`, so `add` brings `button.tsx` along; the
+  "Close" labels are hard-coded in the generated file.
 - **Do:** `yes n | pnpm dlx shadcn@latest add dialog` keeps our patched `button.tsx`. Use
   `<DialogContent showCloseButton={false}>` and put a translated close/cancel button in the footer.
 - **Source:** found while adding the "Link to account" dialog (Task 7).
 
 ### `next/image` `priority` is deprecated in Next 16: use `preload` (2026-11-09)
-- **Do:** `<Image preload />` for above-the-fold images (`ClubBadge` takes `preload`); `placeholder="empty"` is the default, omit it.
+- **Do:** `<Image preload />` for above-the-fold images (`ClubBadge` takes `preload`); `placeholder="empty"` is the
+  default, omit it.
+- **Source:** `node_modules/next/dist/docs/01-app/03-api-reference/02-components/image.md` (`priority` deprecated in
+  v16).
 
 ## Styling, Tailwind and contrast
 
 ### iOS Safari zooms into inputs with font-size < 16px (2026-11-07)
 - shadcn `Input`/`Textarea` already use `text-base md:text-sm`; `NativeSelect` used `text-sm` → patched to
   `text-base md:text-sm` and `h-10 md:h-8` (bigger touch target).
+- **Source:** `src/components/ui/native-select.tsx`; the iOS behaviour not recorded.
 
 ### Outline button border: barely visible, and lost on a `Link` when the cva base conflicts (2026-11-07)
 - Fixed in the design system: outline buttons use `border-input` in both themes. Same for hand-made controls: a bare
@@ -58,6 +69,7 @@
   returns both `border-transparent` (base) and `border-input` (variant); the stylesheet order picks transparent.
 - **Do:** keep colour utilities that variants override out of the cva base: `border-transparent` lives in the
   non-outline variants, so `buttonVariants()` on `Link` works.
+- **Source:** commit fcbd662 ("fix(ui): AA contrast for active nav and visible outline borders in light theme").
 
 ### Orange text is `text-accent-text`; tinted backgrounds need blended-contrast checks (2026-11-09)
 - Orange `--primary` on cream is ~2.2:1; `--accent-text` passes AA: active nav text and orange *text* (`link`
@@ -67,6 +79,7 @@
   the plain background. `globals-contrast.test.ts` blends the tint (`blend()`); keep its alpha constants in sync with
   `button.tsx`/`badge.tsx`. Light `--ring` must be ≥ 3:1 on cream (`#B4560C`).
 - **Also:** CSS-mask elements (wordmark) vanish in Windows forced-colours mode unless `forced-color-adjust: none`.
+- **Source:** `src/app/globals-contrast.test.ts`; commit fcbd662.
 
 ### CSS `uppercase` on a `tr` page dots English i's (2026-11-09)
 - **Symptom:** brand rendered as "RİDE & VİBE" in mockups with `text-transform: uppercase`.
@@ -77,7 +90,8 @@
 - **Source:** found by rendering mockups (headless Chrome).
 
 ### A section that must stay in the night palette: put the `dark` class on it (2026-11-13)
-- **Symptom:** cream text on a photo's dark gradient became unreadable (dark-on-dark / light-on-light) in the light theme.
+- **Symptom:** cream text on a photo's dark gradient became unreadable (dark-on-dark / light-on-light) in the light
+  theme.
 - **Cause:** the tokens (`text-foreground`, `bg-background`) follow the page theme; the photo gradient doesn't.
 - **Do:** give the section `className="dark …"`: the `.dark` scope makes the tokens resolve to the night palette inside
   it, in both themes (`src/components/home/home-hero.tsx`).
@@ -113,8 +127,8 @@
   (`group-data-[size=sm]/card:text-sm`) got `text-sm`'s default line height instead of snug.
 - **Cause:** Tailwind 4's `leading-*` sets `--tw-leading`, which a later `text-*` keeps; the `text-X/Y` shorthand
   writes `line-height` directly, so any other `text-*` replaces it.
-- **Do:** when a size changes in a variant, repeat the line height there too (`…:text-sm/snug`, `src/components/ui/card.tsx`),
-  or keep a separate `leading-*` class.
+- **Do:** when a size changes in a variant, repeat the line height there too (`…:text-sm/snug`,
+  `src/components/ui/card.tsx`), or keep a separate `leading-*` class.
 - **Source:** Task 4 review; measured in headless Chrome (16/22px and 14/19.25px before and after the fix).
 
 ### Pending-link dim must be an animation, not a transition (2026-11-10)
@@ -129,6 +143,8 @@
 ### Theme: dark SSR default + inline `<head>` script, no cookies (2026-11-09)
 - **Symptom:** a client-side theme switch flashes the wrong theme, or reading a theme cookie in the root layout makes
   every route dynamic (Cache Components).
+- **Cause:** the server can't see a choice stored in `localStorage`, and a cookie read in the root layout is
+  request-time data, which stops prerendering under Cache Components.
 - **Do:** server always renders `class="dark"` + `suppressHydrationWarning` on `<html>`; `themeInitScript`
   (`src/lib/theme.ts`, stringified `initTheme`) runs in `<head>` and fixes the class and `meta[name=theme-color]`
   from `localStorage` before first paint (verified: class correct when `<body>` is parsed). `ThemeSwitcher` re-applies
@@ -186,9 +202,9 @@
 - **Source:** found by testing (`scripts/e2e/header-e2e.mjs` logs the skeleton box per animation frame).
 
 ### A guessing fallback inside a pathname `<Suspense>` appears several times in the HTML (2026-11-11)
-- **Symptom (risk):** the "Başvur" nav guess (`applyHintScript`, marking the element that holds it) could miss copies of the
-  nav: the server HTML of `/` holds the guessing `DesktopNav`/`BottomNav` twice each (the pathname boundary's fallback
-  and its content), plus the streamed final nav.
+- **Symptom (risk):** the "Başvur" nav guess (`applyHintScript`, marking the element that holds it) could miss copies of
+  the nav: the server HTML of `/` holds the guessing `DesktopNav`/`BottomNav` twice each (the pathname boundary's
+  fallback and its content), plus the streamed final nav.
 - **Cause:** the outer session boundary (`DesktopNavForUser`/`BottomNavForUser`) falls back to the nav, which has its
   own pathname `<Suspense>`; both of its sides render the same `*NavLinks`. Content streamed later sits in a hidden
   `<div>` and is moved in by `$RC`; its inline script still runs while parsing, so the attribute is set before the move.
@@ -223,6 +239,7 @@
 - **Do:** mirror the child structure, not just the card: put the parts in one `<div>` like the form. Copy-dependent
   heights (permission descriptions wrap to two lines on a phone, one on desktop; one of five stays one line) need
   responsive classes (`h-10.5 sm:h-5.25`); tailwind 4 accepts `h-5.25`/`h-8.5` etc., no pixel literals needed.
+- **Source:** found by measuring the admin skeletons (commit fe46eb9).
 
 ### A skeleton of a different height toggles the scrollbar and shifts the centred layout (2026-11-11)
 - **Symptom:** on desktop (Windows, classic scrollbars) the whole header moved ~8px sideways and back while switching
@@ -264,8 +281,10 @@
 ### Accessible name must contain the visible label (2026-11-09)
 - **Symptom:** locale switcher showed "TR" but its `aria-label` was "Dil" — voice-control users saying "TR" miss it
   (WCAG 2.5.3 Label in Name, Lighthouse `label-content-name-mismatch`).
+- **Cause:** an `aria-label` replaces the visible text as the control's accessible name.
 - **Do:** when a control has visible text, an `aria-label` must include it: `LocaleSwitcher.current` = "Dil: {code}".
   Icon-only controls (theme switch) just need a label.
+- **Source:** WCAG 2.5.3 (Label in Name); fix in commit 273e13d.
 
 ### A focused button that disables or unmounts drops focus to `<body>`; a dialog's `finalFocus` must decide late (2026-11-24)
 - **Symptom:** in the join panel, pressing "−" down to 0 guests, "Katılıyorum", "Güncelle" or the leave dialog's
@@ -340,3 +359,4 @@
   monogram is rebuilt from them (R, &, V pulled out by flood fill and re-spaced ~70 px apart, no underline).
 - **Icons:** render SVG → PNG with headless Chrome (`--default-background-color=00000000` keeps transparency);
   maskable icon keeps the monogram inside ~56 % of the width (corners well inside the 80 % safe circle).
+- **Source:** commit 3b2c0e9 ("feat(brand): club badge, traced wordmark, R&V icons, manifest and link preview").

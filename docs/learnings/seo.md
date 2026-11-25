@@ -32,6 +32,7 @@ with `scripts/e2e/seo-check.mjs` (`scripts/e2e/README.md`).
   the file was a PNG until 2026-11-13).
 - **Do:** nothing. `og:image` is absolute, built from `metadataBase`, which is fixed to the production origin
   (see `nextjs.md`).
+- **Source:** found by testing the built site (brand and link-preview commit 3b2c0e9).
 
 ### A page's `openGraph` replaces the layout's: shared fields and the file-based image (2026-11-13)
 - **Symptom:** a page that sets `openGraph` (e.g. `/apply` in `generateMetadata`) loses the shared fields

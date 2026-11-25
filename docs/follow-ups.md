@@ -660,14 +660,14 @@ lawyer review, CLAUDE.md "Privacy (KVKK)").
 - **`AccountSkeleton` mirrors one kind of account** (2026-11-10, members; 2026-11-11 to 2026-11-18 additions) — it
   mirrors an active member with a birth date and the Acil durum section in its no-contact, no-consent state (the
   page-level emergency prompt card is not mirrored), plus the "Hesabı sil" card (all measured Δh 0 at 390/1280,
-  dark/light; the "Hesabı sil" card also TR/EN). The account state is request-time data, so the fallback can't know
-  it, and other accounts shift: pending and inactive accounts see a shorter page (no profile sections, or only the photo consent; inactive members' Acil durum section is shorter);
-  accounts being deleted see only the recovery card; members without a birth date get a taller visibility card (the
-  one-time date field, hint and button: `profile-visibility` measured −208px at 390px for `admin@test.local` and
-  `probation@test.local`, 0 for `member@test.local`, 2026-11-18); members without an emergency contact get the prompt
-  card (~146px at 390px) above the account card, so the page below jumps down once when it streams in; members with
-  contacts or a stored blood type see another Acil durum height. Open: fix the common cases (e.g. a stored hint like
-  `apply-hint.ts`) or accept.
+  dark/light; the "Hesabı sil" card also TR/EN). The account state is request-time data, so the fallback can't know it,
+  and other accounts shift: pending and inactive accounts see a shorter page (no profile sections, or only the photo
+  consent; inactive members' Acil durum section is shorter); accounts being deleted see only the recovery card; members
+  without a birth date get a taller visibility card (the one-time date field, hint and button: `profile-visibility`
+  measured −208px at 390px for `admin@test.local` and `probation@test.local`, 0 for `member@test.local`, 2026-11-18);
+  members without an emergency contact get the prompt card (~146px at 390px) above the account card, so the page below
+  jumps down once when it streams in; members with contacts or a stored blood type see another Acil durum height. Open:
+  fix the common cases (e.g. a stored hint like `apply-hint.ts`) or accept.
 - **ApplySkeleton mirrors step 1 only** (2026-11-11, apply-steps Task 7) — a restored draft or `?step=N` opens another
   step, so the form can be taller/shorter than the fallback there; measured only signed out at step 1.
 - **Skeleton magic numbers** (2026-11-10, loading-states review; updated 2026-11-11) — measured heights in
@@ -715,12 +715,6 @@ lawyer review, CLAUDE.md "Privacy (KVKK)").
 
 ### Tooling & docs
 
-- **Docs cleanup leftovers** (2026-11-25, docs optimization) — the cleanup merged, moved and regrouped entries but
-  left these out: (a) older learnings entries that are plain bullet lists (most of `infra.md`, `domain.md`,
-  `next-intl.md`, parts of `ui.md`/`supabase.md`/`environment.md`) were not rewritten into the Symptom/Cause/Do/Source
-  format; (b) some prose lines in CLAUDE.md, PLAN.md and learnings run past 120 characters; (c) the finished
-  `docs/superpowers/specs|plans` (~700 KB) stay as they are (archive; could move to `docs/archive/` or be condensed).
-  Low value each; do them when touching the file anyway.
 - **Dead-code sweep** (2026-11-11, iltan) — first sweep: unused exports/files/dependencies (tool still open, see
   "Dead-code tool?" under Open decisions), unused message keys in `messages/*.json`, stale comments and follow-up
   items that point at removed code. Known: `hasStaffAccess` in `src/lib/auth/permissions.ts` has no callers

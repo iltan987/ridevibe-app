@@ -21,9 +21,10 @@
   (more in the application-gaps spec).
 
 ### Show staff *which* account an approval activates (2026-11-09)
-- **Risk:** approving an application linked to an account (`profile_id`) activates that account. Anyone signed in
-  with any Google account can submit a real person's name and phone; staff confirm on WhatsApp with the real person,
-  and the wrong account becomes a member. The account's Google display name is owner-controlled, so it proves nothing.
+- **Symptom (risk):** anyone signed in with any Google account can submit a real person's name and phone; staff
+  confirm on WhatsApp with the real person, and the wrong account becomes a member.
+- **Cause:** approving an application linked to an account (`profile_id`) activates that account. The account's Google
+  display name is owner-controlled, so it proves nothing.
 - **Do:** show the linked account's sign-in email to every decider (`application_account()` RPC, not the RLS-filtered
   profile embed), warn when it differs from the application email (compare normalised: `normalizeEmail` in
   `src/lib/applications/contact.ts` mirrors `private.normalize_email`), and name that email in the approve dialog.

@@ -23,6 +23,7 @@
 - **Gotcha:** never wait for text that may already be on the page from a previous step (a test "found" the old error
   banner and reported failure while the submit actually succeeded). Wait for the submit button to re-enable or for
   a state that only the new result produces.
+- **Source:** `scripts/e2e/README.md`, `scripts/e2e/e2e-lib.mjs`.
 
 ### Testing as a signed-in user locally (2026-11-07)
 - Google OAuth can't be automated and local JWTs are ES256 (can't be minted). Workaround:
@@ -43,6 +44,7 @@
   a change-log entry; needs the test users) and `scripts/dev/unseed.sql`; run each with `docker exec -i
   supabase_db_ridevibe psql -U postgres -v ON_ERROR_STOP=1 < <file>`. Not in `supabase/seed.sql`: the E2E scripts
   expect a nearly empty DB (members E2E: only its fixtures active; events E2E: ≤ 50 past events). Unseed before E2E.
+- **Source:** `scripts/e2e/README.md`, `scripts/dev/login-as.mjs`, `scripts/dev/seed.sql`.
 
 ### Signing in through the real `/auth/callback` locally: a PKCE magic link from Mailpit (2026-11-14)
 - **Need:** test what the callback does after sign-in (a `deleting` account lands on `/account` whatever `next` says);
@@ -68,6 +70,7 @@
   Sorumlusu), `member@test.local`, `member2@test.local`, `probation@test.local` (ön alım), `pending@test.local`.
 - Seed many rows (e.g. 30 pending users via `insert into auth.users … generate_series`) to test pagination
   (`PAGE_SIZE` = 25), then delete them.
+- **Source:** `scripts/e2e/README.md`; roles & permissions commit c346e1d.
 
 ### Production: no browser E2E there, read-only checks only (2026-11-08, updated 2026-11-25)
 - Preview deployments are behind Vercel login (puppeteer can't pass it without a bypass secret); production is public.
@@ -105,6 +108,7 @@
 ### Clearing an `<input type="email">` in puppeteer (2026-11-09)
 - **Symptom:** after `click({ clickCount: 3 })` + Backspace, typing appended to the old address (invalid email, the
   submit failed for the wrong reason).
+- **Cause:** not investigated.
 - **Do:** `focus()`, then Ctrl+A, Backspace before typing.
 - **Source:** found by testing.
 
@@ -117,11 +121,12 @@
 - **Source:** found by testing (Task 7 E2E).
 
 ### `find()` text filters match `textContent + aria-label`; `^…$` anchors then never match (2026-11-11)
-- **Symptom:** the language-switcher click in `apply-e2e.mjs` silently did nothing (`^Dil: TR$` found no element), so the
-  check failed for the wrong reason.
+- **Symptom:** the language-switcher click in `apply-e2e.mjs` silently did nothing (`^Dil: TR$` found no element), so
+  the check failed for the wrong reason.
 - **Cause:** the helper tests the regexp against the text content concatenated with the `aria-label` ("TR" + "Dil: TR").
-- **Do:** anchor only the end for icon buttons with an aria-label (`Dil: TR$`); plain-text buttons ("Devam") can be anchored.
-  Count default-checked radios (e.g. `city_choice`, step 4) out when asserting "nothing is selected" after a reset.
+- **Do:** anchor only the end for icon buttons with an aria-label (`Dil: TR$`); plain-text buttons ("Devam") can be
+  anchored. Count default-checked radios (e.g. `city_choice`, step 4) out when asserting "nothing is selected" after a
+  reset.
 - **Source:** found by testing (apply steps Task 8).
 
 ### Fetching an RSC payload in E2E: replay a captured request; district names also sit in public messages (2026-11-18)
@@ -252,13 +257,14 @@
 
 ### E2E for lists filtered in the browser: count server requests, check the next frame, emulate a phone (2026-11-13)
 - **Need:** prove that typing, chips and pages make no server round trip and change the list at once.
-- **Symptoms:** counting *every* request failed: Chrome re-requests the favicon (`/icon.svg`) on each History API URL
-  change. A "next frame" check after a chip tap failed although the list looked instant (it was one frame late, a real
-  bug: `docs/learnings/nextjs.md`, "URL as list state").
+- **Symptoms:** counting *every* request failed. A "next frame" check after a chip tap failed although the list looked
+  instant.
+- **Cause:** Chrome re-requests the favicon (`/icon.svg`) on each History API URL change. The list was one frame late,
+  a real bug: `docs/learnings/nextjs.md`, "URL as list state".
 - **Do:** count only `resourceType() === "document"` and RSC fetches (`_rsc=` in the URL or an `rsc` header, which
-  includes prefetches) — `watchServer` in `scripts/e2e/e2e-lib.mjs` (with `pagerFit` and `clearAndType`). Read the list in a `requestAnimationFrame`
-  callback right after the action (`nextFrame`), and log the search box per frame to catch flips during zero-delay
-  typing (`trackFrames`). Phone widths: "Headless scrollbars" above. Measure fallbacks on a
+  includes prefetches) — `watchServer` in `scripts/e2e/e2e-lib.mjs` (with `pagerFit` and `clearAndType`). Read the list
+  in a `requestAnimationFrame` callback right after the action (`nextFrame`), and log the search box per frame to catch
+  flips during zero-delay typing (`trackFrames`). Phone widths: "Headless scrollbars" above. Measure fallbacks on a
   language switch back with `SWITCH_BACK=1 node scripts/e2e/skeletons.mjs …` (JS on, throttled).
 - **Source:** found while writing the list-UX E2E.
 
@@ -319,10 +325,10 @@
 ## Fixtures and suites
 
 ### Members E2E fixtures: plant `side`, a typical first card, save forms by an inner element (2026-11-10)
-- **Symptom 1:** the "Avrupa" side chip showed 0 members and a fixture card showed "Beşiktaş" without "· Avrupa", although
-  `district` was set. **Cause:** `profiles.side` is derived by the app (`updateLocation`), not by a trigger; profiles
-  planted with SQL have `side = null` and count only in "Tümü". **Do:** set `district` *and* `side` in fixture SQL
-  (`scripts/e2e/members-e2e.mjs` resets both for its test member).
+- **Symptom 1:** the "Avrupa" side chip showed 0 members and a fixture card showed "Beşiktaş" without "· Avrupa",
+  although `district` was set. **Cause:** `profiles.side` is derived by the app (`updateLocation`), not by a trigger;
+  profiles planted with SQL have `side = null` and count only in "Tümü". **Do:** set `district` *and* `side` in fixture
+  SQL (`scripts/e2e/members-e2e.mjs` resets both for its test member).
 - **Symptom 2:** `skeletons.mjs` reported `members-row` -24px. **Cause:** it measures the *first* visible row, which was
   the one fixture with bike + birthday + Instagram (114px; name+location only is 74px, plus one bike 94px). **Do:** make
   the first row (sort order) a typical card before judging; the skeleton mirrors name + location + one bike (94px).
@@ -336,6 +342,7 @@
 ### Members E2E on a DB with other active members (park them); shared fixtures; `type=date` values (2026-11-11)
 - **Symptom:** the members E2E expects exactly 29 active members ("29 üye", 25 + 4 on the pager), but a local DB that
   wasn't just reset also holds seed members and iltan's admin.
+- **Cause:** the count covers every active profile, not only the fixtures.
 - **Do:** instead of `db:reset` (wipes iltan's account), save the ids of the active non-fixture profiles (also
   `admin@test.local`, which is no members fixture) to the scratchpad, set them `inactive` for the run, then set exactly
   those ids back to `active` and delete the fixtures.
@@ -416,8 +423,10 @@
 ### pgTAP tests must work on a non-empty database (2026-11-07)
 - **Symptom:** tests passed on a fresh DB, failed once real users existed (`users_email_partial_key` duplicates,
   counts off).
+- **Cause:** the tests assumed an empty database: real rows broke their unique emails and their counts.
 - **Do:** fixture emails on `@pgtap.invalid`; scope every count/update/delete to fixture ids/emails; delete extra
   fixture rows right after their own test. Tests run in a rolled-back transaction, so they're safe on production.
+- **Source:** not recorded.
 
 ### pgTAP: planting rows that today's triggers would reject (2026-11-09)
 - **Need:** test that an old row (e.g. a `+90` landline from before the mobile rule) stays editable.
@@ -425,6 +434,7 @@
   origin;` — skips (non-`always`) triggers for that statement; CHECK constraints still apply. Unlike
   `alter table … disable trigger` it takes no table lock, so it is safe in `supabase test db --remote` runs. Works on
   the local stack as `postgres`.
+- **Source:** `supabase/tests/database/application_ownership.test.sql`; commit bfeeae1 (Turkish mobile rule).
 
 ### Mutation-check a pgTAP file: did the assertions actually bite? (2026-11-21)
 - **Symptom:** a new pgTAP file passes on its first GREEN run; that alone doesn't show the gate/check assertions

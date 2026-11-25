@@ -1,7 +1,8 @@
 # Application Form — Spec
 
 Source of truth for the public application form and its database table. Status: **draft v2**, agreed in principle,
-pending Samet's review; shown to applicants in 4 steps since 2026-11-11 (see "Steps"). Labels will be translated (TR default, EN).
+pending Samet's review; shown to applicants in 4 steps since 2026-11-11 (see "Steps"). Labels will be translated (TR
+default, EN).
 
 Principles: keep it short (Instagram visitors drop off on long forms), collect only what is needed to evaluate an
 applicant (KVKK data minimisation). Safety data (emergency contact, blood type, plate) is collected **after approval**,
@@ -109,9 +110,10 @@ sign-in email and warns when it differs from the application email.
 
 ## After approval
 
-On approval, birth date, Instagram, photo consent and the motorcycle are copied to the member profile; photo consent
-is then changed on `/account`. Safety data (up to 2 emergency contacts, blood type with its own consent, plates) is
-entered on `/account` after approval, never in the application (spec: `docs/superpowers/specs/2026-11-12-safety-data-design.md`).
+On approval, birth date, Instagram, photo consent and the motorcycle are copied to the member profile; photo consent is
+then changed on `/account`. Safety data (up to 2 emergency contacts, blood type with its own consent, plates) is entered
+on `/account` after approval, never in the application (spec:
+`docs/superpowers/specs/2026-11-12-safety-data-design.md`).
 
 ## Stored automatically
 

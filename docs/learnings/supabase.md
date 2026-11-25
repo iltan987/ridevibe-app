@@ -27,16 +27,23 @@
 - Injected env names include `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`,
   `POSTGRES_URL_NON_POOLING` (session pooler :5432 — fine for `db push`/`test db`).
 - Project lives in a Vercel-managed Supabase org; `supabase login` (choose "Continue with Vercel") gives CLI access.
+- **Source:** not recorded.
 
 ### `config push` would leak local defaults into production (2026-11-07)
 - **Symptom:** first `config diff` also changed pooler size, TOTP MFA, email rate limits, vector storage.
+- **Cause:** `config push` sends the local config's values, local defaults included, for the properties it declares;
+  undeclared properties are left untouched (v3).
 - **Do:** always `config diff` first; pin hosted values in `[remotes.production]` for anything you don't intend to
-  change. Undeclared properties are left untouched (v3).
+  change.
+- **Source:** found by testing (the first `config diff`).
 
 ### `supabase test db --remote=…` needs `--yes` in agent runs (2026-11-08, updated 2026-11-25)
 - **Symptom:** `HostedMutationConsentRequiredError … Run pgTAP tests … Nothing was changed.`
+- **Cause:** CLI v3 asks for confirmation before every hosted change (default No), and an agent run can't answer
+  ("CLI v3 … differences that matter" above).
 - **Do:** pass `--yes` (the tests roll back). `pnpm db:push` already runs `supabase test db --remote=<url> --yes`
   right after the push (`scripts/db/production.mts`); run it by hand only to re-check production.
+- **Source:** found by testing (commit 00991a2).
 
 ### `supabase db dump` leaves out auth-table triggers and the pg_cron schedule (2026-11-17)
 - **Symptom:** the schema dump (`supabase db dump`, no flags) has no `create trigger … on auth.users` /
@@ -68,26 +75,34 @@
 - **Do:** edit `supabase/schemas/*.sql` → `pnpm db:migration <name>` (`db schema declarative sync --no-apply`) →
   review → apply. Don't use `db diff` for this. Data (DML) isn't tracked — hand-write those migrations.
 - Generated SQL is verbose (one REVOKE/GRANT per column, odd ordering) but correct; review the security lines.
+- **Source:** `package.json` (`db:migration` = `supabase db schema declarative sync --no-apply -f`).
 
 ### `pnpm db:reset` wipes local auth users (2026-11-07)
-- **Do:** to apply new migrations locally while keeping data/sign-ins, use `pnpm exec supabase migration up`.
-  After a reset, sign in again and re-run the admin bootstrap SQL (README).
 - **Symptom (2026-11-10, members):** after an iteration whose subagents ran `db:reset` many times, iltan's local
-  `/members` said "you haven't applied yet": the sign-in had re-created their account as a fresh `pending` profile
-  without a role. **Do:** at the end of any iteration that reset the DB, tell iltan and restore their local admin
-  (status `active` + admin role) before handing over for browser review.
+  `/members` said "you haven't applied yet".
+- **Cause:** `db:reset` rebuilds the local DB from the migrations (+ seed), so the auth users are gone; the next
+  sign-in re-created iltan's account as a fresh `pending` profile without a role.
+- **Do:** to apply new migrations locally while keeping data/sign-ins, use `pnpm exec supabase migration up`.
+  After a reset, sign in again and re-run the admin bootstrap SQL (README). At the end of any iteration that reset
+  the DB, tell iltan and restore their local admin (status `active` + admin role) before handing over for browser
+  review.
+- **Source:** found in the members iteration (2026-11-10).
 
 ### Declarative sync drops columns before data can be migrated (2026-11-08)
 - **Symptom:** the generated `roles_permissions` migration dropped `profiles.role` *before* creating `roles`, which
   would have lost every role assignment.
+- **Cause:** the declarative diff compares schemas only; data (DML) isn't tracked, so nothing tells it the old
+  column's data must be moved first.
 - **Do:** whenever a column/type is replaced, move the generated `DROP` to the end of the migration and add the
   hand-written data step (`INSERT …`/`UPDATE …`) in between; verify on local data with `migration up` before
   `db reset`. Seed rows the app relies on (e.g. the built-in admin role) belong in that migration.
+- **Source:** `supabase/migrations/20261108183406_roles_permissions.sql`.
 
 ### `ALTER TYPE … ADD VALUE` splits the migration; tests that count permissions (2026-11-07)
 - **Symptom:** `pnpm db:migration` after adding an enum value (plus a table using it) emits two files (`_1`, `_2`):
-  `ALTER TYPE … ADD VALUE` goes into its own migration (a new value must be committed before it can be used; it can't
-  be used in the transaction that adds it). `roles.test.sql` then failed on a hardcoded permission count.
+  `ALTER TYPE … ADD VALUE` goes into its own migration. `roles.test.sql` then failed on a hardcoded permission count.
+- **Cause:** a new enum value must be committed before it can be used; it can't be used in the transaction that adds
+  it.
 - **Do:** keep both files; tests that need "every permission" count with
   `array_length(enum_range(null::public.permission), 1)`, never a literal.
 - **Also (2026-11-21, events):** the split can be three files: `_1` tables/columns + the `ADD VALUE` at its end, `_2`
@@ -112,13 +127,15 @@
 - **Symptom:** the declarative diff handles `create extension if not exists pg_cron with schema pg_catalog;` but
   emits `CREATE EXTENSION "pg_cron";` (schema clause and `if not exists` dropped); the job itself is not in any schema.
 - **Cause:** a schedule is a row in `cron.job` (DML), which declarative schemas don't track; the diff tool normalizes
-  extension statements. Supabase documents `pg_catalog` as pg_cron's schema (the `cron` tables still live in schema `cron`).
+  extension statements. Supabase documents `pg_catalog` as pg_cron's schema (the `cron` tables still live in schema
+  `cron`).
 - **Do:** keep the `create extension` line in `supabase/schemas/90_ops.sql`, then edit the generated migration back to
   `create extension if not exists pg_cron with schema pg_catalog;`. Schedule in a separate hand-written migration:
   `create extension if not exists …`, `select cron.unschedule(jobid) from cron.job where jobname = '…'`, then
   `cron.schedule(name, cron, command)`. Run it after the migration that creates the function. pgTAP can read
   `cron.job` (jobname, schedule, command). The job runs as the scheduling role (postgres); the purge function is
-  security definer with no grants to anon/authenticated. Plain `pg_cron` needs no `shared_preload_libraries` change locally.
+  security definer with no grants to anon/authenticated. Plain `pg_cron` needs no `shared_preload_libraries` change
+  locally.
 - **Source:** `supabase/migrations/*_purge_deleted_accounts.sql`, `*_schedule_purge_deleted_accounts.sql`.
 
 ### The declarative diff plans to unschedule pg_cron jobs, and a multi-statement job must lock first (2026-11-14)
@@ -155,8 +172,10 @@
 
 ### Column grants: they cover `id` in inserts too, and don't show in `database.types.ts` (2026-11-08)
 - **Symptom:** pgTAP `permission denied for table roles` when inserting `(id, name)` as an admin.
+- **Cause:** the grant is `insert (name)`: a column-level insert grant refuses every other column, `id` included.
 - **Do:** that's correct (`grant insert (name)`); in tests insert only granted columns and look rows up by name.
 - Column-level grant changes don't change `database.types.ts` (`pnpm db:types` yields no diff) — that's expected.
+- **Source:** found by testing (pgTAP, roles & permissions commit c346e1d).
 
 ### Expression indexes run with the inserting user's rights (2026-11-08)
 - **Symptom:** after adding `create index … on applications (private.normalize_email(email))`, the public form
@@ -164,6 +183,7 @@
 - **Cause:** index expressions are evaluated as the role doing the INSERT/UPDATE.
 - **Do:** never index a `private.*` function on a table that anon/authenticated write; only on tables written by
   security-definer code (e.g. `member_contacts`). The pgTAP "anon can submit" test caught it — keep such tests.
+- **Source:** the pgTAP "anon can submit" test (commit d64548d).
 
 ### An embedded row hidden by RLS comes back as `null`, even though the FK is set (2026-11-09)
 - **Symptom:** application detail showed "not linked" (and offered linking) for an application with `profile_id` set,
@@ -176,12 +196,14 @@
 
 ### `current_role` is a reserved SQL word (2026-11-07)
 - **Do:** don't name functions after SQL keywords (we once had `private.my_role()` for this reason).
+- **Source:** PostgreSQL docs, appendix "SQL Key Words" (`CURRENT_ROLE` is reserved).
 
 ### pgTAP/SQL helper parameters can be shadowed by column names (2026-11-08)
 - **Symptom:** every assertion returned the same unrelated row.
 - **Cause:** in `language sql` function `profile_of(email text)`, `where u.email = email` compared the column to
   itself.
 - **Do:** name parameters so they can't collide with columns (`user_email`, `target_id`).
+- **Source:** found by testing (pgTAP helpers, commit d64548d).
 
 ### Same-event triggers fire in name order (2026-11-09)
 - **Symptom (avoided):** a `before update` guard comparing `new.email` with `old.email` would have treated
@@ -190,6 +212,8 @@
 - **Cause:** PostgreSQL fires triggers of the same timing/event alphabetically by name.
 - **Do:** in a guard trigger, compare the normalised value (`lower(trim(new.email))`), or name triggers so the
   normaliser sorts first.
+- **Source:** PostgreSQL docs, `CREATE TRIGGER` (same-event triggers fire in alphabetical order by name); commit
+  9dd8144.
 
 ### Activating an account by hand made its application unlinkable (2026-11-10)
 - **Symptom:** staff couldn't find a member in "Link to account"; she had put her iCloud address on the form and
@@ -224,7 +248,8 @@
 
 ### Turkish sort order and search: ICU collation, fold the letters before `like` (2026-11-10, updated 2026-11-25)
 - **Symptom:** default collation sorts `Çelik`/`İlker` after `Z`; `ilike '%ilker%'` doesn't find `İlker` and
-  `'%ISIK%'` doesn't find `Işık` (`ilike` doesn't fold `İ/ı`).
+  `'%ISIK%'` doesn't find `Işık`.
+- **Cause:** the default collation doesn't follow Turkish order, and `ilike` doesn't fold `İ/ı`.
 - **Do:** order with `collate "tr-x-icu"` (the local PG 17 image has it, and so does production: `member_directory`
   sorts with it). Search by folding both sides (`translate` of the Turkish letters + `lower`) and matching
   `fold(col) like '%' || escaped(fold(term)) || '%'`; escape `\`, `%`, `_` in the term. Directory search moved to the
@@ -244,8 +269,9 @@
   above (that one stays for `tidy_name`, which must also handle non-Turkish names). Split words with
   `array_remove(regexp_split_to_array(s, '\s+'), '')` and treat `cardinality(...) = 0` as "no name". The collation
   already exists on production (`member_directory` sorts with it).
-- **Also:** adding a column to a `returns table` function makes the declarative diff emit `DROP FUNCTION` + `CREATE`
-  + fresh grants (a return type can't be replaced in place); check the grants at the end of the generated file.
+- **Also:** adding a column to a `returns table` function makes the declarative diff emit `DROP FUNCTION` +
+  `CREATE` + fresh grants (a return type can't be replaced in place); check the grants at the end of the generated
+  file.
 - **Source:** `supabase/schemas/30_member_directory.sql` (`club_overview`), probation Task 2.
 
 ## Auth and accounts
@@ -256,6 +282,8 @@
 - Cookie name locally: `sb-127-auth-token` (from the URL host's first label); value `base64-<base64url(session JSON)>`,
   chunked at 3180 chars (`.0`, `.1`).
 - Local auth signs JWTs with **ES256** (private key), so test tokens can't be minted — see testing.md.
+- **Source:** `src/lib/supabase/proxy.ts` (`getClaims()` right after `createServerClient`), `server.ts`; cookie
+  name, chunking and ES256: found by testing.
 
 ### Provider data after sign-up: trust `auth.identities`, never `raw_user_meta_data` (2026-11-11)
 - **Symptom:** a trigger on `auth.users.raw_user_meta_data` would refresh the profile photo from Google, but any
@@ -302,7 +330,8 @@
   so it also works when the session was already revoked (the deletion done state reuses this action).
 - **Check:** two sessions for one user (two browser contexts), sign out in one, count `auth.sessions` rows for the
   user: `local` leaves 1, `global` leaves 0.
-- **Source:** `node_modules/@supabase/auth-js/dist/main/GoTrueClient.js` (`signOut`, `_signOut`); two-context probe.
+- **Source:** `@supabase/auth-js` `dist/main/GoTrueClient.js` (`signOut`, `_signOut`; pnpm keeps it under
+  `node_modules/.pnpm/@supabase+auth-js@<version>/`); two-context probe.
 
 ### Cross-tab sign-in/out without a browser Supabase client (2026-11-12)
 - **Need:** other open tabs should follow a sign-in, sign-out or account switch.
@@ -332,14 +361,15 @@
   can't be deleted that way: delete their objects first.
 - **Do:** purge in `private.purge_deleted_accounts` (security definer, no grants); when Storage arrives, delete the
   user's objects in the same job, per account (`docs/follow-ups.md`, "Purge is one transaction").
-- **Source:** supabase.com/docs/guides/auth/managing-user-data (deleting users), supabase.com/docs/guides/auth/auth-anonymous
-  (cleanup with SQL); pgTAP `account_deletion_purge*.test.sql`.
+- **Source:** supabase.com/docs/guides/auth/managing-user-data (deleting users),
+  supabase.com/docs/guides/auth/auth-anonymous (cleanup with SQL); pgTAP `account_deletion_purge*.test.sql`.
 
 ## PostgREST reads and generated types
 
 ### PostgREST embeds: `table(count)` and many-to-one objects (2026-11-08)
 - `select("…, profiles(count)")` returns `[{ count }]` per row (respects RLS); `role:roles(...)` via a FK column
   returns an object or null, typed correctly by generated types.
+- **Source:** `src/lib/access/queries.ts` (`profiles(count)`); roles & permissions commit c346e1d.
 
 ### Generated RPC types call every column and argument non-null (2026-11-08, updated 2026-11-15)
 - **Symptom:** `no-unnecessary-condition` on `row.birthday ?? null` / `!= null` checks; after the lint autofix removed
@@ -362,7 +392,8 @@
   it stops at a short chunk or `LIST_CEILING` + 1 rows. `supabase.rpc(…).range()` is typed and becomes
   `offset`/`limit` on the function's output, so the query needs a total order ending in `id` (else chunks skip or
   repeat rows). Chunks are separate requests, so a row changing in between can still repeat at a boundary: pass the
-  result through `uniqueById`. An RPC that logs (blood filter) logs once per chunk call: keep such results within one chunk.
+  result through `uniqueById`. An RPC that logs (blood filter) logs once per chunk call: keep such results within one
+  chunk.
 - **Source:** spec `docs/superpowers/specs/2026-11-13-list-ux-design.md`; `loadDirectory` in
   `src/lib/members/queries.ts`.
 
@@ -371,12 +402,13 @@
   knows whether `?page=` is past the end. Does a too-large offset fail (HTTP 416 "range not satisfiable")?
 - **Cause:** supabase-js `.range(from, to)` sends `offset`/`limit` query parameters (not a `Range` header);
   PostgREST answers `200 []` for an offset past the end (checked locally up to offset 99,999,975).
-- **Do:** run the page query in parallel with the counts and redirect afterwards when `serverPage` (`src/lib/list-url.ts`)
-  flags the URL; no need to wait for the count first.
+- **Do:** run the page query in parallel with the counts and redirect afterwards when `serverPage`
+  (`src/lib/list-url.ts`) flags the URL; no need to wait for the count first.
 - **Except with a count (2026-11-21):** `.select(cols, { count: "exact" })` on the page query itself sends
   `Prefer: count=exact`, and then PostgREST answers an offset past the end with **416 `PGRST103`** ("An offset of 50
   was requested, but there are only 4 rows"; offset = total still gives an empty 206). `/events/past?page=99` showed the
   error page instead of redirecting. Keep the count in its own `head: true` request (`listPastEvents` in
   `src/lib/events/queries.ts`, like `countApplicationsByStatus`).
-- **Source:** `postgrest-js` `range()` in `node_modules/@supabase/postgrest-js/dist/index.mjs`; curl against local
-  PostgREST (with and without `Prefer: count=exact`); the events E2E.
+- **Source:** `postgrest-js` `range()` in `dist/index.mjs` (under
+  `node_modules/.pnpm/@supabase+postgrest-js@<version>/`); curl against local PostgREST (with and without
+  `Prefer: count=exact`); the events E2E.
