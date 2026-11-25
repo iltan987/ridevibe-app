@@ -87,6 +87,7 @@ whether it already exists.
 pnpm dev          # dev server
 pnpm build        # production build (also validates Cache Components rules); needs the local Supabase running (`/` prerenders the events teaser)
 pnpm format       # Prettier (TS/JS/CSS/JSON + Tailwind class order); `format:check` only checks; Markdown/SQL by hand
+                  # (Markdown prose wraps at 120; tables, headings, code blocks and copy-paste commands may run longer)
 pnpm lint         # ESLint, type-aware (~30–40 s); `lint:fix` applies the autofixes; rules: Stack "Write it so lint passes"
 echo '<code>' | pnpm exec eslint --stdin --stdin-filename src/lib/<existing-file>.ts   # probe a rule (a filename not on disk fails typed lint)
 pnpm exec tsc --noEmit
@@ -254,8 +255,8 @@ compatibility, post-push privilege and pg_cron checks, deploy status, SEO check,
   runs pgTAP against production. Remote CLI writes (`db push`, `db reset`, `db query`, `db pull`,
   `migration up/down/repair/squash`, `seed`) are blocked for Claude by a hook (`db push --dry-run`,
   `db query --read-only` allowed).
-  The hook matches command text: a commit message or hook test that merely mentions such a command is blocked too
-  (write it to a file, `git commit -F`).
+  The hook matches command text: any Bash command that merely mentions such a command (commit message, heredoc,
+  inline script editing docs) is blocked too (use the Edit tool, or write it to a file and `git commit -F`).
   Backups, the key and restoring: `docs/runbooks/database-backup.md`. Decrypting a backup needs iltan's gpg passphrase
   cached first (iltan runs one `gpg --decrypt` in their terminal).
 - **Investigating production data:** read-only only (`set default_transaction_read_only = on` psql or
