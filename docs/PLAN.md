@@ -54,12 +54,12 @@ pick each role's permissions in the app (`/admin/roles`); each member has at mos
 `/admin/members`. Built-in **Admin** (Samet, iltan) has everything and is the only one who can edit/assign roles.
 Members without a role are regular members. Approve/reject is its own permission (approval grants membership).
 
-**Ön alım (decided and built 2026-11-18)** — spec `docs/superpowers/specs/2026-11-18-probation-and-member-notes-design.md`:
-approval and staff manual activation put an account into the status `probation` ("Ön alım"), not `active`. Staff
-(`members.manage`) promote it ("Tam üye yap") or remove it ("Pasifleştir"); the database refuses pending → active.
-Ön alım members may edit their own safety data and bikes but see no other members (only the crowd view), and regular
-members don't see them; staff see them with a badge. Ön alım members can join events unless the event is marked
-"full members only".
+**Ön alım (decided and built 2026-11-18)** — spec
+`docs/superpowers/specs/2026-11-18-probation-and-member-notes-design.md`: approval and staff manual activation put an
+account into the status `probation` ("Ön alım"), not `active`. Staff (`members.manage`) promote it ("Tam üye yap") or
+remove it ("Pasifleştir"); the database refuses pending → active. Ön alım members may edit their own safety data and
+bikes but see no other members (only the crowd view), and regular members don't see them; staff see them with a badge.
+Ön alım members can join events unless the event is marked "full members only".
 
 Intended staff roles (2026-11-08, iltan):
 
@@ -220,7 +220,8 @@ backups or outgrows the free limits. Split across members it is negligible.
    works as a fallback for people whose camera fails, and can be said out loud.
 2. **Location guard** — self check-in only allowed within ~300 m of the meeting point during the event time window.
 3. **Organizer roster** — RSVP list with search and one-tap "present"; several organizers can work in parallel.
-4. **After-event fix-up** — members can claim "I was there", organizers approve; organizers can bulk-mark from the roster.
+4. **After-event fix-up** — members can claim "I was there", organizers approve; organizers can bulk-mark from the
+   roster.
 
 ## KVKK notes (not legal advice)
 
@@ -229,11 +230,12 @@ transfer under art. 9): `docs/learnings/domain.md`. Product decisions:
 
 - Data minimisation: the application form collects only what is needed to evaluate it. Emergency contact etc. is
   collected after approval.
-- Blood type is health data (special category) → optional, separate explicit consent (açık rıza, withdrawable; withdrawal
-  deletes it), visible only to holders of `members.safety` (ride organizers / captains), per KVKK Board decision 2018/10.
-  Every blood-type operation and every safety-card view is logged in `safety_access_log` (admins only). Emergency
-  contacts and plates rest on legitimate interest (+ vital interest in an emergency), proposed by Claude (no lawyer).
-  Encryption relies on the hosted database's disk encryption (no app-level encryption); see `docs/follow-ups.md`.
+- Blood type is health data (special category) → optional, separate explicit consent (açık rıza, withdrawable;
+  withdrawal deletes it), visible only to holders of `members.safety` (ride organizers / captains), per KVKK Board
+  decision 2018/10. Every blood-type operation and every safety-card view is logged in `safety_access_log` (admins
+  only). Emergency contacts and plates rest on legitimate interest (+ vital interest in an emergency), proposed by
+  Claude (no lawyer). Encryption relies on the hosted database's disk encryption (no app-level encryption); see
+  `docs/follow-ups.md`.
 - Members delete their own account on `/account` (done 2026-11-14: hidden at once, 14 days to restore by signing in,
   then purged by a nightly pg_cron job; rejected applications keep their 6 months, approved applications of inactive
   accounts are kept 1 year from the request; spec `docs/superpowers/specs/2026-11-14-account-deletion-design.md`).

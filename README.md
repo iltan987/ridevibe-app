@@ -1,6 +1,7 @@
 # Ride & Vibe
 
-Club platform for Ride & Vibe, an Istanbul motorcycle club. Production: https://ridevibe.com.tr (fallback: https://ridevibe-app.vercel.app)
+Club platform for Ride & Vibe, an Istanbul motorcycle club. Production: https://ridevibe.com.tr (fallback:
+https://ridevibe-app.vercel.app)
 
 - Plan & decisions: [`docs/PLAN.md`](docs/PLAN.md)
 - Application form spec: [`docs/application-form.md`](docs/application-form.md)

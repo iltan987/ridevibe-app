@@ -34,10 +34,10 @@ whether it already exists.
   work.
 - **Workflow per iteration (superpowers):** design → `brainstorming` (spec, iltan approves) → `writing-plans` →
   `subagent-driven-development` with `test-driven-development` (pgTAP first for permissions) → `verification-before-
-  completion` (format, lint, tsc, test, db:test, build, browser E2E) → `requesting-code-review` (+ `/security-review` for
-  RLS/grant changes) → iltan reviews → merge. Small fixes skip design/plan. No git worktrees (one local Supabase DB);
-  no PRs (local `--no-ff` merge). End of session: `claude-md-management:revise-claude-md`.
-  Plans: a task that changes a shared type/schema also updates its consumers, so every commit passes tsc.
+  completion` (format, lint, tsc, test, db:test, build, browser E2E) → `requesting-code-review` (+ `/security-review`
+  for RLS/grant changes) → iltan reviews → merge. Small fixes skip design/plan. No git worktrees (one local Supabase
+  DB); no PRs (local `--no-ff` merge). End of session: `claude-md-management:revise-claude-md`. Plans: a task that
+  changes a shared type/schema also updates its consumers, so every commit passes tsc.
 - **Follow-ups — read before, write after.** `docs/follow-ups.md` is the one backlog of everything consciously not
   done: open decisions, deferred features, parked edge cases, review minors, polish. Read it before planning and
   mention the items that touch the same area when presenting a plan. Every
@@ -149,8 +149,8 @@ the test rows: `docker exec -i supabase_db_ridevibe psql -U postgres` (`-i`, or 
   grant only what is needed (column-level `update` grants for user-editable fields). Policies alone are not enough.
 - Security-definer helpers live in the non-exposed `private` schema with `set search_path = ''` and fully qualified
   names. Use `(select auth.uid())` / `(select private.has_permission('…'))` in policies (evaluated once per query).
-  Trigger functions in `private` fired by anon/authenticated writes must be `security definer` too.
-  A `check` constraint can't call a `private.*` helper (it runs with the writer's rights): use a security-definer trigger.
+  Trigger functions in `private` fired by anon/authenticated writes must be `security definer` too. A `check` constraint
+  can't call a `private.*` helper (it runs with the writer's rights): use a security-definer trigger.
 - Never put a `private.*` function in an index/default on a table that anon/authenticated write (it runs with the
   writer's rights → the public form breaks).
 - Conditional self-service writes (only once, only while null, only when active) need a `public` security-definer
@@ -287,12 +287,13 @@ compatibility, post-push privilege and pg_cron checks, deploy status, SEO check,
   `PRIVACY_NOTICE_VERSION` (stored with each consent) — once per release: a version not yet deployed absorbs more edits.
   Turkish copy must read native: check everyday connotations ("kahvede" = old men's tea house, "sohbet" = religious
   gathering) and leave out the obvious or transactional ("ücretsiz", who pays); offer 2–3 options for headlines.
-- **SEO:** public pages build metadata with `pageMetadata()` (`src/lib/seo/`) and pass `(await parent).openGraph?.images`
-  (a page's `openGraph` replaces the layout's share-image file); unfinished pages get `index: false`; a new indexable
-  page goes into `src/app/sitemap.ts`. Verify with `scripts/e2e/seo-check.mjs` (`docs/learnings/seo.md`).
-  Link previews: WhatsApp/Facebook-type bots get metadata in `<head>`, browsers get it streamed into `<body>`, so
-  check with a bot user agent (`curl -A WhatsApp/2`). An `opengraph-image` under `[locale]` gets a `/tr/…` URL that
-  `src/proxy.ts` redirects: name the image URL in the metadata yourself (`eventImageUrl`, `src/lib/seo/site.ts`).
+- **SEO:** public pages build metadata with `pageMetadata()` (`src/lib/seo/`) and pass `(await
+  parent).openGraph?.images` (a page's `openGraph` replaces the layout's share-image file); unfinished pages get `index:
+  false`; a new indexable page goes into `src/app/sitemap.ts`. Verify with `scripts/e2e/seo-check.mjs`
+  (`docs/learnings/seo.md`). Link previews: WhatsApp/Facebook-type bots get metadata in `<head>`, browsers get it
+  streamed into `<body>`, so check with a bot user agent (`curl -A WhatsApp/2`). An `opengraph-image` under `[locale]`
+  gets a `/tr/…` URL that `src/proxy.ts` redirects: name the image URL in the metadata yourself (`eventImageUrl`,
+  `src/lib/seo/site.ts`).
 - One-off image work (resize, JPEG, partial blur): sharp from Next's own dependency, run from the repo root, never a
   new package (recipe: `docs/learnings/environment.md`).
 - **UI:** Tailwind CSS 4 + shadcn/ui (`base-nova` style, built on Base UI). Base UI composes with the `render` prop,

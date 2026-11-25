@@ -15,10 +15,10 @@ actions, teal for positive/status states, cream text, Saira type.
   React 19 "Encountered a script tag" bug on a `[locale]` remount (issue #397, which we fixed in our own script), and
   it doesn't manage `meta[name=theme-color]`, which we'd need anyway. Borrowed from it instead: theme sync across tabs
   (`storage` event) and no colour transitions while the theme flips (`disableTransitionOnChange`).
-- **Brand:** `src/components/brand/{wordmark,club-badge}.tsx`, `src/assets/brand/badge.png` (production badge), `public/brand/` (wordmark SVG, icon PNGs),
-  `src/app/{favicon.ico,icon.svg,apple-icon.png,manifest.ts}`, `src/app/icon1.png` (192 px PNG, a copy of
-  `public/brand/icon-192.png`, for Google's favicon: it ignores SVG), `src/app/[locale]/opengraph-image.jpg` (share
-  image, JPEG ~69 KB, converted with sharp at quality 82).
+- **Brand:** `src/components/brand/{wordmark,club-badge}.tsx`, `src/assets/brand/badge.png` (production badge),
+  `public/brand/` (wordmark SVG, icon PNGs), `src/app/{favicon.ico,icon.svg,apple-icon.png,manifest.ts}`,
+  `src/app/icon1.png` (192 px PNG, a copy of `public/brand/icon-192.png`, for Google's favicon: it ignores SVG),
+  `src/app/[locale]/opengraph-image.jpg` (share image, JPEG ~69 KB, converted with sharp at quality 82).
 - **Mockups:** `docs/design/mockups/` (`chosen-gece-turkuaz.html`, `directions-a-b-c.html`, `shelved-logo-concepts.*`).
   The Turkish sheets shown to Samet are in `mockups/samet-tr/` (PNG; PDFs were the same images, one page each).
 - **WhatsApp photos:** `docs/design/brand/whatsapp/` — `grup.jpg` for every group (circle crop),
@@ -38,10 +38,12 @@ bends off the left edge above each edge-to-edge photo and back in below it (ilta
 
 ## Asset provenance
 
-- Badge: club WhatsApp JPEG (`docs/design/brand/badge-original-whatsapp.jpg`) → Real-ESRGAN `realesrgan-x4plus` 4× → elliptical
-  mask → `docs/design/brand/badge-2048.png` (and the cream wordmark master) → wordmark traced to SVG (potrace).
-- The **wordmark master (`docs/design/brand/wordmark-cream-master.png`) is the real source** for letters: `docs/design/brand/monogram-cream-master.png` is
-  badly cut (R leg, V, & overlap), so the R&V icon artwork was rebuilt from the wordmark's letters.
+- Badge: club WhatsApp JPEG (`docs/design/brand/badge-original-whatsapp.jpg`) → Real-ESRGAN `realesrgan-x4plus` 4× →
+  elliptical mask → `docs/design/brand/badge-2048.png` (and the cream wordmark master) → wordmark traced to SVG
+  (potrace).
+- The **wordmark master (`docs/design/brand/wordmark-cream-master.png`) is the real source** for letters:
+  `docs/design/brand/monogram-cream-master.png` is badly cut (R leg, V, & overlap), so the R&V icon artwork was rebuilt
+  from the wordmark's letters.
 - The print-resolution master `ride-vibe-logo-baski-4665.png` (4665 px, 21 MB) is kept outside git, on iltan's
   Google Drive. Everything else is reproducible from this folder.
 - WhatsApp photos (Pillow, from `badge-2048.png`), set **manually** by Samet:
