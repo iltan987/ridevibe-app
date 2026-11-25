@@ -4,6 +4,10 @@ Members delete their own account on `/account` (14-day grace, then the purge job
 deletion"). This manual path is for **staff-requested deletions only**, and only on iltan's explicit OK. Prefer
 asking the person to use the self-service flow.
 
+Steps 3 and 5 are SQL writes on production. The Claude Code hook blocks remote SQL writes, so Claude prepares the
+statements (scoped by the person's id) and iltan runs them in their own terminal, as with any other production write
+(`docs/runbooks/database-backup.md`, "What runs").
+
 1. `pnpm db:backup` first (`docs/runbooks/database-backup.md`).
 2. Read-only checks (CLAUDE.md "Investigating production data"): the person's status, role, linked application and
    any `applications.reviewed_by` pointing at them.

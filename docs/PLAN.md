@@ -116,8 +116,8 @@ As of 2026-11-25, live at https://ridevibe.com.tr. Built (specs in `docs/superpo
   motorcycles, visibility, photo consent); members activated by hand enter their birth date once (2026-11-11).
 - **Safety data** (MVP step 2a′, 2026-11-13, `safety-data`): up to 2 emergency contacts, blood type (own consent) and
   a plate per bike on `/account`, a gentle prompt while no contact exists; safety cards for `members.safety`.
-- **PWA install prompt** (2026-11-12, `install-prompt`): banner on `/account` and `/members`, avatar-menu entry,
-  guide for iPhone/Android-manual; manifest only, no service worker.
+- **PWA install prompt** (2026-11-12, `install-prompt`): banner on `/account` and `/members` (later also
+  `/events`), avatar-menu entry, guide for iPhone/Android-manual; manifest only, no service worker.
 - **Self-service account deletion** (2026-11-14, `account-deletion`): see KVKK.
 - **Ön alım + staff notes** (MVP step 2b, first part, 2026-11-18): see "Who sees what" and "Member conduct".
 - **Events** (MVP step 3, iteration 1; `events`, `events-release`): organiser side 2026-11-21, joining and release

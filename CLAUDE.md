@@ -48,7 +48,7 @@ whether it already exists.
 - **Nothing project-related lives only on one PC.** Claude Code settings, permissions, plugins and auto memory are
   committed in `.claude/` (memory in `.claude/memory/` via `autoMemoryDirectory`); durable rules still belong here or
   in `docs/`. Final assets go into `docs/` (not `.superpowers/`, the Desktop or the scratchpad); only secrets stay
-  out. New machine: README "New machine setup".
+  out (and iltan's local `.claude/settings.json` edit, see Git). New machine: README "New machine setup".
 - **Fix the environment yourself** before calling it a blocker: diagnose first (not running vs misconfigured), then
   apply the safe fix; ask iltan only for what needs their decision or credentials. E.g. Docker down → start
   `"/mnt/c/Program Files/Docker/Docker/Docker Desktop.exe" &` and wait for `/var/run/docker.sock`.
@@ -59,8 +59,8 @@ whether it already exists.
   (`docs/follow-ups.md`).
 - **Missing tool → ask, never skip.** If a step needs something not installed (CLI, package, browser tooling), ask
   iltan to approve the install or to set it up; don't drop the step or swap in a weaker check. Check what a task needs
-  before it starts and list everything missing in one message with the exact install command (sudo or interactive
-  steps: suggest `! <command>`).
+  before it starts and list everything missing in one message: what, where, why and the exact install command (sudo or
+  interactive steps: suggest `! <command>`).
 
 ## Git
 
@@ -123,8 +123,8 @@ node scripts/dev/login-as.mjs <email>   # sign in as a local test user by hand: 
 ```
 
 Signed-in local E2E needs email sign-in: `SUPABASE_AUTH_EMAIL_ENABLED=true pnpm exec supabase start` (temporary;
-recipe in `docs/learnings/testing.md`, users per script in `scripts/e2e/README.md`), then restart normally and delete the test rows:
-`docker exec -i supabase_db_ridevibe psql -U postgres` (`-i`, or piped SQL is silently ignored), delete
+recipe in `docs/learnings/testing.md`, users per script in `scripts/e2e/README.md`), then restart normally and delete
+the test rows: `docker exec -i supabase_db_ridevibe psql -U postgres` (`-i`, or piped SQL is silently ignored), delete
 `public.applications` then `auth.users` where the email ends in `@test.local` / `@fixture.invalid`.
 
 ## Database (Supabase)
@@ -256,7 +256,7 @@ compatibility, post-push privilege and pg_cron checks, deploy status, SEO check,
   Backups, the key and restoring: `docs/runbooks/database-backup.md`. Decrypting a backup needs iltan's gpg passphrase
   cached first (iltan runs one `gpg --decrypt` in their terminal).
 - **Investigating production data:** read-only only (`set default_transaction_read_only = on` psql or
-  `supabase db query --remote=<url> --read-only`; getting the URL and the command: `docs/runbooks/production-checks.md`),
+  `supabase db query --remote=<url> --read-only`; the URL and the command: `docs/runbooks/production-checks.md`),
   select the fewest columns (mask emails), never write personal data into the repo or logs.
 - **Auth/config as code:** production overrides live in `[remotes.production]` in `supabase/config.toml`; always run
   `config diff` and review before `config push` (`docs/runbooks/production-checks.md`).

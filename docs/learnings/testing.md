@@ -62,9 +62,10 @@
 - Every staff page: signed-out → sign-in redirect, member without the permission → 404, holder → content. Test with a
   role that has *only* the permission in question (create it in the UI as `admin@test.local`). The DB tests cover the
   same rules at the data level.
-- Test users: the E2E fixtures are listed per script in `scripts/e2e/README.md` (the single list). The hand-run demo
-  data (`scripts/dev/seed.sql`) also needs `organizer@test.local` (author of the demo events; give it a role with
-  `events.manage` to try the organiser side).
+- Test users: each E2E script's fixtures (and how to create them) are listed in `scripts/e2e/README.md`. Users for
+  trying roles by hand: `admin@test.local` (admin role), `organizer@test.local` (Organizatör; author of the demo
+  events in `scripts/dev/seed.sql`, which also needs `member@` and `probation@`), `reviewer@test.local` (Başvuru
+  Sorumlusu), `member@test.local`, `member2@test.local`, `probation@test.local` (ön alım), `pending@test.local`.
 - Seed many rows (e.g. 30 pending users via `insert into auth.users … generate_series`) to test pagination
   (`PAGE_SIZE` = 25), then delete them.
 
@@ -76,7 +77,7 @@
   flows that write are tried by hand in the app. The old smoke test (an `@pgtap.invalid` application with
   `utm_campaign=smoke-test` submitted on production, checked and deleted with SQL) is retired: production data changes
   only through the app or migrations, and production psql is read-only.
-- **Source:** `scripts/e2e/README.md`; CLAUDE.md (Production).
+- **Source:** `scripts/e2e/README.md`; CLAUDE.md "Production & deploy".
 
 ## Puppeteer techniques
 

@@ -136,9 +136,10 @@
   prerendered.
 - **Two `theme-color` metas (2026-11-09, 2026-11-11):** after hydration, and again on every client navigation, Next
   appends a fresh `meta[name=theme-color]` with the `viewport` value (dark) after the server-rendered one. Browsers use
-  the first matching one in tree order (HTML spec; checked 2026-11-11: the bar colour stays right), but
-  `applyResolvedTheme`/`initTheme` set every tag anyway (`querySelectorAll`; the fake docs in `theme.test.ts` carry
-  two), so the order can't matter (`docs/follow-ups.md`).
+  the first matching one in tree order (HTML spec; checked 2026-11-11: the bar colour stays right).
+  `applyResolvedTheme`/`initTheme` set every tag present at load or at a theme switch (`querySelectorAll`; the fake
+  docs in `theme.test.ts` carry two), but not the one Next appends after a later navigation, so we rely on the
+  browser using the first tag (fragile if Next ever inserts it first: `docs/follow-ups.md`).
 - **Gotcha:** `initTheme` is embedded via `toString()`, so it must not reference module-level identifiers (inline
   constants); `src/lib/theme.test.ts` runs the generated string in `node:vm` to prove it.
 - **Source:** `node_modules/next/dist/docs/01-app/02-guides/preventing-flash-before-hydration.md`, found by testing.

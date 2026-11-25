@@ -44,7 +44,7 @@ Contents:
 ## Open decisions (need iltan)
 
 KVKK questions are Claude's to research (law text, KVKK Board decisions) and decide; iltan confirms the outcome (no
-lawyer review, CLAUDE.md "Privacy").
+lawyer review, CLAUDE.md "Privacy (KVKK)").
 
 - **Dead-code tool?** (2026-11-11, iltan) — which tool, if any, for the dead-code sweep (Tooling & docs). Candidates
   to compare when we talk: `knip` (unused files, exports, dependencies; Next.js plugin), `ts-prune`/`ts-unused-exports`
@@ -63,8 +63,8 @@ lawyer review, CLAUDE.md "Privacy").
   shown to active members; §5 describes what it shows). The birthday is **opt-out** since 2026-11-11 (iltan asked the
   members; existing members were switched on by migration, §5 updated), and plates in the directory are opt-out too
   (decided 2026-11-12, safety data 2a′; covered in §4/§5 since 2026-11-13). Left: Claude settles which legal basis
-  covers the directory and the opt-out birthday (likely meşru menfaat rather than açık rıza, which can't be
-  pre-ticked) and adds the purpose and basis to §3/§4.
+  covers the directory, the opt-out birthday and the opt-out plates (likely meşru menfaat rather than açık rıza,
+  which can't be pre-ticked) and adds the purpose and basis to §3/§4.
 - **Safety data: KVKK questions** (2026-11-13, safety data) — Claude researches and decides: (a) legal basis for
   emergency contacts (third persons' data) and plates: the notice states meşru menfaat (KVKK m.5/2-f) plus, in an
   emergency, m.5/2-b; blood type rests on açık rıza (m.6). (b) Encryption: we rely on the hosted database's disk
@@ -345,8 +345,9 @@ lawyer review, CLAUDE.md "Privacy").
 - **Safety contacts pgTAP: vacuous post-check** (2026-11-13, safety data reviews, Task 1) — in
   `supabase/tests/database/safety_contacts.test.sql` the final "pending/inactive contacts were not changed" check
   (`name = 'Hacked'` count 0) can't prove the inactive member's (fixture 0606) contact survived the blocked update:
-  the step before deletes that row, and the pending fixture (0605) has no contact at all. Fix: assert 0606's row still
-  reads "Eski Kişi" right after the update attempt, before the delete.
+  the step before deletes that row, and the count can't prove the pending fixture's (0605) contact survived either.
+  Fix: assert both rows keep their original names (0606 "Eski Kişi" right after the update attempt, before the
+  delete; 0605 "Bekleyen Kişi" at the end).
 - **Members pgTAP gaps** (2026-11-10, members review) — owner `INSERT` into `member_details` (no grant) not asserted;
   motorcycle edge cases (cc = 3001, pending/inactive update/delete, manager/anon writes) and a stale comment near
   line 298 of the motorcycles test; no test that an application with `consent_photos = false` copies its stamp; the
@@ -593,7 +594,7 @@ lawyer review, CLAUDE.md "Privacy").
   - Display sizes are fixed px (`text-[40px]`, `text-[72px]`, …) and don't follow the browser's default font size (zoom
     still works; WCAG 1.4.4 met).
 - **Home photos are 1600 px** (2026-11-13, home content) — soft on very wide screens; ask for the originals if it
-  bothers (originals never enter the repo, see CLAUDE.md "Removing a website photo").
+  bothers (originals never enter the repo, see `docs/runbooks/website-photo-removal.md`).
 
 ### Loading states
 
@@ -657,10 +658,10 @@ lawyer review, CLAUDE.md "Privacy").
   bike, measured); real cards are 74px (no bike) to 114px+ (bike + birthday + Instagram, more bikes), so the list can
   jump a little on load. Accepted: card content varies per member.
 - **`AccountSkeleton` mirrors one kind of account** (2026-11-10, members; 2026-11-11 to 2026-11-18 additions) — it
-  mirrors an active member with a birth date, no emergency contact and no blood-type consent, plus the "Hesabı sil"
-  card (all measured Δh 0 at 390/1280, dark/light; the "Hesabı sil" card also TR/EN). The account state is
-  request-time data, so the fallback can't know it, and other accounts shift: pending and inactive accounts see a
-  shorter page (no profile sections, or only the photo consent; inactive members' Acil durum section is shorter);
+  mirrors an active member with a birth date and the Acil durum section in its no-contact, no-consent state (the
+  page-level emergency prompt card is not mirrored), plus the "Hesabı sil" card (all measured Δh 0 at 390/1280,
+  dark/light; the "Hesabı sil" card also TR/EN). The account state is request-time data, so the fallback can't know
+  it, and other accounts shift: pending and inactive accounts see a shorter page (no profile sections, or only the photo consent; inactive members' Acil durum section is shorter);
   accounts being deleted see only the recovery card; members without a birth date get a taller visibility card (the
   one-time date field, hint and button: `profile-visibility` measured −208px at 390px for `admin@test.local` and
   `probation@test.local`, 0 for `member@test.local`, 2026-11-18); members without an emergency contact get the prompt
