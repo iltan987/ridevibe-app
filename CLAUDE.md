@@ -14,7 +14,8 @@ whether it already exists.
 - `CLAUDE.md` (this file): rules for every session, short, with pointers to the detail.
 - `docs/PLAN.md`: product decisions, who sees what, current status and roadmap. `docs/application-form.md`: the
   application form spec. Keep both up to date when decisions change.
-- `docs/learnings/<topic>.md`: the detail behind rules (symptom, cause, workaround); index in its README.
+- `docs/learnings/<topic>.md`: the detail behind rules (symptom, cause, workaround) and reference facts; index in its
+  README.
 - `docs/runbooks/`: rarely used step-by-step procedures (`database-backup.md`, `production-checks.md`,
   `account-deletion.md`, `website-photo-removal.md`).
 - `docs/follow-ups.md`: the one backlog.
@@ -29,11 +30,11 @@ whether it already exists.
   explain decisions, and stop at decision points instead of building large chunks unasked.
 - **Research before writing code.** Don't trust memory for library APIs: check the bundled docs
   (`node_modules/next/dist/docs/`, package READMEs/types), context7, or the web. Prefer current versions and patterns.
-- **Learnings — read before, write after.** `docs/learnings/` holds everything discovered the hard way (library
-  quirks, root causes of mistakes, workarounds, environment issues), one file per topic (index in its README).
-  Before working in an area, read the matching file. Whenever you discover something non-obvious — by docs, by
-  trial, or by fixing your own mistake — add an entry (symptom → cause → do) right away, in the same commit as the
-  work.
+- **Learnings — read before, write after.** `docs/learnings/` holds everything discovered the hard way (library quirks,
+  root causes of mistakes, workarounds, environment issues), one file per topic (index in its README). Before working in
+  an area, read the matching file. Whenever you discover something non-obvious — by docs, by trial, or by fixing your
+  own mistake — add an entry (problem: symptom → cause → do; or a reference fact with its source) right away, in the
+  same commit as the work.
 - **Workflow per iteration (superpowers):** design → `brainstorming` (spec, iltan approves) → `writing-plans` →
   `subagent-driven-development` with `test-driven-development` (pgTAP first for permissions) → `verification-before-
   completion` (format, lint, tsc, test, db:test, build, browser E2E) → `requesting-code-review` (+ `/security-review`
@@ -289,9 +290,9 @@ compatibility, post-push privilege and pg_cron checks, deploy status, SEO check,
   `PRIVACY_NOTICE_VERSION` (stored with each consent) — once per release: a version not yet deployed absorbs more edits.
   Turkish copy must read native: check everyday connotations ("kahvede" = old men's tea house, "sohbet" = religious
   gathering) and leave out the obvious or transactional ("ücretsiz", who pays); offer 2–3 options for headlines.
-- **SEO:** public pages build metadata with `pageMetadata()` (`src/lib/seo/`) and pass `(await
-  parent).openGraph?.images` (a page's `openGraph` replaces the layout's share-image file); unfinished pages get `index:
-  false`; a new indexable page goes into `src/app/sitemap.ts`. Verify with `scripts/e2e/seo-check.mjs`
+- **SEO:** public pages build metadata with `pageMetadata()` (`src/lib/seo/`) and pass
+  `(await parent).openGraph?.images` (a page's `openGraph` replaces the layout's share-image file); unfinished pages get
+  `index: false`; a new indexable page goes into `src/app/sitemap.ts`. Verify with `scripts/e2e/seo-check.mjs`
   (`docs/learnings/seo.md`). Link previews: WhatsApp/Facebook-type bots get metadata in `<head>`, browsers get it
   streamed into `<body>`, so check with a bot user agent (`curl -A WhatsApp/2`). An `opengraph-image` under `[locale]`
   gets a `/tr/…` URL that `src/proxy.ts` redirects: name the image URL in the metadata yourself (`eventImageUrl`,

@@ -47,4 +47,7 @@ Fact entry:
 - **Source:** law/doc link, file, or "found by testing".
 ```
 
+A problem caught before it showed (design review, docs) may skip **Symptom**; extra labels (**Need:**, **Test:**,
+**Consequence:** …) are fine where they help.
+
 Rules: one fact per entry, imperative "Do", keep it short, fix or delete entries that turn out to be wrong.

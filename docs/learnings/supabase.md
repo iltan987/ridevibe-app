@@ -282,7 +282,8 @@
 - Cookie name locally: `sb-127-auth-token` (from the URL host's first label); value `base64-<base64url(session JSON)>`,
   chunked at 3180 chars (`.0`, `.1`).
 - Local auth signs JWTs with **ES256** (private key), so test tokens can't be minted — see testing.md.
-- **Source:** `src/lib/supabase/proxy.ts` (`getClaims()` right after `createServerClient`), `server.ts`.
+- **Source:** `src/lib/supabase/proxy.ts` (`getClaims()` right after `createServerClient`), `server.ts`; cookie
+  name, chunking and ES256: found by testing.
 
 ### Provider data after sign-up: trust `auth.identities`, never `raw_user_meta_data` (2026-11-11)
 - **Symptom:** a trigger on `auth.users.raw_user_meta_data` would refresh the profile photo from Google, but any
@@ -409,5 +410,5 @@
   error page instead of redirecting. Keep the count in its own `head: true` request (`listPastEvents` in
   `src/lib/events/queries.ts`, like `countApplicationsByStatus`).
 - **Source:** `postgrest-js` `range()` in `dist/index.mjs` (under
-  `node_modules/.pnpm/@supabase+postgrest-js@<version>/`); curl against local PostgREST (with and without `Prefer:
-  count=exact`); the events E2E.
+  `node_modules/.pnpm/@supabase+postgrest-js@<version>/`); curl against local PostgREST (with and without
+  `Prefer: count=exact`); the events E2E.

@@ -33,7 +33,7 @@
 - Avoid third-party requests that leak visitor IPs without need (e.g. phone-input flag CDN) and non-essential
   cookies (UTM attribution is passed via URL, no cookie).
 - Store the privacy-notice version with each consent (`privacy_notice_version`).
-- **Source:** KVKK (Law No. 6698) art. 9 and 10; product decisions in `docs/PLAN.md`, "KVKK notes".
+- **Source:** KVKK (Law No. 6698) art. 6 (special categories), 9 and 10; product decisions in `docs/PLAN.md`, "KVKK notes".
 
 ### WhatsApp photos: groups are circles, communities are rounded squares (2026-11-09)
 - **Symptom:** the new group photo showed light corners and a blurred frame; the dark-cornered fix then looked like a

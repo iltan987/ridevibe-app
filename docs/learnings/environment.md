@@ -10,6 +10,7 @@
   WSL Integration. It stops after `wsl --shutdown`.
 - `pnpm db:start` may fail with `StatusDbNotReadyError … starting` right after Docker boots — the container is
   still healthy-checking; poll `pnpm db:status` instead of restarting.
+- **Source:** found by testing (2026-11-08: Docker was simply not running, WSL integration was fine).
 
 ### Local Supabase won't start: Windows reserved its ports (2026-11-17)
 - **Symptom:** `supabase start` fails with `ports are not available: exposing port TCP 0.0.0.0:54322 … /forwards/expose
