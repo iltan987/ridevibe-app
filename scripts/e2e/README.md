@@ -117,7 +117,7 @@ Run against a **local** stack only (local Supabase + a server on port 3123); nev
   `pending-noapp@test.local` gets the card and "Başvur" but no "Giriş yap"; `pending-app@test.local` (linked
   application `new`/`contacted`; SKIP without it) reads "Başvurun inceleniyor". Positive control: `member@test.local`
   gets the full event page. Link preview, fetched as WhatsApp's crawler (bots get the tags in `<head>`, browsers get
-  them streamed into `<body>`, `docs/learnings/nextjs.md`): `og:title` = title, `og:description` = kind · day · area
+  them streamed into `<body>`, `docs/learnings/seo.md`): `og:title` = title, `og:description` = kind · day · area
   ("İptal edildi · " first when cancelled; English on `/en`), `og:url`, `og:locale`, noindex, no start time; generic
   for unknown ids. Home `/` signed out (`/en` once): the "next rides" section with the first 3 of the 4 planted
   rides, no meet-up/cancelled ride or private field, "Tüm etkinlikler (4 sürüş)" to `/events`; the hero's

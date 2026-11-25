@@ -1,15 +1,4 @@
-- [iltan](user-iltan.md) — club member building & maintaining the motorcycle club app for founder Samet
-- [Dev rules](feedback-dev-rules.md) — git email iltancanerr@gmail.com, NEVER co-author trailers, always research docs
-- [Iterative collaboration](feedback-iterative-collaboration.md) — small reviewable steps, iltan steers, no rush
-- [Record learnings](feedback-record-learnings.md) — write discoveries/mistakes to docs/learnings/ (read before, write after)
-- [Ridingclub project](project-ridingclub.md) — requirements: motorcycle club Istanbul, TR/EN, KVKK, mobile; live at ridevibe.com.tr
-- [Paginate every list](feedback-paginate-lists.md) — no fixed caps like .limit(200); club grew to ~130 in 2 weeks
-- [Fix environment yourself](feedback-fix-environment-yourself.md) — start Docker Desktop etc. from WSL before calling it a blocker
-- [Agentic workflow](feedback-agentic-workflow.md) — phases via superpowers: spec → plan → subagent build+TDD → verify → independent review
-- [Track follow-ups](feedback-track-follow-ups.md) — deferred/parked/out-of-scope items go to docs/follow-ups.md; read it before planning
-- [Missing tools: ask](feedback-missing-tools-ask.md) — never skip a step for a missing tool; ask approval to install or ask iltan
-- [Remove dead code](feedback-remove-dead-code.md) — delete unused code in the same change; periodic sweeps (follow-ups)
-- [No lawyer](project-no-lawyer.md) — KVKK "lawyer questions" are Claude's to research and decide; no lawyer review
+- [iltan](user-iltan.md) — club member who owns & maintains the club app for founder Samet; explain decisions
+- [Ridingclub project](project-ridingclub.md) — why services run on iltan's accounts; how Samet is involved
 - [Turkish copy](feedback-turkish-copy.md) — native connotations (not "kahvede", "sohbet"); skip obvious/money details
-- [Ignore settings.json](feedback-ignore-settings-json.md) — never commit/ask about local .claude/settings.json changes until iltan says otherwise
 - [Review in production](feedback-review-in-production.md) — iltan reviews on production after merge; tests there while usage is low (no local admin restore until asked); gate stays closed until batched checks

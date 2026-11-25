@@ -21,9 +21,11 @@
   built-in auth email is rate-limited and not for production. We avoid email entirely so far (Google sign-in,
   WhatsApp links).
 
-### Free-tier limits that shaped the design (2026-11-07)
-- Supabase Free: 500 MB DB, 1 GB storage, 5 GB egress, **no backups**, pauses after 1 week inactivity → own nightly
-  backup + keep-alive planned; media on Cloudflare R2 (10 GB free, free egress).
+### Free-tier limits that shaped the design (2026-11-07, updated 2026-11-25)
+- Supabase Free: 500 MB DB, 1 GB storage, 5 GB egress, **no backups**, pauses after 1 week inactivity → a keep-alive
+  cron (`vercel.ts` `crons` → `src/app/api/keep-alive`, entry "Vercel cron on Hobby" below) and our own encrypted
+  backup before every production push (`pnpm db:push`, or `pnpm db:backup` alone; no nightly job: "Supabase Free plan
+  has no automatic backups" below); media planned on Cloudflare R2 (10 GB free, free egress).
 - Videos stay on WhatsApp (it doesn't store media long-term; phones pay the storage).
 
 ### Publishing the Google OAuth app (2026-11-08)
@@ -50,11 +52,14 @@
   `-q` isn't supported for requests — use `field:"value"`. Never pipe CLI errors into a filter that can hide them.
 - Verified 2026-11-08: keep-alive cron ran 19:17 UTC → 200.
 
-### `vercel ls` prints its table to stderr (2026-11-10)
+### `vercel ls` prints its table to stderr; wait on the newest row only (2026-11-10, updated 2026-11-25)
 - **Symptom:** a wait-for-deploy loop (`vercel ls … 2>/dev/null | grep Ready`) never saw "Ready" and ran until its
   timeout, although the deploy was ready after ~40 s.
-- **Cause:** the Vercel CLI writes the deployments table (and its status column) to stderr, not stdout.
-- **Do:** `vercel ls ridevibe-app --environment production 2>&1 | grep -m1 -E 'Ready|Error|Building|Queued|Canceled'`.
+- **Cause:** the Vercel CLI writes the deployments table (and its status column) to stderr, not stdout. Older
+  deployments in the table already say Ready, so a plain `grep Ready` would match at once.
+- **Do:** `vercel ls ridevibe-app --environment production 2>&1` (top row: Building → Ready). To wait for a deploy,
+  test only the newest row: `vercel ls ridevibe-app --environment production 2>&1 | grep -m1 "●" | grep -qE
+  "Ready|Error|Canceled"`.
 - **Source:** found by testing (loading-states rollout).
 
 ### Supabase Free plan has no automatic backups (2026-11-14)

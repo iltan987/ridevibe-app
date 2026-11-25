@@ -7,18 +7,22 @@ mistakes and their root causes, workarounds, environment quirks. Goal: never re-
 
 | File | Covers |
 |---|---|
-| [nextjs.md](nextjs.md) | Next.js 16 (Cache Components, proxy, routing, dev server) |
-| [next-intl.md](next-intl.md) | i18n routing, messages, typing |
-| [supabase.md](supabase.md) | CLI v3, declarative schemas, RLS/grants, auth, pgTAP, hosted project |
-| [ui.md](ui.md) | shadcn/ui `base-nova`, Base UI, mobile UX |
-| [forms.md](forms.md) | Zod 4, form submission, phone input |
-| [testing.md](testing.md) | Unit tests with `node --test`, browser E2E without a framework, signed-in sessions, mutation-checking pgTAP files, racing requests |
-| [seo.md](seo.md) | Search, link previews, structured data |
-| [security.md](security.md) | Redirects, input handling, Google sign-in in in-app browsers, other attack-surface lessons |
-| [tooling.md](tooling.md) | ESLint (typescript-eslint, Tailwind class lint), Prettier, disable comments, pre-commit hook (lint-staged) |
-| [environment.md](environment.md) | WSL, Docker, pnpm, CLI tools, shell gotchas, sharp image edits |
-| [infra.md](infra.md) | Vercel, Marketplace, domain/DNS, costs and plan limits (e.g. backups) |
-| [domain.md](domain.md) | Motorcycle/Turkey/KVKK facts that drive product decisions |
+| [nextjs.md](nextjs.md) | Next.js 16: Cache Components, `"use cache"` and prerendering, proxy, routing and navigation, URL state, Server Actions, dev server, types and build |
+| [next-intl.md](next-intl.md) | i18n routing, locale detection (`accept-language` pinning, `NEXT_LOCALE`), locale in Server Actions, messages, typing |
+| [supabase.md](supabase.md) | CLI v3 and the hosted project, declarative schemas and migrations (enum splits, pg_cron), grants/RLS, Turkish text in SQL, auth and account deletion, PostgREST reads and generated types |
+| [ui.md](ui.md) | shadcn/ui `base-nova` and Base UI, Tailwind and contrast, theme, inline scripts and session hints, skeletons, focus, PWA install, cross-tab state, brand assets |
+| [forms.md](forms.md) | Zod 4 (incl. `z.uuid()` versions), form submission and state, drafts, phone and date inputs |
+| [testing.md](testing.md) | Browser E2E without a framework (setup, signed-in sessions, hidden routes, background tabs, skeleton measuring, fixtures, racing requests), unit tests with `node --test`, pgTAP (fixtures, planting rows, hints, mutation checks) |
+| [seo.md](seo.md) | Search, metadata merging, share and Open Graph images, link previews for bots, structured data |
+| [security.md](security.md) | Redirects, Google sign-in in in-app browsers, which account an approval activates, personal data in the repo, server-side link following (SSRF) |
+| [tooling.md](tooling.md) | ESLint (typescript-eslint, Tailwind class lint), Prettier, disable comments, `.mts` scripts, pre-commit hook (lint-staged `--no-stash`), git recipes (throwaway clone, merge without checkout, staging only your lines, scrubbing history) |
+| [environment.md](environment.md) | WSL, Docker and Windows-reserved ports, pnpm, CLI tools, shell gotchas (`pkill -f`, `docker exec -i`), secrets in commands, Claude Code setup, Windows GPU tools, headless Chrome exports, sharp image edits |
+| [infra.md](infra.md) | Vercel (project, crons, request logs, deploy status), Marketplace, domain/DNS, email, Google OAuth publishing, costs and plan limits (backups) |
+| [domain.md](domain.md) | Motorcycle/Turkey/KVKK facts that drive product decisions, WhatsApp links and photos, map link formats |
+
+pgTAP: how to write, plant fixtures for and mutation-check tests is in `testing.md`; `supabase.md` holds the database
+behaviour the tests pin down (grants, triggers, migrations). Big files open with a "Contents" list of their `##`
+groups: put a new entry into the group it belongs to.
 
 ## Entry format
 

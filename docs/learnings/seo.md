@@ -20,10 +20,69 @@ with `scripts/e2e/seo-check.mjs` (`scripts/e2e/README.md`).
 - **Symptom:** the 1200x630 PNG share image was ~317 KB; "WhatsApp wants under 300 KB" is all over the web.
 - **Cause:** the official limit (Meta "Link Previews") is **600 KB** for `og:image` (and the tags within the first
   300 KB of HTML); "300 KB" is folklore. A lighter file is still kinder to crawlers.
-- **Do:** convert with Next's own sharp (`require.resolve('sharp', { paths: [require.resolve('next')] })`,
-  `.jpeg({ quality: 82, mozjpeg: true })`): 317 KB became 69 KB. `opengraph-image.jpg` is picked up by the file
-  convention (`src/app/[locale]/opengraph-image.jpg`, served from `/-/opengraph-image.jpg`, see `ui.md`).
+- **Do:** convert with Next's own sharp (`environment.md`, "sharp from Next's own dependency"),
+  `.jpeg({ quality: 82, mozjpeg: true })`: 317 KB became 69 KB. `opengraph-image.jpg` is picked up by the file
+  convention (`src/app/[locale]/opengraph-image.jpg`, served from `/-/opengraph-image.jpg`, next entry).
 - **Source:** Meta business-messaging docs "Link Previews"; found by testing.
+
+### `opengraph-image.jpg` in `[locale]` is served from `/-/opengraph-image.jpg` (2026-11-09)
+- **Symptom:** `og:image` content is `…/-/opengraph-image.jpg?<hash>` (HTML of `/` and `/en`);
+  `/opengraph-image.jpg` is 404.
+- **Cause:** the dynamic segment is replaced by `-` in the metadata route; it works (200, image/jpeg;
+  the file was a PNG until 2026-11-13).
+- **Do:** nothing. `og:image` is absolute, built from `metadataBase`, which is fixed to the production origin
+  (see `nextjs.md`).
+
+### A page's `openGraph` replaces the layout's: shared fields and the file-based image (2026-11-13)
+- **Symptom:** a page that sets `openGraph` (e.g. `/apply` in `generateMetadata`) loses the shared fields
+  (`siteName`, `locale`, `type`, `images`): its `og:image` and `twitter:image` vanished and `twitter:card` fell back to
+  `summary`; pages without `openGraph` kept the image.
+- **Cause:** Next merges metadata shallowly per segment: a nested object like `openGraph` replaces the parent's whole
+  object, file-based images included (the file image is attached at the segment that holds the file; its hashed URL
+  can't be hardcoded). Likewise an `images` key in the page's own `openGraph` makes Next skip the segment's file image
+  (`mergeStaticMetadata` in `next/dist/lib/metadata/metadata-resolution-primitives.js`).
+- **Do:** build every page's metadata through `pageMetadata` (`src/lib/seo/metadata.ts`), which repeats the shared
+  fields and takes the parent's images: `generateMetadata(_props, parent: ResolvingMetadata)` and
+  `images: (await parent).openGraph?.images` into `openGraph`.
+- **Source:** Next `generate-metadata.md` ("Extending or overwriting parent images"); found by curl-testing the built
+  site.
+
+### A generated `opengraph-image` under `[locale]` gets a `/tr/` URL; ImageResponse caches for a year (2026-11-24)
+- **Symptom:** with `src/app/[locale]/events/[id]/opengraph-image.tsx`, the Turkish page's `og:image` was
+  `https://ridevibe.com.tr/tr/events/<id>/opengraph-image?<hash>`; the locale proxy answers that with a 307 to the
+  unprefixed path (and turns the query into `?<hash>=`). The PNG itself came with
+  `cache-control: public, immutable, no-transform, max-age=31536000`.
+- **Cause:** Next fills the metadata image URL from the internal route params (`locale: "tr"`); `localePrefix:
+  "as-needed"` redirects the default prefix. `ImageResponse` (`@vercel/og`) sets that header in production unless
+  `headers` overrides it. A page whose own `openGraph` has an `images` key makes Next skip the segment's file image
+  (entry above).
+- **Do:** name the image in the page's `generateMetadata` (`eventImageUrl` in `src/lib/seo/site.ts`, size
+  `OG_IMAGE_SIZE`, `type`, `alt`); the file stays the route. Pass `headers: { "cache-control": … }` to
+  `ImageResponse` when the image follows data (`public, max-age=3600` beside a `cacheLife("hours")` read;
+  `no-store` for a fallback after a failed read). Vercel's CDN caches a function response only with `s-maxage` /
+  `CDN-Cache-Control`, so `max-age` alone reaches browsers and crawlers only. Fonts: satori takes ttf/otf/woff and no
+  variable fonts; google/fonts has Saira at normal width only as a variable font, so the image uses the static
+  `SairaExtraCondensed-ExtraBold` / `SairaSemiCondensed-SemiBold` (`src/assets/fonts/`, OFL, reserved name "Saira":
+  ship the files unmodified). Text clamping in satori needs `display: "block"` + `lineClamp: 2` (ellipsis included).
+  Check the PNGs by eye (`scripts/e2e/events-public-e2e.mjs` saves them to `OUT_DIR`).
+- **Source:** bundled `opengraph-image.md` / `image-response.md`; `next/dist/compiled/@vercel/og/index.node.js`;
+  Vercel docs "CDN cache"; found by testing.
+
+### `generateMetadata` reading params + a cached read: streamed for browsers, in `<head>` only for listed bots (2026-11-24)
+- **Need:** per-event link previews on `/events/[id]` (`generateMetadata({ params })` → `getEventPreview(id)`, a
+  `"use cache"` read) under Cache Components.
+- **Observed:** `pnpm build` accepts it with no marker: the page already has request-time content behind
+  `<Suspense>` (the session), so metadata just defers with it (`generate-metadata.md`, "With Cache Components"; only an
+  otherwise fully prerenderable page would need `"use cache"` in `generateMetadata` or a dynamic marker). The tags
+  then **stream**: for a normal browser (`curl`, `fetch` with Node's UA) `og:title` etc. arrive at the end of
+  `<body>`; for an HTML-limited bot (`HTML_LIMITED_BOT_UA_RE` in `next/dist/shared/lib/router/utils/html-bots.js`:
+  WhatsApp, facebookexternalhit, Twitterbot, Slackbot, Discordbot, LinkedInBot, …; Telegram's
+  "TelegramBot (like TwitterBot)" matches via "TwitterBot") rendering blocks and they are in `<head>`.
+- **Do:** check preview tags with a bot user agent (`User-Agent: WhatsApp/2.23.20.0 A`) and assert they sit before
+  `</head>` (`scripts/e2e/events-public-e2e.mjs`); a body-only match from a plain `fetch` proves nothing about previews.
+  Keep the uuid check outside the cached function so junk ids make no cache entry (`getEventPreview` →
+  `readEventPreview`).
+- **Source:** bundled `generate-metadata.md` ("Streaming metadata", "With Cache Components"); found by testing.
 
 ### Preview crawlers send the recipient's `Accept-Language` (2026-11-13)
 - **Symptom:** a link shared on WhatsApp previews in a different language than the page's own, or from a redirect.
@@ -42,22 +101,16 @@ with `scripts/e2e/seo-check.mjs` (`scripts/e2e/README.md`).
   seo-check script asserts both are served. Don't disallow pages that carry `noindex` (the tag is never seen).
 - **Source:** spec research; route table before/after in the build output (`pnpm build`).
 
-### Next overwrites nested metadata objects per segment (2026-11-13)
-- **Symptom:** a page that sets `openGraph` loses the shared fields (`siteName`, `locale`, `type`, `images`) and the
-  layout's `og:image`.
-- **Cause:** Next merges metadata shallowly: a nested object like `openGraph` replaces the parent's whole object.
-- **Do:** build every page's metadata through `pageMetadata` (`src/lib/seo/metadata.ts`), which repeats the shared
-  fields and takes the parent's images; the file-image detail is in `nextjs.md` ("A page's `openGraph` drops ...").
-- **Source:** Next `generate-metadata.md`; found by curl-testing the built site.
-
-### No rich results to chase: FAQ gone, Event needs public events (2026-11-13)
+### No rich results to chase: FAQ gone, Event needs a public place (2026-11-13, updated 2026-11-25)
 - **Symptom:** the temptation to add FAQ or Event structured data to the home page for rich results.
-- **Cause:** FAQ rich results were removed (deprecated 2026-05-07); Event rich results need public events at a
-  physical place, and the club's events are members-only. `SportsClub` as a type needs a postal `address` (a
-  `LocalBusiness`), and the club has no place to visit, so no Google Business Profile either.
+- **Cause:** FAQ rich results were removed (deprecated 2026-05-07). Event rich results need an event with a physical
+  location (a place with an address): the public event teasers (since 2026-11-24: `/events`, `/events/[id]`, the home
+  page's next rides) show only title, kind, Istanbul day and area, never the time or the place, and `/events/[id]` is
+  `noindex`; the full events stay members-only. `SportsClub` as a type needs a postal `address` (a `LocalBusiness`),
+  and the club has no place to visit, so no Google Business Profile either.
 - **Do:** home page structured data is `WebSite` (site name: `name`, `url`, `alternateName`) + `SportsOrganization`
-  (`logo` >= 112 px); no FAQ or Event. Revisit Event when public events at a place exist (`docs/follow-ups.md`).
-  JSON-LD is a plain `<script>`, not `InlineScript` (`ui.md`).
+  (`logo` >= 112 px); no FAQ or Event. Revisit Event only if events with a public place appear
+  (`docs/follow-ups.md`). JSON-LD is a plain `<script>`, not `InlineScript` (`ui.md`).
 - **Source:** Google Search Central (site names 2025-12-10, Organization 2026-09-08, FAQ/Event pages).
 
 ### X and WhatsApp have no cache refresh tool (2026-11-13)
@@ -68,24 +121,3 @@ with `scripts/e2e/seo-check.mjs` (`scripts/e2e/README.md`).
 - **Do:** get the tags right before the first share; after a fix test by hand in WhatsApp, Telegram and iMessage.
   Telegram may show no preview at all because of an open bug (bugs.telegram.org/c/61650): don't chase it.
 - **Source:** spec research, "After deploy" checklist.
-
-### A generated `opengraph-image` under `[locale]` gets a `/tr/` URL; ImageResponse caches for a year (2026-11-24)
-- **Symptom:** with `src/app/[locale]/events/[id]/opengraph-image.tsx`, the Turkish page's `og:image` was
-  `https://ridevibe.com.tr/tr/events/<id>/opengraph-image?<hash>`; the locale proxy answers that with a 307 to the
-  unprefixed path (and turns the query into `?<hash>=`). The PNG itself came with
-  `cache-control: public, immutable, no-transform, max-age=31536000`.
-- **Cause:** Next fills the metadata image URL from the internal route params (`locale: "tr"`); `localePrefix:
-  "as-needed"` redirects the default prefix. `ImageResponse` (`@vercel/og`) sets that header in production unless
-  `headers` overrides it. A page whose own `openGraph` has an `images` key makes Next skip the segment's file image
-  (`mergeStaticMetadata` in `next/dist/lib/metadata/metadata-resolution-primitives.js`).
-- **Do:** name the image in the page's `generateMetadata` (`eventImageUrl` in `src/lib/seo/site.ts`, size
-  `OG_IMAGE_SIZE`, `type`, `alt`); the file stays the route. Pass `headers: { "cache-control": … }` to
-  `ImageResponse` when the image follows data (`public, max-age=3600` beside a `cacheLife("hours")` read;
-  `no-store` for a fallback after a failed read). Vercel's CDN caches a function response only with `s-maxage` /
-  `CDN-Cache-Control`, so `max-age` alone reaches browsers and crawlers only. Fonts: satori takes ttf/otf/woff and no
-  variable fonts; google/fonts has Saira at normal width only as a variable font, so the image uses the static
-  `SairaExtraCondensed-ExtraBold` / `SairaSemiCondensed-SemiBold` (`src/assets/fonts/`, OFL, reserved name "Saira":
-  ship the files unmodified). Text clamping in satori needs `display: "block"` + `lineClamp: 2` (ellipsis included).
-  Check the PNGs by eye (`scripts/e2e/events-public-e2e.mjs` saves them to `OUT_DIR`).
-- **Source:** bundled `opengraph-image.md` / `image-response.md`; `next/dist/compiled/@vercel/og/index.node.js`;
-  Vercel docs "CDN cache"; found by testing.

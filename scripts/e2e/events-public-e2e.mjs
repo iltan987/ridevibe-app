@@ -71,7 +71,7 @@ const hasPendingApp =
     "select count(*) from applications a join auth.users u on u.id = a.profile_id where u.email = 'pending-app@test.local' and a.status in ('new', 'contacted')",
   ) === "1";
 
-// Fixed ids (valid v4: Zod's uuid check, docs/learnings/testing.md) so the cached preview of an id never changes.
+// Fixed ids (valid v4: Zod's uuid check, docs/learnings/forms.md) so the cached preview of an id never changes.
 const RIDE = { id: "00000000-0000-4000-8000-00000000e401", title: "E2E Önizleme Ağva Sürüşü", area: "Üsküdar → Ağva" };
 const MEETUP = { id: "00000000-0000-4000-8000-00000000e402", title: "E2E Önizleme Moda Buluşması" };
 const CANCELLED = {

@@ -1,5 +1,13 @@
 # Forms & validation learnings
 
+## Contents
+
+- [Zod and validation](#zod-and-validation)
+- [Submitting and form state](#submitting-and-form-state)
+- [Inputs](#inputs)
+
+## Zod and validation
+
 ### Zod 4: cross-field rules are skipped while other fields have errors (2026-11-08)
 - **Cause:** refinements/superRefine don't run after non-continuable issues.
 - **Do:** one `.refine()` per rule with `{ path, error, when: onlyIf("a", "b") }` — `when` checks only the issues of
@@ -7,13 +15,31 @@
 - Zod 4 API reminders: `{ error: "key" }` (not `message`), `z.email()`, `z.iso.date()`, `z.flattenError()`.
 - **Source:** zod.dev v4 docs ("when").
 
+### Zod 4 never runs a transform after a failing refine: transform-time checks are safety nets (2026-11-15)
+- **Cause:** a pipe stops at the first failing stage (`handlePipeResult`, zod 4.6.7), so a `.transform()` only sees
+  values that passed every earlier refine.
+- **Do:** when a transform reads an answer the refines already made required, don't assert it with `!`: check it and
+  push a `"required"` issue (`ctx.issues.push`) for the field; the branch is unreachable for valid input but typed
+  honestly (`src/lib/applications/schema.ts`).
+- **Source:** zod source; Task 3.
+
+### Browser fixtures with "readable" ids like `00000000-0000-0000-0000-0000000000e1` 404 in the app (2026-11-21)
+- **Symptom:** events planted by SQL with such ids rendered "Sayfa bulunamadı" for an organiser; no server error.
+- **Cause:** Zod 4's `z.uuid()` checks the RFC 9562 version and variant digits (`…-4xxx-[89ab]xxx-…` for v4); version
+  `0` fails, so `getEvent` returned null before querying. Postgres's `uuid` type accepts any hex. (pgTAP fixtures with
+  such ids are fine: they never pass through Zod.)
+- **Do:** give browser fixtures a valid version/variant: `00000000-0000-4000-8000-0000000000e1`.
+- **Source:** found by testing (events Task 6, event page).
+
 ### Error messages as i18n keys (2026-11-07)
 - **Do:** schema errors are keys (`ApplyErrorKey`); the form maps them with `t(\`errors.${key}\`)`. Same schema runs in
   the browser and in the server action.
 
-### Don't use `<form action={serverAction}>` for long forms (2026-11-07)
-- **Cause:** React 19 resets uncontrolled forms after a form action, wiping input on validation errors.
-- **Do:** `onSubmit` + `preventDefault` + `startTransition(async () => await action(formData))`.
+### `String(formData.get(name))` can print "null" or "[object File]" (2026-11-15)
+- **Cause:** `FormData.get` returns `string | File | null`; `String()` stringifies whatever it gets.
+- **Do:** read text fields with `formDataText(form, name)` (`src/lib/form-data.ts`: the string as is, `""` for a
+  missing or file entry).
+- **Source:** `no-base-to-string` lint hits (Task 2).
 
 ### Errors only for touched fields (2026-11-08)
 - **Do:** track touched names via form-level `onBlur` (`closest("[data-field]")`), show all errors after a submit
@@ -23,20 +49,18 @@
 - **Do:** hidden `website` field → pretend success. A "submitted too fast" check depends on the client clock and can
   reject real users — skipped. Vercel BotID is the planned upgrade.
 
-### react-phone-number-input (v3.4) (2026-11-08)
-- Built on libphonenumber-js; `onChange` gives E.164. With `international withCountryCallingCode
-  countryCallingCodeEditable={false} defaultCountry="TR"` it shows `+90 546 123 45 67`.
-- **Gotcha:** typing a Turkish trunk `0` ("0546…") → the **value** drops it (`+90546…`) but the **displayed text**
-  keeps `+90 0546…`. So submit the value via a hidden input (visible input has no `name`), and re-format on blur by
-  re-mounting (`key`) — only when focus leaves the whole field, otherwise the country `<select>` breaks.
-  Pasted `90546…` must be fixed manually (`fixTurkishNumber`).
-- Pass `flags` from `react-phone-number-input/flags` — the default loads flag images from a third-party site
-  (privacy/KVKK).
-- Validate with `isPossiblePhoneNumber` (author's advice: `isValidPhoneNumber` can go stale on new number ranges).
+## Submitting and form state
 
-### Native `<input type="date">` (2026-11-08)
-- Displays in the **device/browser** locale (e.g. mm/dd/yyyy on a US-region PC) but the value is always
-  `YYYY-MM-DD`, so the server reads it correctly. No custom date picker needed.
+### Don't use `<form action={serverAction}>` for long forms (2026-11-07)
+- **Cause:** React 19 resets uncontrolled forms after a form action, wiping input on validation errors.
+- **Do:** `onSubmit` + `preventDefault` + `startTransition(async () => await action(formData))`.
+
+### React 19 types deprecate `FormEvent`: type `onSubmit` handlers with `SubmitEvent` (2026-11-15)
+- **Symptom:** `@typescript-eslint/no-deprecated` on `React.FormEvent<HTMLFormElement>`.
+- **Cause:** `@types/react` 19 marks `FormEvent` deprecated ("you probably meant ChangeEvent, InputEvent, SubmitEvent
+  or SyntheticEvent").
+- **Do:** `(event: React.SubmitEvent<HTMLFormElement>)` for submit handlers.
+- **Source:** `node_modules/@types/react/index.d.ts`.
 
 ### No `refresh()` after submitting the application (2026-11-09)
 - **Cause:** `/apply` renders through `ApplyGate`, which shows "under review" to a signed-in applicant with an open
@@ -98,27 +122,6 @@
   `src/components/apply/apply-form.tsx`, `createDraftSaver` in `src/lib/applications/draft.ts`.
 - **Source:** found by testing (application steps Task 5, puppeteer: switch 155 ms after typing).
 
-### React 19 types deprecate `FormEvent`: type `onSubmit` handlers with `SubmitEvent` (2026-11-15)
-- **Symptom:** `@typescript-eslint/no-deprecated` on `React.FormEvent<HTMLFormElement>`.
-- **Cause:** `@types/react` 19 marks `FormEvent` deprecated ("you probably meant ChangeEvent, InputEvent, SubmitEvent
-  or SyntheticEvent").
-- **Do:** `(event: React.SubmitEvent<HTMLFormElement>)` for submit handlers.
-- **Source:** `node_modules/@types/react/index.d.ts`.
-
-### `String(formData.get(name))` can print "null" or "[object File]" (2026-11-15)
-- **Cause:** `FormData.get` returns `string | File | null`; `String()` stringifies whatever it gets.
-- **Do:** read text fields with `formDataText(form, name)` (`src/lib/form-data.ts`: the string as is, `""` for a
-  missing or file entry).
-- **Source:** `no-base-to-string` lint hits (Task 2).
-
-### Zod 4 never runs a transform after a failing refine: transform-time checks are safety nets (2026-11-15)
-- **Cause:** a pipe stops at the first failing stage (`handlePipeResult`, zod 4.6.7), so a `.transform()` only sees
-  values that passed every earlier refine.
-- **Do:** when a transform reads an answer the refines already made required, don't assert it with `!`: check it and
-  push a `"required"` issue (`ctx.issues.push`) for the field; the branch is unreachable for valid input but typed
-  honestly (`src/lib/applications/schema.ts`).
-- **Source:** zod source; Task 3.
-
 ### A create form left with `router.push` stays alive: reset it once it is hidden (2026-11-21)
 - **Symptom (risk):** after "Oluştur" on `/events/new` and the push to the new event, browser back showed the filled
   form again; one more tap would create a duplicate event.
@@ -140,3 +143,20 @@
   clears it. Pure and unit-tested in `src/lib/events/form-state.ts`. Announce outcomes in one always-mounted polite
   status line per item; don't also render the error as `role="alert"` (it would be read twice).
 - **Source:** events Task 7 review.
+
+## Inputs
+
+### react-phone-number-input (v3.4) (2026-11-08)
+- Built on libphonenumber-js; `onChange` gives E.164. With `international withCountryCallingCode
+  countryCallingCodeEditable={false} defaultCountry="TR"` it shows `+90 546 123 45 67`.
+- **Gotcha:** typing a Turkish trunk `0` ("0546…") → the **value** drops it (`+90546…`) but the **displayed text**
+  keeps `+90 0546…`. So submit the value via a hidden input (visible input has no `name`), and re-format on blur by
+  re-mounting (`key`) — only when focus leaves the whole field, otherwise the country `<select>` breaks.
+  Pasted `90546…` must be fixed manually (`fixTurkishNumber`).
+- Pass `flags` from `react-phone-number-input/flags` — the default loads flag images from a third-party site
+  (privacy/KVKK).
+- Validate with `isPossiblePhoneNumber` (author's advice: `isValidPhoneNumber` can go stale on new number ranges).
+
+### Native `<input type="date">` (2026-11-08)
+- Displays in the **device/browser** locale (e.g. mm/dd/yyyy on a US-region PC) but the value is always
+  `YYYY-MM-DD`, so the server reads it correctly. No custom date picker needed.
