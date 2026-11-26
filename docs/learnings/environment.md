@@ -94,6 +94,12 @@
 - Peer ranges decide what's blocked: `npm view <pkg>@<ver> peerDependencies`. 2026-11-27: ESLint 10 is blocked by
   `eslint-config-next`'s `eslint-plugin-react` / `-import` / `-jsx-a11y` (ESLint ≤ 9); TypeScript 7 by
   `typescript-eslint` (`typescript < 6.1.0`; TS 7 has no JavaScript API, which type-aware lint needs).
+- Lockfile: don't regenerate it wholesale (delete + install). Update direct dependencies by name, then `pnpm dedupe`
+  and `pnpm audit`. A fresh lockfile moves every transitive package at once and can cross majors through loose
+  ranges (2026-11-27 trial: 44 packages, incl. `intl-messageformat` 11 → 12 under next-intl) while fixing nothing
+  `audit` flags (exact pins upstream). To measure one: copy `package.json` + `pnpm-workspace.yaml` into the scratchpad
+  and `pnpm install --lockfile-only --ignore-scripts`; the lockfile holds two YAML documents (pnpm's own binaries
+  first), so compare the last `packages:` section.
 - Not a rule, a fact: the template's `typescript: ^5` / `@types/node: ^20` are floors, not limits. Next 16.4 runs the
   project's own `tsc` in `next build` and documents TS 6 and 7 support (`node_modules/next/dist/docs/01-app/03-api-reference/05-config/02-typescript.md`).
 - **Source:** `create-next-app@16.4.6` scaffold (2026-11-27: `react` 19.3.0 while 19.3.1 was out since 2026-10-14).
