@@ -436,6 +436,14 @@
       "range": "{from}–{to} of {total} members",
       "ceiling": "The list is incomplete: more than 2,000 people have joined and only the first 2,000 are shown. Please tell the admins."
     },
+    "decliners": {
+      "heading": "Not coming",
+      "total": "{count, plural, one {# member} other {# members}}",
+      "empty": "Nobody has said no yet.",
+      "unanswered": "{count, plural, one {# member hasn't} other {# members haven't}} answered yet",
+      "range": "{from}–{to} of {total} members",
+      "ceiling": "The list is incomplete: more than 2,000 people have said they're not coming and only the first 2,000 are shown. Please tell the admins."
+    },
     "changes": {
       "heading": "Updated",
       "byline": "{date} · {name}",

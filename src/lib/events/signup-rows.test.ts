@@ -1,6 +1,14 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { isUuid, maxCc, parseAuthorsRow, parseChangeRows, parseCountsRows, parseRosterRows } from "./signup-rows.ts";
+import {
+  isUuid,
+  maxCc,
+  parseAuthorsRow,
+  parseChangeRows,
+  parseCountsRows,
+  parseDeclinerRows,
+  parseRosterRows,
+} from "./signup-rows.ts";
 
 test("roster rows keep nulls for hidden organiser fields and removed names", () => {
   const rows = parseRosterRows([
@@ -95,4 +103,14 @@ test("isUuid accepts event ids and refuses what the uuid cast would reject", () 
   for (const id of ["abc", "", "5b0c1d2e-3f40-4a5b-8c6d-7e8f9a0b1c2", "5b0c1d2e-3f40-4a5b-8c6d-7e8f9a0b1c2d'"]) {
     assert.equal(isUuid(id), false, id);
   }
+});
+
+test("decliner rows keep null names and avatars", () => {
+  assert.deepEqual(parseDeclinerRows([{ profile_id: "p1", full_name: null, avatar_url: null, probation: true }]), [
+    { profileId: "p1", fullName: null, avatarUrl: null, probation: true },
+  ]);
+});
+
+test("decliner rows reject a row without probation", () => {
+  assert.throws(() => parseDeclinerRows([{ profile_id: "p1", full_name: "A", avatar_url: null }]));
 });

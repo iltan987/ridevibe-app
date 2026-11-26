@@ -436,6 +436,14 @@
       "range": "{from}–{to} / {total} üye",
       "ceiling": "Liste eksik: 2.000'den fazla katılan var, yalnızca ilk 2.000 kişi gösteriliyor. Lütfen yöneticilere haber ver."
     },
+    "decliners": {
+      "heading": "Gelmeyenler",
+      "total": "{count} üye",
+      "empty": "Henüz gelmeyeceğini bildiren yok.",
+      "unanswered": "{count} kişi henüz yanıt vermedi",
+      "range": "{from}–{to} / {total} üye",
+      "ceiling": "Liste eksik: 2.000'den fazla gelmeyeceğini bildiren var, yalnızca ilk 2.000 kişi gösteriliyor. Lütfen yöneticilere haber ver."
+    },
     "changes": {
       "heading": "Güncellendi",
       "byline": "{date} · {name}",

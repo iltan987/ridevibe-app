@@ -16,6 +16,14 @@ export type RosterRow = {
   hasEmergencyContact: boolean | null;
 };
 
+/** Organisers only (the `event_decliners` RPC): who answered "Gelmiyorum". */
+export type DeclinerRow = {
+  profileId: string;
+  fullName: string | null;
+  avatarUrl: string | null;
+  probation: boolean;
+};
+
 export const CHANGE_FIELDS = [
   "starts_at",
   "ends_at",
@@ -54,6 +62,13 @@ const rosterRow = z.object({
   has_emergency_contact: z.boolean().nullable(),
 });
 
+const declinerRow = z.object({
+  profile_id: z.string(),
+  full_name: z.string().nullable(),
+  avatar_url: z.string().nullable(),
+  probation: z.boolean(),
+});
+
 const countsRow = z.object({
   event_id: z.string(),
   people: z.number(),
@@ -89,6 +104,13 @@ export function parseRosterRows(data: unknown): RosterRow[] {
       probation: r.probation,
       hasEmergencyContact: r.has_emergency_contact,
     }));
+}
+
+export function parseDeclinerRows(data: unknown): DeclinerRow[] {
+  return z
+    .array(declinerRow)
+    .parse(data)
+    .map((r) => ({ profileId: r.profile_id, fullName: r.full_name, avatarUrl: r.avatar_url, probation: r.probation }));
 }
 
 export function parseCountsRows(data: unknown): (Counts & { eventId: string })[] {
