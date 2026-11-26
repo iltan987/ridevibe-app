@@ -41,9 +41,11 @@ whether it already exists.
   for RLS/grant changes) → iltan reviews → merge. Small fixes skip design/plan. No PRs (local `--no-ff` merge). End
   of session: `claude-md-management:revise-claude-md`. Plans: a task that changes a shared type/schema also updates
   its consumers, so every commit passes tsc.
-- **Parallel sessions: one git worktree per iteration.** iltan starts it with `claude -w feat/<name>` (any branch
-  prefix; hook `scripts/dev/worktree.mts`: folder `~/projects/ridingclub-wt/feat-<name>`, a new branch from local
-  `main`, `.env*`/`.vercel` linked, packages and plugins installed, ~1 min). The main checkout stays on `main`:
+- **Parallel sessions: one git worktree per iteration.** iltan starts it with `claude -w` (hook
+  `scripts/dev/worktree.mts`: folder `~/projects/ridingclub-wt/<name>`, a new branch from local `main`,
+  `.env*`/`.vercel` linked, packages and plugins installed, ~1 min). The branch is `wip/<generated name>` (or
+  `feat/x` etc. when given); a session on a `wip/` branch renames it to our naming (`git branch -m feat/<slug>`) as
+  soon as the task is clear, before the first commit, and says so. The main checkout stays on `main`:
   merges, rollouts (`db:push`, `config push`, pushing `main`) and memory commits happen there
   (`git -C ~/projects/ridingclub …`); after the merge, `node scripts/dev/worktree.mts remove <branch>`. A session
   works in the checkout it started in: never create worktrees from skills or subagents (`using-git-worktrees`, Agent

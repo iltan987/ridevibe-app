@@ -41,6 +41,16 @@ Contents:
     "Güncellendi" box and the share text's first line), check the roster (badge, "Acil durum kişisi yok", safety
     card), "Katıldıklarım", delete disabled / cancel closing joining.
 
+- **Events: "I'm not coming" (Gelmiyorum)** (2026-11-26, iltan in the production check) — members can only join or
+  leave; leaving deletes the sign-up, so "said no" looks like "didn't answer". Organisers need the no's like in a
+  WhatsApp poll. Next iteration (before member conduct 2b; both change the database, so not in parallel). To settle in
+  the design: who sees the no list (organisers only or every club member), a "hasn't answered" list for organisers,
+  switching freely between coming and not coming, a no never counting toward limits or "Katıldıklarım", what the
+  roster and the share text show. Touches `42_event_signups.sql` (`join_event` / `leave_event`, `event_roster`,
+  `event_counts`), `src/components/events/join-panel.tsx`, E2E `events-join`.
+- **Member conduct, rest of step 2b** (2026-11-26, iltan) — after "I'm not coming"; roadmap step 1 in
+  `docs/PLAN.md` ("Member conduct").
+
 ## Open decisions (need iltan)
 
 KVKK questions are Claude's to research (law text, KVKK Board decisions) and decide; iltan confirms the outcome (no

@@ -1,18 +1,38 @@
 // Pure helpers for `worktree.mts`: which branch a worktree name means, and what `git worktree list` says.
 
-/** Our branch prefixes (CLAUDE.md "Git"). */
-const PREFIXES = ["feat", "fix", "chore", "docs", "refactor", "test"];
-const BRANCH = new RegExp(`^(${PREFIXES.join("|")})[/-]([a-z0-9][a-z0-9-]*)$`);
+/** Our branch prefixes (CLAUDE.md "Git"), plus `wip` for a worktree whose session hasn't named its branch yet. */
+const PREFIXES = ["feat", "fix", "chore", "docs", "refactor", "test", "wip"];
+const BRANCH = new RegExp(`^(${PREFIXES.join("|")})/([a-z0-9][a-z0-9-]*)$`);
+const LEADING_PREFIX = new RegExp(`^(${PREFIXES.join("|")})-([a-z0-9][a-z0-9-]*)$`);
+const SLUG_MAX = 40;
+
+const TURKISH: Record<string, string> = { ı: "i", ğ: "g", ş: "s", ç: "c", ö: "o", ü: "u" };
+
+/** Lowercase ASCII words joined by dashes (Turkish letters folded), at most SLUG_MAX characters. */
+function slugify(text: string): string {
+  return text
+    .toLocaleLowerCase("tr-TR")
+    .replace(/[ığşçöü]/g, (letter) => TURKISH[letter] ?? letter)
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, SLUG_MAX)
+    .replace(/-+$/, "");
+}
 
 /**
- * The branch a worktree name stands for: `feat/member-conduct` as is, `feat-member-conduct` with the dash after the
- * prefix read as the slash. Anything else (no prefix, capitals, a generated name) is null.
+ * The branch a worktree name stands for: a branch name with one of our prefixes as is; otherwise the name as a slug,
+ * where a leading prefix word becomes the prefix (`Fix home image` → `fix/home-image`) and anything else goes on a
+ * `wip/` branch the session renames once the task is clear (`bright-running-fox` → `wip/bright-running-fox`). Null
+ * when nothing usable is left.
  */
 export function worktreeBranch(name: string): string | null {
-  const match = BRANCH.exec(name);
-  if (match === null) return null;
-  const [, prefix, slug] = match;
-  return `${prefix}/${slug}`;
+  if (BRANCH.test(name)) return name;
+  const slug = slugify(name);
+  if (slug === "") return null;
+  const prefixed = LEADING_PREFIX.exec(slug);
+  return prefixed === null ? `wip/${slug}` : `${prefixed[1]}/${prefixed[2]}`;
 }
 
 /** The worktree's folder name: the branch with its slash as a dash. */

@@ -2,33 +2,41 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { parseWorktreeList, worktreeBranch, worktreeFolder } from "./worktree-names.mts";
 
-await test("worktreeBranch accepts a branch name with one of our prefixes", () => {
+await test("worktreeBranch keeps a branch name with one of our prefixes", () => {
   assert.equal(worktreeBranch("feat/member-conduct"), "feat/member-conduct");
   assert.equal(worktreeBranch("fix/home-image"), "fix/home-image");
-  for (const prefix of ["chore", "docs", "refactor", "test"]) {
+  for (const prefix of ["chore", "docs", "refactor", "test", "wip"]) {
     assert.equal(worktreeBranch(`${prefix}/x1`), `${prefix}/x1`);
   }
 });
 
-await test("worktreeBranch reads a dash after the prefix as the slash", () => {
+await test("worktreeBranch reads a leading prefix word as the branch prefix", () => {
   assert.equal(worktreeBranch("feat-member-conduct"), "feat/member-conduct");
-  assert.equal(worktreeBranch("docs-runbook"), "docs/runbook");
+  assert.equal(worktreeBranch("Fix home image"), "fix/home-image");
+  assert.equal(worktreeBranch("feat/a/b"), "feat/a-b");
 });
 
-await test("worktreeBranch refuses names that aren't one of our branches", () => {
-  for (const name of [
-    "bright-running-fox",
-    "feat",
-    "feat/",
-    "feat-",
-    "feature/x",
-    "feat/Member",
-    "feat/a/b",
-    "feat/-x",
-    "feat/x y",
-    "main",
-    "",
-  ]) {
+await test("worktreeBranch puts any other name on a wip/ branch", () => {
+  assert.equal(worktreeBranch("bright-running-fox"), "wip/bright-running-fox");
+  assert.equal(worktreeBranch("home image"), "wip/home-image");
+  assert.equal(worktreeBranch("feature/x"), "wip/feature-x");
+  assert.equal(worktreeBranch("main"), "wip/main");
+  assert.equal(worktreeBranch("feat/"), "wip/feat");
+  assert.equal(worktreeBranch("  --Etkinlik: Gelmiyorum!  "), "wip/etkinlik-gelmiyorum");
+});
+
+await test("worktreeBranch folds Turkish letters to ASCII", () => {
+  assert.equal(worktreeBranch("İLAN ışık çğöşü"), "wip/ilan-isik-cgosu");
+  assert.equal(worktreeBranch("IMAGE"), "wip/image");
+});
+
+await test("worktreeBranch caps the slug at 40 characters without a trailing dash", () => {
+  const branch = worktreeBranch(`${"a".repeat(39)} bcd`);
+  assert.equal(branch, `wip/${"a".repeat(39)}`);
+});
+
+await test("worktreeBranch refuses names with nothing usable", () => {
+  for (const name of ["", "  ", "---", "!!"]) {
     assert.equal(worktreeBranch(name), null, name);
   }
 });

@@ -154,8 +154,11 @@
   `.claude/settings.json`). Contract: stdin JSON with `name` (verbatim, slash included: `claude -w feat/x` passes
   `feat/x`) or `worktree_path`; the last stdout line is the path (everything else to stderr); a non-zero exit fails
   the step. With a hook, `.worktreeinclude` is ignored (the hook links files itself) and Claude Code never deletes the
-  branch (the hook runs `git branch -d`, never `-D`). A nameless `claude -w` or an Agent with `isolation: "worktree"`
-  passes a generated name (`bright-running-fox`): the hook refuses it.
+  branch (the hook runs `git branch -d`, never `-D`). A nameless `claude -w` (and an Agent with
+  `isolation: "worktree"`) passes a generated name (`stateless-discovering-tulip`): the hook puts it on
+  `wip/<name>`, which the session renames later (the hook finds a worktree by folder or by branch, so a rename
+  doesn't lose it). Claude Code validates the name before the hook runs: each `/` segment only letters, digits, dots,
+  underscores and dashes, so no spaces.
 - **Source:** code.claude.com/docs/en/worktrees and /hooks (checked 2026-11-26); throwaway-clone test with Claude Code
   2.1.332.
 
@@ -180,7 +183,8 @@
   only from the main checkout), `.claude/settings.local.json`, and the committed `.claude/settings.json` (iltan's
   uncommitted edit stays in the main checkout). Symlinked by the hook: `.env`, `.env.local`, `.vercel`; they are
   git-ignored, so `git worktree remove` without `--force` still works.
-- **Ports:** `next dev` without `-p` moves to the next free port (up to 10 tries, `next/dist/server/lib/start-server.js`);
-  `next start` doesn't. Local sign-in redirects allow 3000, 3001 and 3124 (`supabase/config.toml`).
+- **Ports:** `next dev` without `-p` moves to the next free port (up to 10 tries,
+  `next/dist/server/lib/start-server.js`); `next start` doesn't. Local sign-in redirects allow 3000, 3001 and 3124
+  (`supabase/config.toml`).
 - `$CLAUDE_PROJECT_DIR` is set for hooks only; it is empty in the Bash tool.
 - **Source:** throwaway-clone test, 2026-11-26.

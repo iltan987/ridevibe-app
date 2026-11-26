@@ -59,8 +59,11 @@ Local Supabase Studio: http://127.0.0.1:54323
 ### Two sessions at once (git worktrees)
 
 ```bash
-claude -w feat/my-change     # new branch from main in ~/projects/ridingclub-wt/feat-my-change, ready in ~1 min
+claude -w                    # new worktree on wip/<generated name> from main, ready in ~1 min
+claude -w fix-home-image     # or give a hint (dashes, no spaces): branch fix/home-image
 ```
+
+On a `wip/` branch the session renames the branch (`feat/…`, `fix/…`) once it knows the task.
 
 The worktree gets `.env`, `.env.local` and `.vercel` linked from this checkout, its own `node_modules`, and the
 Claude Code plugins. All checkouts share the one local Supabase stack, so only one branch at a time may change the
