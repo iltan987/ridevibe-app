@@ -75,6 +75,24 @@
   pull warns that one secret (`CRON_SECRET`, Vercel-sensitive) is written as `[SENSITIVE]`: expected, unused.
 - **Source:** the 3.0.0 → 3.4.0 and 66.6.0 → 67.0.0 upgrade (2026-11-27).
 
+### Upgrading dependencies: follow `create-next-app`, skip brand-new majors (2026-11-27)
+- **Rule (iltan):** before moving `next`, scaffold a fresh app with its CLI in the scratchpad
+  (`pnpm dlx create-next-app@latest probe --ts --eslint --tailwind --app --src-dir --react-compiler --use-pnpm
+  --import-alias '@/*' --yes --disable-git`) and match what it pins, above all `react` / `react-dom` (and
+  `eslint-config-next`, `babel-plugin-react-compiler`, the `eslint` / `typescript` majors). A newer React patch than
+  the template's waits until a Next release ships it. Read the pin's reason in the Next release notes before
+  copying it: `create-next-app` 16.4.6 pins `tailwindcss` 4.3.3 only because 4.3.4's `@tailwindcss/node` `require()`s
+  ESM-only `magic-string` 1.x, which fails on Node < 20.19 / 22.0–22.11 (vercel/next.js#101061); on Node 24+ newer
+  Tailwind patches are fine.
+- **Rule (iltan):** a major released only days ago waits (many changes, early bugs); take it once it has settled and
+  its ecosystem has caught up. Check release dates with `npm view <pkg> time --json`.
+- Peer ranges decide what's blocked: `npm view <pkg>@<ver> peerDependencies`. 2026-11-27: ESLint 10 is blocked by
+  `eslint-config-next`'s `eslint-plugin-react` / `-import` / `-jsx-a11y` (ESLint ≤ 9); TypeScript 7 by
+  `typescript-eslint` (`typescript < 6.1.0`; TS 7 has no JavaScript API, which type-aware lint needs).
+- Not a rule, a fact: the template's `typescript: ^5` / `@types/node: ^20` are floors, not limits. Next 16.4 runs the
+  project's own `tsc` in `next build` and documents TS 6 and 7 support (`node_modules/next/dist/docs/01-app/03-api-reference/05-config/02-typescript.md`).
+- **Source:** `create-next-app@16.4.6` scaffold (2026-11-27: `react` 19.3.0 while 19.3.1 was out since 2026-10-14).
+
 ### Stopping a server: never `pkill -f` / `pgrep -f` with a pattern from your own command (2026-11-07)
 - **Symptom:** `pkill -f "next start -p 3123"` killed the running shell (exit 144) mid-command; another Bash call
   ended with exit 144 right after `pkill -f "next-server"` while the server kept running.

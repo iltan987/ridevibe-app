@@ -13,3 +13,7 @@ mention it and plan the update (backlog item or its own small `chore/` branch, w
 **How to apply:** finish the task at hand first, then propose the update; dev dependencies go through a branch and
 the usual checks, global CLIs are installed directly after checking their changelog for commands the repo scripts
 use. Related: [[user-iltan]].
+
+2026-11-27: iltan wants dependency passes only when asked (no monthly routine). Their upgrade rules (match what
+`create-next-app` pins, esp. React; skip majors only days old) live in `docs/learnings/environment.md`
+"Upgrading dependencies".
