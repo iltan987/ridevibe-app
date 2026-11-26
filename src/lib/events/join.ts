@@ -76,7 +76,7 @@ export type JoinActionResult =
   | { status: "refused"; reason: JoinReason }
   | { status: "invalid" | "forbidden" | "notFound" | "error" };
 
-/** Maps the error of `join_event` / `leave_event` to the action result (`has_signups` is never raised by them). */
+/** Maps the error of `join_event` / `decline_event` to the action result (`has_signups` is never raised by them). */
 export function joinResult(error: { code?: string; hint?: string } | null): JoinActionResult {
   if (!error) return { status: "ok" };
   if (error.code === "P0001") {

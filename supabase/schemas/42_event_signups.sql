@@ -1,11 +1,13 @@
 -- ---------------------------------------------------------------------------
 -- Event sign-ups (spec §3, §5; docs/superpowers/plans/2026-11-21-events-joining.md): a member joins an event as
--- rider (own bike) or passenger, with up to 3 guests (non-member passengers, a count only). Written only by
--- join_event / leave_event; readable only as one's own row, behind the events gate (private.can_see_events,
--- 40_events.sql). Others see counts and rosters only through RPCs.
+-- rider (own bike) or passenger, with up to 3 guests (non-member passengers, a count only); or answers "Gelmiyorum"
+-- (event_declines; docs/superpowers/specs/2026-11-26-events-not-coming-design.md). Both tables are written only by
+-- join_event / decline_event, which keep them mutually exclusive; readable only as one's own rows, behind the events
+-- gate (private.can_see_events, 40_events.sql). Others see counts and rosters only through RPCs; organisers alone see
+-- who said no (event_decliners) and how many haven't answered (event_unanswered).
 -- Only sign-ups of active and ön alım (probation) profiles count (limits, counts, rosters, "has sign-ups"): see
--- private.counted_event_signups. Others' rows are kept and come back with the status. Deleting an account or an
--- event removes its sign-ups (cascade).
+-- private.counted_event_signups. A no counts nowhere. Others' rows are kept and come back with the status. Deleting
+-- an account or an event removes its sign-ups and no's (cascade).
 -- ---------------------------------------------------------------------------
 
 create type public.event_role as enum ('rider', 'passenger');
@@ -20,7 +22,7 @@ create table public.event_signups (
   primary key (event_id, profile_id)
 );
 
-comment on table public.event_signups is 'Who joined which event, as rider or passenger, with guests. Written only via join_event / leave_event.';
+comment on table public.event_signups is 'Who joined which event, as rider or passenger, with guests. Written only via join_event / decline_event.';
 comment on column public.event_signups.guests is 'Non-member passengers brought along (0-3); a count only, never names.';
 
 create index event_signups_profile_idx on public.event_signups (profile_id, event_id);
@@ -57,15 +59,43 @@ where p.status in ('active', 'probation');
 
 revoke all on table private.counted_event_signups from public, anon, authenticated;
 
+-- "Gelmiyorum": who said they won't come. Never both a sign-up and a no for the same person and event (join_event
+-- and decline_event each delete the other row under the event lock).
+create table public.event_declines (
+  event_id uuid not null references public.events (id) on delete cascade,
+  profile_id uuid not null references public.profiles (id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (event_id, profile_id)
+);
+
+comment on table public.event_declines is 'Who said they won''t come to which event ("Gelmiyorum"). Written only via decline_event / join_event.';
+
+create index event_declines_profile_idx on public.event_declines (profile_id, event_id);
+
+revoke all on table public.event_declines from anon, authenticated;
+grant select on table public.event_declines to authenticated;
+
+alter table public.event_declines enable row level security;
+
+create policy "event_declines: read own declines of visible events"
+on public.event_declines
+for select
+to authenticated
+using (
+  profile_id = (select auth.uid())
+  and (select private.can_see_events())
+);
+
 -- ---------------------------------------------------------------------------
--- join_event / leave_event. Errors (the action maps hint → reason, never the message):
+-- join_event / decline_event. Errors (the action maps hint → reason, never the message):
 --   42501  the gate refuses, or the caller is not active / ön alım
 --   22023  malformed input (role null, guests null or outside 0-3); an unknown role fails the enum cast (22P02)
 --   P0002  unknown event
---   P0001  hint started | cancelled | full_members_only | min_cc | people_limit | bike_limit
+--   P0001  hint started | cancelled | full_members_only | min_cc | people_limit | bike_limit (decline_event: started
+--          | full_members_only)
 -- "Don't make it worse": full_members_only, min_cc and the limits refuse a change only when it raises the caller's
 -- own footprint on that rule, so someone signed up before the organiser tightened it can still lower guests, switch
--- to passenger and leave.
+-- to passenger and back out.
 -- The event row is locked (for update) before anything is counted: two people can't take the last place at once
 -- (delete_event / save_event take the same lock).
 -- ---------------------------------------------------------------------------
@@ -176,14 +206,20 @@ begin
   on conflict (event_id, profile_id) do update
   set role = excluded.role, guests = excluded.guests
   where (event_signups.role, event_signups.guests) is distinct from (excluded.role, excluded.guests);
+
+  -- 10. coming replaces a no (only once every rule above has passed: a refused join keeps the no)
+  delete from public.event_declines where event_id = p_event and profile_id = uid;
 end;
 $$;
 
 revoke all on function public.join_event(uuid, public.event_role, integer) from public, anon;
 grant execute on function public.join_event(uuid, public.event_role, integer) to authenticated;
 
--- Leaves an event (a no-op when not signed up). Allowed on a cancelled event, refused once it has started.
-create or replace function public.leave_event(p_event uuid)
+-- "Gelmiyorum": records the caller's no, giving up their sign-up if they had one (a no-op when already declined).
+-- Allowed on a cancelled event, refused once it has started. No limit or min_cc rule applies to a no. A full-members-
+-- only event doesn't invite ön alım members, so their no is refused unless they back out of a sign-up made before
+-- the organiser set the rule.
+create or replace function public.decline_event(p_event uuid)
 returns void
 language plpgsql
 security definer
@@ -191,16 +227,23 @@ set search_path = ''
 as $$
 declare
   uid uuid := (select auth.uid());
+  v_member public.member_status;
   v_starts timestamptz;
+  v_full_only boolean;
 begin
   if not (select private.can_see_events()) then
     raise exception 'events are not open to you' using errcode = '42501';
   end if;
-  if not (select private.is_club_member()) then
-    raise exception 'only active and ön alım members leave events' using errcode = '42501';
+  -- Defence in depth, as in join_event: the gate already refuses every other status.
+  select p.status into v_member from public.profiles p where p.id = uid;
+  if v_member is null or v_member not in ('active', 'probation') then
+    raise exception 'only active and ön alım members answer events' using errcode = '42501';
   end if;
 
-  select e.starts_at into v_starts from public.events e where e.id = p_event for update;
+  select e.starts_at, e.full_members_only into v_starts, v_full_only
+  from public.events e
+  where e.id = p_event
+  for update;
   if not found then
     raise exception 'event not found' using errcode = 'P0002';
   end if;
@@ -208,12 +251,21 @@ begin
     raise exception 'event has started' using errcode = 'P0001', hint = 'started';
   end if;
 
+  if v_full_only and v_member = 'probation' and not exists (
+    select 1 from public.event_signups s where s.event_id = p_event and s.profile_id = uid
+  ) then
+    raise exception 'full members only' using errcode = 'P0001', hint = 'full_members_only';
+  end if;
+
   delete from public.event_signups where event_id = p_event and profile_id = uid;
+  insert into public.event_declines (event_id, profile_id)
+  values (p_event, uid)
+  on conflict (event_id, profile_id) do nothing;
 end;
 $$;
 
-revoke all on function public.leave_event(uuid) from public, anon;
-grant execute on function public.leave_event(uuid) to authenticated;
+revoke all on function public.decline_event(uuid) from public, anon;
+grant execute on function public.decline_event(uuid) to authenticated;
 
 -- ---------------------------------------------------------------------------
 -- Read RPCs (spec §3): counts, rosters per viewer, authors and the change log. Each refuses callers the gate refuses
@@ -221,7 +273,7 @@ grant execute on function public.leave_event(uuid) to authenticated;
 -- Roster visibility: organisers (events.manage) see everyone counted, with the ön alım flag and whether they have an
 -- emergency contact (both null for everyone else); active members see active participants while the event is
 -- upcoming (private.event_is_upcoming); ön alım members, and members once the event is past, get no rows. Counts are
--- the same for every viewer.
+-- the same for every viewer. The no's and the unanswered count: organisers only (event_decliners, event_unanswered).
 -- ---------------------------------------------------------------------------
 
 -- One row per existing event in p_events (zeros included), ordered by event_id. people = members + guests; bikes =
@@ -313,6 +365,86 @@ $$;
 
 revoke all on function public.event_roster(uuid) from public, anon;
 grant execute on function public.event_roster(uuid) to authenticated;
+
+-- Who said no to p_event, by name (Turkish order). THE place that decides who sees the no's: organisers
+-- (events.manage); everyone else gets no rows. Only active and ön alım people's no's show (as with counted sign-ups:
+-- others' rows are kept and come back with the status). 42501 without the gate, P0002 for an unknown event.
+create or replace function public.event_decliners(p_event uuid)
+returns table (profile_id uuid, full_name text, avatar_url text, probation boolean)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+begin
+  if not (select private.can_see_events()) then
+    raise exception 'events are not open to you' using errcode = '42501';
+  end if;
+
+  perform 1 from public.events e where e.id = p_event;
+  if not found then
+    raise exception 'event not found' using errcode = 'P0002';
+  end if;
+
+  if not (select private.has_permission('events.manage')) then
+    return;
+  end if;
+
+  return query
+  select d.profile_id, p.full_name, p.avatar_url, p.status = 'probation'
+  from public.event_declines d
+  join public.profiles p on p.id = d.profile_id
+  where d.event_id = p_event
+    and p.status in ('active', 'probation')
+  order by p.full_name collate "tr-x-icu", d.profile_id;
+end;
+$$;
+
+revoke all on function public.event_decliners(uuid) from public, anon;
+grant execute on function public.event_decliners(uuid) to authenticated;
+
+-- How many club members haven't answered p_event: those who could join it (active members, plus ön alım members
+-- unless the event is full members only) with neither a counted sign-up nor a no. Organisers only: null for everyone
+-- else. 42501 without the gate, P0002 for an unknown event.
+create or replace function public.event_unanswered(p_event uuid)
+returns integer
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_full_only boolean;
+begin
+  if not (select private.can_see_events()) then
+    raise exception 'events are not open to you' using errcode = '42501';
+  end if;
+
+  select e.full_members_only into v_full_only from public.events e where e.id = p_event;
+  if not found then
+    raise exception 'event not found' using errcode = 'P0002';
+  end if;
+
+  if not (select private.has_permission('events.manage')) then
+    return null;
+  end if;
+
+  return (
+    select count(*)::integer
+    from public.profiles p
+    where (p.status = 'active' or (p.status = 'probation' and not v_full_only))
+      and not exists (
+        select 1 from private.counted_event_signups c where c.event_id = p_event and c.profile_id = p.id
+      )
+      and not exists (
+        select 1 from public.event_declines d where d.event_id = p_event and d.profile_id = p.id
+      )
+  );
+end;
+$$;
+
+revoke all on function public.event_unanswered(uuid) from public, anon;
+grant execute on function public.event_unanswered(uuid) to authenticated;
 
 -- "Düzenleyen" for every viewer who passes the gate (ön alım members can't read profiles). A name is null when the
 -- account is gone or deleting. edited_by_other: the last editor isn't the creator. No row for an unknown event.

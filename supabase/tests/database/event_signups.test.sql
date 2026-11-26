@@ -1,6 +1,6 @@
 -- Run with: pnpm db:test
 -- Event sign-ups (docs/superpowers/plans/2026-11-21-events-joining.md, Global Constraints): the gate in one
--- function (private.can_see_events), join_event / leave_event with their rules and refusal hints, "don't make it
+-- function (private.can_see_events), join_event / decline_event with their rules and refusal hints, "don't make it
 -- worse" after an organiser tightens a rule, delete_event only without counted sign-ups, cascade when an account goes;
 -- counts, rosters per viewer, authors and the change log save_event writes.
 -- The gate is open to club members (active, ön alım): one gate section, then the rules and read RPCs.
@@ -71,7 +71,7 @@ insert into public.event_places (event_id, position, name, lat, lng) values
 insert into public.member_emergency_contacts (profile_id, position, name, relationship, phone) values
   ('00000000-0000-0000-0000-000000000761', 1, 'Ayşe Pgtapkatilim', 'parent', '+905321234567');
 
--- Sign-ups planted as postgres: 0761 on the cancelled and the started events (to edit/leave them), 0763 and 0764 on
+-- Sign-ups planted as postgres: 0761 on the cancelled and the started events (to edit them or say no), 0763 and 0764 on
 -- 0772 (own rows the gate must still hide), only uncounted people (inactive 0766, deleting 0765) on 0777, the ön alım
 -- member as the only counted one on 0778 (beside 0766 again, so the inactive member's own row outlives the 0777 delete),
 -- and the inactive member as a rider with 3 guests on 0771, which must take no place under its limits.
@@ -140,12 +140,12 @@ select ok(not has_table_privilege('authenticated', 'public.event_signups', 'upda
 select ok(not has_table_privilege('authenticated', 'public.event_signups', 'delete'), 'no direct delete');
 select ok(not has_table_privilege('anon', 'public.event_signups', 'select'), 'anon has no select on sign-ups');
 select ok(not has_function_privilege('anon', 'public.join_event(uuid, public.event_role, integer)', 'execute'), 'anon cannot join');
-select ok(not has_function_privilege('anon', 'public.leave_event(uuid)', 'execute'), 'anon cannot leave');
+select ok(not has_function_privilege('anon', 'public.decline_event(uuid)', 'execute'), 'anon cannot decline');
 select ok(not has_function_privilege('anon', 'public.can_see_events()', 'execute'), 'anon cannot call can_see_events');
 select ok(has_function_privilege('authenticated', 'public.join_event(uuid, public.event_role, integer)', 'execute'),
   'authenticated may call join_event (it checks the gate)');
-select ok(has_function_privilege('authenticated', 'public.leave_event(uuid)', 'execute'),
-  'authenticated may call leave_event (it checks the gate)');
+select ok(has_function_privilege('authenticated', 'public.decline_event(uuid)', 'execute'),
+  'authenticated may call decline_event (it checks the gate)');
 select ok(has_function_privilege('authenticated', 'public.can_see_events()', 'execute'), 'authenticated may call can_see_events');
 select ok(has_function_privilege('authenticated', 'private.can_see_events()', 'execute'),
   'authenticated may execute private.can_see_events (the policies call it)');
@@ -184,8 +184,8 @@ select is(private.event_is_upcoming(now() - interval '13 hours', now() - interva
   'started 13 hours ago, ended a minute ago: past');
 select is((select count(*)::int from pg_proc where proname = 'join_event' and pronamespace = 'public'::regnamespace), 1,
   'exactly one join_event (no overload left behind)');
-select is((select count(*)::int from pg_proc where proname = 'leave_event' and pronamespace = 'public'::regnamespace), 1,
-  'exactly one leave_event');
+select is((select count(*)::int from pg_proc where proname = 'decline_event' and pronamespace = 'public'::regnamespace), 1,
+  'exactly one decline_event');
 
 -- Table checks the RPCs never reach
 select throws_ok($$ insert into public.event_signups (event_id, profile_id, role, guests)
@@ -212,8 +212,8 @@ select pg_temp.login('00000000-0000-0000-0000-000000000766');
 select ok(not public.can_see_events(), 'inactive organiser does not pass the gate');
 select throws_ok($$ select public.join_event('00000000-0000-0000-0000-000000000771', 'passenger') $$, '42501', null,
   'inactive organiser cannot join');
-select throws_ok($$ select public.leave_event('00000000-0000-0000-0000-000000000777') $$, '42501', null,
-  'inactive organiser cannot leave');
+select throws_ok($$ select public.decline_event('00000000-0000-0000-0000-000000000777') $$, '42501', null,
+  'inactive organiser cannot decline');
 select is((select count(*)::int from public.event_signups where profile_id = '00000000-0000-0000-0000-000000000766'), 0,
   'inactive organiser reads no sign-ups');
 reset role;
@@ -324,23 +324,23 @@ select throws_ok($$ select public.join_event('00000000-0000-0000-0000-0000000007
   'unknown role refused by the enum cast');
 select throws_ok($$ select public.join_event('00000000-0000-0000-0000-000000000779', 'passenger') $$, 'P0002', null,
   'joining an unknown event → P0002');
-select throws_ok($$ select public.leave_event('00000000-0000-0000-0000-000000000779') $$, 'P0002', null,
-  'leaving an unknown event → P0002');
+select throws_ok($$ select public.decline_event('00000000-0000-0000-0000-000000000779') $$, 'P0002', null,
+  'saying no to an unknown event → P0002');
 
 select is((select hint from pg_temp.last_error($$ select public.join_event('00000000-0000-0000-0000-000000000774', 'passenger') $$)
   where sqlstate = 'P0001'), 'cancelled', 'editing a sign-up on a cancelled event refused (P0001 cancelled)');
-select lives_ok($$ select public.leave_event('00000000-0000-0000-0000-000000000774') $$, 'leaving a cancelled event allowed');
+select lives_ok($$ select public.decline_event('00000000-0000-0000-0000-000000000774') $$, 'saying no to a cancelled event allowed');
 select is((select count(*)::int from public.event_signups where event_id = '00000000-0000-0000-0000-000000000774'), 0,
   'the sign-up on the cancelled event is gone');
 
 select is((select hint from pg_temp.last_error($$ select public.join_event('00000000-0000-0000-0000-000000000775', 'rider', 1) $$)
   where sqlstate = 'P0001'), 'started', 'editing after the start refused (P0001 started)');
-select is((select hint from pg_temp.last_error($$ select public.leave_event('00000000-0000-0000-0000-000000000775') $$)
-  where sqlstate = 'P0001'), 'started', 'leaving after the start refused');
+select is((select hint from pg_temp.last_error($$ select public.decline_event('00000000-0000-0000-0000-000000000775') $$)
+  where sqlstate = 'P0001'), 'started', 'saying no after the start refused');
 select is((select hint from pg_temp.last_error($$ select public.join_event('00000000-0000-0000-0000-000000000776', 'rider', 1) $$)
   where sqlstate = 'P0001'), 'started', 'editing at starts_at exactly refused');
-select is((select hint from pg_temp.last_error($$ select public.leave_event('00000000-0000-0000-0000-000000000776') $$)
-  where sqlstate = 'P0001'), 'started', 'leaving at starts_at exactly refused');
+select is((select hint from pg_temp.last_error($$ select public.decline_event('00000000-0000-0000-0000-000000000776') $$)
+  where sqlstate = 'P0001'), 'started', 'saying no at starts_at exactly refused');
 select is((select array_agg(row(event_id, role, guests)::text order by event_id) from public.event_signups
   where event_id in ('00000000-0000-0000-0000-000000000775', '00000000-0000-0000-0000-000000000776')),
   array[row('00000000-0000-0000-0000-000000000775'::uuid, 'rider', 0)::text,
@@ -348,12 +348,12 @@ select is((select array_agg(row(event_id, role, guests)::text order by event_id)
   'the sign-ups on started events stay unchanged');
 select lives_ok($$ select public.join_event('00000000-0000-0000-0000-000000000772', 'passenger') $$,
   'joining one second before the start allowed');
-select lives_ok($$ select public.leave_event('00000000-0000-0000-0000-000000000772') $$,
-  'leaving one second before the start allowed');
+select lives_ok($$ select public.decline_event('00000000-0000-0000-0000-000000000772') $$,
+  'saying no one second before the start allowed');
 select is((select count(*)::int from public.event_signups where event_id = '00000000-0000-0000-0000-000000000772'), 0,
   'own sign-up on 0772 gone');
-select lives_ok($$ select public.leave_event('00000000-0000-0000-0000-000000000772') $$,
-  'leaving without a sign-up is a no-op');
+select lives_ok($$ select public.decline_event('00000000-0000-0000-0000-000000000772') $$,
+  'saying no without a sign-up allowed');
 reset role;
 
 select pg_temp.login('00000000-0000-0000-0000-000000000762');
@@ -464,7 +464,7 @@ select lives_ok($$ select public.join_event('00000000-0000-0000-0000-00000000077
 select is((select guests from public.event_signups
   where event_id = '00000000-0000-0000-0000-000000000771' and profile_id = '00000000-0000-0000-0000-000000000764'),
   1::smallint, 'guests lowered to 1');
-select lives_ok($$ select public.leave_event('00000000-0000-0000-0000-000000000771') $$, '… and leave');
+select lives_ok($$ select public.decline_event('00000000-0000-0000-0000-000000000771') $$, '… and back out (decline)');
 select is((select hint from pg_temp.last_error($$ select public.join_event('00000000-0000-0000-0000-000000000771', 'passenger') $$)
   where sqlstate = 'P0001'), 'full_members_only', '… but not join again');
 reset role;

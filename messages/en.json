@@ -371,6 +371,7 @@
       }
     },
     "joinedBadge": "You're going",
+    "declinedBadge": "Not coming",
     "mineChip": "My events",
     "counts": {
       "label": "Sign-ups:",
@@ -380,6 +381,7 @@
     "join": {
       "heading": "Are you coming?",
       "headingJoined": "You're going",
+      "headingDeclined": "You're not coming",
       "roleLabel": "How are you coming?",
       "roles": {
         "rider": "Rider",
@@ -396,17 +398,17 @@
       "summary": "{role} · {guests, plural, =0 {no guests} one {# guest} other {# guests}}",
       "join": "I'm coming",
       "update": "Update",
-      "leave": "I'm not coming",
-      "leaveDialog": {
+      "decline": "I'm not coming",
+      "declineDialog": {
         "title": "Not coming after all?",
-        "body": "Your sign-up is removed. You can join again until the event starts.",
+        "body": "Your place is freed. You can change your mind until the event starts; you're back in if there's still room.",
         "dismiss": "No, I'm coming",
-        "confirm": "Yes, withdraw"
+        "confirm": "Yes, I'm not coming"
       },
       "done": {
         "joined": "You're signed up.",
         "updated": "Your sign-up is updated.",
-        "left": "Your sign-up is removed."
+        "declined": "Got it: you're not coming."
       },
       "reasons": {
         "started": "The event has started; sign-ups are closed.",
@@ -433,6 +435,14 @@
       "noContact": "No emergency contact",
       "range": "{from}–{to} of {total} members",
       "ceiling": "The list is incomplete: more than 2,000 people have joined and only the first 2,000 are shown. Please tell the admins."
+    },
+    "decliners": {
+      "heading": "Not coming",
+      "total": "{count, plural, one {# member} other {# members}}",
+      "empty": "Nobody has said no yet.",
+      "unanswered": "{count, plural, one {# member hasn't} other {# members haven't}} answered yet",
+      "range": "{from}–{to} of {total} members",
+      "ceiling": "The list is incomplete: more than 2,000 people have said they're not coming and only the first 2,000 are shown. Please tell the admins."
     },
     "changes": {
       "heading": "Updated",

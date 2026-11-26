@@ -13,12 +13,14 @@ import {
   parseAuthorsRow,
   parseChangeRows,
   parseCountsRows,
+  parseDeclinerRows,
   parseRosterRows,
+  type DeclinerRow,
   type RosterRow,
 } from "./signup-rows";
 import { UPCOMING_GRACE_MS } from "./time";
 
-export type { ChangeEntry, ChangeField, RosterRow } from "./signup-rows";
+export type { ChangeEntry, ChangeField, DeclinerRow, RosterRow } from "./signup-rows";
 
 // RLS on events / event_places decides who reads (the events gate: club members); for anyone else these are empty.
 
@@ -237,8 +239,43 @@ export async function getRoster(id: string): Promise<{ rows: RosterRow[]; overCe
   }
 }
 
+/**
+ * Who answered "Gelmiyorum" (organisers only: the RPC returns no rows for anyone else). Null: unknown event.
+ * Everything up to LIST_CEILING.
+ */
+export async function getDecliners(id: string): Promise<{ rows: DeclinerRow[]; overCeiling: boolean } | null> {
+  if (!uuid.safeParse(id).success) return null;
+  const supabase = await createClient();
+  try {
+    const { items, overCeiling } = await readAll(async (from, to) => {
+      const { data, error } = await supabase.rpc("event_decliners", { p_event: id }).range(from, to);
+      if (error) {
+        if (error.code === "P0002") throw new EventNotFoundError();
+        throw new Error(`getDecliners failed: ${error.code}`);
+      }
+      return parseDeclinerRows(data);
+    });
+    return { rows: uniqueByProfile(items), overCeiling };
+  } catch (error) {
+    if (error instanceof EventNotFoundError) return null;
+    throw error;
+  }
+}
+
+/** How many members haven't answered yet (organisers only; null for everyone else and for an unknown event). */
+export async function getUnanswered(id: string): Promise<number | null> {
+  if (!uuid.safeParse(id).success) return null;
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("event_unanswered", { p_event: id });
+  if (error) {
+    if (error.code === "P0002") return null;
+    throw new Error(`getUnanswered failed: ${error.code}`);
+  }
+  return z.number().nullable().parse(data);
+}
+
 /** Chunks are separate requests: a row can repeat at a chunk boundary. */
-function uniqueByProfile(rows: RosterRow[]): RosterRow[] {
+function uniqueByProfile<T extends { profileId: string }>(rows: T[]): T[] {
   const seen = new Set<string>();
   return rows.filter((row) => !seen.has(row.profileId) && seen.add(row.profileId));
 }
@@ -272,6 +309,17 @@ export async function getMySignups(): Promise<Map<string, Signup>> {
   return new Map(
     items.map((r): [string, Signup] => [r.event_id, { role: r.role satisfies JoinRole, guests: r.guests }]),
   );
+}
+
+/** The ids of the events the caller said "Gelmiyorum" to (RLS: own rows, behind the gate). */
+export async function getMyDeclines(): Promise<Set<string>> {
+  const supabase = await createClient();
+  const { items } = await readAll(async (from, to) => {
+    const { data, error } = await supabase.from("event_declines").select("event_id").order("event_id").range(from, to);
+    if (error) throw new Error(`getMyDeclines failed: ${error.code}`);
+    return data;
+  });
+  return new Set(items.map((r) => r.event_id));
 }
 
 /**

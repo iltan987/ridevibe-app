@@ -109,12 +109,12 @@ export async function joinEvent(id: string, input: unknown): Promise<JoinActionR
   return refreshIfStale(result);
 }
 
-export async function leaveEvent(id: string): Promise<JoinActionResult> {
+export async function declineEvent(id: string): Promise<JoinActionResult> {
   if (!uuid.safeParse(id).success) return { status: "invalid" };
   const supabase = await createClient();
-  const { error } = await supabase.rpc("leave_event", { p_event: id });
+  const { error } = await supabase.rpc("decline_event", { p_event: id });
   const result = joinResult(error);
-  if (result.status === "error") console.error("leaveEvent failed", { code: error?.code });
+  if (result.status === "error") console.error("declineEvent failed", { code: error?.code });
   if (result.status === "ok") refresh();
   return refreshIfStale(result);
 }

@@ -222,11 +222,14 @@ the test rows: `docker exec -i supabase_db_ridevibe psql -U postgres` (`-i`, or 
   organiser actions call `updateTag`, psql writes don't expire it. Share texts end with the event link. Writes only
   via `save_event` / `cancel_event` / `delete_event` (refuses `has_signups`); `save_event` logs changes of events with
   counted sign-ups.
-  Sign-ups (`42_event_signups.sql`) only via `join_event` / `leave_event` (security definer, lock the event row
-  first); counted = `private.counted_event_signups` (active/probation); rule refusals are `P0001` + `hint`, mapped in
-  `src/lib/events/join.ts`; reads via `event_counts` / `event_roster` / `event_authors` / `event_change_log`. A place
-  = point and/or venue link (Google place / Yandex org); a route link keeps only its destination (the origin is the
-  sharer's position): pasted links are never stored or logged (`src/lib/events/place-input.ts`, `resolve-place.ts`).
+  Sign-ups (`42_event_signups.sql`) only via `join_event` / `decline_event` (security definer, lock the event row
+  first); a "Gelmiyorum" lives in `event_declines`: members read their own (RLS), others' only via
+  `event_decliners` (the one place that decides) and `event_unanswered`, and it is never counted;
+  counted = `private.counted_event_signups` (active/probation); rule refusals are `P0001` + `hint`, mapped in
+  `src/lib/events/join.ts`; reads via `event_counts` / `event_roster` / `event_authors` / `event_change_log`. A place =
+  point and/or venue link (Google place / Yandex org); a route link keeps only its destination (the origin is the
+  sharer's position): pasted links are never stored or logged (`src/lib/events/place-input.ts`,
+  `resolve-place.ts`).
 - **Applications:** anything that decides which account becomes active (approve, `link_application`, editing the email
   of an approved application) requires `applications.decide`; `applications.profile_id` = the account an application
   belongs to. Linking targets pending accounts; approved applications may also go to an active account without one

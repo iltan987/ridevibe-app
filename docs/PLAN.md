@@ -126,7 +126,8 @@ As of 2026-11-25, live at https://ridevibe.com.tr. Built (specs in `docs/superpo
   (active and ön alım) join as rider or passenger with up to 3 guests; optional limits on people and bikes, minimum
   cc (riders), "full members only"; a change log and WhatsApp share (with the event link) instead of notifications.
   Visitors see upcoming rides (area line only) on `/events` and the home page; an event link shows that event's card
-  and a generated link preview.
+  and a generated link preview. "Gelmiyorum" (2026-11-26, `events-not-coming`): members can say they won't come;
+  organisers see who said no and how many haven't answered.
 - **Privacy notice:** draft at `/privacy`, version `2026-11-26-draft-11` (open points: KVKK below).
 
 ## Roadmap (open steps)
@@ -270,7 +271,9 @@ transfer under art. 9): `docs/learnings/domain.md`. Product decisions:
 - **Events** (decided 2026-11-24, Claude, no lawyer): sign-ups (rider/passenger, guest count, never guest names) and
   who created/changed an event rest on legitimate interest (KVKK art. 5/2-f, checked against the law text on
   mevzuat.gov.tr: art. 5 is unchanged by the 2024 amendment); kept like other member data; deleting an account deletes
-  its sign-ups and nulls its authorship. Public teaser data (title, kind, day, area) is no personal data. Notice §2–§6.
+  its sign-ups and nulls its authorship. "Not coming" answers (2026-11-26) rest on the same legitimate interest
+  (art. 5/2-f), are visible to organisers and admins only and are deleted with the account. Public teaser data (title,
+  kind, day, area) is no personal data. Notice §2–§6.
 - **Retention** (proposed, accepted by iltan; notice §6, values still marked as placeholders there): rejected
   applications 6 months after the decision, member data 1 year after membership ends. Instead of keeping expired
   records "archived" (still personal data → not allowed past the purpose), **anonymise** them: strip name/contact/birth

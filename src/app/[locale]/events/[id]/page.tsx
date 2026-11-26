@@ -8,6 +8,7 @@ import { CancelEventDialog } from "@/components/events/cancel-event-dialog";
 import { ChangeLog, describeChanges } from "@/components/events/change-log";
 import { DeleteEventDialog } from "@/components/events/delete-event-dialog";
 import { EventCounts } from "@/components/events/event-counts";
+import { EventDecliners } from "@/components/events/event-decliners";
 import { EventRoster } from "@/components/events/event-roster";
 import { EventTeaser } from "@/components/events/event-teaser";
 import { EventTeaserSkeleton } from "@/components/events/events-teaser-skeleton";
@@ -26,11 +27,14 @@ import { dayToDate } from "@/lib/events/day";
 import { NO_COUNTS } from "@/lib/events/join";
 import {
   getChangeLog,
+  getDecliners,
   getEvent,
   getEventCounts,
+  getMyDeclines,
   getMyJoinContext,
   getMySignups,
   getRoster,
+  getUnanswered,
 } from "@/lib/events/queries";
 import { memberShareText, shareText } from "@/lib/events/places";
 import { getEventPreview } from "@/lib/events/public";
@@ -134,12 +138,29 @@ async function EventContent({ params }: { params: PageProps<"/[locale]/events/[i
   const organiser = can(user.access, "events.manage");
   const probation = user.profile?.status === "probation";
 
-  const [event, counts, roster, changeLog, mySignups, joinContext, t, tSides, format, locale] = await Promise.all([
+  const [
+    event,
+    counts,
+    roster,
+    decliners,
+    unanswered,
+    changeLog,
+    mySignups,
+    myDeclines,
+    joinContext,
+    t,
+    tSides,
+    format,
+    locale,
+  ] = await Promise.all([
     getEvent(id),
     getEventCounts([id]),
     probation ? null : getRoster(id),
+    organiser ? getDecliners(id) : null,
+    organiser ? getUnanswered(id) : null,
     getChangeLog(id),
     getMySignups(),
+    getMyDeclines(),
     getMyJoinContext(),
     getTranslations("Events"),
     getTranslations("Admin.sides"),
@@ -235,6 +256,7 @@ async function EventContent({ params }: { params: PageProps<"/[locale]/events/[i
         event={event}
         counts={eventCounts}
         mine={mySignups.get(event.id) ?? null}
+        declined={myDeclines.has(event.id)}
         probation={joinContext.probation}
         maxCc={joinContext.maxCc}
         hasEmergencyContact={joinContext.hasEmergencyContact}
@@ -292,6 +314,15 @@ async function EventContent({ params }: { params: PageProps<"/[locale]/events/[i
         />
       )}
 
+      {organiser && decliners !== null && (
+        <EventDecliners
+          rows={decliners.rows}
+          overCeiling={decliners.overCeiling}
+          // Nobody is chased once the ride started or was cancelled.
+          unanswered={!cancelled && now < Date.parse(event.startsAt) ? unanswered : null}
+        />
+      )}
+
       {(event.createdByName || (event.editedByOther && event.updatedByName)) && (
         <div className="flex flex-col gap-1 text-sm text-muted-foreground">
           {event.createdByName && <p>{t("detail.createdBy", { name: event.createdByName })}</p>}
@@ -328,13 +359,14 @@ async function EventContent({ params }: { params: PageProps<"/[locale]/events/[i
 }
 
 /**
- * Mirrors a typical ride as an active member sees it before joining (the common viewer since the release): badges,
+ * Mirrors a typical ride as an active member sees it before answering (the common viewer since the release): badges,
  * title, date, area and counts lines, the share button, the join panel (heading, Sürücü/Artçı, the guests stepper with
- * its hint, the button and its empty status line), the route card with two places (strip, then name block and the
- * action buttons, which wrap to two rows on a phone), a one-line description, the roster with two rows (name, role)
- * and the "Oluşturan" line. Measured with `scripts/e2e/skeletons.mjs` (member, organiser, signed out). Organisers also
- * get the edit button, a safety-card button per roster row and the cancel/delete row (taller); ön alım members no
- * roster (shorter): the shell can't know the role (follow-ups, "Loading states").
+ * its hint, "Katılıyorum" and "Gelmiyorum", the empty status line), the route card with two places (strip, then name
+ * block and the action buttons, which wrap to two rows on a phone), a one-line description, the roster with two rows
+ * (name, role) and the "Oluşturan" line. Measured with `scripts/e2e/skeletons.mjs` (member, organiser, signed out).
+ * Organisers also get the edit button, a safety-card button per roster row, the "Gelmeyenler" section and the
+ * cancel/delete row (taller); ön alım members no roster (shorter): the shell can't know the role (follow-ups,
+ * "Loading states").
  */
 function EventSkeleton() {
   return (
@@ -382,7 +414,10 @@ function EventSkeleton() {
           </div>
         </div>
         <div className="flex flex-col gap-2">
-          <Skeleton className="h-8 w-28" />
+          <div className="flex gap-2">
+            <Skeleton className="h-8 w-24" />
+            <Skeleton className="h-8 w-25" />
+          </div>
           <div />
         </div>
       </div>

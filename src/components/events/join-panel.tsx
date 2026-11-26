@@ -25,7 +25,7 @@ import {
 import { Button, buttonVariants } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Link } from "@/i18n/navigation";
-import { joinEvent, leaveEvent } from "@/lib/events/actions";
+import { declineEvent, joinEvent } from "@/lib/events/actions";
 import {
   checkJoin,
   type Counts,
@@ -43,7 +43,7 @@ type JoinEvent = Parameters<typeof checkJoin>[0]["event"];
 
 /** What the last action left to say: done, refused with a reason, or failed. */
 type Outcome =
-  | { kind: "done"; what: "joined" | "updated" | "left" }
+  | { kind: "done"; what: "joined" | "updated" | "declined" }
   | { kind: "refused"; reason: JoinReason }
   | { kind: "failed"; status: "invalid" | "forbidden" | "notFound" | "error" };
 
@@ -52,26 +52,31 @@ function unusable(el: Element): boolean {
   return !el.isConnected || el.matches(":disabled, [aria-disabled='true'], [data-disabled]");
 }
 
-function outcomeOf(result: JoinActionResult, what: "joined" | "updated" | "left"): Outcome {
+function outcomeOf(result: JoinActionResult, what: "joined" | "updated" | "declined"): Outcome {
   if (result.status === "ok") return { kind: "done", what };
   if (result.status === "refused") return { kind: "refused", reason: result.reason };
   return { kind: "failed", status: result.status };
 }
 
 /**
- * "Katılıyorum": Sürücü / Artçı and 0–3 guests, or, once signed up, "Güncelle" and "Katılmaktan vazgeç". Options the
- * join rules refuse (`checkJoin`, the same rules as `join_event`) are disabled with the reason; the database still
- * decides and its refusals show the same texts. A started or cancelled event shows that state instead. After a new
- * sign-up without an emergency contact, a nudge links to the profile's emergency section.
+ * The viewer's answer to the event. No answer: Sürücü / Artçı and 0–3 guests with "Katılıyorum" and "Gelmiyorum"
+ * (saved at once: nothing is lost). Declined ("Gelmiyorsun"): the same form with "Katılıyorum" only, to switch. Signed
+ * up: "Güncelle" and "Gelmiyorum", which asks first (the place may be gone when they come back). Options the join
+ * rules refuse (`checkJoin`, the same rules as `join_event`) are disabled with the reason; the database still decides
+ * and its refusals show the same texts. A limit leaves "Gelmiyorum" open; "Sadece tam üyeler" seen by an ön alım
+ * member without a sign-up offers no "Gelmiyorum" (`decline_event` refuses it). A started or cancelled event shows
+ * that state instead. After a new sign-up without an emergency contact, a nudge links to the profile's emergency
+ * section.
  * Keyboard focus never falls to <body> when the focused control disables or unmounts ("−" at 0 guests, "+" at the
- * limit, saving, "Katılıyorum" replaced by "Güncelle", leaving): it moves to the stepper's other button, else to the
- * panel heading.
+ * limit, saving, "Katılıyorum" replaced by "Güncelle", "Gelmiyorum" gone after declining): it moves to the stepper's
+ * other button, else to the panel heading.
  */
 export function JoinPanel({
   eventId,
   event,
   counts,
   mine,
+  declined,
   probation,
   maxCc,
   hasEmergencyContact,
@@ -81,6 +86,8 @@ export function JoinPanel({
   event: JoinEvent;
   counts: Counts;
   mine: Signup | null;
+  /** The viewer said "Gelmiyorum" (never together with `mine`: the database keeps them exclusive). */
+  declined: boolean;
   probation: boolean;
   maxCc: number | null;
   hasEmergencyContact: boolean;
@@ -93,12 +100,12 @@ export function JoinPanel({
   const [guests, setGuests] = useState(mine?.guests ?? 0);
   const [outcome, setOutcome] = useState<Outcome | null>(null);
   const [nudge, setNudge] = useState(false);
-  const [leaveOpen, setLeaveOpen] = useState(false);
+  const [declineOpen, setDeclineOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const headingRef = useRef<HTMLHeadingElement>(null);
   const fewerRef = useRef<HTMLButtonElement>(null);
   const moreRef = useRef<HTMLButtonElement>(null);
-  const leaveRef = useRef<HTMLButtonElement>(null);
+  const declineRef = useRef<HTMLButtonElement>(null);
   // The panel's last focused control while focus is in the panel (null once the user moves focus elsewhere).
   const lastFocus = useRef<Element | null>(null);
 
@@ -114,7 +121,7 @@ export function JoinPanel({
     else headingRef.current?.focus({ preventScroll: true });
   });
   const focusHandlers = {
-    // Only the panel's own DOM: React also bubbles focus from the portaled leave dialog (its `finalFocus` handles it).
+    // Only the panel's own DOM: React also bubbles focus from the portaled decline dialog (its `finalFocus` takes it).
     onFocus: (e: FocusEvent<HTMLElement>) => {
       if (e.currentTarget.contains(e.target)) lastFocus.current = e.target;
     },
@@ -144,7 +151,7 @@ export function JoinPanel({
   const reasonText = (reason: JoinReason) => t(`join.reasons.${reason}`, { cc: event.minCc ?? 0 });
   const summary = (signup: Signup) =>
     t("join.summary", { role: t(`join.roles.${signup.role}`), guests: signup.guests });
-  const heading = mine ? t("join.headingJoined") : t("join.heading");
+  const heading = mine ? t("join.headingJoined") : declined ? t("join.headingDeclined") : t("join.heading");
   const outcomeText = (o: Outcome) => {
     if (o.kind === "done") return t(`join.done.${o.what}`);
     return o.kind === "refused" ? reasonText(o.reason) : t(`errors.${o.status}`);
@@ -160,12 +167,12 @@ export function JoinPanel({
     });
   }
 
-  function leave() {
+  function decline() {
     setOutcome(null);
     startTransition(async () => {
-      const result = await leaveEvent(eventId).catch((): JoinActionResult => ({ status: "error" }));
-      setLeaveOpen(false);
-      setOutcome(outcomeOf(result, "left"));
+      const result = await declineEvent(eventId).catch((): JoinActionResult => ({ status: "error" }));
+      setDeclineOpen(false);
+      setOutcome(outcomeOf(result, "declined"));
       if (result.status === "ok") setNudge(false);
     });
   }
@@ -265,14 +272,21 @@ export function JoinPanel({
               <Button disabled={isPending || closed !== null || unchanged} onClick={submit}>
                 {t("join.update")}
               </Button>
-              <Button ref={leaveRef} variant="outline" disabled={isPending} onClick={() => setLeaveOpen(true)}>
-                {t("join.leave")}
+              <Button ref={declineRef} variant="outline" disabled={isPending} onClick={() => setDeclineOpen(true)}>
+                {t("join.decline")}
               </Button>
             </>
           ) : (
-            <Button disabled={isPending || closed !== null} onClick={submit}>
-              {t("join.join")}
-            </Button>
+            <>
+              <Button disabled={isPending || closed !== null} onClick={submit}>
+                {t("join.join")}
+              </Button>
+              {!declined && closed !== "fullMembersOnly" && (
+                <Button variant="outline" disabled={isPending} onClick={decline}>
+                  {t("join.decline")}
+                </Button>
+              )}
+            </>
           )}
         </div>
         {/* Always rendered (a live region must exist before its text changes); the skeleton mirrors its gap. */}
@@ -294,19 +308,19 @@ export function JoinPanel({
         </div>
       )}
 
-      <AlertDialog open={leaveOpen} onOpenChange={(open) => !isPending && setLeaveOpen(open)}>
+      <AlertDialog open={declineOpen} onOpenChange={(open) => !isPending && setDeclineOpen(open)}>
         {/* Dismissed: back to the trigger. Confirmed: the trigger is disabled (saving) or gone, so the heading. */}
         <AlertDialogContent
-          finalFocus={() => (leaveRef.current && !unusable(leaveRef.current) ? true : headingRef.current)}
+          finalFocus={() => (declineRef.current && !unusable(declineRef.current) ? true : headingRef.current)}
         >
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("join.leaveDialog.title")}</AlertDialogTitle>
-            <AlertDialogDescription>{t("join.leaveDialog.body")}</AlertDialogDescription>
+            <AlertDialogTitle>{t("join.declineDialog.title")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("join.declineDialog.body")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isPending}>{t("join.leaveDialog.dismiss")}</AlertDialogCancel>
-            <AlertDialogAction variant="destructive" disabled={isPending} onClick={leave}>
-              {t("join.leaveDialog.confirm")}
+            <AlertDialogCancel disabled={isPending}>{t("join.declineDialog.dismiss")}</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" disabled={isPending} onClick={decline}>
+              {t("join.declineDialog.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

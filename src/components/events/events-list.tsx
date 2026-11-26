@@ -27,19 +27,22 @@ type Kind = (typeof KINDS)[number];
  * Upcoming events in the browser: side, kind and "Katıldıklarım" chips and pages over the full list from the server,
  * with the state in the URL (`?side=…&kind=…&mine=1&page=…`, defaults left out; chips and pages push a history entry,
  * nothing goes to the server). "Tümü" clears every filter; a pressed chip clears its own filter. `counts` by event id
- * (the counts line of each card), `joined`: the ids of the viewer's own sign-ups, `canCreate`: the viewer is an
- * organiser (the empty list then points to "Etkinlik oluştur").
+ * (the counts line of each card), `joined` / `declined`: the ids of the viewer's own sign-ups / "Gelmiyorum" answers
+ * (card badges; "Katıldıklarım" is sign-ups only), `canCreate`: the viewer is an organiser (the empty list then points
+ * to "Etkinlik oluştur").
  */
 export function EventsList({
   events,
   counts,
   joined,
+  declined,
   overCeiling,
   canCreate,
 }: {
   events: EventSummary[];
   counts: Partial<Record<string, Counts>>;
   joined: string[];
+  declined: string[];
   overCeiling: boolean;
   canCreate: boolean;
 }) {
@@ -50,6 +53,7 @@ export function EventsList({
   const kind = oneOf(KINDS, params.get("kind")) ?? null;
   const mine = params.get("mine") === "1";
   const joinedIds = new Set(joined);
+  const declinedIds = new Set(declined);
   // Repeated (`?page=2&page=3`) reads as an array: shown as page 1 and corrected, like on the server.
   const rawPage = params.raw("page");
   const view = eventsView(events, { side, kind, mine, page: parsePage(rawPage) }, joinedIds);
@@ -147,7 +151,12 @@ export function EventsList({
           <ul className="flex flex-col gap-3">
             {view.items.map((event) => (
               <li key={event.id}>
-                <EventCard event={event} counts={counts[event.id] ?? NO_COUNTS} joined={joinedIds.has(event.id)} />
+                <EventCard
+                  event={event}
+                  counts={counts[event.id] ?? NO_COUNTS}
+                  joined={joinedIds.has(event.id)}
+                  declined={declinedIds.has(event.id)}
+                />
               </li>
             ))}
           </ul>
