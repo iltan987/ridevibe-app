@@ -6,6 +6,8 @@ import { fileURLToPath } from "node:url";
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const repoRequire = createRequire(path.join(REPO, "package.json"));
+// The app under test: `pnpm start -p 3123` (a worktree uses 3124: BASE_URL=http://localhost:3124).
+const DEFAULT_BASE = process.env.BASE_URL ?? "http://localhost:3123";
 
 // puppeteer-core is installed outside the repo: PUPPETEER_DIR=<dir containing node_modules/puppeteer-core>.
 if (!process.env.PUPPETEER_DIR) {
@@ -42,7 +44,7 @@ export async function newPage(browserOrContext, viewport = { width: 390, height:
 }
 
 /** Sets the Supabase session cookies for a local test user (email sign-in must be enabled locally). */
-export async function signIn(page, email, baseUrl = "http://localhost:3123") {
+export async function signIn(page, email, baseUrl = DEFAULT_BASE) {
   const res = await fetch(`${API}/auth/v1/token?grant_type=password`, {
     method: "POST",
     headers: { apikey: PUBLISHABLE, "Content-Type": "application/json" },
@@ -59,7 +61,7 @@ export async function signIn(page, email, baseUrl = "http://localhost:3123") {
  *  with our own code challenge, reads it from the local Mailpit, follows it to get the one-time `code`, plants the
  *  code-verifier cookie that `exchangeCodeForSession` reads, then opens the callback. Clears Mailpit's inbox.
  *  Returns the page's final URL. Needs local email sign-in (docs/learnings/testing.md). */
-export async function signInViaCallback(page, email, next, baseUrl = "http://localhost:3123") {
+export async function signInViaCallback(page, email, next, baseUrl = DEFAULT_BASE) {
   const verifier = crypto.randomBytes(48).toString("base64url");
   const challenge = crypto.createHash("sha256").update(verifier).digest("base64url");
   await fetch(`${MAILPIT}/api/v1/messages`, { method: "DELETE" });
@@ -105,7 +107,7 @@ export async function throttle(page, { latency = 400, kbps = 400 } = {}) {
 
 /** Counts the requests that go to the server for a page: documents and RSC fetches (incl. prefetches). Other requests
  *  don't count: Chrome refetches the favicon on every History API URL change (docs/learnings/testing.md). */
-export function watchServer(page, baseUrl = "http://localhost:3123") {
+export function watchServer(page, baseUrl = DEFAULT_BASE) {
   let seen = [];
   page.on("request", (r) => {
     const url = r.url();

@@ -38,9 +38,21 @@ whether it already exists.
 - **Workflow per iteration (superpowers):** design → `brainstorming` (spec, iltan approves) → `writing-plans` →
   `subagent-driven-development` with `test-driven-development` (pgTAP first for permissions) → `verification-before-
   completion` (format, lint, tsc, test, db:test, build, browser E2E) → `requesting-code-review` (+ `/security-review`
-  for RLS/grant changes) → iltan reviews → merge. Small fixes skip design/plan. No git worktrees (one local Supabase
-  DB); no PRs (local `--no-ff` merge). End of session: `claude-md-management:revise-claude-md`. Plans: a task that
-  changes a shared type/schema also updates its consumers, so every commit passes tsc.
+  for RLS/grant changes) → iltan reviews → merge. Small fixes skip design/plan. No PRs (local `--no-ff` merge). End
+  of session: `claude-md-management:revise-claude-md`. Plans: a task that changes a shared type/schema also updates
+  its consumers, so every commit passes tsc.
+- **Parallel sessions: one git worktree per iteration.** iltan starts it with `claude -w` (hook
+  `scripts/dev/worktree.mts`: folder `~/projects/ridingclub-wt/<name>`, a new branch from local `main`,
+  `.env*`/`.vercel` linked, packages and plugins installed, ~1 min). The branch is `wip/<generated name>` (or
+  `feat/x` etc. when given); a session on a `wip/` branch renames it to our naming (`git branch -m feat/<slug>`) as
+  soon as the task is clear, before the first commit, and says so. The main checkout stays on `main`:
+  merges, rollouts (`db:push`, `config push`, pushing `main`) and memory commits happen there
+  (`git -C ~/projects/ridingclub …`); after the merge, `node scripts/dev/worktree.mts remove <branch>`. A session
+  works in the checkout it started in: never create worktrees from skills or subagents (`using-git-worktrees`, Agent
+  `isolation`). **One local Supabase stack serves every checkout:** before `pnpm db:migration`, `db:reset` or
+  `migration up`, run `node scripts/dev/worktree.mts db-check`; another branch listed → stop and ask iltan. In a
+  worktree, `pnpm dev` takes the next free port (3001) and E2E runs on `pnpm start -p 3124` with
+  `BASE_URL=http://localhost:3124`. Details: `docs/learnings/tooling.md`.
 - **Follow-ups — read before, write after.** `docs/follow-ups.md` is the one backlog of everything consciously not
   done: open decisions, deferred features, parked edge cases, review minors, polish. Read it before planning and
   mention the items that touch the same area when presenting a plan. Every

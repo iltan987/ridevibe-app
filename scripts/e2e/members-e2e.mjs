@@ -37,7 +37,7 @@ import path from "node:path";
 import { clearAndType, launch, newPage, pagerFit, signIn, watchServer } from "./e2e-lib.mjs";
 
 const DIR = process.env.OUT_DIR ?? os.tmpdir();
-const BASE = "http://localhost:3123";
+const BASE = process.env.BASE_URL ?? "http://localhost:3123";
 const DB = process.env.DB_CONTAINER ?? "supabase_db_ridevibe";
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let fails = 0;
