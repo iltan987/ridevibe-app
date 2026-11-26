@@ -10,6 +10,10 @@
   WSL Integration. It stops after `wsl --shutdown`.
 - `pnpm db:start` may fail with `StatusDbNotReadyError … starting` right after Docker boots — the container is
   still healthy-checking; poll `pnpm db:status` instead of restarting.
+- Variant (2026-11-26): `/var/run/docker.sock` exists, but `docker ps` / `docker version` print nothing and the binary
+  behind the `/usr/bin/docker` link (`/mnt/wsl/docker-desktop/cli-tools/…`) dies with `Bus error`; Supabase reports
+  `DockerLifecycleInspectError` / `StatusDbInspectError` and the containers seem gone. Docker Desktop died under WSL:
+  start it as above (ready in ~15 s); containers and volumes come back with `pnpm db:start`, data intact.
 - **Source:** found by testing (2026-11-08: Docker was simply not running, WSL integration was fine).
 
 ### Local Supabase won't start: Windows reserved its ports (2026-11-17)

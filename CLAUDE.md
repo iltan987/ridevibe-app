@@ -48,7 +48,9 @@ whether it already exists.
   soon as the task is clear, before the first commit, and says so. The main checkout stays on `main`:
   merges, rollouts (`db:push`, `config push`, pushing `main`) and memory commits happen there, from a session started
   in `~/projects/ridingclub` or iltan's terminal: a `claude -w` session can't run git there, not even via `!`, so it
-  hands over the exact commands; after the merge, `node scripts/dev/worktree.mts remove <branch>`. A session
+  hands over the exact commands (merge: `git merge --no-ff --no-edit <branch>`); it writes memory to its own
+  `.claude/memory/` (the shared path is refused), which lands with the merge; after the merge,
+  `node scripts/dev/worktree.mts remove <branch>`. A session
   works in the checkout it started in: never create worktrees from skills or subagents (`using-git-worktrees`, Agent
   `isolation`). **One local Supabase stack serves every checkout:** before `pnpm db:migration`, `db:reset` or
   `migration up`, run `node scripts/dev/worktree.mts db-check`; another branch listed → stop and ask iltan. In a
@@ -66,8 +68,9 @@ whether it already exists.
   in `docs/`. Final assets go into `docs/` (not `.superpowers/`, the Desktop or the scratchpad); only secrets stay
   out (and iltan's local `.claude/settings.json` edit, see Git). New machine: README "New machine setup".
 - **Fix the environment yourself** before calling it a blocker: diagnose first (not running vs misconfigured), then
-  apply the safe fix; ask iltan only for what needs their decision or credentials. E.g. Docker down → start
-  `"/mnt/c/Program Files/Docker/Docker/Docker Desktop.exe" &` and wait for `/var/run/docker.sock`.
+  apply the safe fix; ask iltan only for what needs their decision or credentials. E.g. Docker down (no socket, or
+  `docker` dies with `Bus error`) → start `"/mnt/c/Program Files/Docker/Docker/Docker Desktop.exe" &` and wait for
+  `/var/run/docker.sock`.
   `supabase start` "ports are not available" = Windows reserved the ports: iltan runs the admin fix
   (`docs/learnings/environment.md`).
 - **Remove dead code.** Unused exports, helpers, messages, flags and leftovers from replaced approaches go in the same

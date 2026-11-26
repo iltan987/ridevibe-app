@@ -126,6 +126,12 @@
   only iltan's.
 - **Source:** found while merging `chore/pre-push-backup`.
 
+### Commands handed to iltan for a merge: add `--no-edit` (2026-11-26)
+- **Symptom:** `git merge --no-ff <branch>` in iltan's terminal stops in an editor asking for a commit message.
+- **Cause:** `--no-ff` always makes a merge commit and git opens `$EDITOR` for its message.
+- **Do:** hand over `git merge --no-ff --no-edit <branch>`: the default "Merge branch '<branch>'" is our convention.
+- **Source:** events-not-coming merge.
+
 ### Scrubbing text from history: filter-repo in a fresh clone, then `reset --keep` (2026-11-19)
 - **Symptom:** a value must leave every commit (blobs **and** commit messages), but `git filter-repo` refuses to run
   in a non-fresh clone and its `--force` would rewrite the working repo in place (iltan's local edits).
