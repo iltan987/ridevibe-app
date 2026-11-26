@@ -63,6 +63,18 @@
 - `npm i -g vercel` does nothing useful here; upgrade with `pnpm add -g vercel@latest`.
 - **Source:** `which vercel` → `~/.local/share/pnpm/bin/vercel` (checked 2026-11-25).
 
+### Upgrading the CLIs (2026-11-27)
+- **Supabase CLI** (dev dependency, `chore/` branch): read the GitHub releases (`gh release view vX.Y.Z -R
+  supabase/cli`) for `db push`/`dump`, migration diffing and `test db`; then `pnpm db:test`, a drift check
+  (`pnpm db:migration drift_check`: only the `cron.unschedule` noise) and `pnpm db:push < /dev/null` (backs up, dry-runs
+  and stops at "Nothing to push"; with pending migrations the y/N prompt reads nothing and pushes nothing). Confirm the
+  dry run's output still matches `/up to date/i` in `scripts/db/production.mts`.
+- **Vercel CLI** (pnpm global): since 66 the changelog has commit hashes only and the source isn't public (the repo's
+  `packages/cli/CHANGELOG.md` stops at 65.4.0), so test what we use instead: `vercel whoami`, `vercel ls`,
+  `vercel env pull --environment=production --yes <file>` (`production.mts` reads `POSTGRES_URL_NON_POOLING`). The
+  pull warns that one secret (`CRON_SECRET`, Vercel-sensitive) is written as `[SENSITIVE]`: expected, unused.
+- **Source:** the 3.0.0 → 3.4.0 and 66.6.0 → 67.0.0 upgrade (2026-11-27).
+
 ### Stopping a server: never `pkill -f` / `pgrep -f` with a pattern from your own command (2026-11-07)
 - **Symptom:** `pkill -f "next start -p 3123"` killed the running shell (exit 144) mid-command; another Bash call
   ended with exit 144 right after `pkill -f "next-server"` while the server kept running.

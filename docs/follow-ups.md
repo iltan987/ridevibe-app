@@ -20,10 +20,6 @@ Contents:
 
 ## Next up (iltan asked for these; in priority order; start in a new session)
 
-- **Update the CLIs** (2026-11-26, iltan: "new versions are kind of important") — Supabase CLI 3.0.0 → 3.4.0 (dev
-  dependency in `package.json`: a `chore/` branch; read the release notes for `db push`, migration diffing and pgTAP
-  changes; check with `db:test` and a `db:push` dry run) and Vercel CLI 66.6.0 → 67.0.0 (global: `pnpm add -g
-  vercel@latest`; check `vercel env pull` and `vercel ls`, which `scripts/db/production.mts` and the runbook use).
 - **Full Events check on production (iltan)** (2026-11-21, events; iltan) — the release is live; iltan checks it on
   production:
   - Branch 1 feedback: the items marked "decide with iltan" / "Deferred: … iltan" below (Features "Events joining:
@@ -745,7 +741,10 @@ lawyer review, CLAUDE.md "Privacy (KVKK)").
   local stack, so only one branch at a time may change the database (`node scripts/dev/worktree.mts db-check`). If
   two such branches ever need to run in parallel: a second stack with its own `project_id` and ports (an override for
   the worktree's `supabase/config.toml` that never gets committed, plus its own `.env.local`). Not needed while
-  parallel work is "database branch + UI branch".
+  parallel work is "database branch + UI branch". Alternative since CLI 3.4 (2026-11-27, CLI upgrade): the
+  experimental stack backend (`stack = true` under `[experimental]`, fixed ports removed) runs one stack per worktree;
+  `supabase start` now nudges toward it. Experimental, would change every port our scripts, E2E and `.env.local` use:
+  evaluate in a throwaway clone before switching.
 - **Enforce the database-owner rule in the guard hook** (2026-11-26, worktrees) — today `db-check` is a written rule
   (CLAUDE.md "Parallel sessions"). `scripts/db/guard-hook.mts` could run it before `db:reset` / `db:migration` /
   `migration up` and block when another branch is listed. Add if a session ever resets the database under another.
@@ -753,9 +752,6 @@ lawyer review, CLAUDE.md "Privacy (KVKK)").
   "Dead-code tool?" under Open decisions), unused message keys in `messages/*.json`, stale comments and follow-up
   items that point at removed code. Known: `hasStaffAccess` in `src/lib/auth/permissions.ts` has no callers
   (pre-existing, 2026-11-13).
-- **Upgrade the Supabase CLI** (2026-11-10) — 3.0.0 is installed (`node_modules/supabase/package.json`); 3.1.0 was
-  out on 2026-11-10, check the latest. On upgrade, re-check the `/up to date/i` match in `production.mts` (see
-  "Pre-push backup review minors" (b)).
 - **Import order nits** (2026-11-10 to 2026-11-12, loading-states, apply-steps and install-prompt reviews) — not
   lint-enforced (see "More lint later?"): `src/app/[locale]/admin/applications/page.tsx` and
   `src/app/[locale]/account/page.tsx` mix component and lib imports out of order; `src/components/apply/apply-form.tsx`
@@ -787,11 +783,11 @@ lawyer review, CLAUDE.md "Privacy (KVKK)").
   `secrets`, `config push`) are not guarded (no Storage or Edge Functions yet; `config push` has its own diff-first
   rule). (b) `production.mts`:
   SIGTERM/SIGHUP (terminal closed) skip the `exit` handler, so the private temp `.env` with every production secret
-  can stay in `os.tmpdir()` (handle them like SIGINT); `/up to date/i` is correct for CLI 3.0.0 (stdout only when
-  nothing is pending) but should be re-checked on CLI upgrades or replaced by `--output-format json` + `upToDate`;
+  can stay in `os.tmpdir()` (handle them like SIGINT); `/up to date/i` is correct up to CLI 3.4.0 (stdout only when
+  nothing is pending) but must be re-checked on each CLI upgrade (`docs/learnings/environment.md` "Upgrading the
+  CLIs") or replaced by `--output-format json` + `upToDate`;
   the roles and schema dumps have no content check (a `CREATE TABLE` marker for the schema); when gpg dies first the
-  error says "Dump failed" (check gpg's result first). (c) Unverified: whether CLI 3 error output can echo the
-  `--remote=<url>` value (try a fake URL on `127.0.0.1:1`). (d) Restore: sessions of accounts created after the
+  error says "Dump failed" (check gpg's result first). (d) Restore: sessions of accounts created after the
   backup linger until they expire (documented in the runbook); delete `auth.sessions` too if that matters.
 - **Backups older than 14 days without a Claude session** (2026-11-18, final review) — pruning runs at every Claude
   Code session start here and before every backup; with neither for over two weeks, the newest backup outlives the
