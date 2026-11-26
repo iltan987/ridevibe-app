@@ -27,6 +27,12 @@
       {
         "hooks": [{ "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/scripts/db/production.mts\" prune" }]
       }
+    ],
+    "WorktreeCreate": [
+      { "hooks": [{ "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/scripts/dev/worktree.mts\" hook" }] }
+    ],
+    "WorktreeRemove": [
+      { "hooks": [{ "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/scripts/dev/worktree.mts\" hook" }] }
     ]
   },
   "enabledPlugins": {

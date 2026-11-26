@@ -4,6 +4,7 @@
 
 - [Lint, format and types](#lint-format-and-types)
 - [Git hooks and git recipes](#git-hooks-and-git-recipes)
+- [Worktrees and parallel sessions](#worktrees-and-parallel-sessions)
 
 ## Lint, format and types
 
@@ -141,3 +142,45 @@
   The old tip stays in the reflog: the earliest commit introducing a value (`git log <old> --reverse -S'<value>'`) is
   it. Never write an old SHA into the repo: it points straight at the scrubbed data.
 - **Source:** public-repo audit, 2026-11-19.
+
+## Worktrees and parallel sessions
+
+### Claude Code's worktrees land inside the repo on `worktree-<name>`: a `WorktreeCreate` hook replaces both (2026-11-26)
+- **Symptom:** `claude -w name` creates `.claude/worktrees/<name>` on branch `worktree-<name>` from
+  `origin/<default branch>`. Inside the repo, tsc (`**/*.ts`), ESLint (no gitignore) and `node --test` would also
+  sweep the nested checkout, and the branch breaks our `feat/…` names. No setting moves it or renames the branch
+  (`worktree.baseRef` is only `fresh` / `head`).
+- **Do:** our `WorktreeCreate` / `WorktreeRemove` hooks (`scripts/dev/worktree.mts`, registered in
+  `.claude/settings.json`). Contract: stdin JSON with `name` (verbatim, slash included: `claude -w feat/x` passes
+  `feat/x`) or `worktree_path`; the last stdout line is the path (everything else to stderr); a non-zero exit fails
+  the step. With a hook, `.worktreeinclude` is ignored (the hook links files itself) and Claude Code never deletes the
+  branch (the hook runs `git branch -d`, never `-D`). A nameless `claude -w` or an Agent with `isolation: "worktree"`
+  passes a generated name (`bright-running-fox`): the hook refuses it.
+- **Source:** code.claude.com/docs/en/worktrees and /hooks (checked 2026-11-26); throwaway-clone test with Claude Code
+  2.1.332.
+
+### A new worktree has no project plugins, and `claude plugin install` rewrites `.claude/settings.json` (2026-11-26)
+- **Symptom:** a session in a fresh worktree: `Plugin "superpowers" is enabled in project settings but isn't installed`
+  (all project plugins fail to load).
+- **Cause:** `~/.claude/plugins/installed_plugins.json` records project-scope installs per `projectPath`; a worktree is
+  a new path. `claude plugin install <id> --scope project` also re-serialises `.claude/settings.json` (moves keys,
+  unwraps the one-line hooks), even when `enabledPlugins` already lists the plugin.
+- **Do:** the hook installs every enabled plugin from inside the new worktree and writes the original file text back
+  (~40 s for six). Nothing is uninstalled on removal (`~/.claude/plugins/data/<id>` is per plugin, not per project);
+  entries for removed paths are harmless.
+- **Source:** throwaway-clone test.
+
+### What a worktree shares with the main checkout (2026-11-26)
+- **Shared:** `.git` (branches, `core.hooksPath=.husky/_`, relative, so each worktree's `pnpm install` makes its own
+  `.husky/_`: the pre-commit hook runs there); the one local Supabase stack (Docker project `ridevibe`, fixed ports:
+  `db:reset` from any checkout rebuilds it from *that* checkout's migrations and wipes the E2E fixture users for
+  everyone); auto memory (`autoMemoryDirectory` is absolute: the main checkout's `.claude/memory/`, so memory is
+  committed on `main`); the pnpm store (`pnpm install` in a worktree takes about a second).
+- **Per worktree:** `node_modules`, `.next`, `supabase/.temp` (no `linked-project.json`, so `config diff` / `push`
+  only from the main checkout), `.claude/settings.local.json`, and the committed `.claude/settings.json` (iltan's
+  uncommitted edit stays in the main checkout). Symlinked by the hook: `.env`, `.env.local`, `.vercel`; they are
+  git-ignored, so `git worktree remove` without `--force` still works.
+- **Ports:** `next dev` without `-p` moves to the next free port (up to 10 tries, `next/dist/server/lib/start-server.js`);
+  `next start` doesn't. Local sign-in redirects allow 3000, 3001 and 3124 (`supabase/config.toml`).
+- `$CLAUDE_PROJECT_DIR` is set for hooks only; it is empty in the Bash tool.
+- **Source:** throwaway-clone test, 2026-11-26.

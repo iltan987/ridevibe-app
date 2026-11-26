@@ -1,6 +1,7 @@
 # Local browser E2E scripts
 
-Run against a **local** stack only (local Supabase + a server on port 3123); never against production.
+Run against a **local** stack only (local Supabase + a server on port 3123); never against production. Every script
+reads `BASE_URL` (default `http://localhost:3123`): a worktree serves on 3124 (CLAUDE.md "Parallel sessions").
 
 - `e2e-lib.mjs` — helpers: `launch({ scrollbars, args })` (system Chrome, `CHROME_PATH` to override; `scrollbars: true`
   keeps classic scrollbars, hidden by default in headless; `args` = extra Chrome flags), `newPage()` (390x844, Turkish),

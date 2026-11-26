@@ -723,6 +723,14 @@ lawyer review, CLAUDE.md "Privacy (KVKK)").
 
 ### Tooling & docs
 
+- **Second local Supabase stack for a second database branch** (2026-11-26, worktrees) — all checkouts share one
+  local stack, so only one branch at a time may change the database (`node scripts/dev/worktree.mts db-check`). If
+  two such branches ever need to run in parallel: a second stack with its own `project_id` and ports (an override for
+  the worktree's `supabase/config.toml` that never gets committed, plus its own `.env.local`). Not needed while
+  parallel work is "database branch + UI branch".
+- **Enforce the database-owner rule in the guard hook** (2026-11-26, worktrees) — today `db-check` is a written rule
+  (CLAUDE.md "Parallel sessions"). `scripts/db/guard-hook.mts` could run it before `db:reset` / `db:migration` /
+  `migration up` and block when another branch is listed. Add if a session ever resets the database under another.
 - **Dead-code sweep** (2026-11-11, iltan) — first sweep: unused exports/files/dependencies (tool still open, see
   "Dead-code tool?" under Open decisions), unused message keys in `messages/*.json`, stale comments and follow-up
   items that point at removed code. Known: `hasStaffAccess` in `src/lib/auth/permissions.ts` has no callers

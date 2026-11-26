@@ -56,6 +56,17 @@ pnpm dev             # http://localhost:3000
 
 Local Supabase Studio: http://127.0.0.1:54323
 
+### Two sessions at once (git worktrees)
+
+```bash
+claude -w feat/my-change     # new branch from main in ~/projects/ridingclub-wt/feat-my-change, ready in ~1 min
+```
+
+The worktree gets `.env`, `.env.local` and `.vercel` linked from this checkout, its own `node_modules`, and the
+Claude Code plugins. All checkouts share the one local Supabase stack, so only one branch at a time may change the
+database. This checkout stays on `main` for merges and rollouts. Rules: CLAUDE.md "Parallel sessions"; commands:
+`scripts/dev/worktree.mts`.
+
 ## Making yourself admin (once per environment)
 
 Sign in once so your profile exists, then run in the SQL editor (Studio locally, Supabase dashboard in production):

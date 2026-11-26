@@ -4,7 +4,7 @@ import { launch, newPage, signIn, throttle } from "./e2e-lib.mjs";
 import os from "node:os";
 import path from "node:path";
 const DIR = process.env.OUT_DIR ?? os.tmpdir();
-const BASE = "http://localhost:3123";
+const BASE = process.env.BASE_URL ?? "http://localhost:3123";
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let fails = 0;
 const check = (name, ok, extra = "") => {
