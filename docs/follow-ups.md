@@ -20,6 +20,10 @@ Contents:
 
 ## Next up (iltan asked for these; in priority order; start in a new session)
 
+- **Update the CLIs** (2026-11-26, iltan: "new versions are kind of important") — Supabase CLI 3.0.0 → 3.4.0 (dev
+  dependency in `package.json`: a `chore/` branch; read the release notes for `db push`, migration diffing and pgTAP
+  changes; check with `db:test` and a `db:push` dry run) and Vercel CLI 66.6.0 → 67.0.0 (global: `pnpm add -g
+  vercel@latest`; check `vercel env pull` and `vercel ls`, which `scripts/db/production.mts` and the runbook use).
 - **Full Events check on production (iltan)** (2026-11-21, events; iltan) — the release is live; iltan checks it on
   production:
   - Branch 1 feedback: the items marked "decide with iltan" / "Deferred: … iltan" below (Features "Events joining:

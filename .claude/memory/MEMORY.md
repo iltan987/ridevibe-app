@@ -1,4 +1,5 @@
 - [iltan](user-iltan.md) — club member who owns & maintains the club app for founder Samet; explain decisions
 - [Ridingclub project](project-ridingclub.md) — why services run on iltan's accounts; how Samet is involved
 - [Turkish copy](feedback-turkish-copy.md) — native connotations (not "kahvede", "sohbet"); skip obvious/money details
+- [Keep tools updated](feedback-keep-tools-updated.md) — act on CLI "new version" notices: plan the update, don't ignore
 - [Review in production](feedback-review-in-production.md) — iltan reviews on production after merge; tests there while usage is low (no local admin restore until asked); gate stays closed until batched checks
