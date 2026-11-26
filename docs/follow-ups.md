@@ -99,6 +99,14 @@ lawyer review, CLAUDE.md "Privacy (KVKK)").
 - **Event poster upload** (2026-11-24, iltan) — organisers already post an AI-made poster per event in the WhatsApp
   channel; let them upload it as the event's cover and link-preview image, the generated preview (Events 2b) staying
   the fallback. Needs image storage (R2), so with the gallery work.
+- **Short event links** (2026-11-26, iltan's WhatsApp idea) — share texts end with `/events/<uuid>`, a long ugly line
+  in the WhatsApp bubble, on desktop and when copied. iltan suggested putting the link first (phones may hide a
+  leading link behind the preview); rejected for now: notifications and the chat list show the first line, which would
+  become the URL instead of the title / "Güncellendi" / "İptal edildi", and WhatsApp previews the first URL either way
+  (our texts hold one). Better fix: a short code per event (e.g. 6–8 characters, unique, never reused) in the URL
+  (`/events/<code>`), the uuid staying the key; old uuid links redirect. Touches `save_event`, the public reads
+  (`event_preview`), the route, `eventImageUrl`, share texts and E2E. Cheap phone check if it comes up again: send
+  yourself both orders and compare bubble, notification and chat-list line.
 - **Google Places API for place links** (2026-11-21, events organiser side) — a Google place link carries no
   coordinates, so a venue-only place routes by its name/address in Apple/Yandex and gets no Yandex Navi or
   coordinates; organisers who want an exact point long-press the map and share a pin as well. The Places API would
