@@ -50,9 +50,14 @@
 - **Source:** found by testing.
 
 ### pnpm 12 blocks dependency build scripts (2026-11-07)
-- **Do:** list them in `pnpm-workspace.yaml` → `allowBuilds:` (`false` unless needed). New entries appear as
-  `'pkg': set this to true or false` after installs — decide and fix the file.
-- **Source:** `pnpm-workspace.yaml` (`allowBuilds`), `package.json` (`packageManager: pnpm@12.3.4`).
+- **Do:** list them in `pnpm-workspace.yaml` → `allowBuilds:` (`false` unless needed). Since pnpm 12.7 an install
+  without a terminal (Claude's shell) no longer writes `'pkg': set this to true or false` placeholders: a new build
+  script shows up only under "Ignored build scripts" in the install output — read it, decide and add the entry.
+- Version: the global shim runs `~/.local/share/pnpm`'s copy, which switches to `package.json#packageManager`;
+  Vercel uses that pin too (build log "Detected … from package.json#packageManager"). Upgrade: `cd ~ && pnpm
+  self-update <ver>`, edit the pin, `pnpm install` (lockfile: only the `@pnpm/exe.*` entries change).
+- **Source:** `pnpm-workspace.yaml` (`allowBuilds`), `package.json` (`packageManager`); pnpm 12.7.0 release notes; the
+  12.3.4 → 12.23.0 upgrade (2026-11-27).
 
 ### Validating pure TS logic quickly (2026-11-07)
 - `npx --yes tsx --tsconfig tsconfig.json script.ts` works (path aliases resolve). `pnpm dlx tsx` fails under
