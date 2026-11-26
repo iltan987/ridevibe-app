@@ -25,7 +25,7 @@ import {
 import { Button, buttonVariants } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Link } from "@/i18n/navigation";
-import { joinEvent, leaveEvent } from "@/lib/events/actions";
+import { declineEvent, joinEvent } from "@/lib/events/actions";
 import {
   checkJoin,
   type Counts,
@@ -163,7 +163,7 @@ export function JoinPanel({
   function leave() {
     setOutcome(null);
     startTransition(async () => {
-      const result = await leaveEvent(eventId).catch((): JoinActionResult => ({ status: "error" }));
+      const result = await declineEvent(eventId).catch((): JoinActionResult => ({ status: "error" }));
       setLeaveOpen(false);
       setOutcome(outcomeOf(result, "left"));
       if (result.status === "ok") setNudge(false);

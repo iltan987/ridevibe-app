@@ -57,6 +57,32 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"event_declines": {
+                  Row: {
+                    "created_at": string,"event_id": string,"profile_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"event_id": string,"profile_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"event_id"?: string,"profile_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "event_declines_event_id_fkey"
+      columns: ["event_id"]
+isOneToOne: false
+      referencedRelation: "events"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "event_declines_profile_id_fkey"
+      columns: ["profile_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"event_places": {
                   Row: {
                     "event_id": string,"id": string,"lat": number | null,"lng": number | null,"name": string,"position": number,"venue_label": string | null,"venue_url": string | null
@@ -374,6 +400,9 @@ isOneToOne: false
               "asian": number,"european": number,"initials": (string)[],"total": number
             }[]
                            },
+"decline_event":
+{ Args: { "p_event": string }; Returns: undefined
+                           },
 "delete_event":
 { Args: { "p_id": string }; Returns: undefined
                            },
@@ -392,6 +421,11 @@ isOneToOne: false
               "bikes": number,"event_id": string,"guests": number,"members": number,"people": number,"probation": number
             }[]
                            },
+"event_decliners":
+{ Args: { "p_event": string }; Returns: {
+              "avatar_url": string,"full_name": string,"probation": boolean,"profile_id": string
+            }[]
+                           },
 "event_preview":
 { Args: { "p_id": string }; Returns: {
               "area": string,"cancelled": boolean,"day": string,"kind": Database["public"]['Enums']["event_kind"],"title": string
@@ -407,14 +441,14 @@ isOneToOne: false
               "area": string,"day": string,"side": Database["public"]['Enums']["istanbul_side"],"title": string
             }[]
                            },
+"event_unanswered":
+{ Args: { "p_event": string }; Returns: number
+                           },
 "join_event":
 { Args: { "p_event": string,"p_guests"?: number,"p_role": Database["public"]['Enums']["event_role"] }; Returns: undefined
                            },
 "keep_alive":
 { Args: Record<PropertyKey, never>; Returns: boolean
-                           },
-"leave_event":
-{ Args: { "p_event": string }; Returns: undefined
                            },
 "link_application":
 { Args: { "application_id": string,"target_id": string }; Returns: undefined
