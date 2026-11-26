@@ -41,8 +41,7 @@ Contents:
     "Güncellendi" box and the share text's first line), check the roster (badge, "Acil durum kişisi yok", safety
     card), "Katıldıklarım", delete disabled / cancel closing joining.
 
-- **Member conduct, rest of step 2b** (2026-11-26, iltan) — roadmap step 1 in
-  `docs/PLAN.md` ("Member conduct").
+- **Member conduct, rest of step 2b** (2026-11-26, iltan) — roadmap step 1 in `docs/PLAN.md` ("Member conduct").
 
 ## Open decisions (need iltan)
 
@@ -99,8 +98,8 @@ lawyer review, CLAUDE.md "Privacy (KVKK)").
   page state and scroll handler of `EventRoster` / `EventDecliners` into a hook.
 - **Events joining: small features left out** (2026-11-22, events joining, Task 5 review) — (a) leaving a
   cancelled event is "Gelmiyorum" in the DB (`decline_event`), the panel still offers none; (b) a started event
-  still says "Katılıyorsun" (past tense "Katıldın" would read better); (c) "Katıldıklarım" with no sign-ups shows the generic
-  "Bu filtreye uyan etkinlik yok." (a dedicated empty state). `src/components/events/join-panel.tsx`,
+  still says "Katılıyorsun" (past tense "Katıldın" would read better); (c) "Katıldıklarım" with no sign-ups shows
+  the generic "Bu filtreye uyan etkinlik yok." (a dedicated empty state). `src/components/events/join-panel.tsx`,
   `events-list.tsx`; (d) a cancelled event with sign-ups can never be deleted: `delete_event` refuses while sign-ups
   exist and the UI offers no leave on a cancelled event (the copy explains it). Deferred: polish; decide in iltan's
   production check.
