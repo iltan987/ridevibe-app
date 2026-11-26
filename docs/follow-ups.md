@@ -41,14 +41,7 @@ Contents:
     "Güncellendi" box and the share text's first line), check the roster (badge, "Acil durum kişisi yok", safety
     card), "Katıldıklarım", delete disabled / cancel closing joining.
 
-- **Events: "I'm not coming" (Gelmiyorum)** (2026-11-26, iltan in the production check) — members can only join or
-  leave; leaving deletes the sign-up, so "said no" looks like "didn't answer". Organisers need the no's like in a
-  WhatsApp poll. Next iteration (before member conduct 2b; both change the database, so not in parallel). To settle in
-  the design: who sees the no list (organisers only or every club member), a "hasn't answered" list for organisers,
-  switching freely between coming and not coming, a no never counting toward limits or "Katıldıklarım", what the
-  roster and the share text show. Touches `42_event_signups.sql` (`join_event` / `leave_event`, `event_roster`,
-  `event_counts`), `src/components/events/join-panel.tsx`, E2E `events-join`.
-- **Member conduct, rest of step 2b** (2026-11-26, iltan) — after "I'm not coming"; roadmap step 1 in
+- **Member conduct, rest of step 2b** (2026-11-26, iltan) — roadmap step 1 in
   `docs/PLAN.md` ("Member conduct").
 
 ## Open decisions (need iltan)
@@ -94,9 +87,19 @@ lawyer review, CLAUDE.md "Privacy (KVKK)").
 
 ## Features
 
+- **Events "Gelmiyorum": left out and to check** (2026-11-26, events-not-coming, design and task reviews) —
+  (a) widen the no list to everyone who sees the roster if members ask (change `event_decliners` and the notice);
+  (b) a "hasn't answered" list with names for organisers (today only the count, `event_unanswered`); (c) copy
+  alternatives for iltan's production check: "Gelmeyeceksin", "Yanıtın kaydedildi.", "Gelmiyor"; (d) "0 kişi henüz
+  yanıt vermedi" shows when everyone answered: hide or reword (with the other copy alternatives); (e) looks: the
+  "Gelmiyorsun" card badge uses `variant="outline"`, the same as the side badge ("Anadolu/Avrupa") on that row
+  (iltan's production check); (f) `getMySignups` / `getMyDeclines` (`src/lib/events/queries.ts`) drop `readAll`'s
+  `overCeiling` silently (unreachable per person: over 2,000 own answers; CLAUDE.md asks to flag every cap): make it
+  loud (`console.error`) or accept; (g) if a third paged list section appears on the event page, extract the shared
+  page state and scroll handler of `EventRoster` / `EventDecliners` into a hook.
 - **Events joining: small features left out** (2026-11-22, events joining, Task 5 review) — (a) leaving a
-  cancelled event: the DB allows it (`leave_event`), the panel offers no button; (b) a started event still says
-  "Katılıyorsun" (past tense "Katıldın" would read better); (c) "Katıldıklarım" with no sign-ups shows the generic
+  cancelled event is "Gelmiyorum" in the DB (`decline_event`), the panel still offers none; (b) a started event
+  still says "Katılıyorsun" (past tense "Katıldın" would read better); (c) "Katıldıklarım" with no sign-ups shows the generic
   "Bu filtreye uyan etkinlik yok." (a dedicated empty state). `src/components/events/join-panel.tsx`,
   `events-list.tsx`; (d) a cancelled event with sign-ups can never be deleted: `delete_event` refuses while sign-ups
   exist and the UI offers no leave on a cancelled event (the copy explains it). Deferred: polish; decide in iltan's

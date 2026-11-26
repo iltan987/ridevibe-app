@@ -64,8 +64,8 @@ export function PrivacyEn() {
         </li>
         <li>
           <strong>Event data:</strong> your sign-ups for club events (as a rider or a passenger, with the number of
-          guests you bring; guests&apos; names are not collected) and, if you are on the club team, your name on the
-          events you create or change and a record of your changes.
+          guests you bring; guests&apos; names are not collected) or your answer that you won&apos;t come to an event
+          and, if you are on the club team, your name on the events you create or change and a record of your changes.
         </li>
         <li>
           <strong>Session cookie:</strong> a cookie that is strictly necessary for signing in.
@@ -175,12 +175,13 @@ export function PrivacyEn() {
       </p>
       <p>
         Events: only club members see an event&apos;s details (time, meeting point, participants). Organisers (active
-        members given the events task) see the full list of participants. Full members see the names of the full members
-        taking part until the event is over; members in the ön alım period see only the numbers, and their own names are
-        not shown to other members except organisers, only counted. After an event, members see only the numbers. The
-        name of the team member who created or last changed an event is shown to club members. Public pages and the
-        preview of a shared event link show only the event&apos;s title, kind, day and area; these contain no personal
-        data. Event texts shared on WhatsApp contain no personal data either.
+        members given the events task) see the full list of participants. Only organisers see who has said they
+        won&apos;t come to an event. Full members see the names of the full members taking part until the event is over;
+        members in the ön alım period see only the numbers, and their own names are not shown to other members except
+        organisers, only counted. After an event, members see only the numbers. The name of the team member who created
+        or last changed an event is shown to club members. Public pages and the preview of a shared event link show only
+        the event&apos;s title, kind, day and area; these contain no personal data. Event texts shared on WhatsApp
+        contain no personal data either.
       </p>
       <p>To provide the service we use these service providers (data processors):</p>
       <ul>
@@ -233,10 +234,10 @@ export function PrivacyEn() {
           the 14 days). An incorrect or unnecessary note can be deleted by admins.
         </li>
         <li>
-          Event sign-ups: kept for the same period as other member data; for that period the participant lists of past
-          events stay with the organisers to keep track of attendance in the club. When your account is deleted, your
-          sign-ups are deleted too; events you created or changed stay with the club, but your name is removed from them
-          and from their change records.
+          Event sign-ups and &quot;not coming&quot; answers: kept for the same period as other member data; for that
+          period the participant lists of past events stay with the organisers to keep track of attendance in the club.
+          When your account is deleted, your sign-ups and answers are deleted too; events you created or changed stay
+          with the club, but your name is removed from them and from their change records.
         </li>
         <li>
           Account deletion: you can request deletion on your account page at any time; your account is hidden from other

@@ -60,8 +60,9 @@ export function PrivacyTr() {
         </li>
         <li>
           <strong>Etkinlik bilgileri:</strong> kulüp etkinliklerine katılım kaydınız (sürücü veya artçı olarak,
-          yanınızda getireceğiniz misafir sayısıyla; misafirlerin adı alınmaz) ve kulüp ekibindeyseniz oluşturduğunuz
-          veya değiştirdiğiniz etkinliklerde adınız ve yaptığınız değişikliklerin kaydı.
+          yanınızda getireceğiniz misafir sayısıyla; misafirlerin adı alınmaz) veya bir etkinliğe gelmeyeceğinizi
+          bildirmeniz ve kulüp ekibindeyseniz oluşturduğunuz veya değiştirdiğiniz etkinliklerde adınız ve yaptığınız
+          değişikliklerin kaydı.
         </li>
         <li>
           <strong>Oturum çerezi:</strong> giriş yapabilmeniz için zorunlu çerez.
@@ -173,13 +174,14 @@ export function PrivacyTr() {
       </p>
       <p>
         Etkinlikler: etkinliklerin ayrıntılarını (saat, buluşma yeri, katılımcılar) yalnızca kulüp üyeleri görür.
-        Organizatörler (etkinlik yetkisi verilen aktif üyeler) katılımcı listesinin tamamını görür. Tam üyeler, etkinlik
-        sona erene kadar katılan tam üyelerin adlarını görür; ön alım dönemindeki üyeler yalnızca katılımcı sayılarını
-        görür ve kendi adları organizatörler dışındaki üyelere gösterilmez, yalnızca sayı olarak yer alır. Etkinlik sona
-        erdikten sonra üyeler yalnızca sayıları görür. Etkinliği oluşturan veya en son değiştiren ekip üyesinin adı
-        kulüp üyelerine gösterilir. Herkese açık sayfalarda ve paylaşılan etkinlik bağlantılarının önizlemesinde
-        yalnızca etkinliğin başlığı, türü, günü ve bölgesi yer alır; bunlar kişisel veri içermez. WhatsApp&apos;ta
-        paylaşılan etkinlik metinlerinde de kişisel veri bulunmaz.
+        Organizatörler (etkinlik yetkisi verilen aktif üyeler) katılımcı listesinin tamamını görür. Bir etkinliğe
+        gelmeyeceğini bildirenleri yalnızca organizatörler görür. Tam üyeler, etkinlik sona erene kadar katılan tam
+        üyelerin adlarını görür; ön alım dönemindeki üyeler yalnızca katılımcı sayılarını görür ve kendi adları
+        organizatörler dışındaki üyelere gösterilmez, yalnızca sayı olarak yer alır. Etkinlik sona erdikten sonra üyeler
+        yalnızca sayıları görür. Etkinliği oluşturan veya en son değiştiren ekip üyesinin adı kulüp üyelerine
+        gösterilir. Herkese açık sayfalarda ve paylaşılan etkinlik bağlantılarının önizlemesinde yalnızca etkinliğin
+        başlığı, türü, günü ve bölgesi yer alır; bunlar kişisel veri içermez. WhatsApp&apos;ta paylaşılan etkinlik
+        metinlerinde de kişisel veri bulunmaz.
       </p>
       <p>Hizmeti sunabilmek için aşağıdaki hizmet sağlayıcılarını (veri işleyen) kullanıyoruz:</p>
       <ul>
@@ -235,10 +237,10 @@ export function PrivacyTr() {
           silinir. Yanlış veya gereksiz bir not yöneticiler tarafından silinebilir.
         </li>
         <li>
-          Etkinlik katılımları: diğer üye bilgileriyle aynı süre saklanır; geçmiş etkinliklerin katılımcı listesi bu
-          süre boyunca kulüp içi katılım takibi için organizatörlerde kalır. Hesabınız silindiğinde katılım kayıtlarınız
-          da silinir; oluşturduğunuz veya değiştirdiğiniz etkinlikler kulüpte kalır, ancak adınız bu etkinliklerden ve
-          değişiklik kayıtlarından kaldırılır.
+          Etkinlik katılımları ve gelmeyeceğinizi bildirdiğiniz yanıtlar: diğer üye bilgileriyle aynı süre saklanır;
+          geçmiş etkinliklerin katılımcı listesi bu süre boyunca kulüp içi katılım takibi için organizatörlerde kalır.
+          Hesabınız silindiğinde katılım kayıtlarınız ve yanıtlarınız da silinir; oluşturduğunuz veya değiştirdiğiniz
+          etkinlikler kulüpte kalır, ancak adınız bu etkinliklerden ve değişiklik kayıtlarından kaldırılır.
         </li>
         <li>
           Hesap silme: hesap sayfanızdan istediğiniz zaman hesabınızın silinmesini talep edebilirsiniz; hesabınız diğer
