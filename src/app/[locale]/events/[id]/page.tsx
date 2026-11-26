@@ -28,6 +28,7 @@ import {
   getChangeLog,
   getEvent,
   getEventCounts,
+  getMyDeclines,
   getMyJoinContext,
   getMySignups,
   getRoster,
@@ -134,18 +135,20 @@ async function EventContent({ params }: { params: PageProps<"/[locale]/events/[i
   const organiser = can(user.access, "events.manage");
   const probation = user.profile?.status === "probation";
 
-  const [event, counts, roster, changeLog, mySignups, joinContext, t, tSides, format, locale] = await Promise.all([
-    getEvent(id),
-    getEventCounts([id]),
-    probation ? null : getRoster(id),
-    getChangeLog(id),
-    getMySignups(),
-    getMyJoinContext(),
-    getTranslations("Events"),
-    getTranslations("Admin.sides"),
-    getFormatter(),
-    getLocale(),
-  ]);
+  const [event, counts, roster, changeLog, mySignups, myDeclines, joinContext, t, tSides, format, locale] =
+    await Promise.all([
+      getEvent(id),
+      getEventCounts([id]),
+      probation ? null : getRoster(id),
+      getChangeLog(id),
+      getMySignups(),
+      getMyDeclines(),
+      getMyJoinContext(),
+      getTranslations("Events"),
+      getTranslations("Admin.sides"),
+      getFormatter(),
+      getLocale(),
+    ]);
   if (!event) notFound();
 
   const now = Date.now(); // eslint-disable-line react-hooks/purity -- request time (after the session read): joining closes at the start
@@ -235,6 +238,7 @@ async function EventContent({ params }: { params: PageProps<"/[locale]/events/[i
         event={event}
         counts={eventCounts}
         mine={mySignups.get(event.id) ?? null}
+        declined={myDeclines.has(event.id)}
         probation={joinContext.probation}
         maxCc={joinContext.maxCc}
         hasEmergencyContact={joinContext.hasEmergencyContact}
@@ -328,11 +332,11 @@ async function EventContent({ params }: { params: PageProps<"/[locale]/events/[i
 }
 
 /**
- * Mirrors a typical ride as an active member sees it before joining (the common viewer since the release): badges,
+ * Mirrors a typical ride as an active member sees it before answering (the common viewer since the release): badges,
  * title, date, area and counts lines, the share button, the join panel (heading, Sürücü/Artçı, the guests stepper with
- * its hint, the button and its empty status line), the route card with two places (strip, then name block and the
- * action buttons, which wrap to two rows on a phone), a one-line description, the roster with two rows (name, role)
- * and the "Oluşturan" line. Measured with `scripts/e2e/skeletons.mjs` (member, organiser, signed out). Organisers also
+ * its hint, "Katılıyorum" and "Gelmiyorum", the empty status line), the route card with two places (strip, then name
+ * block and the action buttons, which wrap to two rows on a phone), a one-line description, the roster with two rows
+ * (name, role) and the "Oluşturan" line. Measured with `scripts/e2e/skeletons.mjs` (member, organiser, signed out). Organisers also
  * get the edit button, a safety-card button per roster row and the cancel/delete row (taller); ön alım members no
  * roster (shorter): the shell can't know the role (follow-ups, "Loading states").
  */
@@ -382,7 +386,10 @@ function EventSkeleton() {
           </div>
         </div>
         <div className="flex flex-col gap-2">
-          <Skeleton className="h-8 w-28" />
+          <div className="flex gap-2">
+            <Skeleton className="h-8 w-28" />
+            <Skeleton className="h-8 w-28" />
+          </div>
           <div />
         </div>
       </div>

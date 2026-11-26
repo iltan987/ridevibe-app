@@ -371,6 +371,7 @@
       }
     },
     "joinedBadge": "Katılıyorsun",
+    "declinedBadge": "Gelmiyorsun",
     "mineChip": "Katıldıklarım",
     "counts": {
       "label": "Katılım:",
@@ -380,6 +381,7 @@
     "join": {
       "heading": "Katılıyor musun?",
       "headingJoined": "Katılıyorsun",
+      "headingDeclined": "Gelmiyorsun",
       "roleLabel": "Nasıl geliyorsun?",
       "roles": {
         "rider": "Sürücü",
@@ -396,17 +398,17 @@
       "summary": "{role} · {guests, plural, =0 {misafirsiz} other {# misafir}}",
       "join": "Katılıyorum",
       "update": "Güncelle",
-      "leave": "Katılmaktan vazgeç",
-      "leaveDialog": {
-        "title": "Katılmaktan vazgeçiyor musun?",
-        "body": "Katılımın silinir. Etkinlik başlayana kadar yeniden katılabilirsin.",
+      "decline": "Gelmiyorum",
+      "declineDialog": {
+        "title": "Gelmiyor musun?",
+        "body": "Yerin boşalır. Etkinlik başlayana kadar fikrini değiştirebilirsin; yer kalmışsa yeniden katılırsın.",
         "dismiss": "Hayır, geliyorum",
-        "confirm": "Evet, vazgeç"
+        "confirm": "Evet, gelmiyorum"
       },
       "done": {
         "joined": "Katılımın kaydedildi.",
         "updated": "Katılımın güncellendi.",
-        "left": "Katılımın silindi."
+        "declined": "Gelmeyeceğini kaydettik."
       },
       "reasons": {
         "started": "Etkinlik başladı; katılım kapandı.",

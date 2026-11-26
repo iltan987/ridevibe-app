@@ -12,19 +12,22 @@ import { cn } from "@/lib/utils";
 /**
  * An event in a list (design system §6): route strip on top (decoration: the meta line names the places), then the
  * date block, the title, "08:30 · start → finish", the counts line (with a capacity bar when a limit is set) and
- * badges ("cancelled", "Katılıyorsun" when `joined`, kind, side). A cancelled event's title is struck through. The whole card links to the event; the link is named by the title and described by the date, meta
- * line and badges (screen readers hear the title first). `withYear`: past lists span years, so their date block shows the year where upcoming ones show the
- * weekday.
+ * badges ("cancelled", "Katılıyorsun" when `joined`, else "Gelmiyorsun" when `declined`, kind, side). A cancelled
+ * event's title is struck through. The whole card links to the event; the link is named by the title and described by
+ * the date, meta line and badges (screen readers hear the title first). `withYear`: past lists span years, so their
+ * date block shows the year where upcoming ones show the weekday.
  */
 export function EventCard({
   event,
   counts,
   joined = false,
+  declined = false,
   withYear = false,
 }: {
   event: EventSummary;
   counts: Counts;
   joined?: boolean;
+  declined?: boolean;
   withYear?: boolean;
 }) {
   const t = useTranslations("Events");
@@ -75,7 +78,11 @@ export function EventCard({
             />
             <div id={`${id}-badges`} className="flex flex-wrap gap-1.5 pt-1">
               {cancelled && <Badge variant="destructive">{t("cancelled")}</Badge>}
-              {joined && <Badge variant="status">{t("joinedBadge")}</Badge>}
+              {joined ? (
+                <Badge variant="status">{t("joinedBadge")}</Badge>
+              ) : (
+                declined && <Badge variant="outline">{t("declinedBadge")}</Badge>
+              )}
               <Badge variant="secondary">{t(`kinds.${event.kind}`)}</Badge>
               {event.side && <Badge variant="outline">{tSides(event.side)}</Badge>}
             </div>

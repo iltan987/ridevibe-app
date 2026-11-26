@@ -15,8 +15,8 @@
 // The member gets the 2a list (chips, card links, the meet-up and the cancelled ride: the positive controls). With
 // no upcoming ride left: the empty state (SKIP when the DB holds other upcoming rides).
 // Join-panel focus (the member, keyboard, on a planted ride): "−" down to 0 guests moves focus to "+", "+" up to 3 to
-// "−"; "Katılıyorum", "Güncelle" and the leave dialog's confirm leave it on the panel heading, dismissing the dialog
-// returns it to "Katılmaktan vazgeç". The member leaves again (and by psql in `finally` if a check broke off).
+// "−"; "Katılıyorum", "Güncelle" and the "Gelmiyorum" dialog's confirm leave it on the panel heading, dismissing the
+// dialog returns it to "Gelmiyorum". The member's answer is removed by psql in `finally`.
 // Signed out, on a planted ride: the card (title, area, day; no link), "Giriş Yap" (back to this event via `?next=`)
 // and "Kulübe Başvur"; the HTML holds no place name, start time or description. A meet-up shows no area line; a cancelled
 // ride says "İptal edildi". A malformed id and an unknown uuid are the 404 page. The pending user gets the card and
@@ -356,8 +356,8 @@ const shiftTab = async (page) => {
 /**
  * The join panel keeps keyboard focus when the focused control disables or unmounts (follow-ups "Events joining UI
  * minors" (a)): "−" down to 0 guests → "+"; "+" up to 3 → "−"; "Katılıyorum", "Güncelle" (disabled while saving, then
- * unchanged) and confirming "Katılmaktan vazgeç" → the panel heading; dismissing that dialog → back to its trigger.
- * The member leaves again at the end.
+ * unchanged) and confirming "Gelmiyorum" → the panel heading; dismissing that dialog → back to its trigger. The
+ * member's answer is removed at the end.
  */
 async function joinFocusScenario() {
   const ctx = await browser.createBrowserContext();
@@ -407,39 +407,41 @@ async function joinFocusScenario() {
       await focused(page),
     );
 
-    await focusOn(page, "button", "^Katılmaktan vazgeç$");
+    await focusOn(page, "button", "^Gelmiyorum$");
     await page.keyboard.press("Enter");
     await until(page, () => document.querySelector('[role="alertdialog"]') !== null);
     await sleep(400);
     await page.keyboard.press("Escape");
     await sleep(600);
     check(
-      "dismissing the leave dialog returns focus to its trigger",
-      (await focused(page)) === "button:Katılmaktan vazgeç",
+      "dismissing the decline dialog returns focus to its trigger",
+      (await focused(page)) === "button:Gelmiyorum",
       await focused(page),
     );
     await page.keyboard.press("Enter");
     const dialog = await until(page, () => document.querySelector('[role="alertdialog"]') !== null);
-    check("focus: the leave dialog opens", dialog !== null);
+    check("focus: the decline dialog opens", dialog !== null);
     await sleep(400);
-    await focusOn(page, '[role="alertdialog"] button', "^Evet, vazgeç$");
+    await focusOn(page, '[role="alertdialog"] button', "^Evet, gelmiyorum$");
     await page.keyboard.press("Enter");
-    const left = await until(page, () =>
-      [...document.querySelectorAll("h2")].some((h) => h.textContent.trim() === "Katılıyor musun?"),
+    const declined = await until(page, () =>
+      [...document.querySelectorAll("h2")].some((h) => h.textContent.trim() === "Gelmiyorsun"),
     );
-    check("focus: left", left !== null);
+    check("focus: declined", declined !== null);
     await sleep(600); // the dialog's closing animation, then its final focus
     check(
-      "leaving through the dialog leaves focus on the panel heading",
-      (await focused(page)) === "h2:Katılıyor musun?",
+      "declining through the dialog leaves focus on the panel heading",
+      (await focused(page)) === "h2:Gelmiyorsun",
       await focused(page),
     );
   } finally {
-    // A check that failed midway may leave the member joined: leave by psql (sign-ups are no public data, so the
-    // cached public reads need no expiry).
-    sql(
-      `delete from event_signups where event_id = '${RIDE.id}' and profile_id = (select id from auth.users where email = 'member@test.local')`,
-    );
+    // Back to no answer (a check that failed midway may leave the member joined) by psql: answers are no public data,
+    // so the cached public reads need no expiry.
+    for (const table of ["event_signups", "event_declines"]) {
+      sql(
+        `delete from ${table} where event_id = '${RIDE.id}' and profile_id = (select id from auth.users where email = 'member@test.local')`,
+      );
+    }
     await ctx.close();
   }
 }

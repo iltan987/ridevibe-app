@@ -13,7 +13,7 @@ import { Link } from "@/i18n/navigation";
 import { can } from "@/lib/auth/permissions";
 import { getCurrentUser } from "@/lib/auth/user";
 import { canSeeEvents } from "@/lib/events/access";
-import { getEventCounts, getMySignups, listUpcomingEvents } from "@/lib/events/queries";
+import { getEventCounts, getMyDeclines, getMySignups, listUpcomingEvents } from "@/lib/events/queries";
 import { LIST_CEILING } from "@/lib/pagination";
 import { pageMetadata } from "@/lib/seo/metadata";
 
@@ -47,9 +47,10 @@ async function Events() {
   const user = await getCurrentUser();
   if (!(await canSeeEvents())) return <EventsTeaser signedIn={user !== null} />;
 
-  const [{ events, overCeiling }, mySignups, t] = await Promise.all([
+  const [{ events, overCeiling }, mySignups, myDeclines, t] = await Promise.all([
     listUpcomingEvents(),
     getMySignups(),
+    getMyDeclines(),
     getTranslations("Events"),
   ]);
   if (overCeiling) console.error("upcoming events over ceiling", { count: `${LIST_CEILING}+` });
@@ -71,6 +72,7 @@ async function Events() {
         events={events}
         counts={Object.fromEntries(counts)}
         joined={[...mySignups.keys()]}
+        declined={[...myDeclines]}
         overCeiling={overCeiling}
         canCreate={canCreate}
       />

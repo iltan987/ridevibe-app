@@ -274,6 +274,17 @@ export async function getMySignups(): Promise<Map<string, Signup>> {
   );
 }
 
+/** The ids of the events the caller said "Gelmiyorum" to (RLS: own rows, behind the gate). */
+export async function getMyDeclines(): Promise<Set<string>> {
+  const supabase = await createClient();
+  const { items } = await readAll(async (from, to) => {
+    const { data, error } = await supabase.from("event_declines").select("event_id").order("event_id").range(from, to);
+    if (error) throw new Error(`getMyDeclines failed: ${error.code}`);
+    return data;
+  });
+  return new Set(items.map((r) => r.event_id));
+}
+
 /**
  * What the join rules need to know about the caller: their own bikes and emergency contacts, read with an explicit
  * `profile_id` filter (RLS alone would also return other members' rows to `members.manage` holders).
