@@ -80,6 +80,17 @@
   pull warns that one secret (`CRON_SECRET`, Vercel-sensitive) is written as `[SENSITIVE]`: expected, unused.
 - **Source:** the 3.0.0 → 3.4.0 and 66.6.0 → 67.0.0 upgrade (2026-11-27).
 
+### Upgrading Node (nvm) (2026-11-27)
+- nvm keeps global npm packages per Node version: after `nvm install <new>`, the old version's globals
+  (`ls ~/.nvm/versions/node/v<old>/lib/node_modules`; e.g. `ccstatusline`, Claude Code's status line in
+  `~/.claude/settings.json`) are missing until reinstalled (`npm i -g <pkg>`, or `nvm install <new>
+  --reinstall-packages-from=<old>`). pnpm (standalone, `~/.local/share/pnpm`) and the pnpm global Vercel CLI are not
+  affected. Node 25+ ships no `corepack`.
+- Order: Node in `engines.node` and the nvm default move together, at the merge (`nvm alias default <major>`); until
+  then a worktree tries the new one with `PATH=$HOME/.nvm/versions/node/v<ver>/bin:$PATH` (a Claude session can't
+  `source nvm.sh`; `bash -ic 'nvm …'` works). A mismatch is only a pnpm "Unsupported engine" warning.
+- **Source:** the 24.20 → 26.13 upgrade (2026-11-27).
+
 ### Upgrading dependencies: follow `create-next-app`, skip brand-new majors (2026-11-27)
 - **Rule (iltan):** before moving `next`, scaffold a fresh app with its CLI in the scratchpad
   (`pnpm dlx create-next-app@latest probe --ts --eslint --tailwind --app --src-dir --react-compiler --use-pnpm

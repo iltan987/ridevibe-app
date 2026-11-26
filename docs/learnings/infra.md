@@ -5,7 +5,8 @@
   production, other branches → protected preview URLs (use `vercel curl <path> --deployment <url>` to bypass).
 - Functions default to `iad1`; we pin `regions: ["fra1"]` in `vercel.ts` (next to the Frankfurt DB, EU). Verify with
   the `x-vercel-id: fra1::…` response header.
-- Project defaulted to Node 26 → pinned `engines.node: "24.x"` (matches local).
+- Node version: `engines.node` in `package.json` decides (overrides the project setting); keep it equal to the local
+  nvm default. 24.x from 2026-11-07, 26.x (LTS) from 2026-11-27.
 - Hobby plan = personal/non-commercial only; taking payments in the app → Pro ($20/mo).
 - **Source:** `vercel.ts` (`regions`), `package.json` (`engines.node`); the plan terms not recorded.
 
