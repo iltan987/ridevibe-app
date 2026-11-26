@@ -34,6 +34,17 @@
   `dns.Resolver` + `setServers([ip])`. Domain availability: Vercel MCP `get_bulk_availability` (whois-less).
 - **Source:** not recorded.
 
+### Reading official PDFs from kvkk.gov.tr (2026-11-26)
+- **Symptom:** `curl` fails with "unable to get local issuer certificate", and so does WebFetch; a kvkk.gov.tr
+  `/Icerik/…` link may also serve a PDF rather than HTML. The Read tool can't open PDFs: "pdftoppm is not installed".
+- **Cause:** the server sends its certificate without the intermediate (GlobalSign). PDF reading needs poppler-utils
+  (installed by iltan 2026-11-26; also gives `pdftotext`, `pdfinfo`).
+- **Do:** read the issuer URL from the certificate (`openssl s_client -connect kvkk.gov.tr:443 -servername kvkk.gov.tr
+  | openssl x509 -noout -text`, "CA Issuers"), download it, convert with `openssl x509 -inform der`, append it to a
+  copy of `/etc/ssl/certs/ca-certificates.crt` and pass that with `curl --cacert` (still verified, unlike `-k`).
+  Then `pdftotext -layout file.pdf` and grep the text. Keep downloads in their own scratchpad folder.
+- **Source:** found by testing.
+
 ### pnpm 12 blocks dependency build scripts (2026-11-07)
 - **Do:** list them in `pnpm-workspace.yaml` → `allowBuilds:` (`false` unless needed). New entries appear as
   `'pkg': set this to true or false` after installs — decide and fix the file.

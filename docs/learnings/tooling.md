@@ -188,3 +188,16 @@
   (`supabase/config.toml`).
 - `$CLAUDE_PROJECT_DIR` is set for hooks only; it is empty in the Bash tool.
 - **Source:** throwaway-clone test, 2026-11-26.
+
+### A `claude -w` session can't run git in the main checkout, not even via `!` (2026-11-26)
+- **Symptom:** `git -C ~/projects/ridingclub merge …` (also with the absolute path, and typed by iltan as
+  `! <command>`) fails: "This session is isolated in the worktree … Refusing to run it — a worktree-isolated
+  session's git operations must target its own worktree."
+- **Cause:** Claude Code guards every git command of a worktree session, the `!` prefix included, and refuses any
+  that point at another checkout.
+- **Do:** merge, push `main`, roll out and commit memory from a session started in the main checkout
+  (`cd ~/projects/ridingclub && claude`) or from iltan's own terminal. The worktree session prepares everything
+  (branch committed, checks green, `git merge-base --is-ancestor main <branch>` from inside the worktree) and hands
+  over the exact commands. Never move `main` from the worktree with `git update-ref`: the main checkout has `main`
+  checked out, so its index and files would fall behind its `HEAD`.
+- **Source:** found while merging `docs/kvkk-legal-basis`.

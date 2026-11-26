@@ -93,6 +93,7 @@ export function PrivacyEn() {
           participants about changes to an event,
         </li>
         <li>To check the 18+ requirement and to celebrate your birthday,</li>
+        <li>To run the club&apos;s internal member directory so members can get to know each other (see section 5),</li>
         <li>To measure which promotion channels and ads work,</li>
         <li>With your explicit consent, to share event photos in the club gallery,</li>
         <li>
@@ -112,6 +113,12 @@ export function PrivacyEn() {
         <li>
           The club&apos;s legitimate interest, provided it does not harm your fundamental rights (KVKK art. 5/2-f):
           running the club, event and club safety, measuring promotion channels,
+        </li>
+        <li>
+          For the member directory, the club&apos;s legitimate interest, provided it does not harm your fundamental
+          rights (KVKK art. 5/2-f): letting members get to know and reach each other within the club. Only active
+          members see the directory; you can hide your birthday and plates at any time, and your Instagram username is
+          shown only if you turn it on.
         </li>
         <li>
           Your explicit consent for sharing photos in the gallery (KVKK art. 5/1). You can give or withdraw it at any
@@ -169,9 +176,11 @@ export function PrivacyEn() {
       <p>
         Your emergency contacts and blood type are not shown to everyone in the directory. Only the club&apos;s safety
         team (active members who have been given that task) and the club&apos;s administrators can see them; the
-        information of members whose membership is inactive is not shown to these people. Operations on blood types and
-        views of emergency information are logged; only admins can see the log. This information is shared with health
-        teams only in an emergency.
+        information of members whose membership is inactive is not shown to these people. The safety team and the
+        administrators also see your plates, so your motorcycle can be recognised in an emergency; the &quot;Show my
+        plates&quot; switch only hides them from other members in the directory. Operations on blood types and views of
+        emergency information are logged; only admins can see the log. This information is shared with health teams only
+        in an emergency.
       </p>
       <p>
         Events: only club members see an event&apos;s details (time, meeting point, participants). Organisers (active

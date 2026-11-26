@@ -127,7 +127,7 @@ As of 2026-11-25, live at https://ridevibe.com.tr. Built (specs in `docs/superpo
   cc (riders), "full members only"; a change log and WhatsApp share (with the event link) instead of notifications.
   Visitors see upcoming rides (area line only) on `/events` and the home page; an event link shows that event's card
   and a generated link preview.
-- **Privacy notice:** draft at `/privacy`, version `2026-11-24-draft-10` (open points: KVKK below).
+- **Privacy notice:** draft at `/privacy`, version `2026-11-26-draft-11` (open points: KVKK below).
 
 ## Roadmap (open steps)
 
@@ -233,9 +233,31 @@ transfer under art. 9): `docs/learnings/domain.md`. Product decisions:
 - Blood type is health data (special category) → optional, separate explicit consent (açık rıza, withdrawable;
   withdrawal deletes it), visible only to holders of `members.safety` (ride organizers / captains), per KVKK Board
   decision 2018/10. Every blood-type operation and every safety-card view is logged in `safety_access_log` (admins
-  only). Emergency contacts and plates rest on legitimate interest (+ vital interest in an emergency), proposed by
-  Claude (no lawyer). Encryption relies on the hosted database's disk encryption (no app-level encryption); see
-  `docs/follow-ups.md`.
+  only).
+- **Legal bases of member and safety data** (decided 2026-11-26, Claude, no lawyer; sources: KVKK art. 5/6 and the
+  Authority's guide "Özel Nitelikli Kişisel Verilerin İşlenmesine İlişkin Rehber", KVKK Yayınları No: 51, Feb 2025):
+  - **Blood type: explicit consent only** (art. 6/3-a). None of the other art. 6/3 conditions fits keeping it in
+    advance: vital interest (6/3-c) applies only when the person can't consent at that moment, and the non-profit
+    condition (6/3-g) covers only political, philosophical, religious or union organisations. The guide says never
+    to stack consent on top of another condition, so the notice names consent alone.
+  - **Emergency contacts and plates: legitimate interest** (5/2-f), plus vital interest (5/2-b) when the member can't
+    consent in an emergency. Members tell their contacts themselves (hint on `/account`, notice §2).
+  - **Member directory: legitimate interest** (5/2-f), with the member's controls as safeguards: only active members
+    see it, birthday and plates are opt-out, Instagram is opt-in. No consent (opt-out can't be consent, and consent
+    must not be stacked on another basis). Notice §3/§4.
+  - **Plates on the safety card ignore "Plakalarımı göster"**: the switch is about the directory; the safety team and
+    admins need the plate to recognise a bike in an emergency. Notice §5 says so.
+  - **Admins see blood types and emergency data** (admins hold every permission). The notice named them since
+    2026-11-13, before the first consent was given; the consent label and `/account` hints named only the safety
+    team, so they now name admins too. Existing consents stay valid (same purpose, and the notice they were given
+    under already named admins).
+  - **Encryption: disk encryption is enough** for now. Decision 2018/10 (still binding, restated in the 2025 guide)
+    3(a)/(b) asks for storage "kriptografik yöntemler kullanılarak" with the keys kept "güvenli ve farklı ortamlarda":
+    Supabase encrypts all data at rest with AES-256 (supabase.com/security; the keys are the provider's, never ours,
+    but where it keeps them is not published), and our backups are gpg-encrypted with the key on iltan's machine.
+    App-level encryption would add little: the app must decrypt to show the safety card, so whoever gets through RLS
+    or holds the service key would get the plain value too. The decision's organisational measures are open
+    (`docs/follow-ups.md`).
 - Members delete their own account on `/account` (done 2026-11-14: hidden at once, 14 days to restore by signing in,
   then purged by a nightly pg_cron job; rejected applications keep their 6 months, approved applications of inactive
   accounts are kept 1 year from the request; spec `docs/superpowers/specs/2026-11-14-account-deletion-design.md`).

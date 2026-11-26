@@ -44,6 +44,9 @@ vercel link                       # scope iltan-caners-projects, project ridevib
     claude plugin install "$p@claude-plugins-official" --scope project; done
   ```
 
+  Claude Code reads PDFs (e.g. official KVKK guides) only with poppler-utils: `sudo apt-get install -y
+  poppler-utils`.
+
 - **Not in git on purpose:** secrets (`.env`, `.env.local`), the 21 MB print logo (Google Drive, see
   `docs/design/README.md`).
 

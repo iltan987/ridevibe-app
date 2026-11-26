@@ -552,7 +552,7 @@
       "relationshipPlaceholder": "Select",
       "phone": "Phone",
       "limitReached": "You can add at most 2 emergency contacts.",
-      "hintVisibility": "Only the club's safety team can see them.",
+      "hintVisibility": "Only the club's safety team and administrators can see them.",
       "hintNotify": "Let the person you add know.",
       "relationships": {
         "spouse_partner": "Spouse / partner",
@@ -565,15 +565,15 @@
     },
     "bloodType": {
       "title": "Blood type",
-      "intro": "You can add your blood type if you like. It is stored only with your explicit consent and is visible only to the club's safety team.",
-      "consentLabel": "I give my explicit consent for the club's safety team to see my blood type, so that it can be passed to medical teams in an accident or emergency and suitable donors can be found within the club when blood is needed. I can withdraw this consent at any time from my profile.",
+      "intro": "You can add your blood type if you like. It is stored only with your explicit consent and is visible only to the club's safety team and administrators.",
+      "consentLabel": "I give my explicit consent for the club's safety team and administrators to see my blood type, so that it can be passed to medical teams in an accident or emergency and suitable donors can be found within the club when blood is needed. I can withdraw this consent at any time from my profile.",
       "select": "Blood type",
       "placeholder": "Select",
       "current": "Your blood type: {type}",
       "change": "Change",
       "withdraw": "Withdraw my consent",
       "withdrawTitle": "Withdraw your consent",
-      "withdrawConfirm": "Your blood type will be deleted and the safety team will no longer see it. Are you sure?"
+      "withdrawConfirm": "Your blood type will be deleted and no one will be able to see it anymore. Are you sure?"
     }
   },
   "Apply": {

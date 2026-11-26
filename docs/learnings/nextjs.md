@@ -276,6 +276,14 @@ merging, Open Graph images and link previews: `seo.md`; locale in Server Actions
 - **Do:** `pnpm exec next typegen` (also runs during `dev`/`build`).
 - **Source:** `03-api-reference/06-cli/next.md` ("`next typegen` options").
 
+### Fresh worktree: `tsc` can't find `@/assets/*.png|jpg` (2026-11-26)
+- **Symptom:** `TS2307: Cannot find module '@/assets/brand/badge.png'` (and the home photos) in a new worktree,
+  before any `dev`/`build` ran there.
+- **Cause:** the image module types come from `next-env.d.ts`, which is generated and git-ignored, so a new checkout
+  has none.
+- **Do:** `pnpm exec next typegen` once (writes `next-env.d.ts`, a few seconds), then `tsc`.
+- **Source:** found by testing (`.gitignore` lists `next-env.d.ts`).
+
 ### A dev session killed mid-write leaves corrupt `.next/dev/types` that break `tsc` and `next build` (2026-11-08)
 - **Symptom:** `TS1005`/`TS1002` errors in `.next/dev/types/routes.d.ts` / `validator.ts` (half-written files);
   `pnpm build` fails at "Running TypeScript".
