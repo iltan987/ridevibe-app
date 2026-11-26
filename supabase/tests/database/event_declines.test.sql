@@ -8,17 +8,18 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(56);
+select plan(59);
 
 -- Fixtures: 0801 organiser (active, role 0809 holding only events.manage), 0802 and 0805 active members, 0803 ön alım
--- member, 0804 inactive, 0806 deleting.
+-- member, 0804 inactive, 0806 deleting, 0807 pending (the profile default).
 insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-000000000801', 'pgtap-ed-organiser@pgtap.invalid', '{"full_name": "Orhan Pgtapgelmiyor"}'),
   ('00000000-0000-0000-0000-000000000802', 'pgtap-ed-member@pgtap.invalid',    '{"full_name": "Deniz Pgtapgelmiyor"}'),
   ('00000000-0000-0000-0000-000000000803', 'pgtap-ed-probation@pgtap.invalid', '{"full_name": "Çağla Pgtapgelmiyor"}'),
   ('00000000-0000-0000-0000-000000000804', 'pgtap-ed-inactive@pgtap.invalid',  '{"full_name": "Emre Pgtapgelmiyor"}'),
   ('00000000-0000-0000-0000-000000000805', 'pgtap-ed-member2@pgtap.invalid',   '{"full_name": "Pelin Pgtapgelmiyor"}'),
-  ('00000000-0000-0000-0000-000000000806', 'pgtap-ed-deleting@pgtap.invalid',  '{"full_name": "Burak Pgtapgelmiyor"}');
+  ('00000000-0000-0000-0000-000000000806', 'pgtap-ed-deleting@pgtap.invalid',  '{"full_name": "Burak Pgtapgelmiyor"}'),
+  ('00000000-0000-0000-0000-000000000807', 'pgtap-ed-pending@pgtap.invalid',   '{"full_name": "Ayla Pgtapgelmiyor"}');
 insert into public.roles (id, name) values ('00000000-0000-0000-0000-000000000809', 'pgtap-ed-organiser');
 insert into public.role_permissions (role_id, permission) values
   ('00000000-0000-0000-0000-000000000809', 'events.manage');
@@ -36,6 +37,7 @@ update public.profiles
 -- Events planted as postgres. now() is fixed for the whole test transaction: 0813 (starts_at = now()) has started.
 -- 0819 is never inserted (the unknown event).
 insert into public.events (id, kind, title, starts_at, limit_people, full_members_only) values
+  ('00000000-0000-0000-0000-000000000810', 'meetup', 'pgtap-ed one place', now() + interval '2 days', 1, false),
   ('00000000-0000-0000-0000-000000000811', 'meetup', 'pgtap-ed full', now() + interval '2 days', 1, false),
   ('00000000-0000-0000-0000-000000000812', 'meetup', 'pgtap-ed full members only', now() + interval '2 days', null, true),
   ('00000000-0000-0000-0000-000000000813', 'meetup', 'pgtap-ed right now', now(), null, false),
@@ -52,9 +54,12 @@ insert into public.event_signups (event_id, profile_id, role, guests) values
   ('00000000-0000-0000-0000-000000000811', '00000000-0000-0000-0000-000000000805', 'passenger', 0),
   ('00000000-0000-0000-0000-000000000812', '00000000-0000-0000-0000-000000000803', 'passenger', 0),
   ('00000000-0000-0000-0000-000000000814', '00000000-0000-0000-0000-000000000802', 'passenger', 0);
--- 0815: only 0802's no (the delete case); 0816: the no's of the ön alım, inactive and deleting people.
+-- 0810 (one place): only 0805's no; 0815: only 0802's no (the delete case); 0816: the no's of the ön alım, inactive,
+-- deleting and pending people.
 insert into public.event_declines (event_id, profile_id) values
+  ('00000000-0000-0000-0000-000000000810', '00000000-0000-0000-0000-000000000805'),
   ('00000000-0000-0000-0000-000000000815', '00000000-0000-0000-0000-000000000802'),
+  ('00000000-0000-0000-0000-000000000816', '00000000-0000-0000-0000-000000000807'),
   ('00000000-0000-0000-0000-000000000816', '00000000-0000-0000-0000-000000000803'),
   ('00000000-0000-0000-0000-000000000816', '00000000-0000-0000-0000-000000000804'),
   ('00000000-0000-0000-0000-000000000816', '00000000-0000-0000-0000-000000000806');
@@ -189,8 +194,13 @@ select is(pg_temp.answers('00000000-0000-0000-0000-000000000811', '00000000-0000
   'the refused join keeps the no');
 
 -- ---------------------------------------------------------------------------
--- A no counts nowhere: counts, roster, delete_event
+-- A no counts nowhere: limits, counts, roster, delete_event
 -- ---------------------------------------------------------------------------
+select pg_temp.login('00000000-0000-0000-0000-000000000802');
+select lives_ok($$ select public.join_event('00000000-0000-0000-0000-000000000810', 'passenger') $$,
+  'the one place of 0810 is still free beside a no (a no takes no place)');
+reset role;
+
 select pg_temp.login('00000000-0000-0000-0000-000000000801');
 select is((select row(c.*)::text from public.event_counts(array['00000000-0000-0000-0000-000000000816']::uuid[]) c),
   row('00000000-0000-0000-0000-000000000816'::uuid, 0, 0, 0, 0, 0)::text,
@@ -212,7 +222,10 @@ select is((select array_agg(row(r.profile_id, r.full_name, r.probation)::text or
     with ordinality as r(profile_id, full_name, avatar_url, probation, ord)),
   array[row('00000000-0000-0000-0000-000000000803'::uuid, 'Çağla Pgtapgelmiyor', true)::text,
         row('00000000-0000-0000-0000-000000000802'::uuid, 'Deniz Pgtapgelmiyor', false)::text],
-  'organiser: who said no, by Turkish name order, with the ön alım flag; not the inactive or deleting people');
+  'organiser: who said no, by Turkish name order, with the ön alım flag; not the inactive, deleting or pending people');
+select is((select count(*)::int from public.event_decliners('00000000-0000-0000-0000-000000000816')
+  where profile_id = '00000000-0000-0000-0000-000000000807'), 0,
+  'organiser: a pending account''s planted no does not show');
 select throws_ok($$ select * from public.event_decliners('00000000-0000-0000-0000-000000000819') $$, 'P0002', null,
   'decliners of an unknown event → P0002');
 reset role;
@@ -236,6 +249,9 @@ reset role;
 -- ---------------------------------------------------------------------------
 select pg_temp.login('00000000-0000-0000-0000-000000000802');
 select is(public.event_unanswered('00000000-0000-0000-0000-000000000818'), null, 'active member: null');
+reset role;
+select pg_temp.login('00000000-0000-0000-0000-000000000803');
+select is(public.event_unanswered('00000000-0000-0000-0000-000000000818'), null, 'ön alım member: null');
 reset role;
 
 select pg_temp.login('00000000-0000-0000-0000-000000000801');

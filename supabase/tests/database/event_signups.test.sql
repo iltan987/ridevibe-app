@@ -71,7 +71,7 @@ insert into public.event_places (event_id, position, name, lat, lng) values
 insert into public.member_emergency_contacts (profile_id, position, name, relationship, phone) values
   ('00000000-0000-0000-0000-000000000761', 1, 'Ayşe Pgtapkatilim', 'parent', '+905321234567');
 
--- Sign-ups planted as postgres: 0761 on the cancelled and the started events (to edit/leave them), 0763 and 0764 on
+-- Sign-ups planted as postgres: 0761 on the cancelled and the started events (to edit them or say no), 0763 and 0764 on
 -- 0772 (own rows the gate must still hide), only uncounted people (inactive 0766, deleting 0765) on 0777, the ön alım
 -- member as the only counted one on 0778 (beside 0766 again, so the inactive member's own row outlives the 0777 delete),
 -- and the inactive member as a rider with 3 guests on 0771, which must take no place under its limits.
@@ -325,22 +325,22 @@ select throws_ok($$ select public.join_event('00000000-0000-0000-0000-0000000007
 select throws_ok($$ select public.join_event('00000000-0000-0000-0000-000000000779', 'passenger') $$, 'P0002', null,
   'joining an unknown event → P0002');
 select throws_ok($$ select public.decline_event('00000000-0000-0000-0000-000000000779') $$, 'P0002', null,
-  'leaving an unknown event → P0002');
+  'saying no to an unknown event → P0002');
 
 select is((select hint from pg_temp.last_error($$ select public.join_event('00000000-0000-0000-0000-000000000774', 'passenger') $$)
   where sqlstate = 'P0001'), 'cancelled', 'editing a sign-up on a cancelled event refused (P0001 cancelled)');
-select lives_ok($$ select public.decline_event('00000000-0000-0000-0000-000000000774') $$, 'leaving a cancelled event allowed');
+select lives_ok($$ select public.decline_event('00000000-0000-0000-0000-000000000774') $$, 'saying no to a cancelled event allowed');
 select is((select count(*)::int from public.event_signups where event_id = '00000000-0000-0000-0000-000000000774'), 0,
   'the sign-up on the cancelled event is gone');
 
 select is((select hint from pg_temp.last_error($$ select public.join_event('00000000-0000-0000-0000-000000000775', 'rider', 1) $$)
   where sqlstate = 'P0001'), 'started', 'editing after the start refused (P0001 started)');
 select is((select hint from pg_temp.last_error($$ select public.decline_event('00000000-0000-0000-0000-000000000775') $$)
-  where sqlstate = 'P0001'), 'started', 'leaving after the start refused');
+  where sqlstate = 'P0001'), 'started', 'saying no after the start refused');
 select is((select hint from pg_temp.last_error($$ select public.join_event('00000000-0000-0000-0000-000000000776', 'rider', 1) $$)
   where sqlstate = 'P0001'), 'started', 'editing at starts_at exactly refused');
 select is((select hint from pg_temp.last_error($$ select public.decline_event('00000000-0000-0000-0000-000000000776') $$)
-  where sqlstate = 'P0001'), 'started', 'leaving at starts_at exactly refused');
+  where sqlstate = 'P0001'), 'started', 'saying no at starts_at exactly refused');
 select is((select array_agg(row(event_id, role, guests)::text order by event_id) from public.event_signups
   where event_id in ('00000000-0000-0000-0000-000000000775', '00000000-0000-0000-0000-000000000776')),
   array[row('00000000-0000-0000-0000-000000000775'::uuid, 'rider', 0)::text,
@@ -349,7 +349,7 @@ select is((select array_agg(row(event_id, role, guests)::text order by event_id)
 select lives_ok($$ select public.join_event('00000000-0000-0000-0000-000000000772', 'passenger') $$,
   'joining one second before the start allowed');
 select lives_ok($$ select public.decline_event('00000000-0000-0000-0000-000000000772') $$,
-  'leaving one second before the start allowed');
+  'saying no one second before the start allowed');
 select is((select count(*)::int from public.event_signups where event_id = '00000000-0000-0000-0000-000000000772'), 0,
   'own sign-up on 0772 gone');
 select lives_ok($$ select public.decline_event('00000000-0000-0000-0000-000000000772') $$,
