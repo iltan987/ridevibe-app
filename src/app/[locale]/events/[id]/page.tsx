@@ -387,8 +387,8 @@ function EventSkeleton() {
         </div>
         <div className="flex flex-col gap-2">
           <div className="flex gap-2">
-            <Skeleton className="h-8 w-28" />
-            <Skeleton className="h-8 w-28" />
+            <Skeleton className="h-8 w-24" />
+            <Skeleton className="h-8 w-25" />
           </div>
           <div />
         </div>
