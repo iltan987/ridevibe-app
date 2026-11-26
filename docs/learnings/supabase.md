@@ -67,7 +67,9 @@
 - **Cause:** CLI 3 detects agents/non-TTY output (`--agent auto`) and switches the output format.
 - **Do:** match on text both formats share (`/up to date/i` in `production.mts`), or pass `--output-format` /
   `--agent no` explicitly when parsing. `db dump` still writes plain SQL to stdout (status lines go to stderr).
-- **Source:** found by testing (CLI 3.0.0).
+- Errors name the host, port and user of a `--remote=<url>` but never the password (`db push`, `db dump`; on
+  production the user is `postgres.<project-ref>`, not a secret).
+- **Source:** found by testing (CLI 3.0.0; output and errors re-checked with 3.4.0, 2026-11-27).
 
 ## Declarative schemas and migrations
 
