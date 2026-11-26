@@ -562,7 +562,7 @@
       "relationshipPlaceholder": "Seç",
       "phone": "Telefon",
       "limitReached": "En fazla 2 acil durum kişisi ekleyebilirsin.",
-      "hintVisibility": "Yalnızca kulübün güvenlik sorumluları görür.",
+      "hintVisibility": "Yalnızca kulübün güvenlik sorumluları ve yöneticileri görür.",
       "hintNotify": "Eklediğin kişiye haber ver.",
       "relationships": {
         "spouse_partner": "Eş / partner",
@@ -575,15 +575,15 @@
     },
     "bloodType": {
       "title": "Kan grubu",
-      "intro": "İstersen kan grubunu ekleyebilirsin. Yalnızca açık rızanla saklanır ve yalnızca kulübün güvenlik sorumlularına görünür.",
-      "consentLabel": "Kan grubumun; kaza veya acil durumda sağlık ekiplerine iletilmesi ve kulüp içinde kan ihtiyacı olduğunda uygun bağışçıların bulunması amacıyla kulübün güvenlik sorumlularınca görülmesine açık rıza veriyorum. Bu rızayı istediğim zaman profilimden geri alabilirim.",
+      "intro": "İstersen kan grubunu ekleyebilirsin. Yalnızca açık rızanla saklanır ve yalnızca kulübün güvenlik sorumluları ile yöneticileri görür.",
+      "consentLabel": "Kan grubumun; kaza veya acil durumda sağlık ekiplerine iletilmesi ve kulüp içinde kan ihtiyacı olduğunda uygun bağışçıların bulunması amacıyla kulübün güvenlik sorumluları ve yöneticilerince görülmesine açık rıza veriyorum. Bu rızayı istediğim zaman profilimden geri alabilirim.",
       "select": "Kan grubu",
       "placeholder": "Seç",
       "current": "Kan grubun: {type}",
       "change": "Değiştir",
       "withdraw": "Rızamı geri al",
       "withdrawTitle": "Rızanı geri al",
-      "withdrawConfirm": "Kan grubun silinecek ve güvenlik sorumluları artık göremeyecek. Emin misin?"
+      "withdrawConfirm": "Kan grubun silinecek ve artık kimse göremeyecek. Emin misin?"
     }
   },
   "Apply": {

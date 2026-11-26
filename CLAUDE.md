@@ -46,8 +46,9 @@ whether it already exists.
   `.env*`/`.vercel` linked, packages and plugins installed, ~1 min). The branch is `wip/<generated name>` (or
   `feat/x` etc. when given); a session on a `wip/` branch renames it to our naming (`git branch -m feat/<slug>`) as
   soon as the task is clear, before the first commit, and says so. The main checkout stays on `main`:
-  merges, rollouts (`db:push`, `config push`, pushing `main`) and memory commits happen there
-  (`git -C ~/projects/ridingclub …`); after the merge, `node scripts/dev/worktree.mts remove <branch>`. A session
+  merges, rollouts (`db:push`, `config push`, pushing `main`) and memory commits happen there, from a session started
+  in `~/projects/ridingclub` or iltan's terminal: a `claude -w` session can't run git there, not even via `!`, so it
+  hands over the exact commands; after the merge, `node scripts/dev/worktree.mts remove <branch>`. A session
   works in the checkout it started in: never create worktrees from skills or subagents (`using-git-worktrees`, Agent
   `isolation`). **One local Supabase stack serves every checkout:** before `pnpm db:migration`, `db:reset` or
   `migration up`, run `node scripts/dev/worktree.mts db-check`; another branch listed → stop and ask iltan. In a
