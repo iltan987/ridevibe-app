@@ -733,8 +733,15 @@ async function declineScenario(width, height, fmoId) {
     );
     await p.screenshot({ path: path.join(DIR, `events-decline-organiser-${width}.png`), fullPage: true });
 
-    // member2 (active, no role): no "Gelmeyenler".
+    // member2 (active, no role): no "Gelmeyenler". The roster streams in the same render: once it shows, a missing
+    // section is really missing.
     await go(mem2.page, `/events/${id}`);
+    const mem2Roster = await until(mem2.page, () =>
+      [...document.querySelectorAll("section[data-skeleton-result=event-roster] h2")].some(
+        (h) => h.getBoundingClientRect().width > 0 && h.textContent === "Katılanlar",
+      ),
+    );
+    check(`${label} member2: the roster "Katılanlar" shows`, !!mem2Roster);
     check(
       `${label} member2: no "Gelmeyenler"`,
       (await decliners(mem2.page)) === null && !(await bodyText(mem2.page)).includes("Gelmeyenler"),
@@ -743,7 +750,7 @@ async function declineScenario(width, height, fmoId) {
     // A place frees up: the member joins as Artçı and the no is gone.
     sql(`update events set limit_people = 5 where id = '${id}'`);
     await go(m, `/events/${id}`);
-    await click(m, "section[data-skeleton-result=event-join] label", "^Artçı");
+    check(`${label} member: pick "Artçı"`, await click(m, "section[data-skeleton-result=event-join] label", "^Artçı"));
     check(
       `${label} member: click "Katılıyorum"`,
       await click(m, "section[data-skeleton-result=event-join] button", "^Katılıyorum$"),
@@ -761,9 +768,13 @@ async function declineScenario(width, height, fmoId) {
     };
     let dialog = await openDialog();
     check(`${label} member: "Gelmiyorum" opens "Gelmiyor musun?"`, !!dialog?.includes("Gelmiyor musun?"), dialog);
-    await click(m, "[role=alertdialog] button", "^\\s*Hayır, geliyorum\\s*$");
+    check(
+      `${label} member: click "Hayır, geliyorum"`,
+      await click(m, "[role=alertdialog] button", "^\\s*Hayır, geliyorum\\s*$"),
+    );
     await until(m, () => !document.querySelector("[role=alertdialog]"));
-    await sleep(400);
+    await sleep(400); // a negative check (nothing saved, nothing changes): no positive state to wait for
+
     jp = await panel(m);
     check(
       `${label} member: "Hayır, geliyorum" keeps the sign-up`,
@@ -774,7 +785,10 @@ async function declineScenario(width, height, fmoId) {
     // "Evet, gelmiyorum" gives the place up.
     dialog = await openDialog();
     check(`${label} member: the dialog again`, !!dialog?.includes("Gelmiyor musun?"), dialog);
-    await click(m, "[role=alertdialog] button", "^\\s*Evet, gelmiyorum\\s*$");
+    check(
+      `${label} member: click "Evet, gelmiyorum"`,
+      await click(m, "[role=alertdialog] button", "^\\s*Evet, gelmiyorum\\s*$"),
+    );
     check(`${label} member: "Evet, gelmiyorum" → "Gelmiyorsun"`, !!(await headingIs(m, "Gelmiyorsun")));
     await until(m, () => !document.querySelector("[role=alertdialog]"));
     jp = await panel(m);
