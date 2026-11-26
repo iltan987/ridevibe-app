@@ -404,8 +404,20 @@ lawyer review, CLAUDE.md "Privacy (KVKK)").
   (2026-11-12, iltan asked) — functions in `fra1` sit next to the Frankfurt DB (a query is a few ms), ~150 members
   fit in Postgres memory; Redis would add a service, a KVKK processor and RLS-bypass risk in a shared cache. Prefer
   Next's built-in cache; revisit Redis for rate limiting (e.g. form spam).
+- **`lists-e2e.mjs` clicks a button that no longer exists** (2026-11-27, seen in the dependency-update E2E run) —
+  2 FAILs every run ("admin action clamps", "admin action keeps tab, search and page"): it looks for "Aktifleştir",
+  gone from `messages/tr.json` since the ön alım tab (1ec456b, 2026-11-18; now "Ön alıma al"); the script was last
+  changed 2026-11-15. Update the scenario to the current row action. Risk: the row-action paging checks don't run.
 
 ### App logic
+
+- **Teasers can show a cancelled ride after the cancel (intermittent)** (2026-11-27, dependency-update E2E run) —
+  `events-public-e2e.mjs` failed 6 checks in 2 runs on the first server process after a build (signed-out `/` and
+  `/events` still listed the ride the organiser had just cancelled, and the old count), then passed 4 runs in a row
+  (Node 26 and 24, and on `main` with Next 16.4.5). Guess, not proven: a prefetch or render of the `events-public`
+  cache that starts before the cancel's `updateTag` and finishes after it is stored as fresh. Investigate whether a
+  fill started before `updateTag` can outlive it (Next `"use cache"` docs; a loop of the scenario). Risk: visitors see
+  a cancelled ride until the next expiry (`/` one day).
 
 - **Events release minors** (2026-11-24, events release, task reviews) — (a) `events_public.test.sql` scopes its gate
   reads by title, not by fixture id; (b) `getTeaserRides`: `count ?? rides.length` turns off the over-`max_rows` log
