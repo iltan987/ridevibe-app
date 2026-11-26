@@ -68,26 +68,6 @@ lawyer review, CLAUDE.md "Privacy (KVKK)").
   processor). Sources: vercel.com/docs/analytics, /docs/analytics/limits-and-pricing,
   /docs/speed-insights/limits-and-pricing (checked 2026-11-10). If added, also measure the application funnel on
   `/apply` (opened → each step → sent; 2026-11-11, apply-steps).
-- **Privacy notice: directory purpose and legal basis** (2026-11-10, members review) — sections 3/4 of the notice
-  (purposes, legal basis) don't name the in-club member directory (name, district, bikes, birthday, opt-in Instagram
-  shown to active members; §5 describes what it shows). The birthday is **opt-out** since 2026-11-11 (iltan asked the
-  members; existing members were switched on by migration, §5 updated), and plates in the directory are opt-out too
-  (decided 2026-11-12, safety data 2a′; covered in §4/§5 since 2026-11-13). Left: Claude settles which legal basis
-  covers the directory, the opt-out birthday and the opt-out plates (likely meşru menfaat rather than açık rıza,
-  which can't be pre-ticked) and adds the purpose and basis to §3/§4.
-- **Safety data: KVKK questions** (2026-11-13, safety data) — Claude researches and decides: (a) legal basis for
-  emergency contacts (third persons' data) and plates: the notice states meşru menfaat (KVKK m.5/2-f) plus, in an
-  emergency, m.5/2-b; blood type rests on açık rıza (m.6). (b) Encryption: we rely on the hosted database's disk
-  encryption instead of app-level encryption (decision 2018/10, 3(a)/(b)). Checked 2026-11-13:
-  https://supabase.com/security says "All customer data is encrypted at rest with AES-256 and in transit via TLS.";
-  the shared-responsibility page (https://supabase.com/docs/guides/deployment/shared-responsibility-model) says "Data
-  is encrypted at rest and in transit by Supabase." and suggests encrypting at the application layer if needed;
-  `/docs/guides/platform/security` only covers TLS. Decide whether disk encryption is enough for blood type. (c) The
-  safety team and `members.manage` see plates even with "Plakalarımı göster" off (the safety card ignores the switch).
-  (d) Admins also see blood types (access log, `members.safety` via admin role) while the consent text names only the
-  safety team. (e) The blood-filter log row has no target: a name-narrowed filter does not record whose type was
-  revealed (logging the search text would put names into the log). Risk if left: the notice states a basis nobody has
-  confirmed.
 - **Apply-form option `coffee_meetups`** (2026-11-13, home content review) — still reads "Kahvaltı / kahve
   buluşmaları" (`messages/tr.json`); iltan rejected "kahvede" for the home page. Ask iltan whether the form wording
   should change too.
@@ -193,10 +173,14 @@ lawyer review, CLAUDE.md "Privacy (KVKK)").
 
 ### Outside the app (iltan / Samet)
 
-- **Safety data: KVKK club processes** (2026-11-13, safety data; spec §6) — not app features, for iltan/Samet: review
-  the holders of `members.safety` periodically; ask holders to turn on Google 2-Step Verification (the app can't
-  enforce it, sign-in is Google only); training and confidentiality undertaking for holders; never copy safety data
-  into WhatsApp groups. Risk if left: decision 2018/10 measures only half met.
+- **Safety data: KVKK club processes** (2026-11-13, safety data; spec §6; clauses checked 2026-11-26 against the
+  2025 guide, which says decision 2018/10 is still binding) — not app features, for iltan/Samet: a one-page safety
+  data policy (clause 1); a confidentiality undertaking and a short briefing for every holder of `members.safety` and
+  the admin role (2(a)/(b)); review the holders periodically and remove the role at once when someone leaves the task
+  (2(c)/(ç)/(d)); Google 2-Step Verification for those holders (3(e); the app can't enforce it, sign-in is Google
+  only) and on the Supabase, Vercel and GitHub accounts; never copy safety data into WhatsApp groups. Optional:
+  where Supabase keeps its disk-encryption keys (3(b)) is not published; ask support or read their SOC 2 report if
+  the question comes up. Risk if left: decision 2018/10 measures only half met.
 
 ## Parked edge cases (known, judged harmless for now)
 
@@ -274,6 +258,17 @@ lawyer review, CLAUDE.md "Privacy (KVKK)").
 ## Polish and tech debt
 
 ### Database & tests
+
+- **Blood-type filter log: record whose blood type it revealed** (2026-11-26, KVKK legal bases; decided, needs a
+  migration: after "I'm not coming", not in parallel) — `member_directory(blood_filter)` writes one
+  `safety_access_log` row per call with the blood type but no target, although the response holds every matching
+  member (the name search narrows only in the browser). Decision 2018/10 3(c) asks to log every action on the data,
+  and a member asking "who saw my blood type" can't be answered. Log the matched profile ids (one row per target, or
+  an id array; ids only, never the search text); pgTAP for both. Notice §2 already says the log records "hangi üye".
+- **`member_motorcycles`: `members.manage` read is unused** (2026-11-26, KVKK legal bases) — the select policy lets
+  `members.manage` read every bike with its plate, but the app reads only the own row (`getMyProfile`; others go
+  through `member_directory` / `member_safety_card`). Narrow the policy to the own row (data minimisation) and update
+  the pgTAP tests; check `src/lib/` for a staff read first.
 
 - **FAILING TEST: `lists-e2e.mjs` still clicks "Aktifleştir"** (2026-11-24, found in the events release E2E run) —
   the pending tab's button became "Ön alıma al" with the ön alım stage (2026-11-18, `Admin.toProbation`), so "admin
@@ -733,6 +728,12 @@ lawyer review, CLAUDE.md "Privacy (KVKK)").
 
 ### Tooling & docs
 
+- **Worktree hook: run `next typegen`** (2026-11-26, KVKK legal bases) — a fresh worktree has no `next-env.d.ts`, so
+  `tsc` fails on image imports until `dev`/`build` ran (`docs/learnings/nextjs.md`). `scripts/dev/worktree.mts` could
+  run `pnpm exec next typegen` after installing packages (try it in a throwaway clone first). Low risk: one command.
+- **Lint warning in `lint-staged.config.mjs`** (2026-11-26, seen in `pnpm lint`; there since 2026-11-15) —
+  `import/no-anonymous-default-export` on the default export. Assign the config to a const and export that (hook
+  config: try in a throwaway clone first). Low risk: a warning, not an error.
 - **Second local Supabase stack for a second database branch** (2026-11-26, worktrees) — all checkouts share one
   local stack, so only one branch at a time may change the database (`node scripts/dev/worktree.mts db-check`). If
   two such branches ever need to run in parallel: a second stack with its own `project_id` and ports (an override for

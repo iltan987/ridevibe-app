@@ -89,6 +89,9 @@ export function PrivacyTr() {
           organizatörlere göstermek ve etkinlikte yapılan değişiklikleri katılımcılara duyurmak,
         </li>
         <li>18 yaş şartını kontrol etmek ve doğum gününüzü kutlamak,</li>
+        <li>
+          Üyelerin birbirini tanıyabilmesi için kulüp içi üye rehberini sunmak (rehberde neler göründüğü 5. bölümde),
+        </li>
         <li>Hangi tanıtım kanallarının ve reklamların işe yaradığını ölçmek,</li>
         <li>Açık rızanız varsa, etkinlik fotoğraflarını kulüp galerisinde paylaşmak,</li>
         <li>
@@ -112,6 +115,12 @@ export function PrivacyTr() {
         <li>
           Temel hak ve özgürlüklerinize zarar vermemek kaydıyla kulübün meşru menfaati (KVKK m.5/2-f): kulüp yönetimi,
           etkinlik ve kulüp güvenliği, tanıtım kanallarının ölçümü,
+        </li>
+        <li>
+          Üye rehberi için, temel hak ve özgürlüklerinize zarar vermemek kaydıyla kulübün meşru menfaati (KVKK m.5/2-f):
+          üyelerin birbirini tanıması ve kulüp içi iletişim. Rehberi yalnızca aktif üyeler görür; doğum gününüzü ve
+          plakalarınızı istediğiniz zaman gizleyebilirsiniz, Instagram kullanıcı adınız ise yalnızca siz açarsanız
+          gösterilir.
         </li>
         <li>
           Fotoğraflarınızın galeride paylaşılması için açık rızanız (KVKK m.5/1). Bu rızayı istediğiniz zaman hesap
@@ -168,8 +177,10 @@ export function PrivacyTr() {
       <p>
         Acil durum kişileriniz ve kan grubunuz üye rehberinde herkese gösterilmez. Bunları yalnızca kulübün güvenlik
         ekibi (bu görev verilmiş aktif üyeler) ve kulübün yöneticileri görebilir; üyeliği pasif olan kişilerin bilgileri
-        bu kişilere gösterilmez. Kan grubu işlemleri ve acil durum bilgisi görüntülemeleri kaydedilir; kayıtları
-        yalnızca yöneticiler görebilir. Bu bilgiler yalnızca acil durumda sağlık ekipleriyle paylaşılır.
+        bu kişilere gösterilmez. Güvenlik ekibi ve yöneticiler, acil durumda motosikletinizin tanınabilmesi için
+        plakalarınızı da görür; &quot;Plakalarımı göster&quot; seçeneği plakalarınızı yalnızca üye rehberinde diğer
+        üyelerden gizler. Kan grubu işlemleri ve acil durum bilgisi görüntülemeleri kaydedilir; kayıtları yalnızca
+        yöneticiler görebilir. Bu bilgiler yalnızca acil durumda sağlık ekipleriyle paylaşılır.
       </p>
       <p>
         Etkinlikler: etkinliklerin ayrıntılarını (saat, buluşma yeri, katılımcılar) yalnızca kulüp üyeleri görür.

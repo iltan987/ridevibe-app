@@ -35,6 +35,26 @@
 - Store the privacy-notice version with each consent (`privacy_notice_version`).
 - **Source:** KVKK (Law No. 6698) art. 6 (special categories), 9 and 10; product decisions in `docs/PLAN.md`, "KVKK notes".
 
+### KVKK special-category data after the 2024 amendment (2026-11-26)
+- Art. 6/3 conditions: (a) açık rıza, (b) kanunlarda açıkça öngörülme, (c) vital interest when the person **can't**
+  consent (fiili imkânsızlık) or their consent has no legal validity, (ç) made public by the person, used as they
+  intended (the guide's own example: a blood type painted on one's motorcycle may be used only in emergencies), (d)
+  establishing/using/protecting a right, (e) health services by people under secrecy, (f) employment/social security
+  duties, (g) foundations and associations with political, philosophical, religious or union aims only (a motorcycle
+  club isn't one).
+- **Never stack consent on another basis:** if another condition applies, rely on it; asking for consent anyway "can
+  breach the principles of lawfulness and good faith" (guide §2.1 and §3.2). Consent and the other conditions have
+  no hierarchy. The same holds for ordinary data under art. 5.
+- The notice must state the legal basis for each processing, accurately and kept current; misleading, incomplete or
+  wrong information is not allowed (Aydınlatma Tebliği, restated in guide §3.3).
+- Board decision 2018/10 (adequate measures) is still binding: 1 written policy; 2(a)–(d) training, confidentiality
+  agreements, defined access scope, periodic access reviews, immediate removal; 3(a)–(e) electronic storage:
+  cryptographic storage, keys kept separately, logging every action, security updates/tests, user authorisation,
+  2-factor for remote access; 5 transfers (encrypted email/KEP, encrypted media, VPN/sFTP between servers).
+- **Source:** "Özel Nitelikli Kişisel Verilerin İşlenmesine İlişkin Rehber", KVKK Yayınları No: 51, February 2025
+  (https://kvkk.gov.tr/SharedFolderServer/CMSFiles/70f95c73-06a2-44dc-81e9-34201bdd7f5c.pdf), §2, §3.2, §3.3, §3.5;
+  decision text https://www.kvkk.gov.tr/Icerik/4110/2018-10 (a PDF). Reading them: `environment.md`.
+
 ### WhatsApp photos: groups are circles, communities are rounded squares (2026-11-09)
 - **Symptom:** the new group photo showed light corners and a blurred frame; the dark-cornered fix then looked like a
   black tile on the community.
