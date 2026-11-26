@@ -64,8 +64,8 @@ export function PrivacyEn() {
         </li>
         <li>
           <strong>Event data:</strong> your sign-ups for club events (as a rider or a passenger, with the number of
-          guests you bring; guests&apos; names are not collected) or your answer that you won&apos;t come to an event
-          and, if you are on the club team, your name on the events you create or change and a record of your changes.
+          guests you bring; guests&apos; names are not collected) or your answer that you won&apos;t come to an event;
+          if you are on the club team, also your name on the events you create or change and a record of your changes.
         </li>
         <li>
           <strong>Session cookie:</strong> a cookie that is strictly necessary for signing in.

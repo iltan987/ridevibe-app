@@ -60,8 +60,8 @@ export function PrivacyTr() {
         </li>
         <li>
           <strong>Etkinlik bilgileri:</strong> kulüp etkinliklerine katılım kaydınız (sürücü veya artçı olarak,
-          yanınızda getireceğiniz misafir sayısıyla; misafirlerin adı alınmaz) veya bir etkinliğe gelmeyeceğinizi
-          bildirmeniz ve kulüp ekibindeyseniz oluşturduğunuz veya değiştirdiğiniz etkinliklerde adınız ve yaptığınız
+          yanınızda getireceğiniz misafir sayısıyla; misafirlerin adı alınmaz) ya da bir etkinliğe gelmeyeceğinize dair
+          yanıtınız; kulüp ekibindeyseniz ayrıca oluşturduğunuz veya değiştirdiğiniz etkinliklerde adınız ve yaptığınız
           değişikliklerin kaydı.
         </li>
         <li>

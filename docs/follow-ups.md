@@ -89,7 +89,8 @@ lawyer review, CLAUDE.md "Privacy (KVKK)").
 - **Events "Gelmiyorum": left out and to check** (2026-11-26, events-not-coming, design and task reviews) —
   (a) widen the no list to everyone who sees the roster if members ask (change `event_decliners` and the notice);
   (b) a "hasn't answered" list with names for organisers (today only the count, `event_unanswered`); (c) copy
-  alternatives for iltan's production check: "Gelmeyeceksin", "Yanıtın kaydedildi.", "Gelmiyor"; (d) "0 kişi henüz
+  alternatives for iltan's production check: "Gelmeyeceksin", "Yanıtın kaydedildi.", "Gelmiyor"; "Gelmeyenler" on
+  past events could read as "didn't show up" (clash with the planned attendance feature); (d) "0 kişi henüz
   yanıt vermedi" shows when everyone answered: hide or reword (with the other copy alternatives); (e) looks: the
   "Gelmiyorsun" card badge uses `variant="outline"`, the same as the side badge ("Anadolu/Avrupa") on that row
   (iltan's production check); (f) `getMySignups` / `getMyDeclines` (`src/lib/events/queries.ts`) drop `readAll`'s
@@ -326,7 +327,7 @@ lawyer review, CLAUDE.md "Privacy (KVKK)").
   footprint on a `fullMembersOnly` event (allowed: the rule only refuses new sign-ups); the query layer
   (`src/lib/events/queries.ts` sign-up reads) has no unit tests (the browser E2E covers it). Risk: low.
 - **Events joining E2E gaps** (2026-11-22, events joining) — `scripts/e2e/events-join-e2e.mjs` runs in Turkish and
-  the dark theme only; joining as Sürücü, the bike limit, "Katılmaktan vazgeç", "don't make it worse" after a
+  the dark theme only; joining as Sürücü, the bike limit, "don't make it worse" after a
   tightened rule and a past event's roster (no names for members) are covered by pgTAP / unit tests and Task 5's
   manual smoke run, not in the browser. Risk: a UI regression on those paths goes unseen.
 - **Events E2E gaps** (2026-11-21, events organiser side) — `scripts/e2e/events-e2e.mjs`: the origin-absent DB check
