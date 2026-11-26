@@ -16,8 +16,15 @@
 // roster has the "Ön alım" badge, "Acil durum kişisi yok" and safety-card buttons, the member's has names without the
 // badge and "+1 yeni üye"; a start-time change shows in the "Güncellendi" box and leads the share text; "Katıldıklarım"
 // filters the list with no server request; delete is disabled while people are signed up; cancelling closes joining.
-// Fixture rows (events titled "E2E Katılım …" / "E2E Sadece Tam …" with their sign-ups and change log, the member's
-// "E2E" bike) are planted and deleted through `docker exec psql` (DB_CONTAINER, local only) before and after the run.
+// "Gelmiyorum" (planted meet-ups): on a full event the member can still say no (no dialog) and the list card says
+// "Gelmiyorsun"; the organiser sees the member under "Gelmeyenler" with the "henüz yanıt vermedi" count (= SQL),
+// member2 sees no such section; after the limit is raised the member joins (the no is gone), "Gelmiyorum" asks first
+// ("Hayır, geliyorum" keeps the place, "Evet, gelmiyorum" gives it up); a started event keeps "Gelmiyorsun" without
+// buttons and the organiser's list without the unanswered line; an ön alım member gets no "Gelmiyorum" on a
+// "Sadece tam üyeler" event.
+// Fixture rows (events titled "E2E Katılım …" / "E2E Sadece Tam …" with their sign-ups, no's and change log, the
+// member's "E2E" bike) are planted and deleted through `docker exec psql` (DB_CONTAINER, local only) before and after
+// the run.
 // Env: PUPPETEER_DIR (required), OUT_DIR (screenshots), BASE_URL, DB_CONTAINER.
 import { execFileSync, spawn } from "node:child_process";
 import os from "node:os";
@@ -55,16 +62,22 @@ function clean() {
   sql("delete from events where title like 'E2E Katılım %' or title like 'E2E Sadece Tam %'");
   sql(`delete from member_motorcycles where profile_id = '${ID.member}' and brand = '${BIKE.brand}'`);
 }
-/** A "Sadece tam üyeler" meet-up in three days (a real v4 id: the app's z.uuid() refuses readable ones). */
-function plantFullMembersOnly(width) {
+/**
+ * A meet-up with one place, starting at the SQL expression `startsAt` (a real v4 id: the app's z.uuid() refuses
+ * readable ones).
+ */
+function plantMeetup(title, startsAt, { limitPeople = "null", fullMembersOnly = false } = {}) {
   const id = sql(
-    `insert into events (kind, title, side, starts_at, full_members_only) values ('meetup', 'E2E Sadece Tam ${width}', 'asian', now() + interval '3 days', true) returning id`,
+    `insert into events (kind, title, side, starts_at, limit_people, full_members_only) values ('meetup', '${title}', 'asian', ${startsAt}, ${limitPeople}, ${fullMembersOnly}) returning id`,
   ).split("\n")[0];
   sql(
     `insert into event_places (event_id, position, name, lat, lng) values ('${id}', 0, 'E2E Moda', 41.0255, 29.0154)`,
   );
   return id;
 }
+/** A "Sadece tam üyeler" meet-up in three days. */
+const plantFullMembersOnly = (width) =>
+  plantMeetup(`E2E Sadece Tam ${width}`, "now() + interval '3 days'", { fullMembersOnly: true });
 
 const browser = await launch();
 const bodyText = (page) => page.evaluate(() => document.body.innerText);
@@ -612,6 +625,199 @@ async function joinScenario(width, height, fmoId) {
   }
 }
 
+/** The visible "Gelmeyenler" section: heading, total, the unanswered line and the rows' names. Null without it. */
+const decliners = (page) =>
+  page.evaluate(() => {
+    const s = [...document.querySelectorAll("section[data-skeleton-result=event-decliners]")].find(
+      (e) => e.getBoundingClientRect().width > 0,
+    );
+    if (!s) return null;
+    return {
+      heading: s.querySelector("h2")?.textContent ?? "",
+      total: s.querySelector("h2")?.nextElementSibling?.textContent ?? "",
+      unanswered:
+        [...s.querySelectorAll("p")].map((p) => p.textContent).find((t) => t.includes("henüz yanıt vermedi")) ?? null,
+      names: [...s.querySelectorAll("li p")].map((p) => p.textContent),
+    };
+  });
+/** One-line "signups/declines" of `who` on event `id` ("0/1": declined, "1/0": signed up). */
+const answer = (id, who) =>
+  sql(
+    `select (select count(*) from event_signups where event_id = '${id}' and profile_id = '${ID[who]}') || '/' || (select count(*) from event_declines where event_id = '${id}' and profile_id = '${ID[who]}')`,
+  );
+/** Visible alert dialog text, or null. */
+const dialogText = (page) =>
+  page.evaluate(
+    () =>
+      [...document.querySelectorAll("[role=alertdialog]")].find((e) => e.getBoundingClientRect().width > 0)
+        ?.innerText ?? null,
+  );
+const headingIs = (page, text) =>
+  until(
+    page,
+    (text) => document.querySelector("section[data-skeleton-result=event-join] h2")?.textContent === text,
+    text,
+  );
+
+async function declineScenario(width, height, fmoId) {
+  const label = `${width}px "Gelmiyorum"`;
+  const title = `E2E Katılım Gelmiyorum ${width}`;
+  // Full: one place, taken by member2.
+  const id = plantMeetup(title, "now() + interval '2 days'", { limitPeople: 1 });
+  sql(`insert into event_signups (event_id, profile_id, role) values ('${id}', '${ID.member2}', 'passenger')`);
+  // Started an hour ago; the member said no before.
+  const startedId = plantMeetup(`E2E Katılım Gelmiyorum Başladı ${width}`, "now() - interval '1 hour'");
+  sql(`insert into event_declines (event_id, profile_id) values ('${startedId}', '${ID.member}')`);
+  const org = await as("admin", width, height);
+  const mem = await as("member", width, height);
+  const mem2 = await as("member2", width, height);
+  const prob = await as("probation", width, height);
+  try {
+    // The member on the full event: joining is closed, saying no is not (saved at once, no dialog).
+    const m = mem.page;
+    await go(m, `/events/${id}`);
+    let jp = await panel(m);
+    check(`${label} member, full event: "Katılıyor musun?"`, jp?.heading === "Katılıyor musun?", jp?.heading);
+    check(
+      `${label} member, full event: "Katılıyorum" disabled, "Gelmiyorum" enabled`,
+      jp?.buttons["Katılıyorum"] === true && jp.buttons["Gelmiyorum"] === false,
+      JSON.stringify(jp?.buttons),
+    );
+    check(
+      `${label} member: click "Gelmiyorum"`,
+      await click(m, "section[data-skeleton-result=event-join] button", "^Gelmiyorum$"),
+    );
+    check(`${label} member: heading "Gelmiyorsun"`, !!(await headingIs(m, "Gelmiyorsun")));
+    jp = await panel(m);
+    check(
+      `${label} member: "Gelmeyeceğini kaydettik.", no dialog, no "Gelmiyorum" left`,
+      jp?.status === "Gelmeyeceğini kaydettik." && (await dialogText(m)) === null && !("Gelmiyorum" in jp.buttons),
+      JSON.stringify({ status: jp?.status, buttons: jp?.buttons }),
+    );
+    check(`${label} DB: member declined, no sign-up`, answer(id, "member") === "0/1", answer(id, "member"));
+    await m.screenshot({ path: path.join(DIR, `events-decline-member-${width}.png`), fullPage: true });
+
+    // The list card says "Gelmiyorsun", never with "Katılıyorsun".
+    await go(m, "/events");
+    const card = await m.evaluate(
+      (title) =>
+        [...document.querySelectorAll("a[data-skeleton-result=events-row]")]
+          .filter((a) => a.getBoundingClientRect().width > 0)
+          .find((a) => a.querySelector("h2")?.textContent === title)?.innerText ?? "",
+      title,
+    );
+    check(
+      `${label} member list: the card says "Gelmiyorsun", not "Katılıyorsun"`,
+      card.includes("Gelmiyorsun") && !card.includes("Katılıyorsun"),
+      card.replace(/\n/g, " ¶ "),
+    );
+
+    // The organiser: "Gelmeyenler" with the member, and how many haven't answered (the same count as SQL).
+    const p = org.page;
+    await go(p, `/events/${id}`);
+    let dl = await decliners(p);
+    check(
+      `${label} organiser: "Gelmeyenler" lists the member`,
+      dl?.heading === "Gelmeyenler" &&
+        dl.total === "1 üye" &&
+        JSON.stringify(dl.names) === JSON.stringify([NAME.member]),
+      JSON.stringify(dl),
+    );
+    const unanswered = sql(
+      `select count(*) from profiles p where p.status in ('active', 'probation') and not exists (select 1 from event_signups s where s.event_id = '${id}' and s.profile_id = p.id) and not exists (select 1 from event_declines d where d.event_id = '${id}' and d.profile_id = p.id)`,
+    );
+    check(
+      `${label} organiser: "${unanswered} kişi henüz yanıt vermedi"`,
+      /^\d+ kişi henüz yanıt vermedi$/.test(dl?.unanswered ?? "") && dl.unanswered.split(" ")[0] === unanswered,
+      dl?.unanswered,
+    );
+    await p.screenshot({ path: path.join(DIR, `events-decline-organiser-${width}.png`), fullPage: true });
+
+    // member2 (active, no role): no "Gelmeyenler".
+    await go(mem2.page, `/events/${id}`);
+    check(
+      `${label} member2: no "Gelmeyenler"`,
+      (await decliners(mem2.page)) === null && !(await bodyText(mem2.page)).includes("Gelmeyenler"),
+    );
+
+    // A place frees up: the member joins as Artçı and the no is gone.
+    sql(`update events set limit_people = 5 where id = '${id}'`);
+    await go(m, `/events/${id}`);
+    await click(m, "section[data-skeleton-result=event-join] label", "^Artçı");
+    check(
+      `${label} member: click "Katılıyorum"`,
+      await click(m, "section[data-skeleton-result=event-join] button", "^Katılıyorum$"),
+    );
+    check(`${label} member: heading "Katılıyorsun"`, !!(await headingIs(m, "Katılıyorsun")));
+    check(`${label} DB: member joined, the no is gone`, answer(id, "member") === "1/0", answer(id, "member"));
+
+    // "Gelmiyorum" now asks first: "Hayır, geliyorum" keeps the sign-up.
+    const openDialog = async () => {
+      await click(m, "section[data-skeleton-result=event-join] button", "^Gelmiyorum$");
+      return until(m, () => {
+        const d = document.querySelector("[role=alertdialog]");
+        return d && d.getBoundingClientRect().width > 0 ? d.innerText.replace(/\n+/g, " ¶ ") : null;
+      });
+    };
+    let dialog = await openDialog();
+    check(`${label} member: "Gelmiyorum" opens "Gelmiyor musun?"`, !!dialog?.includes("Gelmiyor musun?"), dialog);
+    await click(m, "[role=alertdialog] button", "^\\s*Hayır, geliyorum\\s*$");
+    await until(m, () => !document.querySelector("[role=alertdialog]"));
+    await sleep(400);
+    jp = await panel(m);
+    check(
+      `${label} member: "Hayır, geliyorum" keeps the sign-up`,
+      (await dialogText(m)) === null && jp?.heading === "Katılıyorsun" && answer(id, "member") === "1/0",
+      `${jp?.heading}; DB ${answer(id, "member")}`,
+    );
+
+    // "Evet, gelmiyorum" gives the place up.
+    dialog = await openDialog();
+    check(`${label} member: the dialog again`, !!dialog?.includes("Gelmiyor musun?"), dialog);
+    await click(m, "[role=alertdialog] button", "^\\s*Evet, gelmiyorum\\s*$");
+    check(`${label} member: "Evet, gelmiyorum" → "Gelmiyorsun"`, !!(await headingIs(m, "Gelmiyorsun")));
+    await until(m, () => !document.querySelector("[role=alertdialog]"));
+    jp = await panel(m);
+    check(
+      `${label} member: "Gelmeyeceğini kaydettik."`,
+      jp?.status === "Gelmeyeceğini kaydettik." && (await dialogText(m)) === null,
+      jp?.status,
+    );
+    check(`${label} DB: member declined, sign-up gone`, answer(id, "member") === "0/1", answer(id, "member"));
+
+    // Started: the member's no stays, without buttons; the organiser's list has no unanswered line.
+    await go(m, `/events/${startedId}`);
+    jp = await panel(m);
+    check(
+      `${label} member, started event: "Gelmiyorsun", the started reason, no buttons`,
+      jp?.heading === "Gelmiyorsun" &&
+        jp.text.includes("Etkinlik başladı; katılım kapandı.") &&
+        Object.keys(jp.buttons).length === 0,
+      JSON.stringify(jp),
+    );
+    await go(p, `/events/${startedId}`);
+    dl = await decliners(p);
+    check(
+      `${label} organiser, started event: the member under "Gelmeyenler", no "henüz yanıt vermedi"`,
+      JSON.stringify(dl?.names) === JSON.stringify([NAME.member]) &&
+        dl.unanswered === null &&
+        !(await bodyText(p)).includes("henüz yanıt vermedi"),
+      JSON.stringify(dl),
+    );
+
+    // Ön alım on a "Sadece tam üyeler" event: no "Gelmiyorum".
+    await go(prob.page, `/events/${fmoId}`);
+    jp = await panel(prob.page);
+    check(
+      `${label} probation, "Sadece tam üyeler": no "Gelmiyorum"`,
+      !!jp && !("Gelmiyorum" in jp.buttons) && jp.text.includes("Bu etkinlik sadece tam üyeler için."),
+      JSON.stringify(jp?.buttons),
+    );
+  } finally {
+    for (const s of [org, mem, mem2, prob]) await s.ctx.close();
+  }
+}
+
 try {
   clean();
   check(
@@ -636,6 +842,7 @@ try {
     [1280, 900],
   ]) {
     await joinScenario(width, height, fmo[width]);
+    await declineScenario(width, height, fmo[width]);
   }
 } catch (e) {
   fails++;
