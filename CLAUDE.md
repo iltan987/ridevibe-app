@@ -50,7 +50,8 @@ whether it already exists.
   in `~/projects/ridingclub` or iltan's terminal: a `claude -w` session can't run git there, not even via `!`, so it
   hands over the exact commands (merge: `git merge --no-ff --no-edit <branch>`); it writes memory to its own
   `.claude/memory/` (the shared path is refused), which lands with the merge; after the merge,
-  `node scripts/dev/worktree.mts remove <branch>`. A session
+  `node scripts/dev/worktree.mts remove <branch>`. The guard also refuses shell it can't parse (loops, functions,
+  `export …; git …`): put such logic in a scratchpad script and run git commands on their own. A session
   works in the checkout it started in: never create worktrees from skills or subagents (`using-git-worktrees`, Agent
   `isolation`). **One local Supabase stack serves every checkout:** before `pnpm db:migration`, `db:reset` or
   `migration up`, run `node scripts/dev/worktree.mts db-check`; another branch listed → stop and ask iltan. In a
@@ -107,6 +108,8 @@ pnpm format       # Prettier (TS/JS/CSS/JSON + Tailwind class order); `format:ch
 pnpm lint         # ESLint, type-aware (~30–40 s); `lint:fix` applies the autofixes; rules: Stack "Write it so lint passes"
 echo '<code>' | pnpm exec eslint --stdin --stdin-filename src/lib/<existing-file>.ts   # probe a rule (a filename not on disk fails typed lint)
 pnpm exec tsc --noEmit
+                  # Next's generated types (next-env.d.ts, .next/types) come from `pnpm install` (prepare runs
+                  # `next typegen`); after deleting .next: `pnpm exec next typegen`
 pnpm test         # unit tests (node --test, *.test.ts)
                   # tested modules import relatively with `.ts` extensions (`node --test` can't resolve `@/`)
                   # scripts run directly by node (scripts/db/) are `.mts`; Supabase CLI prints JSON when stdout isn't a TTY

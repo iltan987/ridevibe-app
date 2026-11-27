@@ -43,6 +43,17 @@ Contents:
 
 - **Member conduct, rest of step 2b** (2026-11-26, iltan) — roadmap step 1 in `docs/PLAN.md` ("Member conduct").
 
+- **Hidden members (staff-granted exception)** (2026-11-28, a staff member asked; iltan) — someone wants to stay
+  anonymous, "as if they never joined". Decided with iltan: an exception staff grant to specific people, not a switch
+  members flip themselves. Proposed (not yet approved; next step is the full design + builder check): regular members
+  don't see the person anywhere: `/members` (`member_directory`), direct `profiles` reads (today every active member
+  can select active profiles: the RLS policy must change, not only the page), ön alım initials (`club_overview`), names
+  in ride rosters (`event_roster`) and "Düzenleyen" (`event_authors`); still visible to `members.manage`,
+  `members.safety` (safety card) and organisers on the rides they join; still counted in totals. Open: who may grant
+  it (admins only vs `members.manage`), what a roster row shows instead of the name, whether the person sees a note on
+  `/account`, and the privacy notice (less processing: likely no change). Fold in "`member_motorcycles`:
+  `members.manage` read is unused" (Database & tests) since it touches the same policies.
+
 ## Open decisions (need iltan)
 
 KVKK questions are Claude's to research (law text, KVKK Board decisions) and decide; iltan confirms the outcome (no

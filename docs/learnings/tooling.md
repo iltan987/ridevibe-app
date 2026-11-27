@@ -207,4 +207,8 @@
   (branch committed, checks green, `git merge-base --is-ancestor main <branch>` from inside the worktree) and hands
   over the exact commands. Never move `main` from the worktree with `git update-ref`: the main checkout has `main`
   checked out, so its index and files would fall behind its `HEAD`.
+- The same guard also refuses commands it can't parse safely, even without git: shell functions, `for` loops,
+  `export PATH=…; git …` ("too complex to verify that it stays inside the worktree"). Put such logic in a script in
+  the scratchpad and run `bash <file>`; run git commands on their own. (2026-11-28, lockfile and riding-months
+  session.)
 - **Source:** found while merging `docs/kvkk-legal-basis`.
