@@ -53,11 +53,31 @@
 - **Do:** list them in `pnpm-workspace.yaml` → `allowBuilds:` (`false` unless needed). Since pnpm 12.7 an install
   without a terminal (Claude's shell) no longer writes `'pkg': set this to true or false` placeholders: a new build
   script shows up only under "Ignored build scripts" in the install output — read it, decide and add the entry.
+- Why all four are `false` (2026-11-27): each ships its native binary as a platform package (optional dependency,
+  installed anyway: `@img/sharp-linux-x64`, `@unrs/resolver-binding-linux-x64-gnu`, `@swc/core-linux-x64-gnu`,
+  `@parcel/watcher-linux-x64-glibc`); the scripts are only fallbacks, so blocking them costs nothing and keeps install
+  scripts (the usual supply-chain entry point) off. `sharp` and `unrs-resolver` are the two lines `create-next-app`
+  writes into every pnpm project (`ignoredBuiltDependencies` on pnpm 10); their scripts (build libvips from source /
+  download the binding) are gone since sharp 0.35.0 and unrs-resolver 1.13.0, but keep the lines as Next writes them.
+  `@parcel/watcher` (script builds only with `npm_config_build_from_source=true`) and `@swc/core` (checks the binary,
+  else downloads `@swc/wasm`) come with next-intl's message extractor.
+- Check that a blocked package works (call each once: `@swc/core` swallows a missing binary at `require` and falls
+  back to `@swc/wasm`, so a bare `require` proves nothing); Vercel builds on the same linux-x64-glibc binaries:
+
+  ```bash
+  node -e 'const r = (p) => require(require.resolve(p, { paths: ["node_modules/.pnpm/node_modules"] }));
+  console.log("swc", r("@swc/core").transformSync("let a: number = 1", { jsc: { parser: { syntax: "typescript" } } }).code.trim());
+  console.log("unrs", r("unrs-resolver").ResolverFactory.default().sync(process.cwd(), "next").path ? "ok" : "fail");
+  r("sharp")({ create: { width: 1, height: 1, channels: 3, background: "#000" } }).png().toBuffer().then(() => console.log("sharp ok"));
+  r("@parcel/watcher").subscribe("src", () => {}).then((s) => s.unsubscribe()).then(() => console.log("watcher ok"));'
+  ```
+
 - Version: the global shim runs `~/.local/share/pnpm`'s copy, which switches to `package.json#packageManager`;
   Vercel uses that pin too (build log "Detected … from package.json#packageManager"). Upgrade: `cd ~ && pnpm
   self-update <ver>`, edit the pin, `pnpm install` (lockfile: only the `@pnpm/exe.*` entries change).
 - **Source:** `pnpm-workspace.yaml` (`allowBuilds`), `package.json` (`packageManager`); pnpm 12.7.0 release notes; the
-  12.3.4 → 12.23.0 upgrade (2026-11-27).
+  12.3.4 → 12.23.0 upgrade (2026-11-27); `create-next-app` 16.4.6 `dist/index.js`; the packages' `package.json`
+  scripts (`npm view sharp@0.34.5 scripts`); the check above on Node 24.20 and 26.13.
 
 ### Validating pure TS logic quickly (2026-11-07)
 - `npx --yes tsx --tsconfig tsconfig.json script.ts` works (path aliases resolve). `pnpm dlx tsx` fails under
