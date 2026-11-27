@@ -30,6 +30,7 @@ create table public.applications (
   -- Riding
   license_class public.license_class not null,
   riding_years smallint not null check (riding_years between 0 and 70),
+  riding_months smallint check (riding_months between 0 and 11),
   owns_motorcycle boolean not null,
   motorcycle_brand text check (char_length(motorcycle_brand) <= 60),
   motorcycle_model text check (char_length(motorcycle_model) <= 60),
@@ -88,12 +89,16 @@ create table public.applications (
   constraint applications_other_languages_named check (
     not ('other' = any (languages)) or other_languages is not null
   ),
+  constraint applications_riding_months_under_a_year check (
+    riding_months is null or riding_years = 0
+  ),
   constraint applications_other_events_named check (
     not ('other' = any (event_interests)) or other_event_interests is not null
   )
 );
 
 comment on table public.applications is 'Membership applications from the public form.';
+comment on column public.applications.riding_months is 'Months riding when under a year (riding_years = 0); null otherwise and on rows before 2026-11-28.';
 comment on column public.applications.profile_id is 'The account this application belongs to: set when submitted while signed in, when staff link it, or when an approved application is matched by email.';
 comment on column public.applications.retained_until is 'Set when the owner deletes their account: the application is kept (inactive members: 1 year from the deletion request) and purged after this time. Null = no deadline.';
 
@@ -685,7 +690,7 @@ revoke all on table public.applications from anon, authenticated;
 
 grant insert (
   locale, full_name, phone, email, birth_date, city, district, side, instagram, languages, other_languages,
-  license_class, riding_years, owns_motorcycle, motorcycle_brand, motorcycle_model, motorcycle_cc,
+  license_class, riding_years, riding_months, owns_motorcycle, motorcycle_brand, motorcycle_model, motorcycle_cc,
   riding_styles, group_experience, in_other_clubs, other_club_names, heard_from, referrer_name,
   event_interests, other_event_interests, expectations, alienating_behaviors, conflict_handling,
   consent_privacy, consent_rules, consent_photos, privacy_notice_version, utm_source, utm_medium, utm_campaign, utm_content, utm_term
