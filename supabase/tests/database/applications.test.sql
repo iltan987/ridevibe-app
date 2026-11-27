@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(30);
+select plan(32);
 
 -- ---------------------------------------------------------------------------
 -- Fixtures: an admin, a reviewer (view + review), a decider (view + decide)
@@ -175,9 +175,25 @@ select lives_ok(
   $$ select pg_temp.submit('{"email": "noconflict@pgtap.invalid", "conflict_handling": null}') $$,
   'an application without a disagreement answer is still valid in the DB'
 );
+
+-- Rows from before the months column (or inside the rollout window) have years 0 and no months.
+select lives_ok(
+  $$ select pg_temp.submit('{"email": "months-null@pgtap.invalid", "riding_years": 0, "riding_months": null}') $$,
+  'years 0 without months is valid in the DB (old rows, rollout window)'
+);
+
+-- Signed-in applicants insert through the session client (role authenticated).
+select pg_temp.login('00000000-0000-0000-0000-0000000000c1');
+select lives_ok(
+  $$ select pg_temp.submit('{"email": "months-auth@pgtap.invalid", "riding_years": 0, "riding_months": 2}') $$,
+  'a signed-in applicant can submit riding months'
+);
 reset role;
 -- Keep exactly one fixture application for the review tests below.
-delete from public.applications where email in ('blicense@pgtap.invalid', 'noconflict@pgtap.invalid', 'months-ok@pgtap.invalid');
+delete from public.applications where email in (
+  'blicense@pgtap.invalid', 'noconflict@pgtap.invalid', 'months-ok@pgtap.invalid', 'months-null@pgtap.invalid',
+  'months-auth@pgtap.invalid'
+);
 
 select is(
   (select email || '|' || status from public.applications where email like '%@pgtap.invalid'),

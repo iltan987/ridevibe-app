@@ -371,7 +371,7 @@ try {
   {
     const { ctx, page } = await fresh();
     await go(page, "/apply");
-    await fillStep1(page);
+    await fillStep1(page, { years: "0", months: "3" });
     await next(page, 1);
     await pick(page, "heard_from", "Instagram reklamı");
     await pick(page, "in_other_clubs", "Evet");
@@ -396,6 +396,7 @@ try {
         ?.textContent.trim(),
     );
     const years = await value(page, "input[name=riding_years]");
+    const months = await value(page, "input[name=riding_months]");
     await shot(page, "step2-en");
     check(
       "language-switch-keeps-draft",
@@ -403,9 +404,10 @@ try {
         !!onEn &&
         (await visibleStep(page)) === 2 &&
         heard === "Instagram ad" &&
-        years === "5" &&
+        years === "0" &&
+        months === "3" &&
         clubs === "Gece Atlıları",
-      `path=${new URL(page.url()).pathname}${new URL(page.url()).search} step=${await visibleStep(page)} heard_from=${heard} years=${years} other_club_names=${clubs} (switch ${sinceTyped} ms after typing)`,
+      `path=${new URL(page.url()).pathname}${new URL(page.url()).search} step=${await visibleStep(page)} heard_from=${heard} years=${years} months=${months} other_club_names=${clubs} (switch ${sinceTyped} ms after typing)`,
     );
     await ctx.close();
   }
