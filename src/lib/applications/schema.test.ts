@@ -59,3 +59,25 @@ test("an issue without an error key reports invalidOption (never zod's English m
   // `locale` has no custom error: zod's default message is not an Apply.errors key.
   assert.equal(validateField("locale", "de"), "invalidOption");
 });
+
+test("0 riding years requires the months", () => {
+  assert.equal(validateField("riding_years", "0"), undefined);
+  const result = validateApplication(formData({ riding_years: "0" }));
+  assert.equal(result.ok ? undefined : result.fieldErrors.riding_months, "required");
+  const ok = validateApplication(formData({ riding_years: "00", riding_months: "5" }));
+  assert.equal(ok.ok && ok.data.riding_months, 5);
+});
+
+test("riding months must be 0-11", () => {
+  for (const bad of ["12", "-1", "2.5"]) {
+    const result = validateApplication(formData({ riding_years: "0", riding_months: bad }));
+    assert.equal(result.ok ? undefined : result.fieldErrors.riding_months, "invalidNumber");
+  }
+  const zero = validateApplication(formData({ riding_years: "0", riding_months: "0" }));
+  assert.equal(zero.ok && zero.data.riding_months, 0);
+});
+
+test("riding months are dropped when the years are 1 or more", () => {
+  const result = validateApplication(formData({ riding_years: "3", riding_months: "5" }));
+  assert.equal(result.ok && result.data.riding_months, null);
+});

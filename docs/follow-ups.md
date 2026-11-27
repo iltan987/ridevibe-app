@@ -543,6 +543,14 @@ lawyer review, CLAUDE.md "Privacy (KVKK)").
   "Şimdi değil", or a dismissed system dialog, removes the banner with focus on its button, so keyboard and
   screen-reader users land on `<body>` (`src/components/pwa/install-banner.tsx`). Deferred: the banner is a phone
   feature for touch users; fix: move focus to the main heading (or announce) before unmounting.
+- **Riding months review minors** (2026-11-28, riding-months review) — all optional.
+  - Parked: a crafted request with `riding_years=3&riding_months=12` gets `invalidNumber` on a field the server drops
+    anyway (same as `motorcycle_cc`); the UI never sends it.
+  - Months field error above 11: an applicant with years 0 who types 12+ months sees "Geçerli bir sayı gir"; option: a
+    hint under the months field ("12 ay ve üstü için yılı yaz") or a dedicated error key. Copy for iltan to choose.
+  - `apply-e2e.mjs` waits after reloads with fixed `sleep()`s (e.g. `riding-months`, ~line 100, and elsewhere): poll
+    for the element instead, file-wide.
+  - `schema.test.ts`: no case for non-numeric months ("abc"); low value (a number input can't send it).
 - **Application form steps review minors** (2026-11-11, apply-steps reviews) — all optional; the final review removes
   what it fixes.
   - Unit tests/draft: no direct tests for `stepOfField` / `isLastStep` (`steps.ts`); `parseDraft` keeps empty strings

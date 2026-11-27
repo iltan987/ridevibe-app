@@ -10,6 +10,7 @@ export const APPLY_STEPS: readonly { id: ApplyStepId; fields: readonly string[] 
     fields: [
       "license_class",
       "riding_years",
+      "riding_months",
       "owns_motorcycle",
       "motorcycle_brand",
       "motorcycle_model",

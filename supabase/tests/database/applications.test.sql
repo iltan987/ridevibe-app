@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(26);
+select plan(32);
 
 -- ---------------------------------------------------------------------------
 -- Fixtures: an admin, a reviewer (view + review), a decider (view + decide)
@@ -59,13 +59,13 @@ begin
 
   insert into public.applications (
     locale, full_name, phone, email, birth_date, city, district, side, instagram, languages, other_languages,
-    license_class, riding_years, owns_motorcycle, motorcycle_brand, motorcycle_model, motorcycle_cc,
+    license_class, riding_years, riding_months, owns_motorcycle, motorcycle_brand, motorcycle_model, motorcycle_cc,
     riding_styles, group_experience, in_other_clubs, other_club_names, heard_from, referrer_name,
     event_interests, other_event_interests, expectations, alienating_behaviors, conflict_handling, consent_privacy, consent_rules,
     consent_photos, privacy_notice_version, utm_source, utm_medium, utm_campaign, utm_content, utm_term
   ) values (
     r.locale, r.full_name, r.phone, r.email, r.birth_date, r.city, r.district, r.side, r.instagram, r.languages, r.other_languages,
-    r.license_class, r.riding_years, r.owns_motorcycle, r.motorcycle_brand, r.motorcycle_model, r.motorcycle_cc,
+    r.license_class, r.riding_years, r.riding_months, r.owns_motorcycle, r.motorcycle_brand, r.motorcycle_model, r.motorcycle_cc,
     r.riding_styles, r.group_experience, r.in_other_clubs, r.other_club_names, r.heard_from, r.referrer_name,
     r.event_interests, r.other_event_interests, r.expectations, r.alienating_behaviors, r.conflict_handling, r.consent_privacy, r.consent_rules,
     r.consent_photos, r.privacy_notice_version, r.utm_source, r.utm_medium, r.utm_campaign, r.utm_content, r.utm_term
@@ -80,6 +80,23 @@ grant execute on function pg_temp.submit(jsonb) to anon, authenticated;
 set local role anon;
 
 select lives_ok($$ select pg_temp.submit() $$, 'anon can submit a valid application');
+
+select lives_ok(
+  $$ select pg_temp.submit('{"email": "months-ok@pgtap.invalid", "riding_years": 0, "riding_months": 5}') $$,
+  'anon can submit riding months with 0 years'
+);
+select throws_ok(
+  $$ select pg_temp.submit('{"email": "months-12@pgtap.invalid", "riding_years": 0, "riding_months": 12}') $$,
+  '23514', null, 'riding months above 11 are refused'
+);
+select throws_ok(
+  $$ select pg_temp.submit('{"email": "months-neg@pgtap.invalid", "riding_years": 0, "riding_months": -1}') $$,
+  '23514', null, 'negative riding months are refused'
+);
+select throws_ok(
+  $$ select pg_temp.submit('{"email": "months-yrs@pgtap.invalid", "riding_years": 3, "riding_months": 5}') $$,
+  '23514', null, 'riding months with a year or more are refused'
+);
 
 select throws_ok(
   $$ select id from public.applications where email like '%@pgtap.invalid' $$,
@@ -158,9 +175,25 @@ select lives_ok(
   $$ select pg_temp.submit('{"email": "noconflict@pgtap.invalid", "conflict_handling": null}') $$,
   'an application without a disagreement answer is still valid in the DB'
 );
+
+-- Rows from before the months column (or inside the rollout window) have years 0 and no months.
+select lives_ok(
+  $$ select pg_temp.submit('{"email": "months-null@pgtap.invalid", "riding_years": 0, "riding_months": null}') $$,
+  'years 0 without months is valid in the DB (old rows, rollout window)'
+);
+
+-- Signed-in applicants insert through the session client (role authenticated).
+select pg_temp.login('00000000-0000-0000-0000-0000000000c1');
+select lives_ok(
+  $$ select pg_temp.submit('{"email": "months-auth@pgtap.invalid", "riding_years": 0, "riding_months": 2}') $$,
+  'a signed-in applicant can submit riding months'
+);
 reset role;
 -- Keep exactly one fixture application for the review tests below.
-delete from public.applications where email in ('blicense@pgtap.invalid', 'noconflict@pgtap.invalid');
+delete from public.applications where email in (
+  'blicense@pgtap.invalid', 'noconflict@pgtap.invalid', 'months-ok@pgtap.invalid', 'months-null@pgtap.invalid',
+  'months-auth@pgtap.invalid'
+);
 
 select is(
   (select email || '|' || status from public.applications where email like '%@pgtap.invalid'),

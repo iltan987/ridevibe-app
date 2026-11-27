@@ -16,7 +16,7 @@ The sections below keep the review order (admin view, approval). The public form
 
 | Step | Title (TR) | Fields |
 |---|---|---|
-| 1 `riding` | Sürüş | license class, riding years, owns a motorcycle, brand/model/cc, riding styles, group experience |
+| 1 `riding` | Sürüş | license class, riding years (and the months when under a year), owns a motorcycle, brand/model/cc, riding styles, group experience |
 | 2 `club` | Kulüp | other clubs (+ names), how they heard (+ referrer), events (+ other) |
 | 3 `words` | Kendi sözlerinle | expectations, alienating behaviours, disagreement handling |
 | 4 `you` | Seni tanıyalım | Google fill, name, phone, email, birth date, city, district, Instagram, languages; sub-heading "Onaylar": the three consents; submit |
@@ -71,6 +71,7 @@ and email and the draft restores steps 1-3.
 |---|---|---|---|
 | License class | select: A1 / A2 / A / B (125 cc authorisation) / not yet | yes | |
 | Years of riding | number / range select | yes | |
+| Riding months | number 0–11 | if years = 0 | Shown only when years is 0; null otherwise and on rows before 2026-11-28 |
 | Owns a motorcycle | yes/no | yes | |
 | Motorcycle brand, model, engine (cc) | text + number | if owns | Brand is free text with a `<datalist>` of common brands in Turkey (`MOTORCYCLE_BRAND_SUGGESTIONS` in `options.ts`) |
 | Riding style | multi-select: city, touring, enduro/off-road, sport, cruiser, scooter | yes | |

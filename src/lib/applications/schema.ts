@@ -131,6 +131,13 @@ const applicationFields = z.object({
     .int(err("invalidNumber"))
     .min(0, err("invalidNumber"))
     .max(70, err("invalidNumber")),
+  // Only asked (and kept) when riding_years is 0.
+  riding_months: z.coerce
+    .number(err("invalidNumber"))
+    .int(err("invalidNumber"))
+    .min(0, err("invalidNumber"))
+    .max(11, err("invalidNumber"))
+    .optional(),
   owns_motorcycle: yesNo,
   motorcycle_brand: optionalText(60),
   motorcycle_model: optionalText(60),
@@ -179,6 +186,10 @@ export const applicationSchema = applicationFields
     ...rule("other_languages"),
     when: onlyIf("languages", "other_languages"),
   })
+  .refine((v) => v.riding_years !== 0 || v.riding_months !== undefined, {
+    ...rule("riding_months"),
+    when: onlyIf("riding_years", "riding_months"),
+  })
   .refine((v) => !v.owns_motorcycle || !!v.motorcycle_brand, {
     ...rule("motorcycle_brand"),
     when: onlyIf("owns_motorcycle", "motorcycle_brand"),
@@ -197,8 +208,8 @@ export const applicationSchema = applicationFields
   })
   .transform((v, ctx): TablesInsert<"applications"> => {
     // The rules above guarantee these answers; should one ever be missing, the field reports "required".
-    const answer = (field: string, value: string | undefined) => {
-      if (value) return value;
+    const answer = <T extends string | number>(field: string, value: T | undefined) => {
+      if (value !== undefined && value !== "") return value;
       ctx.issues.push({ code: "custom", message: "required" satisfies ApplyErrorKey, input: value, path: [field] });
       return z.NEVER;
     };
@@ -216,6 +227,7 @@ export const applicationSchema = applicationFields
       other_languages: v.languages.includes("other") ? answer("other_languages", v.other_languages) : null,
       license_class: v.license_class,
       riding_years: v.riding_years,
+      riding_months: v.riding_years === 0 ? answer("riding_months", v.riding_months) : null,
       owns_motorcycle: v.owns_motorcycle,
       // Drop bike/club/referrer details that don't apply to the chosen answer.
       motorcycle_brand: v.owns_motorcycle ? answer("motorcycle_brand", v.motorcycle_brand) : null,

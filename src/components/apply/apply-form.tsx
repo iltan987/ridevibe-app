@@ -26,6 +26,7 @@ import {
   UTM_KEYS,
 } from "@/lib/applications/options";
 import { isGoogleMailAddress } from "@/lib/applications/contact";
+import { asksRidingMonths } from "@/lib/applications/riding-experience";
 import { type ApplyDraft, browserStorage, clearDraft, createDraftSaver, readDraft } from "@/lib/applications/draft";
 import { type ApplicationFieldErrors, isEmailAddress, validateApplication } from "@/lib/applications/schema";
 import { errorsOfStep, firstStepWithError, isLastStep, parseStep, stepOfField } from "@/lib/applications/steps";
@@ -115,6 +116,7 @@ function ApplyFormSteps({
 
   // Conditional sections.
   const [cityChoice, setCityChoice] = useState<"istanbul" | "other">("istanbul");
+  const [ridingYears, setRidingYears] = useState(draftText(draft, "riding_years"));
   const [ownsBike, setOwnsBike] = useState<string | null>(draftChoice(draft, YES_NO, "owns_motorcycle") ?? null);
   const [otherClubs, setOtherClubs] = useState<string | null>(draftChoice(draft, YES_NO, "in_other_clubs") ?? null);
   const [heardFrom, setHeardFrom] = useState<string | null>(draftChoice(draft, HEARD_FROM, "heard_from") ?? null);
@@ -392,11 +394,25 @@ function ApplyFormSteps({
             label={t("fields.riding_years")}
             error={error("riding_years")}
             defaultValue={draftText(draft, "riding_years")}
+            onChange={(event) => setRidingYears(event.currentTarget.value)}
             inputMode="numeric"
             min={0}
             max={70}
             className="max-w-32"
           />
+          {asksRidingMonths(ridingYears) && (
+            <TextField
+              name="riding_months"
+              type="number"
+              label={t("fields.riding_months")}
+              error={error("riding_months")}
+              defaultValue={draftText(draft, "riding_months")}
+              inputMode="numeric"
+              min={0}
+              max={11}
+              className="max-w-32"
+            />
+          )}
           <ChoiceRadios
             name="owns_motorcycle"
             label={t("fields.owns_motorcycle")}

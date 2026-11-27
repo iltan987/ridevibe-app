@@ -143,9 +143,10 @@ async function next(page, from) {
 }
 
 const TEXT = "Birlikte güvenli sürüşler yapmak istiyorum.";
-async function fillStep1(page, { bike = false } = {}) {
+async function fillStep1(page, { bike = false, years = "5", months = null } = {}) {
   await pick(page, "license_class", "A2");
-  await typeInto(page, "input[name=riding_years]", "5");
+  await typeInto(page, "input[name=riding_years]", years);
+  if (months !== null) await typeInto(page, "input[name=riding_months]", months);
   await pick(page, "owns_motorcycle", bike ? "Evet" : "Hayır");
   if (bike) {
     await typeInto(page, "input[name=motorcycle_brand]", "Honda");
@@ -254,6 +255,42 @@ try {
     await ctx.close();
   }
 
+  // riding-months: years 0 asks for the months (required, kept in the draft); other years unmount the field
+  {
+    const { ctx, page } = await fresh();
+    await go(page, "/apply");
+    await fillStep1(page);
+    const months = (p) => find(p, "input[name=riding_months]");
+    const hiddenBefore = !(await months(page));
+    await typeInto(page, "input[name=riding_years]", "0");
+    const shown =
+      !!(await until(page, () => !!document.querySelector("input[name=riding_months]"))) && !!(await months(page));
+    await shot(page, "riding-months");
+    await click(page, "button[type=submit]", "^Devam$");
+    const required = !!(await until(page, () =>
+      /Bu alan zorunlu\./.test(document.querySelector('[data-field="riding_months"]')?.textContent ?? ""),
+    ));
+    const stayed = (await visibleStep(page)) === 1;
+    await typeInto(page, "input[name=riding_months]", "5");
+    await sleep(1200); // longer than the draft save debounce
+    await page.reload({ waitUntil: "networkidle0" });
+    await sleep(500);
+    const yearsBack = await value(page, "input[name=riding_years]");
+    const monthsBack = await value(page, "input[name=riding_months]");
+    await typeInto(page, "input[name=riding_months]", "4");
+    await typeInto(page, "input[name=riding_years]", "3");
+    const gone = !!(await until(page, () => !document.querySelector("input[name=riding_months]")));
+    const inFormData = await page.evaluate(() =>
+      new FormData(document.querySelector("input[name=riding_years]").form).has("riding_months"),
+    );
+    check(
+      "riding-months",
+      hiddenBefore && shown && required && stayed && yearsBack === "0" && monthsBack === "5" && gone && !inFormData,
+      `hiddenBefore=${hiddenBefore} shown=${shown} required=${required && stayed} restored=${yearsBack}/${monthsBack} hiddenAt3=${gone} inFormData=${inFormData}`,
+    );
+    await ctx.close();
+  }
+
   // draft-restore + draft-no-personal-data (continuation)
   {
     const { ctx, page } = await fresh();
@@ -334,7 +371,7 @@ try {
   {
     const { ctx, page } = await fresh();
     await go(page, "/apply");
-    await fillStep1(page);
+    await fillStep1(page, { years: "0", months: "3" });
     await next(page, 1);
     await pick(page, "heard_from", "Instagram reklamı");
     await pick(page, "in_other_clubs", "Evet");
@@ -359,6 +396,7 @@ try {
         ?.textContent.trim(),
     );
     const years = await value(page, "input[name=riding_years]");
+    const months = await value(page, "input[name=riding_months]");
     await shot(page, "step2-en");
     check(
       "language-switch-keeps-draft",
@@ -366,9 +404,10 @@ try {
         !!onEn &&
         (await visibleStep(page)) === 2 &&
         heard === "Instagram ad" &&
-        years === "5" &&
+        years === "0" &&
+        months === "3" &&
         clubs === "Gece Atlıları",
-      `path=${new URL(page.url()).pathname}${new URL(page.url()).search} step=${await visibleStep(page)} heard_from=${heard} years=${years} other_club_names=${clubs} (switch ${sinceTyped} ms after typing)`,
+      `path=${new URL(page.url()).pathname}${new URL(page.url()).search} step=${await visibleStep(page)} heard_from=${heard} years=${years} months=${months} other_club_names=${clubs} (switch ${sinceTyped} ms after typing)`,
     );
     await ctx.close();
   }
@@ -459,7 +498,7 @@ try {
   {
     const { ctx, page } = await fresh();
     await go(page, "/apply");
-    await fillStep1(page);
+    await fillStep1(page, { years: "0", months: "4" });
     await next(page, 1);
     await fillStep2(page);
     await next(page, 2);
@@ -476,10 +515,11 @@ try {
     await sleep(1500); // longer than the save debounce: a late save would re-create the draft
     const draftAfter = await draftRaw(page);
     const rows = testApplicationCount();
+    const riding = sql(`select riding_years || '/' || riding_months from applications where email = '${TEST_EMAIL}'`);
     check(
       "submit-clears-draft",
-      draftBefore && !!success && draftAfter === null && rows === 1,
-      `draft before=${draftBefore} success=${!!success} draft after=${draftAfter === null ? "absent" : "present"} rows=${rows}`,
+      draftBefore && !!success && draftAfter === null && rows === 1 && riding === "0/4",
+      `draft before=${draftBefore} success=${!!success} draft after=${draftAfter === null ? "absent" : "present"} rows=${rows} years/months=${riding}`,
     );
     deleteTestApplication();
     await ctx.close();

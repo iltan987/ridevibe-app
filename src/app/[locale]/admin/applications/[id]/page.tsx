@@ -17,6 +17,7 @@ import { oneOf } from "@/lib/one-of";
 import { whatsAppUrl } from "@/lib/applications/contact";
 import { EVENT_INTERESTS, LANGUAGES, RIDING_STYLES } from "@/lib/applications/options";
 import { getApplication, getApplicationAccount } from "@/lib/applications/queries";
+import { ridingExperience } from "@/lib/applications/riding-experience";
 import { requirePermission } from "@/lib/auth/require-access";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -162,6 +163,19 @@ async function ApplicationDetail({ params }: { params: PageProps<"/[locale]/admi
       })
       .join(", ");
   const yesNo = (v: boolean) => tApply(v ? "options.yes" : "options.no");
+  const ridingLabel = () => {
+    const riding = ridingExperience(a.riding_years, a.riding_months);
+    switch (riding.key) {
+      case "years":
+        return t("years", { years: riding.years });
+      case "months":
+        return t("months", { months: riding.months });
+      case "underMonth":
+        return t("underMonth");
+      case "underYear":
+        return t("underYear");
+    }
+  };
 
   const decidedLabel = a.reviewed_at
     ? a.reviewer?.full_name
@@ -271,7 +285,7 @@ async function ApplicationDetail({ params }: { params: PageProps<"/[locale]/admi
 
       <Section title={tApply("sections.riding")}>
         <Row label={tApply("fields.license_class")}>{tApply(`options.license_class.${a.license_class}`)}</Row>
-        <Row label={tApply("fields.riding_years")}>{t("years", { years: a.riding_years })}</Row>
+        <Row label={tApply("fields.riding_years")}>{ridingLabel()}</Row>
         <Row label={tApply("fields.owns_motorcycle")}>
           {a.owns_motorcycle
             ? [a.motorcycle_brand, a.motorcycle_model, a.motorcycle_cc && `${a.motorcycle_cc} cc`]
