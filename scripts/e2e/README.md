@@ -135,7 +135,8 @@ reads `BASE_URL` (default `http://localhost:3123`): a worktree serves on 3124 (C
   doesn't jump), and no sideways header shift on `/apply` as a member (real scrollbars). Needs `member@test.local`
   (active, `avatar_url` = `<BASE_URL>/apple-icon.png`) for the signed-in part. Run against `pnpm dev -p 3123` (the
   warning is dev-only) and `pnpm start -p 3123`. `BASE_URL` overrides the server.
-- `apply-e2e.mjs` — the stepped `/apply` form: step-1 errors only, Enter acts as "Devam" (no POST), browser back, draft
+- `apply-e2e.mjs` — the stepped `/apply` form: step-1 errors only, Enter acts as "Devam" (no POST), browser back, riding months (years 0 asks for
+  them, required, restored from the draft, unmounted again for other years), draft
   restore (conditional answers, steps 1-3 only, no contact data in `localStorage`), language switch and "Baştan başla",
   deep link `?step=4` jumping to step 1, writing minimum (15 characters), draft gone after a successful submit, and the
   "Google ile doldur" button (redirect carries `next=/apply?step=4`; hidden in Instagram's in-app browser). Needs
