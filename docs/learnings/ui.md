@@ -32,7 +32,10 @@
   `globals-contrast.test.ts`), `link` uses `text-accent-text`; `badge.tsx`: destructive alphas, `link` uses
   `text-accent-text`; `native-select.tsx`: `h-10 text-base md:h-8 md:text-sm` (iOS zoom, "iOS Safari zooms" below);
   `card.tsx`: `group-data-[size=sm]/card:text-sm/snug` (snug line-height kept for small titles, 5de1011).
-  Re-adding one of these files with `--overwrite` drops them: re-apply from git history.
+  Re-adding one of these files with `--overwrite` drops them: re-apply from git history. Kept on purpose (iltan,
+  2026-11-27) instead of moving them into wrappers (e.g. an `@/components/app/button.tsx` whose `buttonVariants()`
+  runs `cn(shadcnButtonVariants(…), ours)`; `native-select` would need an additive `selectClassName` prop): revisit
+  only if an upstream update to one of these files conflicts with them.
 - **Source:** registry dry run vs `src/components/ui/` (shadcn 4.23.1, 2026-11-27); upstream base-nova sources last
   changed 2026-10-14 (#12307), before our components were added (2026-11-07 to 11-10).
 
