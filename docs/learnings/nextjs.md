@@ -280,9 +280,14 @@ merging, Open Graph images and link previews: `seo.md`; locale in Server Actions
 - **Symptom:** `TS2307: Cannot find module '@/assets/brand/badge.png'` (and the home photos) in a new worktree,
   before any `dev`/`build` ran there.
 - **Cause:** the image module types come from `next-env.d.ts`, which is generated and git-ignored, so a new checkout
-  has none.
-- **Do:** `pnpm exec next typegen` once (writes `next-env.d.ts`, a few seconds), then `tsc`.
-- **Source:** found by testing (`.gitignore` lists `next-env.d.ts`).
+  has none; it imports `.next/types/routes.d.ts` and `root-params.d.ts` (generated too), so committing it wouldn't
+  help (without `root-params.d.ts`, type-aware lint fails on `.locale` of `any`).
+- **Do:** nothing since 2026-11-28: `prepare` runs `next typegen` after `husky` on every `pnpm install` (fresh clone,
+  the worktree hook, dependency updates; under a second, no `.env` needed). An install with nothing to do skips
+  `prepare`, so a deleted `.next` needs it by hand: `pnpm exec next typegen`.
+- **Source:** found by testing (`.gitignore` lists `next-env.d.ts`); Next's docs recommend git-ignoring it and running
+  `next typegen` before `tsc` (`03-api-reference/06-cli/next.md`, `05-config/02-typescript.md`); fresh-clone install
+  test, 2026-11-28.
 
 ### A dev session killed mid-write leaves corrupt `.next/dev/types` that break `tsc` and `next build` (2026-11-08)
 - **Symptom:** `TS1005`/`TS1002` errors in `.next/dev/types/routes.d.ts` / `validator.ts` (half-written files);
