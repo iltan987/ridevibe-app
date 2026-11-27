@@ -109,7 +109,9 @@
 - Order: Node in `engines.node` and the nvm default move together, at the merge (`nvm alias default <major>`); until
   then a worktree tries the new one with `PATH=$HOME/.nvm/versions/node/v<ver>/bin:$PATH` (a Claude session can't
   `source nvm.sh`; `bash -ic 'nvm …'` works). A mismatch is only a pnpm "Unsupported engine" warning.
-- **Source:** the 24.20 → 26.13 upgrade (2026-11-27).
+- A shell keeps the Node it started with: Claude Code launched from a terminal opened before the alias change still
+  runs the old Node (`node -v` 24.20 the day after the switch). Open a new terminal; meanwhile use the `PATH` prefix.
+- **Source:** the 24.20 → 26.13 upgrade (2026-11-27); the stale terminal, 2026-11-28.
 
 ### Upgrading dependencies: follow `create-next-app`, skip brand-new majors (2026-11-27)
 - **Rule (iltan):** before moving `next`, scaffold a fresh app with its CLI in the scratchpad
