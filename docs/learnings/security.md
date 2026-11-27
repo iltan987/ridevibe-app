@@ -7,7 +7,7 @@
   `/\t/evil.example` becomes the protocol-relative `//evil.example`. String checks see a harmless path.
 - **Do:** validate redirect targets by parsing them (`new URL(next, base)`), require `origin === base`, and use the
   **normalized** `pathname + search + hash` afterwards. See `src/lib/auth/safe-next.ts` (+ `.test.ts`).
-- **Source:** found in code review; verified with Node 24.
+- **Source:** found in code review; verified with Node 24, re-checked on Node 26.13 (2026-11-27).
 
 ### Google blocks OAuth in in-app browsers (2026-11-09)
 - **Symptom:** applicants coming from Instagram/Facebook/TikTok get `403 disallowed_useragent` on "Sign in with Google".
@@ -51,4 +51,5 @@
   one `AbortSignal.timeout` for the whole chain; log a reason code only (never the input or a `Location`). The action
   (`resolvePlaceLink`) is limited to `events.manage` so it isn't an open fetcher. Node's fetch (undici) with
   `redirect: "manual"` returns the real 3xx with its `Location` header (browsers return an opaque redirect instead).
-- **Source:** found by testing (Node 24 against a local 302 server); tests with a fake `fetchImpl`.
+- **Source:** found by testing (Node 24 against a local 302 server; same on Node 26.13 / undici 8, 2026-11-27); tests
+  with a fake `fetchImpl`.

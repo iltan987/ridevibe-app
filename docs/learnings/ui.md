@@ -12,6 +12,33 @@
 
 ## Base UI and shadcn components
 
+### Our shadcn patches, and checking for upstream updates (2026-11-27)
+- **Check for updates:** base-nova isn't stored built any more; the registry generates it from
+  `apps/v4/registry/bases/base/ui/<name>.tsx` + `apps/v4/registry/styles/style-nova.css` in `shadcn-ui/ui` (the old
+  `apps/v4/public/r/styles/base-nova/*.json` stops in July 2026). List upstream commits on those two paths since the
+  file's add date (`gh api "repos/shadcn-ui/ui/commits?path=<path>&since=<date>"`; run it from a script file, the
+  worktree guard refuses inline loops that name git). None → nothing to update. Otherwise compare what `add` would
+  write (`pnpm exec shadcn add <name> --dry-run --view src/components/ui/<name>.tsx`, strip the `│ │ ` prefix, format
+  with our Prettier) with our file and carry over only upstream hunks, keeping the patches below. The `shadcn`
+  package update itself brings `shadcn/tailwind.css` (imported in `globals.css`).
+- **Lint-only rewrites (not patches; `pnpm lint:fix` redoes them):** `-translate-x-1/2 -translate-y-1/2` →
+  `-translate-1/2`, `has-[:focus-visible]` → `has-focus-visible`, `text-sm leading-normal` → `text-sm/normal`,
+  `Array<…>` → `…[]`, a needless `?.` in `FieldError`.
+- **Additive patches (fit the rule):** `DropdownMenuLinkItem` and the optional `keepMounted` on
+  `DropdownMenuContent` (`dropdown-menu.tsx`); the `status` variant in `badge.tsx`.
+- **Patches that change defaults (from before the rule):** `button.tsx`: `border-transparent` moved from the cva
+  base into the non-outline variants (else `buttonVariants()` on a `Link` loses the outline border, see "Outline
+  button border" below), outline `border-input`, destructive/outline hover alphas lowered (blended contrast,
+  `globals-contrast.test.ts`), `link` uses `text-accent-text`; `badge.tsx`: destructive alphas, `link` uses
+  `text-accent-text`; `native-select.tsx`: `h-10 text-base md:h-8 md:text-sm` (iOS zoom, "iOS Safari zooms" below);
+  `card.tsx`: `group-data-[size=sm]/card:text-sm/snug` (snug line-height kept for small titles, 5de1011).
+  Re-adding one of these files with `--overwrite` drops them: re-apply from git history. Kept on purpose (iltan,
+  2026-11-27) instead of moving them into wrappers (e.g. an `@/components/app/button.tsx` whose `buttonVariants()`
+  runs `cn(shadcnButtonVariants(…), ours)`; `native-select` would need an additive `selectClassName` prop): revisit
+  only if an upstream update to one of these files conflicts with them.
+- **Source:** registry dry run vs `src/components/ui/` (shadcn 4.23.1, 2026-11-27); upstream base-nova sources last
+  changed 2026-10-14 (#12307), before our components were added (2026-11-07 to 11-10).
+
 ### Base UI composes with `render`, not `asChild` (2026-11-07)
 - **Do:** `<DropdownMenuTrigger render={<Button … />} />`. For links styled as buttons, put `buttonVariants()` on
   `<Link>`. The rendered component must forward ref and spread props (React 19 function components do).

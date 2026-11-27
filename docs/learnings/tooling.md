@@ -56,7 +56,8 @@
 - **Symptom (risk):** flat config fails with "Cannot redefine plugin".
 - **Cause:** two versions load two plugin objects under the same `@typescript-eslint` key.
 - **Do:** after upgrading `typescript-eslint` or `eslint-config-next`, check `pnpm why typescript-eslint` shows one
-  version (today 8.72.1, inside `eslint-config-next`'s `^8.56.0`).
+  version (today 8.74.0, inside `eslint-config-next`'s `^8.56.0`). Its `typescript` peer range caps the TypeScript
+  version (8.74: `< 6.1.0`); a TS outside it makes lint print an "unsupported TypeScript version" warning.
 - **Source:** ESLint flat config docs; checked on this repo (Task 2).
 
 ### better-tailwindcss: `dark` is "unknown", and canonical renames aren't always pixel-equal (2026-11-15)

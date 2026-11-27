@@ -9,7 +9,8 @@ https://ridevibe-app.vercel.app)
 
 ## Requirements
 
-- Node.js 24, pnpm (`corepack enable`)
+- Node.js 26 (via nvm), pnpm (standalone installer, https://pnpm.io/installation: Node 25+ no longer ships
+  `corepack`; pnpm then switches itself to the `packageManager` version in `package.json`)
 - Docker Desktop (on Windows: enable WSL integration for your distro)
 - Vercel CLI (`pnpm add -g vercel`), GitHub CLI (`gh`), Claude Code
 

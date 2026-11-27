@@ -50,9 +50,14 @@
 - **Source:** found by testing.
 
 ### pnpm 12 blocks dependency build scripts (2026-11-07)
-- **Do:** list them in `pnpm-workspace.yaml` → `allowBuilds:` (`false` unless needed). New entries appear as
-  `'pkg': set this to true or false` after installs — decide and fix the file.
-- **Source:** `pnpm-workspace.yaml` (`allowBuilds`), `package.json` (`packageManager: pnpm@12.3.4`).
+- **Do:** list them in `pnpm-workspace.yaml` → `allowBuilds:` (`false` unless needed). Since pnpm 12.7 an install
+  without a terminal (Claude's shell) no longer writes `'pkg': set this to true or false` placeholders: a new build
+  script shows up only under "Ignored build scripts" in the install output — read it, decide and add the entry.
+- Version: the global shim runs `~/.local/share/pnpm`'s copy, which switches to `package.json#packageManager`;
+  Vercel uses that pin too (build log "Detected … from package.json#packageManager"). Upgrade: `cd ~ && pnpm
+  self-update <ver>`, edit the pin, `pnpm install` (lockfile: only the `@pnpm/exe.*` entries change).
+- **Source:** `pnpm-workspace.yaml` (`allowBuilds`), `package.json` (`packageManager`); pnpm 12.7.0 release notes; the
+  12.3.4 → 12.23.0 upgrade (2026-11-27).
 
 ### Validating pure TS logic quickly (2026-11-07)
 - `npx --yes tsx --tsconfig tsconfig.json script.ts` works (path aliases resolve). `pnpm dlx tsx` fails under
@@ -74,6 +79,41 @@
   `vercel env pull --environment=production --yes <file>` (`production.mts` reads `POSTGRES_URL_NON_POOLING`). The
   pull warns that one secret (`CRON_SECRET`, Vercel-sensitive) is written as `[SENSITIVE]`: expected, unused.
 - **Source:** the 3.0.0 → 3.4.0 and 66.6.0 → 67.0.0 upgrade (2026-11-27).
+
+### Upgrading Node (nvm) (2026-11-27)
+- nvm keeps global npm packages per Node version: after `nvm install <new>`, the old version's globals
+  (`ls ~/.nvm/versions/node/v<old>/lib/node_modules`; e.g. `ccstatusline`, Claude Code's status line in
+  `~/.claude/settings.json`) are missing until reinstalled (`npm i -g <pkg>`, or `nvm install <new>
+  --reinstall-packages-from=<old>`). pnpm (standalone, `~/.local/share/pnpm`) and the pnpm global Vercel CLI are not
+  affected. Node 25+ ships no `corepack`.
+- Order: Node in `engines.node` and the nvm default move together, at the merge (`nvm alias default <major>`); until
+  then a worktree tries the new one with `PATH=$HOME/.nvm/versions/node/v<ver>/bin:$PATH` (a Claude session can't
+  `source nvm.sh`; `bash -ic 'nvm …'` works). A mismatch is only a pnpm "Unsupported engine" warning.
+- **Source:** the 24.20 → 26.13 upgrade (2026-11-27).
+
+### Upgrading dependencies: follow `create-next-app`, skip brand-new majors (2026-11-27)
+- **Rule (iltan):** before moving `next`, scaffold a fresh app with its CLI in the scratchpad
+  (`pnpm dlx create-next-app@latest probe --ts --eslint --tailwind --app --src-dir --react-compiler --use-pnpm
+  --import-alias '@/*' --yes --disable-git`) and match what it pins, above all `react` / `react-dom` (and
+  `eslint-config-next`, `babel-plugin-react-compiler`, the `eslint` / `typescript` majors). A newer React patch than
+  the template's waits until a Next release ships it. Read the pin's reason in the Next release notes before
+  copying it: `create-next-app` 16.4.6 pins `tailwindcss` 4.3.3 only because 4.3.4's `@tailwindcss/node` `require()`s
+  ESM-only `magic-string` 1.x, which fails on Node < 20.19 / 22.0–22.11 (vercel/next.js#101061); on Node 24+ newer
+  Tailwind patches are fine.
+- **Rule (iltan):** a major released only days ago waits (many changes, early bugs); take it once it has settled and
+  its ecosystem has caught up. Check release dates with `npm view <pkg> time --json`.
+- Peer ranges decide what's blocked: `npm view <pkg>@<ver> peerDependencies`. 2026-11-27: ESLint 10 is blocked by
+  `eslint-config-next`'s `eslint-plugin-react` / `-import` / `-jsx-a11y` (ESLint ≤ 9); TypeScript 7 by
+  `typescript-eslint` (`typescript < 6.1.0`; TS 7 has no JavaScript API, which type-aware lint needs).
+- Lockfile: don't regenerate it wholesale (delete + install). Update direct dependencies by name, then `pnpm dedupe`
+  and `pnpm audit`. A fresh lockfile moves every transitive package at once and can cross majors through loose
+  ranges (2026-11-27 trial: 44 packages, incl. `intl-messageformat` 11 → 12 under next-intl) while fixing nothing
+  `audit` flags (exact pins upstream). To measure one: copy `package.json` + `pnpm-workspace.yaml` into the scratchpad
+  and `pnpm install --lockfile-only --ignore-scripts`; the lockfile holds two YAML documents (pnpm's own binaries
+  first), so compare the last `packages:` section.
+- Not a rule, a fact: the template's `typescript: ^5` / `@types/node: ^20` are floors, not limits. Next 16.4 runs the
+  project's own `tsc` in `next build` and documents TS 6 and 7 support (`node_modules/next/dist/docs/01-app/03-api-reference/05-config/02-typescript.md`).
+- **Source:** `create-next-app@16.4.6` scaffold (2026-11-27: `react` 19.3.0 while 19.3.1 was out since 2026-10-14).
 
 ### Stopping a server: never `pkill -f` / `pgrep -f` with a pattern from your own command (2026-11-07)
 - **Symptom:** `pkill -f "next start -p 3123"` killed the running shell (exit 144) mid-command; another Bash call

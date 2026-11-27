@@ -404,8 +404,20 @@ lawyer review, CLAUDE.md "Privacy (KVKK)").
   (2026-11-12, iltan asked) — functions in `fra1` sit next to the Frankfurt DB (a query is a few ms), ~150 members
   fit in Postgres memory; Redis would add a service, a KVKK processor and RLS-bypass risk in a shared cache. Prefer
   Next's built-in cache; revisit Redis for rate limiting (e.g. form spam).
+- **`lists-e2e.mjs` clicks a button that no longer exists** (2026-11-27, seen in the dependency-update E2E run) —
+  2 FAILs every run ("admin action clamps", "admin action keeps tab, search and page"): it looks for "Aktifleştir",
+  gone from `messages/tr.json` since the ön alım tab (1ec456b, 2026-11-18; now "Ön alıma al"); the script was last
+  changed 2026-11-15. Update the scenario to the current row action. Risk: the row-action paging checks don't run.
 
 ### App logic
+
+- **Teasers can show a cancelled ride after the cancel (intermittent)** (2026-11-27, dependency-update E2E run) —
+  `events-public-e2e.mjs` failed 6 checks in 2 runs on the first server process after a build (signed-out `/` and
+  `/events` still listed the ride the organiser had just cancelled, and the old count), then passed 4 runs in a row
+  (Node 26 and 24, and on `main` with Next 16.4.5). Guess, not proven: a prefetch or render of the `events-public`
+  cache that starts before the cancel's `updateTag` and finishes after it is stored as fresh. Investigate whether a
+  fill started before `updateTag` can outlive it (Next `"use cache"` docs; a loop of the scenario). Risk: visitors see
+  a cancelled ride until the next expiry (`/` one day).
 
 - **Events release minors** (2026-11-24, events release, task reviews) — (a) `events_public.test.sql` scopes its gate
   reads by title, not by fixture id; (b) `getTeaserRides`: `count ?? rides.length` turns off the over-`max_rows` log
@@ -731,6 +743,20 @@ lawyer review, CLAUDE.md "Privacy (KVKK)").
 
 ### Tooling & docs
 
+- **Dependency majors waiting on others** (2026-11-27, dependency update; rules in `docs/learnings/environment.md`
+  "Upgrading dependencies") — re-check at the next update pass:
+  - **ESLint 10:** npm marks 9.39.5 "no longer supported", but `eslint-config-next` (16.4.6 and canary) still brings
+    `eslint-plugin-react` / `-import` / `-jsx-a11y`, which crash on 10 (vercel/next.js#89764, open) and
+    `create-next-app` still ships `eslint ^9`. Move when Next does. Risk if left: no ESLint security fixes.
+  - **TypeScript 7:** `typescript-eslint` 8.74 accepts `typescript < 6.1.0` (TS 7 has no JavaScript API, which
+    type-aware lint needs). Move when `typescript-eslint` supports it.
+  - **React 19.3.1:** out since 2026-10-14, but `create-next-app` 16.4.6 pins 19.3.0; take it when a Next release does.
+  - **`intl-messageformat` 12:** next-intl 4.15 allows it (`use-intl`), our lockfile keeps 11 (a fresh lockfile would
+    take 12). Take it deliberately, with a check of formatted messages (plurals, dates).
+- **`pnpm audit`: `path-to-regexp` 6.1.0 ReDoS** (2026-11-27, dependency update; GHSA-9wv6-86v2-598j, high) — only via
+  the dev dependency `@vercel/config` → `@vercel/routing-utils`, which pins 6.1.0 exactly (also in its latest 6.6.1).
+  Not reachable here: `vercel.ts` defines no route patterns and the package only runs at build time. Drops out when
+  `@vercel/routing-utils` updates; a `pnpm.overrides` to 6.3.0 would be the fallback if it ever matters.
 - **Worktree hook: run `next typegen`** (2026-11-26, KVKK legal bases) — a fresh worktree has no `next-env.d.ts`, so
   `tsc` fails on image imports until `dev`/`build` ran (`docs/learnings/nextjs.md`). `scripts/dev/worktree.mts` could
   run `pnpm exec next typegen` after installing packages (try it in a throwaway clone first). Low risk: one command.
