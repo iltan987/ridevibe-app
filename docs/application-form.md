@@ -16,7 +16,7 @@ The sections below keep the review order (admin view, approval). The public form
 
 | Step | Title (TR) | Fields |
 |---|---|---|
-| 1 `riding` | Sürüş | license class, riding years, owns a motorcycle, brand/model/cc, riding styles, group experience |
+| 1 `riding` | Sürüş | license class, riding years (and the months when under a year), owns a motorcycle, brand/model/cc, riding styles, group experience |
 | 2 `club` | Kulüp | other clubs (+ names), how they heard (+ referrer), events (+ other) |
 | 3 `words` | Kendi sözlerinle | expectations, alienating behaviours, disagreement handling |
 | 4 `you` | Seni tanıyalım | Google fill, name, phone, email, birth date, city, district, Instagram, languages; sub-heading "Onaylar": the three consents; submit |

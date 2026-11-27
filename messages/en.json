@@ -630,6 +630,7 @@
       "languages": "Languages you speak",
       "license_class": "License class",
       "riding_years": "How many years have you been riding?",
+      "riding_months": "How many months?",
       "owns_motorcycle": "Do you own a motorcycle?",
       "motorcycle_brand": "Brand",
       "motorcycle_model": "Model",
