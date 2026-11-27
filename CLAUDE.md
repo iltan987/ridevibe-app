@@ -322,6 +322,9 @@ compatibility, post-push privilege and pg_cron checks, deploy status, SEO check,
 - **UI:** Tailwind CSS 4 + shadcn/ui (`base-nova` style, built on Base UI). Base UI composes with the `render` prop,
   **not** `asChild`. For links that look like buttons use `buttonVariants()` on `Link`. `cn` comes from the `cn`
   package (re-exported in `@/lib/utils`). Add components with `pnpm dlx shadcn@latest add <name>`.
+  `src/components/ui/` stays close to the registry (iltan): build on it with our own wrapper components; an edit
+  there is additive only (a new optional prop, variant or export, off by default) and goes into the patch list in
+  `docs/learnings/ui.md` ("Our shadcn patches"), which also has the update check.
 - **Design system** ("Gece + turkuaz", `docs/design/README.md`): palette tokens live in `src/app/globals.css` (hex,
   contrast-tested by `globals-contrast.test.ts`; re-run `pnpm test` after changing values); `heading` / `eyebrow`
   utilities; orange text uses `text-accent-text`, not `text-primary`. Brand: `Wordmark` / `ClubBadge`

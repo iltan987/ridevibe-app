@@ -48,6 +48,15 @@ Contents:
 KVKK questions are Claude's to research (law text, KVKK Board decisions) and decide; iltan confirms the outcome (no
 lawyer review, CLAUDE.md "Privacy (KVKK)").
 
+- **shadcn patches that change defaults: keep or move into wrappers?** (2026-11-27, shadcn check; iltan's rule:
+  wrappers, additive-only edits in `src/components/ui/`) — `button.tsx`, `badge.tsx`, `native-select.tsx` and
+  `card.tsx` carry older non-additive patches (list: `docs/learnings/ui.md` "Our shadcn patches"). Options: (a) keep
+  them, documented (an `add --overwrite` must re-apply them; upstream hasn't changed these files since 2026-10-14);
+  (b) own wrappers, e.g. `@/components/app/button.tsx` whose `buttonVariants()` runs `cn(shadcnButtonVariants(…),
+  ourVariantClasses)` (`cn` resolves the conflicts, which also fixes the `Link` border case), imports switched to it
+  and the `ui/` import banned by lint; `native-select` needs an additive `selectClassName` prop since its `<select>`
+  classes aren't reachable from outside. (b) touches every button call site plus the contrast test; its own small
+  iteration with a visual check.
 - **Dead-code tool?** (2026-11-11, iltan) — which tool, if any, for the dead-code sweep (Tooling & docs). Candidates
   to compare when we talk: `knip` (unused files, exports, dependencies; Next.js plugin), `ts-prune`/`ts-unused-exports`
   (exports only), TypeScript's `noUnusedLocals`/`noUnusedParameters` and ESLint rules (locals only), or no tool (manual
