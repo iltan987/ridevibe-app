@@ -71,6 +71,7 @@ and email and the draft restores steps 1-3.
 |---|---|---|---|
 | License class | select: A1 / A2 / A / B (125 cc authorisation) / not yet | yes | |
 | Years of riding | number / range select | yes | |
+| Riding months | number 0–11 | if years = 0 | Shown only when years is 0; null otherwise and on rows before 2026-11-28 |
 | Owns a motorcycle | yes/no | yes | |
 | Motorcycle brand, model, engine (cc) | text + number | if owns | Brand is free text with a `<datalist>` of common brands in Turkey (`MOTORCYCLE_BRAND_SUGGESTIONS` in `options.ts`) |
 | Riding style | multi-select: city, touring, enduro/off-road, sport, cruiser, scooter | yes | |
